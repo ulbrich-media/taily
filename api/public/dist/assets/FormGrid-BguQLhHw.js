@@ -1,0 +1,1 @@
+import{c as n,j as e}from"./index-BB2C9xIB.js";function d(i){const s=n.c(3),{children:c,columns:t}=i,r=(t===void 0?2:t)===2?"grid grid-cols-1 md:grid-cols-2 gap-6":"space-y-6";let o;return s[0]!==c||s[1]!==r?(o=e.jsx("div",{className:r,children:c}),s[0]=c,s[1]=r,s[2]=o):o=s[2],o}export{d as F};
