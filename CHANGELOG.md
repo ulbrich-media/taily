@@ -2,6 +2,13 @@
 
 All notable changes to Taily are documented here.
 
+## [0.1.1](https://github.com/ulbrich-media/taily/compare/v0.1.0...v0.1.1) (2026-04-19)
+
+
+### Bug Fixes
+
+* release asset target fixed ([e730e4f](https://github.com/ulbrich-media/taily/commit/e730e4fb56703fd670586236237eb80b3b67004a))
+
 # [0.1.0](https://github.com/ulbrich-media/taily/compare/v0.0.0...v0.1.0) (2026-04-19)
 
 
