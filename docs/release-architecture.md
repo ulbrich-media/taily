@@ -123,7 +123,8 @@ my-taily/
 │   ── Published assets (updated by post-update-cmd) ────────────────
 ├── public/
 │   ├── index.php              ← Laravel entry point (scaffold, static)
-│   └── vendor/taily/          ← frontend assets copied here by artisan
+│   ├── index.html             ← React SPA entry point (published by artisan)
+│   └── assets/                ← JS/CSS bundles (published by artisan)
 │
 │   ── Operator-owned (never touched by Composer) ───────────────────
 ├── .env                       ← instance configuration

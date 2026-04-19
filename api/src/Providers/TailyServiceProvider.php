@@ -29,7 +29,7 @@ class TailyServiceProvider extends ServiceProvider
         $this->registerMiddlewareAlias();
 
         $this->publishes([
-            __DIR__.'/../../public/dist' => public_path('vendor/taily'),
+            __DIR__.'/../../public/dist' => public_path(),
         ], 'taily-assets');
 
         $this->publishes([
