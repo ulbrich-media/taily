@@ -1,1 +1,0 @@
-import{s as i}from"./index-MvM1iDBK.js";const a=255,m=65535,c=(n={})=>{const r=n.maxLength??a,t=n.required??!1;let e=i().max(r,`Darf maximal ${r} Zeichen lang sein`).trim();return t&&(e=e.min(1,"Pflichtfeld darf nicht leer sein")),e};export{m as S,c as z};

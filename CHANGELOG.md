@@ -2,6 +2,13 @@
 
 All notable changes to Taily are documented here.
 
+## [0.1.2](https://github.com/ulbrich-media/taily/compare/v0.1.1...v0.1.2) (2026-04-19)
+
+
+### Bug Fixes
+
+* hardcoded ddev url removed ([ddaa5cf](https://github.com/ulbrich-media/taily/commit/ddaa5cfa3322146ce1f305d6dc50b67a65e36337))
+
 ## [0.1.1](https://github.com/ulbrich-media/taily/compare/v0.1.0...v0.1.1) (2026-04-19)
 
 
