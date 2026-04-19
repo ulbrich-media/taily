@@ -1,0 +1,63 @@
+<?php
+
+namespace Taily\Providers;
+
+use Illuminate\Routing\Router;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\ServiceProvider;
+use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
+use Taily\Http\Middleware\EnsureUserIsAdmin;
+
+class TailyServiceProvider extends ServiceProvider
+{
+    /**
+     * Register any application services.
+     */
+    public function register(): void
+    {
+        $this->mergeConfigFrom(__DIR__.'/../../config/taily.php', 'taily');
+    }
+
+    /**
+     * Bootstrap any application services.
+     */
+    public function boot(): void
+    {
+        $this->loadMigrationsFrom(__DIR__.'/../../database/migrations');
+
+        $this->registerRoutes();
+        $this->registerMiddlewareAlias();
+
+        $this->publishes([
+            __DIR__.'/../../public/dist' => public_path('vendor/taily'),
+        ], 'taily-assets');
+
+        $this->publishes([
+            __DIR__.'/../../config/taily.php' => config_path('taily.php'),
+        ], 'taily-config');
+    }
+
+    /**
+     * Register the package routes with their required prefix and middleware.
+     */
+    protected function registerRoutes(): void
+    {
+        Route::prefix('api')
+            ->middleware(['api'])
+            ->group(__DIR__.'/../../routes/api.php');
+
+        Route::prefix('internal')
+            ->middleware(['api', EnsureFrontendRequestsAreStateful::class])
+            ->group(__DIR__.'/../../routes/internal.php');
+    }
+
+    /**
+     * Register the admin middleware alias.
+     */
+    protected function registerMiddlewareAlias(): void
+    {
+        $this->callAfterResolving(Router::class, function (Router $router) {
+            $router->aliasMiddleware('admin', EnsureUserIsAdmin::class);
+        });
+    }
+}

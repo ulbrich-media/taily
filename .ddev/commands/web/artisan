@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+## Description: Run artisan commands in api/
+## Usage: artisan [args]
+## Example: ddev artisan migrate
+
+php /var/www/html/api/artisan "$@"

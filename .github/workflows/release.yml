@@ -1,0 +1,101 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  build-assets:
+    name: Build & Commit Frontend Assets
+    runs-on: ubuntu-latest
+    needs: ci
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install npm dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Commit assets
+        run: |
+          rm -rf api/public/dist/*
+          cp -r frontend/dist/. api/public/dist/
+          git add -f api/public/dist/
+          if git diff --cached --quiet; then
+            echo "Assets unchanged, nothing to commit."
+          else
+            git commit -m "chore: build frontend assets"
+            git push origin main
+          fi
+
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    needs: build-assets
+    outputs:
+      new_release_published: ${{ steps.semantic-release.outputs.new_release_published }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - uses: cycjimmy/semantic-release-action@v4
+        id: semantic-release
+        with:
+          extra_plugins: |
+            @semantic-release/changelog
+            @semantic-release/exec
+            @semantic-release/git
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  back-merge:
+    name: Back-merge main into development
+    runs-on: ubuntu-latest
+    needs: release
+    if: needs.release.outputs.new_release_published == 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: development
+          fetch-depth: 0
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Merge main into development
+        run: |
+          git fetch origin main
+          git merge --no-ff origin/main -m "chore: sync main after release"
+          git push origin development

@@ -1,0 +1,43 @@
+language: en
+
+tone_instructions: "Focus on logic errors, security issues, and performance bottlenecks."
+
+reviews:
+  auto_review:
+    enabled: true
+  review_status: true
+  instructions: |
+    Apply the following project-specific coding patterns during review:
+
+    **Token patterns** (`docs/coding-patterns/tokens.md`):
+    - Use the `HasAccessToken` trait when a token gates access to an existing record (e.g. a temporary link to a pre-existing model). Tokens are stored in the shared `access_tokens` table.
+    - Use a self-contained model with its own `token` and `expires_at` columns when the token record IS the business object (e.g. an invitation). There is no pre-existing record being gated.
+    - Flag any new model that adds token-like columns directly when `HasAccessToken` would be more appropriate, and vice versa.
+
+    **Frontend links via callback** (`docs/coding-patterns/frontend-links.md`):
+    - All backend-generated frontend URLs must go through `FrontendUriBuilder`. Flag any inline construction of callback URLs using `env('FRONTEND_URL')` or string concatenation.
+    - Each new action requires a static method on `FrontendUriBuilder` and a corresponding handler in the frontend `/callback` route.
+
+    **API type handling** (`docs/coding-patterns/api-type-handling.md`):
+    - Every model returned from an endpoint must be wrapped in a Laravel Resource — never a raw Eloquent model. Flag any controller method that returns a raw model or `$model->toArray()` instead of a Resource.
+    - Nested relations inside a Resource must themselves be wrapped in the appropriate Resource class. Flag any `$this->whenLoaded('relation')` that returns a raw model instead of e.g. `new PersonBaseResource($v)` or `ResourceClass::collection(...)`.
+    - Frontend types for API responses must live in `frontend/src/api/types/*.ts`. Flag any resource-shaped interface defined inside a module's own `api/types.ts` instead of the central location.
+    - Each frontend resource interface must mirror the corresponding backend Resource exactly. Flag interfaces that add `?` (optional/undefined) to fields that are always present in the resource; nullable fields must be `Type | null`, not `Type?` or `Type | undefined`.
+
+    **Empty strings** (`docs/coding-patterns/empty-strings.md`):
+    - String/text columns must be non-nullable by default. Flag any migration that adds `->nullable()` to a string column unless there is a clear semantic reason for `null` to be distinct from empty.
+    - Empty-string defaults must be set in the model via `protected $attributes`, not via `->default('')` in the migration.
+    - Flag any seeder or factory that sets a string field to `null` where the column is non-nullable.
+  path_filters:
+    - "!**/vendor/**"
+    - "!**/node_modules/**"
+    - "!**/package-lock.json"
+    - "!**/composer.lock"
+    - "!frontend/src/routeTree.gen.ts"
+    - "!**/*.min.js"
+    - "!**/dist/**"
+    - "!**/build/**"
+
+issue_enrichment:
+  planning:
+    enabled: true
