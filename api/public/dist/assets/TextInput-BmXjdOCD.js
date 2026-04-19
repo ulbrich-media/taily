@@ -1,0 +1,1 @@
+import{c as n,j as r}from"./index-BB2C9xIB.js";import{F as o}from"./FormFieldWrapper-DbjLPFLZ.js";import{I as a}from"./input-CAWiyNzs.js";function p(i){const t=n.c(2);let e;return t[0]!==i?(e=r.jsx(o,{...i,render:m}),t[0]=i,t[1]=e):e=t[1],e}function m(i){const{field:t,fieldState:e}=i;return r.jsx(a,{...t,id:t.name,"aria-invalid":e.invalid,autoComplete:"off"})}export{p as T};
