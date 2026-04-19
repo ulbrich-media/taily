@@ -1,1 +1,0 @@
-import{r as e}from"./index-BB2C9xIB.js";var a=globalThis?.document?e.useLayoutEffect:()=>{};function f(t){const u=e.useRef(t);return e.useEffect(()=>{u.current=t}),e.useMemo(()=>(...r)=>u.current?.(...r),[])}export{f as a,a as u};
