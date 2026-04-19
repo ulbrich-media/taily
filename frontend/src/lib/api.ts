@@ -1,4 +1,4 @@
-const API_URL_ROOT = 'https://api.taily.ddev.site'
+const API_URL_ROOT = import.meta.env.VITE_API_URL ?? window.location.origin
 const API_URL = `${API_URL_ROOT}/internal`
 
 export async function csrfCookie(): Promise<void> {
