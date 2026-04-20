@@ -2,11 +2,13 @@
 
 namespace Taily\Providers;
 
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
 use Taily\Http\Middleware\EnsureUserIsAdmin;
+use Taily\Models\User;
 
 class TailyServiceProvider extends ServiceProvider
 {
@@ -24,6 +26,10 @@ class TailyServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->loadMigrationsFrom(__DIR__.'/../../database/migrations');
+        $this->loadViewsFrom(__DIR__.'/../../resources/views', 'taily');
+
+        JsonResource::withoutWrapping();
+        config(['auth.providers.users.model' => User::class]);
 
         $this->registerRoutes();
         $this->registerMiddlewareAlias();
@@ -31,6 +37,10 @@ class TailyServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__.'/../../public/dist' => public_path(),
         ], 'taily-assets');
+
+        $this->publishes([
+            __DIR__.'/../../resources/views' => resource_path('views/vendor/taily'),
+        ], 'taily-views');
 
         $this->publishes([
             __DIR__.'/../../config/taily.php' => config_path('taily.php'),
