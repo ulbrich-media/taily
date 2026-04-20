@@ -1,1 +1,0 @@
-import{c as n,ba as a,r as s}from"./index-CmowhFuf.js";function c(){const t=n.c(2),e=a.useNavigate();let o;return t[0]!==e?(o=()=>{e({})},t[0]=e,t[1]=o):o=t[1],s.useEffect(o),null}export{c as component};
