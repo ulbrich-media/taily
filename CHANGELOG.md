@@ -2,6 +2,13 @@
 
 All notable changes to Taily are documented here.
 
+## [0.1.3](https://github.com/ulbrich-media/taily/compare/v0.1.2...v0.1.3) (2026-04-20)
+
+
+### Bug Fixes
+
+* namespace and provider issues resolved ([#10](https://github.com/ulbrich-media/taily/issues/10)) ([2cbce5f](https://github.com/ulbrich-media/taily/commit/2cbce5fed5f5797e95229b69ddc81bac9e9db318))
+
 ## [0.1.2](https://github.com/ulbrich-media/taily/compare/v0.1.1...v0.1.2) (2026-04-19)
 
 
