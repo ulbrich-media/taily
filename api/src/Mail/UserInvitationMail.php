@@ -28,7 +28,7 @@ class UserInvitationMail extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'emails.user-invitation',
+            view: 'taily::emails.user-invitation',
             with: [
                 'invitationUrl' => $this->getInvitationUrl(),
                 'expiresAt' => $this->invitation->expires_at,

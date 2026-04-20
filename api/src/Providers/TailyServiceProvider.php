@@ -26,6 +26,7 @@ class TailyServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->loadMigrationsFrom(__DIR__.'/../../database/migrations');
+        $this->loadViewsFrom(__DIR__.'/../../resources/views', 'taily');
 
         JsonResource::withoutWrapping();
         config(['auth.providers.users.model' => User::class]);
@@ -36,6 +37,10 @@ class TailyServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__.'/../../public/dist' => public_path(),
         ], 'taily-assets');
+
+        $this->publishes([
+            __DIR__.'/../../resources/views' => resource_path('views/vendor/taily'),
+        ], 'taily-views');
 
         $this->publishes([
             __DIR__.'/../../config/taily.php' => config_path('taily.php'),
