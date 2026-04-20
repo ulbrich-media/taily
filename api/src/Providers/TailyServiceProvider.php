@@ -2,6 +2,7 @@
 
 namespace Taily\Providers;
 
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
@@ -26,6 +27,7 @@ class TailyServiceProvider extends ServiceProvider
     {
         $this->loadMigrationsFrom(__DIR__.'/../../database/migrations');
 
+        JsonResource::withoutWrapping();
         config(['auth.providers.users.model' => User::class]);
 
         $this->registerRoutes();
