@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
 use Taily\Http\Middleware\EnsureUserIsAdmin;
+use Taily\Models\User;
 
 class TailyServiceProvider extends ServiceProvider
 {
@@ -24,6 +25,8 @@ class TailyServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->loadMigrationsFrom(__DIR__.'/../../database/migrations');
+
+        config(['auth.providers.users.model' => User::class]);
 
         $this->registerRoutes();
         $this->registerMiddlewareAlias();
