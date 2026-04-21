@@ -8,7 +8,8 @@ use Illuminate\Support\Str;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Taily\Models\Animal;
 use Taily\Models\AnimalType;
-use Taily\Models\HealthCondition;
+use Taily\Models\MedicalTest;
+use Taily\Models\Vaccination;
 use Taily\Models\Person;
 
 class AnimalSeeder extends Seeder
@@ -57,19 +58,35 @@ class AnimalSeeder extends Seeder
             }
         }
 
-        // Create health conditions for dogs
-        // These can be used as either vaccinations or tests
-        $healthConditions = [
-            HealthCondition::create([
-                'name' => 'Tollwut',
+        // Create vaccinations for dogs
+        $vaccinations = [
+            Vaccination::create([
+                'title' => 'Tollwut',
+                'description' => '',
                 'animal_type_id' => $animalTypeDog->id,
             ]),
-            HealthCondition::create([
-                'name' => 'Borreliose',
+            Vaccination::create([
+                'title' => 'Borreliose',
+                'description' => '',
                 'animal_type_id' => $animalTypeDog->id,
             ]),
-            HealthCondition::create([
-                'name' => 'Leishmaniose',
+            Vaccination::create([
+                'title' => 'DHPPi-L',
+                'description' => 'Staupe, Hepatitis, Parvovirose, Parainfluenza & Leptospirose',
+                'animal_type_id' => $animalTypeDog->id,
+            ]),
+        ];
+
+        // Create medical tests for dogs
+        $medicalTests = [
+            MedicalTest::create([
+                'title' => 'Leishmaniose',
+                'description' => '',
+                'animal_type_id' => $animalTypeDog->id,
+            ]),
+            MedicalTest::create([
+                'title' => '4D Snap Test',
+                'description' => 'Kombinationstest für Heartworm, Ehrlichia, Anaplasma & Borrelia',
                 'animal_type_id' => $animalTypeDog->id,
             ]),
         ];
@@ -187,25 +204,22 @@ class AnimalSeeder extends Seeder
                     ->toMediaCollection('pictures');
             }
 
-            // Randomly assign health conditions as vaccinations to dogs
-            // Each animal gets 0-3 vaccinations
-            $numVaccinations = $faker->numberBetween(0, 3);
-            $selectedVaccinations = $faker->randomElements($healthConditions, $numVaccinations);
+            // Randomly assign vaccinations to dogs
+            $numVaccinations = $faker->numberBetween(0, count($vaccinations));
+            $selectedVaccinations = $faker->randomElements($vaccinations, $numVaccinations);
 
-            foreach ($selectedVaccinations as $healthCondition) {
-                $animal->healthConditionVaccinations()->attach($healthCondition->id, [
+            foreach ($selectedVaccinations as $vaccination) {
+                $animal->vaccinations()->attach($vaccination->id, [
                     'vaccinated_at' => $faker->dateTimeBetween('-2 years', 'now'),
                 ]);
             }
 
-            // Randomly assign health conditions as tests to dogs
-            // Each animal gets 0-3 tests
-            // A health condition can be both a vaccination and a test for the same animal
-            $numTests = $faker->numberBetween(0, 3);
-            $selectedTests = $faker->randomElements($healthConditions, $numTests);
+            // Randomly assign medical tests to dogs
+            $numTests = $faker->numberBetween(0, count($medicalTests));
+            $selectedTests = $faker->randomElements($medicalTests, $numTests);
 
-            foreach ($selectedTests as $healthCondition) {
-                $animal->healthConditionTests()->attach($healthCondition->id, [
+            foreach ($selectedTests as $medicalTest) {
+                $animal->medicalTests()->attach($medicalTest->id, [
                     'tested_at' => $faker->dateTimeBetween('-2 years', 'now'),
                     'result' => $faker->randomElement(['positive', 'negative']),
                 ]);

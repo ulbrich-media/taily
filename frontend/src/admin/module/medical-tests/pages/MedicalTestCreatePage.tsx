@@ -3,8 +3,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { healthConditionQueryKeys } from '@/admin/module/health-conditions/api/queries.ts'
-import { createHealthCondition } from '@/admin/module/health-conditions/api/requests.ts'
+import { medicalTestQueryKeys } from '@/admin/module/medical-tests/api/queries'
+import { createMedicalTest } from '@/admin/module/medical-tests/api/requests'
 import type { AnimalTypeResource } from '@/api/types/animal-types'
 import {
   Dialog,
@@ -15,7 +15,7 @@ import {
   DialogTitle,
 } from '@/shadcn/components/ui/dialog.tsx'
 import { Button } from '@/shadcn/components/ui/button.tsx'
-import { Activity } from 'lucide-react'
+import { FlaskConical } from 'lucide-react'
 import { FieldGroup } from '@/shadcn/components/ui/field.tsx'
 import { toast } from 'sonner'
 import { FormBlocker } from '@/components/form/FormBlocker'
@@ -23,43 +23,45 @@ import { TextInput } from '@/components/field/TextInput'
 import { SelectInput } from '@/components/field/SelectInput'
 import { zFieldString } from '@/components/field/TextInput.utils.ts'
 
-const createHealthConditionSchema = z.object({
-  name: zFieldString({ required: true }),
+const createMedicalTestSchema = z.object({
+  title: zFieldString({ required: true }),
+  description: zFieldString(),
   animal_type_id: z.string().min(1, 'Bitte wähle eine Tierart aus'),
 })
 
-type CreateHealthConditionFormData = z.infer<typeof createHealthConditionSchema>
+type CreateMedicalTestFormData = z.infer<typeof createMedicalTestSchema>
 
-interface HealthConditionCreatePageProps {
+interface MedicalTestCreatePageProps {
   animalTypes: AnimalTypeResource[]
   onClose: () => void
 }
 
-export function HealthConditionCreatePage({
+export function MedicalTestCreatePage({
   animalTypes,
   onClose,
-}: HealthConditionCreatePageProps) {
+}: MedicalTestCreatePageProps) {
   const queryClient = useQueryClient()
-
   const [keepOpen, setKeepOpen] = useState(false)
 
-  const form = useForm<CreateHealthConditionFormData>({
-    resolver: zodResolver(createHealthConditionSchema),
+  const form = useForm<CreateMedicalTestFormData>({
+    resolver: zodResolver(createMedicalTestSchema),
     defaultValues: {
-      name: '',
+      title: '',
+      description: '',
       animal_type_id: animalTypes.length === 1 ? animalTypes[0].id : '',
     },
   })
 
   const createMutation = useMutation({
-    mutationFn: createHealthCondition,
+    mutationFn: createMedicalTest,
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: healthConditionQueryKeys.list })
+      queryClient.invalidateQueries({ queryKey: medicalTestQueryKeys.list })
       toast.success(data.message)
 
       if (keepOpen) {
         form.reset({
-          name: '',
+          title: '',
+          description: '',
           animal_type_id: form.getValues('animal_type_id'),
         })
         setKeepOpen(false)
@@ -69,7 +71,7 @@ export function HealthConditionCreatePage({
     },
   })
 
-  const onSubmit = async (data: CreateHealthConditionFormData) => {
+  const onSubmit = async (data: CreateMedicalTestFormData) => {
     await createMutation.mutateAsync(data)
   }
 
@@ -83,11 +85,11 @@ export function HealthConditionCreatePage({
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Activity className="h-5 w-5 text-primary" />
-            Neuen Gesundheitszustand erstellen
+            <FlaskConical className="h-5 w-5 text-primary" />
+            Neuen Test erstellen
           </DialogTitle>
           <DialogDescription>
-            Erstelle einen neuen Gesundheitszustand für eine Tierart.
+            Erstelle einen neuen Test für eine Tierart.
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -108,10 +110,16 @@ export function HealthConditionCreatePage({
               />
 
               <TextInput
-                name="name"
+                name="title"
                 control={form.control}
-                label="Name"
+                label="Titel"
                 required
+              />
+
+              <TextInput
+                name="description"
+                control={form.control}
+                label="Beschreibung"
               />
             </FieldGroup>
 

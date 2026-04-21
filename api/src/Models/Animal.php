@@ -136,22 +136,16 @@ class Animal extends Model implements HasMedia
         return $this->belongsTo(AnimalType::class);
     }
 
-    /**
-     * Get the health conditions assigned as vaccinations for this animal.
-     */
-    public function healthConditionVaccinations(): BelongsToMany
+    public function vaccinations(): BelongsToMany
     {
-        return $this->belongsToMany(HealthCondition::class, 'animal_health_condition_vaccination')
+        return $this->belongsToMany(Vaccination::class, 'animal_vaccination')
             ->withPivot('vaccinated_at')
             ->withTimestamps();
     }
 
-    /**
-     * Get the health conditions assigned as tests for this animal.
-     */
-    public function healthConditionTests(): BelongsToMany
+    public function medicalTests(): BelongsToMany
     {
-        return $this->belongsToMany(HealthCondition::class, 'animal_health_condition_test')
+        return $this->belongsToMany(MedicalTest::class, 'animal_medical_test')
             ->withPivot('tested_at', 'result')
             ->withTimestamps();
     }

@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { healthConditionQueryKeys } from '@/admin/module/health-conditions/api/queries.ts'
-import { deleteHealthCondition } from '@/admin/module/health-conditions/api/requests.ts'
-import type { HealthConditionResource } from '@/api/types/health-conditions'
+import { vaccinationQueryKeys } from '@/admin/module/vaccinations/api/queries'
+import { deleteVaccination } from '@/admin/module/vaccinations/api/requests'
+import type { VaccinationResource } from '@/api/types/vaccinations'
 import {
   Dialog,
   DialogContent,
@@ -13,21 +13,21 @@ import { Button } from '@/shadcn/components/ui/button.tsx'
 import { Trash2Icon } from 'lucide-react'
 import { toast } from 'sonner'
 
-interface HealthConditionDeletePageProps {
-  healthCondition: HealthConditionResource
+interface VaccinationDeletePageProps {
+  vaccination: VaccinationResource
   onClose: () => void
 }
 
-export function HealthConditionDeletePage({
-  healthCondition,
+export function VaccinationDeletePage({
+  vaccination,
   onClose,
-}: HealthConditionDeletePageProps) {
+}: VaccinationDeletePageProps) {
   const queryClient = useQueryClient()
 
   const deleteMutation = useMutation({
-    mutationFn: deleteHealthCondition,
+    mutationFn: deleteVaccination,
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: healthConditionQueryKeys.list })
+      queryClient.invalidateQueries({ queryKey: vaccinationQueryKeys.list })
       toast.success(data.message)
       onClose()
     },
@@ -39,22 +39,20 @@ export function HealthConditionDeletePage({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Trash2Icon className="h-5 w-5 text-destructive" />
-            Gesundheitszustand löschen
+            Impfung löschen
           </DialogTitle>
         </DialogHeader>
 
         <div>
           <div className="leading-7 mb-2">
-            Möchtest du den Gesundheitszustand{' '}
-            <span className="font-medium">{healthCondition.name}</span> für{' '}
-            <span className="font-medium">
-              {healthCondition.animal_type.title}
-            </span>{' '}
+            Möchtest du die Impfung{' '}
+            <span className="font-medium">{vaccination.title}</span> für{' '}
+            <span className="font-medium">{vaccination.animal_type.title}</span>{' '}
             wirklich löschen?
           </div>
           <div className="leading-7 mb-2">
-            Dieser Vorgang kann nicht rückgängig gemacht werden. Alle Impfungen
-            und Tests für diesen Gesundheitszustand werden ebenfalls gelöscht.
+            Dieser Vorgang kann nicht rückgängig gemacht werden. Alle
+            Impfeinträge der Tiere für diese Impfung werden ebenfalls gelöscht.
           </div>
         </div>
 
@@ -70,7 +68,7 @@ export function HealthConditionDeletePage({
           <Button
             variant="destructive"
             disabled={deleteMutation.isPending}
-            onClick={() => deleteMutation.mutateAsync(healthCondition.id)}
+            onClick={() => deleteMutation.mutateAsync(vaccination.id)}
           >
             {deleteMutation.isPending ? 'Wird gelöscht...' : 'Ja, löschen'}
           </Button>
