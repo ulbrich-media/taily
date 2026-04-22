@@ -17,10 +17,14 @@ class MedicalTestController extends Controller
 
     public function index(Request $request): JsonResponse
     {
+        $validated = $request->validate([
+            'animal_type_id' => 'sometimes|uuid|exists:animal_types,id',
+        ]);
+
         $query = MedicalTest::with('animalType')->orderBy('title');
 
-        if ($request->has('animal_type_id')) {
-            $query->where('animal_type_id', $request->input('animal_type_id'));
+        if (isset($validated['animal_type_id'])) {
+            $query->where('animal_type_id', $validated['animal_type_id']);
         }
 
         return response()->json(MedicalTestResource::collection($query->get()));
