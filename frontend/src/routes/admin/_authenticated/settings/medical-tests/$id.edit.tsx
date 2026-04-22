@@ -19,7 +19,9 @@ export const Route = createFileRoute(
   loader: async ({ params }) => {
     const medicalTestId = params.id
 
-    const medicalTests = await queryClient.ensureQueryData(listMedicalTestsQuery)
+    const medicalTests = await queryClient.ensureQueryData(
+      listMedicalTestsQuery
+    )
 
     const medicalTest = medicalTests.find((t) => t.id === medicalTestId)
 

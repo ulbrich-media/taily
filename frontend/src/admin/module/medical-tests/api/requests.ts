@@ -12,8 +12,13 @@ import type {
 export async function getMedicalTests(
   query: { animal_type_id?: string } = {}
 ): Promise<MedicalTestsResponse> {
+  const params = new URLSearchParams(
+    Object.fromEntries(
+      Object.entries(query).filter(([, v]) => v !== undefined)
+    ) as Record<string, string>
+  ).toString()
   return apiRequest<MedicalTestsResponse>(
-    `medical-tests?${new URLSearchParams(query).toString()}`
+    params ? `medical-tests?${params}` : 'medical-tests'
   )
 }
 

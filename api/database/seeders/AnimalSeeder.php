@@ -9,8 +9,8 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Taily\Models\Animal;
 use Taily\Models\AnimalType;
 use Taily\Models\MedicalTest;
-use Taily\Models\Vaccination;
 use Taily\Models\Person;
+use Taily\Models\Vaccination;
 
 class AnimalSeeder extends Seeder
 {
@@ -146,9 +146,6 @@ class AnimalSeeder extends Seeder
             'Hundeengel Griechenland',
             'Straßenhunde Rumänien e.V.',
         ];
-
-        // Get all persons for relations
-        $persons = Person::all();
 
         // Create 25 demo dogs
         for ($i = 1; $i <= 25; $i++) {

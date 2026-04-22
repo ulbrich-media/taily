@@ -38,13 +38,14 @@ export function MedicalTestListPage({
   const groupedTests = useMemo(() => {
     const groups = new Map<
       string,
-      { title: string; tests: MedicalTestResource[] }
+      { id: string; title: string; tests: MedicalTestResource[] }
     >()
 
     medicalTests?.forEach((test) => {
       const typeId = test.animal_type.id
       if (!groups.has(typeId)) {
         groups.set(typeId, {
+          id: typeId,
           title: test.animal_type.title,
           tests: [],
         })
@@ -71,7 +72,7 @@ export function MedicalTestListPage({
       {hasTests ? (
         <div className="space-y-6">
           {groupedTests.map((group) => (
-            <Card key={group.title}>
+            <Card key={group.id}>
               <CardHeader>
                 <CardTitle>{group.title}</CardTitle>
               </CardHeader>

@@ -38,13 +38,14 @@ export function VaccinationListPage({
   const groupedVaccinations = useMemo(() => {
     const groups = new Map<
       string,
-      { title: string; vaccinations: VaccinationResource[] }
+      { id: string; title: string; vaccinations: VaccinationResource[] }
     >()
 
     vaccinations?.forEach((vaccination) => {
       const typeId = vaccination.animal_type.id
       if (!groups.has(typeId)) {
         groups.set(typeId, {
+          id: typeId,
           title: vaccination.animal_type.title,
           vaccinations: [],
         })
@@ -71,7 +72,7 @@ export function VaccinationListPage({
       {hasVaccinations ? (
         <div className="space-y-6">
           {groupedVaccinations.map((group) => (
-            <Card key={group.title}>
+            <Card key={group.id}>
               <CardHeader>
                 <CardTitle>{group.title}</CardTitle>
               </CardHeader>

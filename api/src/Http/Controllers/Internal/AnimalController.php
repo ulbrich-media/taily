@@ -5,6 +5,7 @@ namespace Taily\Http\Controllers\Internal;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Validation\Rule;
 use Taily\Http\Controllers\Controller;
 use Taily\Http\Resources\AnimalDetailResource;
 use Taily\Http\Resources\AnimalListResource;
@@ -131,10 +132,10 @@ class AnimalController extends Controller
             'date_of_death' => 'sometimes|nullable|date_format:Y-m-d',
             // Vaccinations and Tests
             'vaccinations' => 'sometimes|array',
-            'vaccinations.*.vaccination_id' => 'required|uuid|exists:vaccinations,id',
+            'vaccinations.*.vaccination_id' => ['required', 'uuid', Rule::exists('vaccinations', 'id')->where('animal_type_id', $animal->animal_type_id)],
             'vaccinations.*.vaccinated_at' => 'sometimes|nullable|date',
             'tests' => 'sometimes|array',
-            'tests.*.medical_test_id' => 'required|uuid|exists:medical_tests,id',
+            'tests.*.medical_test_id' => ['required', 'uuid', Rule::exists('medical_tests', 'id')->where('animal_type_id', $animal->animal_type_id)],
             'tests.*.tested_at' => 'sometimes|nullable|date',
             'tests.*.result' => 'required|in:positive,negative',
         ]);

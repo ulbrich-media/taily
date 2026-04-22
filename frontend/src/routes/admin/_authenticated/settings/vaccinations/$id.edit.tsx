@@ -19,7 +19,9 @@ export const Route = createFileRoute(
   loader: async ({ params }) => {
     const vaccinationId = params.id
 
-    const vaccinations = await queryClient.ensureQueryData(listVaccinationsQuery)
+    const vaccinations = await queryClient.ensureQueryData(
+      listVaccinationsQuery
+    )
 
     const vaccination = vaccinations.find((v) => v.id === vaccinationId)
 

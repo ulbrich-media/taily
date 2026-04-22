@@ -77,7 +77,9 @@ export function MedicalTestCreatePage({
 
   const handleSaveAndNew = () => {
     setKeepOpen(true)
-    form.handleSubmit(onSubmit)()
+    form
+      .handleSubmit(onSubmit)()
+      .catch(() => setKeepOpen(false))
   }
 
   return (

@@ -31,6 +31,9 @@ export function VaccinationDeletePage({
       toast.success(data.message)
       onClose()
     },
+    onError: () => {
+      toast.error('Fehler beim Löschen der Impfung')
+    },
   })
 
   return (
@@ -68,7 +71,7 @@ export function VaccinationDeletePage({
           <Button
             variant="destructive"
             disabled={deleteMutation.isPending}
-            onClick={() => deleteMutation.mutateAsync(vaccination.id)}
+            onClick={() => deleteMutation.mutate(vaccination.id)}
           >
             {deleteMutation.isPending ? 'Wird gelöscht...' : 'Ja, löschen'}
           </Button>

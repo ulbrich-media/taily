@@ -12,8 +12,13 @@ import type {
 export async function getVaccinations(
   query: { animal_type_id?: string } = {}
 ): Promise<VaccinationsResponse> {
+  const params = new URLSearchParams(
+    Object.fromEntries(
+      Object.entries(query).filter(([, v]) => v !== undefined)
+    ) as Record<string, string>
+  ).toString()
   return apiRequest<VaccinationsResponse>(
-    `vaccinations?${new URLSearchParams(query).toString()}`
+    params ? `vaccinations?${params}` : 'vaccinations'
   )
 }
 

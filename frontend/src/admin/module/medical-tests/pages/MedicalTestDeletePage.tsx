@@ -31,6 +31,9 @@ export function MedicalTestDeletePage({
       toast.success(data.message)
       onClose()
     },
+    onError: () => {
+      toast.error('Fehler beim Löschen des Tests')
+    },
   })
 
   return (
@@ -47,9 +50,7 @@ export function MedicalTestDeletePage({
           <div className="leading-7 mb-2">
             Möchtest du den Test{' '}
             <span className="font-medium">{medicalTest.title}</span> für{' '}
-            <span className="font-medium">
-              {medicalTest.animal_type.title}
-            </span>{' '}
+            <span className="font-medium">{medicalTest.animal_type.title}</span>{' '}
             wirklich löschen?
           </div>
           <div className="leading-7 mb-2">
@@ -70,7 +71,7 @@ export function MedicalTestDeletePage({
           <Button
             variant="destructive"
             disabled={deleteMutation.isPending}
-            onClick={() => deleteMutation.mutateAsync(medicalTest.id)}
+            onClick={() => deleteMutation.mutate(medicalTest.id)}
           >
             {deleteMutation.isPending ? 'Wird gelöscht...' : 'Ja, löschen'}
           </Button>

@@ -78,8 +78,7 @@ export function SettingsPage({
             icon: Syringe,
             title: 'Impfungen',
             subtitle: 'Verfügbare Impfungen',
-            description:
-              'Verwalte die verfügbaren Impfungen der Tiere.',
+            description: 'Verwalte die verfügbaren Impfungen der Tiere.',
             actions: vaccinationsAction,
           },
           {
