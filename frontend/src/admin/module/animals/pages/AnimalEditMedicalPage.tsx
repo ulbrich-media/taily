@@ -13,20 +13,25 @@ import {
   CardTitle,
 } from '@/shadcn/components/ui/card.tsx'
 import { toast } from 'sonner'
-import type { HealthConditionResource } from '@/api/types/health-conditions'
+import type { VaccinationResource } from '@/api/types/vaccinations'
+import type { MedicalTestResource } from '@/api/types/medical-tests'
 import type { AnimalDetailResource } from '@/api/types/animals'
 import { toApiDate } from '@/components/field/DateInput.utils.ts'
 
 interface AnimalEditMedicalPageProps {
   animal: AnimalDetailResource
-  healthConditions: HealthConditionResource[]
-  healthConditionsLink?: ReactNode
+  vaccinations: VaccinationResource[]
+  medicalTests: MedicalTestResource[]
+  vaccinationsLink?: ReactNode
+  medicalTestsLink?: ReactNode
 }
 
 export function AnimalEditMedicalPage({
   animal,
-  healthConditions,
-  healthConditionsLink,
+  vaccinations,
+  medicalTests,
+  vaccinationsLink,
+  medicalTestsLink,
 }: AnimalEditMedicalPageProps) {
   const queryClient = useQueryClient()
 
@@ -41,15 +46,15 @@ export function AnimalEditMedicalPage({
         vaccinations: data.vaccinations
           .filter((v) => v.result === 'done')
           .map((v) => ({
-            vaccinated_at: toApiDate(v.vaccinated_at) ?? '',
-            health_condition_id: v.health_condition_id,
+            vaccination_id: v.vaccination_id,
+            vaccinated_at: toApiDate(v.vaccinated_at),
           })),
         tests: data.tests
           .filter((t) => ['positive', 'negative'].includes(t.result))
           .map((t) => ({
+            medical_test_id: t.medical_test_id,
             result: t.result === 'positive' ? 'positive' : 'negative',
-            tested_at: toApiDate(t.tested_at) ?? '',
-            health_condition_id: t.health_condition_id,
+            tested_at: toApiDate(t.tested_at),
           })),
       }),
     onSuccess: async (response) => {
@@ -73,13 +78,15 @@ export function AnimalEditMedicalPage({
       </CardHeader>
       <CardContent>
         <AnimalFormHealth
-          healthConditions={healthConditions}
+          vaccinations={vaccinations}
+          medicalTests={medicalTests}
           defaultValues={animal}
           onSubmit={async (data) => {
             await updateMutation.mutateAsync(data)
           }}
           isSubmitting={updateMutation.isPending}
-          healthConditionsLink={healthConditionsLink}
+          vaccinationsLink={vaccinationsLink}
+          medicalTestsLink={medicalTestsLink}
         />
       </CardContent>
     </Card>

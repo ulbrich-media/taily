@@ -3,13 +3,13 @@
 // ---------------------------------------------------------------------------
 
 export interface VaccinationFormData {
-  health_condition_id: string
-  vaccinated_at: string
+  vaccination_id: string
+  vaccinated_at: string | null
 }
 
 export interface TestFormData {
-  health_condition_id: string
-  tested_at: string
+  medical_test_id: string
+  tested_at: string | null
   result: 'positive' | 'negative'
 }
 

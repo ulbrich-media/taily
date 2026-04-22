@@ -4,10 +4,8 @@
 
 import type { AnimalTypeResource } from './animal-types'
 import type { PersonBaseResource } from './people'
-import type {
-  HealthConditionVaccinationResource,
-  HealthConditionTestResource,
-} from './health-conditions'
+import type { AnimalVaccinationResource } from './vaccinations'
+import type { AnimalMedicalTestResource } from './medical-tests'
 import type { AdoptionBaseResource } from './adoptions'
 
 export interface AnimalPicture {
@@ -79,7 +77,7 @@ export interface AnimalDetailResource extends AnimalBaseResource {
   owner: PersonBaseResource | null
   sponsor: PersonBaseResource | null
   adoptions: AdoptionBaseResource[]
-  health_condition_vaccinations: HealthConditionVaccinationResource[]
-  health_condition_tests: HealthConditionTestResource[]
+  vaccinations: AnimalVaccinationResource[]
+  medical_tests: AnimalMedicalTestResource[]
   pictures: AnimalPicture[]
 }

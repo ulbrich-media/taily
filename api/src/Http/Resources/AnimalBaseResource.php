@@ -57,8 +57,8 @@ class AnimalBaseResource extends JsonResource
             'owner' => $this->whenLoaded('owner', fn ($v) => $v ? new PersonBaseResource($v) : null),
             'sponsor' => $this->whenLoaded('sponsor', fn ($v) => $v ? new PersonBaseResource($v) : null),
             'adoptions' => AdoptionBaseResource::collection($this->whenLoaded('adoptions')),
-            'health_condition_vaccinations' => HealthConditionVaccinationResource::collection($this->whenLoaded('healthConditionVaccinations')),
-            'health_condition_tests' => HealthConditionTestResource::collection($this->whenLoaded('healthConditionTests')),
+            'vaccinations' => AnimalVaccinationResource::collection($this->whenLoaded('vaccinations')),
+            'medical_tests' => AnimalMedicalTestResource::collection($this->whenLoaded('medicalTests')),
         ];
     }
 }

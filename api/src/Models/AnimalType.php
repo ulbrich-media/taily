@@ -39,12 +39,14 @@ class AnimalType extends Model
         return $this->hasMany(PreInspection::class);
     }
 
-    /**
-     * Get the health conditions for this animal type.
-     */
-    public function healthConditions(): HasMany
+    public function vaccinations(): HasMany
     {
-        return $this->hasMany(HealthCondition::class);
+        return $this->hasMany(Vaccination::class);
+    }
+
+    public function medicalTests(): HasMany
+    {
+        return $this->hasMany(MedicalTest::class);
     }
 
     /**

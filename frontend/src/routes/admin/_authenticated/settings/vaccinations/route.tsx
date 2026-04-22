@@ -1,48 +1,48 @@
 import { createFileRoute, Outlet } from '@tanstack/react-router'
-import { AnimalTypeListPage } from '@/admin/module/animal-types/pages/AnimalTypeListPage'
-import { queryClient } from '@/lib/queryClient'
-import { listAnimalTypesQuery } from '@/admin/module/animal-types/api/queries'
+import { VaccinationListPage } from '@/admin/module/vaccinations/pages/VaccinationListPage'
+import { queryClient } from '@/lib/queryClient.ts'
+import { listVaccinationsQuery } from '@/admin/module/vaccinations/api/queries'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { useAuth } from '@/lib/auth.hook'
 import { Button } from '@/shadcn/components/ui/button'
 import { Edit, PlusIcon, Trash2 } from 'lucide-react'
-import type { AnimalTypeResource } from '@/api/types/animal-types'
-import { Route as CreateRoute } from '@/routes/admin/_authenticated/settings/animal-types/create'
-import { Route as EditRoute } from '@/routes/admin/_authenticated/settings/animal-types/$id.edit'
-import { Route as DeleteRoute } from '@/routes/admin/_authenticated/settings/animal-types/$id.delete'
+import type { VaccinationResource } from '@/api/types/vaccinations'
+import { Route as CreateRoute } from '@/routes/admin/_authenticated/settings/vaccinations/create'
+import { Route as EditRoute } from '@/routes/admin/_authenticated/settings/vaccinations/$id.edit'
+import { Route as DeleteRoute } from '@/routes/admin/_authenticated/settings/vaccinations/$id.delete'
 
 export const Route = createFileRoute(
-  '/admin/_authenticated/settings/animal-types'
+  '/admin/_authenticated/settings/vaccinations'
 )({
   loader: async () => {
-    await queryClient.ensureQueryData(listAnimalTypesQuery)
+    await queryClient.ensureQueryData(listVaccinationsQuery)
   },
   component: RouteComponent,
 })
 
 function RouteComponent() {
   const { isAdmin } = useAuth()
-  const { data: animalTypesData } = useSuspenseQuery(listAnimalTypesQuery)
+  const { data: vaccinations } = useSuspenseQuery(listVaccinationsQuery)
 
   const createAction = isAdmin ? (
     <Button asChild>
       <CreateRoute.Link>
         <PlusIcon />
-        Tierart hinzufügen
+        Impfung hinzufügen
       </CreateRoute.Link>
     </Button>
   ) : undefined
 
   const renderRowActions = isAdmin
-    ? (animalType: AnimalTypeResource) => (
+    ? (vaccination: VaccinationResource) => (
         <div className="flex justify-end gap-2">
           <Button size="sm" variant="outline" asChild>
-            <EditRoute.Link params={{ id: animalType.id }}>
+            <EditRoute.Link params={{ id: vaccination.id }}>
               <Edit /> Bearbeiten
             </EditRoute.Link>
           </Button>
           <Button size="sm" variant="destructive" asChild>
-            <DeleteRoute.Link params={{ id: animalType.id }}>
+            <DeleteRoute.Link params={{ id: vaccination.id }}>
               <Trash2 /> Löschen
             </DeleteRoute.Link>
           </Button>
@@ -52,8 +52,8 @@ function RouteComponent() {
 
   return (
     <>
-      <AnimalTypeListPage
-        animalTypes={animalTypesData.data}
+      <VaccinationListPage
+        vaccinations={vaccinations}
         createAction={createAction}
         renderRowActions={renderRowActions}
       />

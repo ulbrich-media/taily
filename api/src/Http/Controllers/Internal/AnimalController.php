@@ -5,6 +5,7 @@ namespace Taily\Http\Controllers\Internal;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Validation\Rule;
 use Taily\Http\Controllers\Controller;
 use Taily\Http\Resources\AnimalDetailResource;
 use Taily\Http\Resources\AnimalListResource;
@@ -58,7 +59,7 @@ class AnimalController extends Controller
 
         $animal = Animal::create($validated);
 
-        $animal->load(['animalType', 'healthConditionVaccinations', 'healthConditionTests', 'assignedAgent', 'owner', 'sponsor', 'adoptions', 'media']);
+        $animal->load(['animalType', 'vaccinations', 'medicalTests', 'assignedAgent', 'owner', 'sponsor', 'adoptions', 'media']);
 
         return response()->json([
             'message' => 'Tier erfolgreich angelegt.',
@@ -73,8 +74,8 @@ class AnimalController extends Controller
     {
         $animal->load([
             'animalType',
-            'healthConditionVaccinations',
-            'healthConditionTests',
+            'vaccinations',
+            'medicalTests',
             'assignedAgent',
             'owner',
             'sponsor',
@@ -131,11 +132,11 @@ class AnimalController extends Controller
             'date_of_death' => 'sometimes|nullable|date_format:Y-m-d',
             // Vaccinations and Tests
             'vaccinations' => 'sometimes|array',
-            'vaccinations.*.health_condition_id' => 'required|uuid|exists:health_conditions,id',
-            'vaccinations.*.vaccinated_at' => 'required|date',
+            'vaccinations.*.vaccination_id' => ['required', 'uuid', Rule::exists('vaccinations', 'id')->where('animal_type_id', $animal->animal_type_id)],
+            'vaccinations.*.vaccinated_at' => 'sometimes|nullable|date',
             'tests' => 'sometimes|array',
-            'tests.*.health_condition_id' => 'required|uuid|exists:health_conditions,id',
-            'tests.*.tested_at' => 'required|date',
+            'tests.*.medical_test_id' => ['required', 'uuid', Rule::exists('medical_tests', 'id')->where('animal_type_id', $animal->animal_type_id)],
+            'tests.*.tested_at' => 'sometimes|nullable|date',
             'tests.*.result' => 'required|in:positive,negative',
         ]);
 
@@ -144,23 +145,23 @@ class AnimalController extends Controller
         // Sync vaccinations if provided
         if ($request->has('vaccinations')) {
             $vaccinationData = collect($validated['vaccinations'])->mapWithKeys(function ($vaccination) {
-                return [$vaccination['health_condition_id'] => ['vaccinated_at' => $vaccination['vaccinated_at']]];
+                return [$vaccination['vaccination_id'] => ['vaccinated_at' => $vaccination['vaccinated_at'] ?? null]];
             });
-            $animal->healthConditionVaccinations()->sync($vaccinationData);
+            $animal->vaccinations()->sync($vaccinationData);
         }
 
         // Sync tests if provided
         if ($request->has('tests')) {
             $testData = collect($validated['tests'])->mapWithKeys(function ($test) {
-                return [$test['health_condition_id'] => [
-                    'tested_at' => $test['tested_at'],
+                return [$test['medical_test_id'] => [
+                    'tested_at' => $test['tested_at'] ?? null,
                     'result' => $test['result'],
                 ]];
             });
-            $animal->healthConditionTests()->sync($testData);
+            $animal->medicalTests()->sync($testData);
         }
 
-        $animal->load(['animalType', 'healthConditionVaccinations', 'healthConditionTests', 'assignedAgent', 'owner', 'sponsor', 'adoptions', 'media']);
+        $animal->load(['animalType', 'vaccinations', 'medicalTests', 'assignedAgent', 'owner', 'sponsor', 'adoptions', 'media']);
 
         return response()->json([
             'message' => 'Tier erfolgreich aktualisiert.',

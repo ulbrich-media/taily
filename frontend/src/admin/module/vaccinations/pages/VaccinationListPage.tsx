@@ -1,5 +1,5 @@
 import { useMemo, type ReactNode } from 'react'
-import { Activity, SlashSquareIcon } from 'lucide-react'
+import { Syringe, SlashSquareIcon } from 'lucide-react'
 import {
   Table,
   TableBody,
@@ -21,58 +21,58 @@ import {
   CardHeader,
   CardTitle,
 } from '@/shadcn/components/ui/card'
-import type { HealthConditionResource } from '@/api/types/health-conditions'
+import type { VaccinationResource } from '@/api/types/vaccinations'
 import { PageHeader } from '@/components/layout/PageHeader'
 
-interface HealthConditionListPageProps {
-  healthConditions: HealthConditionResource[]
+interface VaccinationListPageProps {
+  vaccinations: VaccinationResource[]
   createAction?: ReactNode
-  renderRowActions?: (condition: HealthConditionResource) => ReactNode
+  renderRowActions?: (vaccination: VaccinationResource) => ReactNode
 }
 
-export function HealthConditionListPage({
-  healthConditions,
+export function VaccinationListPage({
+  vaccinations,
   createAction,
   renderRowActions,
-}: HealthConditionListPageProps) {
-  // Group health conditions by animal type
-  const groupedConditions = useMemo(() => {
+}: VaccinationListPageProps) {
+  const groupedVaccinations = useMemo(() => {
     const groups = new Map<
       string,
-      { title: string; conditions: HealthConditionResource[] }
+      { id: string; title: string; vaccinations: VaccinationResource[] }
     >()
 
-    healthConditions?.forEach((condition) => {
-      const typeId = condition.animal_type.id
+    vaccinations?.forEach((vaccination) => {
+      const typeId = vaccination.animal_type.id
       if (!groups.has(typeId)) {
         groups.set(typeId, {
-          title: condition.animal_type.title,
-          conditions: [],
+          id: typeId,
+          title: vaccination.animal_type.title,
+          vaccinations: [],
         })
       }
-      groups.get(typeId)!.conditions.push(condition)
+      groups.get(typeId)!.vaccinations.push(vaccination)
     })
 
     return Array.from(groups.values()).sort((a, b) =>
       a.title.localeCompare(b.title)
     )
-  }, [healthConditions])
+  }, [vaccinations])
 
-  const hasConditions = healthConditions && healthConditions.length > 0
+  const hasVaccinations = vaccinations && vaccinations.length > 0
 
   return (
     <div className="space-y-6">
       <PageHeader
-        icon={Activity}
-        title="Gesundheitszustände"
-        description="Verwalte die verfügbaren Gesundheitszustände der Tiere"
+        icon={Syringe}
+        title="Impfungen"
+        description="Verwalte die verfügbaren Impfungen der Tiere"
         actions={createAction}
       />
 
-      {hasConditions ? (
+      {hasVaccinations ? (
         <div className="space-y-6">
-          {groupedConditions.map((group) => (
-            <Card key={group.title}>
+          {groupedVaccinations.map((group) => (
+            <Card key={group.id}>
               <CardHeader>
                 <CardTitle>{group.title}</CardTitle>
               </CardHeader>
@@ -80,19 +80,23 @@ export function HealthConditionListPage({
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Name</TableHead>
+                      <TableHead>Titel</TableHead>
+                      <TableHead>Beschreibung</TableHead>
                       {renderRowActions && <TableHead></TableHead>}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {group.conditions.map((condition) => (
-                      <TableRow key={condition.id}>
+                    {group.vaccinations.map((vaccination) => (
+                      <TableRow key={vaccination.id}>
                         <TableCell className="font-medium">
-                          {condition.name}
+                          {vaccination.title}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {vaccination.description || '–'}
                         </TableCell>
                         {renderRowActions && (
                           <TableCell className="text-right">
-                            {renderRowActions(condition)}
+                            {renderRowActions(vaccination)}
                           </TableCell>
                         )}
                       </TableRow>
@@ -109,10 +113,8 @@ export function HealthConditionListPage({
             <EmptyMedia variant="icon">
               <SlashSquareIcon />
             </EmptyMedia>
-            <EmptyTitle>Keine Gesundheitszustände vorhanden</EmptyTitle>
-            <EmptyDescription>
-              Erstelle den ersten Gesundheitszustand!
-            </EmptyDescription>
+            <EmptyTitle>Keine Impfungen vorhanden</EmptyTitle>
+            <EmptyDescription>Erstelle die erste Impfung!</EmptyDescription>
           </EmptyHeader>
         </Empty>
       )}

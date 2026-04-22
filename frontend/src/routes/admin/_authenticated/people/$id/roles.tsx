@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { PersonEditRolesPage } from '@/admin/module/people/pages/PersonEditRolesPage.tsx'
 import { queryClient } from '@/lib/queryClient.ts'
-import { listAnimalTypesQuery } from '@/admin/module/health-conditions/api/queries.ts'
+import { listAnimalTypesQuery } from '@/admin/module/animal-types/api/queries.ts'
 import { getPersonQuery } from '@/admin/module/people/api/queries.ts'
 import { useSuspenseQuery } from '@tanstack/react-query'
 
