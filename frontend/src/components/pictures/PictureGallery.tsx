@@ -30,19 +30,20 @@ import { Trash2, Upload, Loader2 } from 'lucide-react'
 
 export interface Picture {
   id: string
+  type: 'image' | 'video'
   url: string
 }
 
 interface SortablePictureProps {
   picture: Picture
-  isFirst: boolean
+  isProfilePicture: boolean
   isDeleting: boolean
   onDelete: (id: string) => void
 }
 
 function SortablePicture({
   picture,
-  isFirst,
+  isProfilePicture,
   isDeleting,
   onDelete,
 }: SortablePictureProps) {
@@ -67,15 +68,25 @@ function SortablePicture({
       style={style}
       className="relative group aspect-square"
     >
-      <img
-        src={picture.url}
-        alt=""
-        className="w-full h-full object-cover rounded-lg cursor-grab active:cursor-grabbing select-none"
-        draggable={false}
-        {...attributes}
-        {...listeners}
-      />
-      {isFirst && (
+      {picture.type === 'video' ? (
+        <video
+          src={picture.url}
+          className="w-full h-full object-cover rounded-lg cursor-grab active:cursor-grabbing select-none"
+          draggable={false}
+          {...attributes}
+          {...listeners}
+        />
+      ) : (
+        <img
+          src={picture.url}
+          alt=""
+          className="w-full h-full object-cover rounded-lg cursor-grab active:cursor-grabbing select-none"
+          draggable={false}
+          {...attributes}
+          {...listeners}
+        />
+      )}
+      {isProfilePicture && (
         <span className="absolute bottom-2 left-2 text-xs font-medium bg-black/60 text-white rounded px-1.5 py-0.5 pointer-events-none">
           Profilbild
         </span>
@@ -94,14 +105,16 @@ function SortablePicture({
             ) : (
               <Trash2 className="size-3" />
             )}
-            <span className="sr-only">Bild löschen</span>
+            <span className="sr-only">Medium löschen</span>
           </Button>
         </AlertDialogTrigger>
         <AlertDialogContent size="sm">
           <AlertDialogHeader>
-            <AlertDialogTitle>Bild löschen?</AlertDialogTitle>
+            <AlertDialogTitle>
+              {picture.type === 'video' ? 'Video löschen?' : 'Bild löschen?'}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Dieses Bild wird unwiderruflich gelöscht.
+              Dieses Medium wird unwiderruflich gelöscht.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -148,6 +161,8 @@ export function PictureGallery({
 
   const sensors = useSensors(useSensor(PointerSensor))
 
+  const firstImageIndex = displayPictures.findIndex((p) => p.type === 'image')
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? [])
     if (files.length > 0) {
@@ -176,7 +191,7 @@ export function PictureGallery({
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*"
+          accept="image/*,video/*"
           multiple
           className="sr-only"
           onChange={handleFileChange}
@@ -196,7 +211,7 @@ export function PictureGallery({
           ) : (
             <>
               <Upload className="mr-2 size-4" />
-              Bilder hochladen
+              Medien hochladen
             </>
           )}
         </Button>
@@ -204,7 +219,7 @@ export function PictureGallery({
 
       {displayPictures.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          Noch keine Bilder vorhanden.
+          Noch keine Medien vorhanden.
         </p>
       ) : (
         <DndContext
@@ -221,7 +236,7 @@ export function PictureGallery({
                 <SortablePicture
                   key={picture.id}
                   picture={picture}
-                  isFirst={index === 0}
+                  isProfilePicture={index === firstImageIndex}
                   isDeleting={isDeleting}
                   onDelete={onDelete}
                 />

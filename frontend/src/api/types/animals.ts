@@ -13,8 +13,9 @@ import type { AdoptionBaseResource } from './adoptions'
 export interface AnimalPicture {
   id: string
   sort_order: number
-  url: string // preview 800px
-  full: string // 1440px
+  type: 'image' | 'video'
+  url: string
+  full: string
 }
 
 // Scalar fields shared by list and detail resources.

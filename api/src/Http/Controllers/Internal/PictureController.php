@@ -65,11 +65,18 @@ abstract class PictureController extends Controller
 
     protected function formatMedia(Media $media): array
     {
+        $isVideo = str_starts_with($media->mime_type ?? '', 'video/');
+
         return [
             'id' => $media->uuid,
             'sort_order' => $media->order_column,
-            'url' => $media->getTemporaryUrl(now()->addHour(), 'preview'),
-            'full' => $media->getTemporaryUrl(now()->addHour(), 'full'),
+            'type' => $isVideo ? 'video' : 'image',
+            'url' => $isVideo
+                ? $media->getTemporaryUrl(now()->addHour())
+                : $media->getTemporaryUrl(now()->addHour(), 'preview'),
+            'full' => $isVideo
+                ? $media->getTemporaryUrl(now()->addHour())
+                : $media->getTemporaryUrl(now()->addHour(), 'full'),
             'original' => $media->getTemporaryUrl(now()->addHour()),
         ];
     }
