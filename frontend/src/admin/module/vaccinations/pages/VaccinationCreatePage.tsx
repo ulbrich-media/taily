@@ -69,6 +69,10 @@ export function VaccinationCreatePage({
         onClose()
       }
     },
+    onError: (err) => {
+      toast.error(err?.message || 'Fehler beim Erstellen der Impfung')
+      setKeepOpen(false)
+    },
   })
 
   const onSubmit = async (data: CreateVaccinationFormData) => {

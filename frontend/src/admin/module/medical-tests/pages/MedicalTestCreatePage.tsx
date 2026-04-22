@@ -69,6 +69,10 @@ export function MedicalTestCreatePage({
         onClose()
       }
     },
+    onError: (err) => {
+      toast.error(err?.message || 'Fehler beim Erstellen des Tests')
+      setKeepOpen(false)
+    },
   })
 
   const onSubmit = async (data: CreateMedicalTestFormData) => {
