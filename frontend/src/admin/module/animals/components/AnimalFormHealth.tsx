@@ -32,7 +32,7 @@ import {
   AlertDescription,
   AlertTitle,
 } from '@/shadcn/components/ui/alert.tsx'
-import { InfoIcon } from 'lucide-react'
+import { CircleHelp, InfoIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
 import {
   STRING_LENGTH_TEXTAREA,
@@ -43,6 +43,12 @@ import {
   toDateFieldValue,
   zFieldDate,
 } from '@/components/field/DateInput.utils.ts'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/shadcn/components/ui/tooltip.tsx'
 
 const vaccinationSchema = z.object({
   vaccination_id: z.string().min(1, 'Impfung ist erforderlich'),
@@ -51,6 +57,7 @@ const vaccinationSchema = z.object({
     error: 'Ergebnis ist erforderlich',
   }),
   _title: z.string(),
+  _description: z.string(),
 })
 
 const testSchema = z.object({
@@ -60,6 +67,7 @@ const testSchema = z.object({
     error: 'Ergebnis ist erforderlich',
   }),
   _title: z.string(),
+  _description: z.string(),
 })
 
 const animalFormHealthSchema = z.object({
@@ -115,6 +123,7 @@ export function AnimalFormHealth({
           vaccinated_at: toDateFieldValue(existing?.pivot.vaccinated_at),
           result: existing ? 'done' : 'unset',
           _title: vaccination.title,
+          _description: vaccination.description,
         }
       }),
       tests: medicalTests.map((medicalTest) => {
@@ -127,6 +136,7 @@ export function AnimalFormHealth({
           tested_at: toDateFieldValue(existing?.pivot.tested_at),
           result: existing?.pivot.result ?? 'unset',
           _title: medicalTest.title,
+          _description: medicalTest.description,
         }
       }),
     },
@@ -235,6 +245,20 @@ export function AnimalFormHealth({
                     <TableRow key={vaccination.vaccination_id}>
                       <TableCell className="font-medium">
                         {vaccination._title}
+                        {!!vaccination._description && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button variant="ghost">
+                                  <CircleHelp />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {vaccination._description}
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
                       </TableCell>
                       <TableCell>
                         <Controller
@@ -358,6 +382,20 @@ export function AnimalFormHealth({
                     <TableRow key={test.medical_test_id}>
                       <TableCell className="font-medium">
                         {test._title}
+                        {!!test._description && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button variant="ghost">
+                                  <CircleHelp />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {test._description}
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
                       </TableCell>
                       <TableCell>
                         <Controller
