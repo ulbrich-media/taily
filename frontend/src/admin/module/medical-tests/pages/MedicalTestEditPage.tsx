@@ -54,7 +54,7 @@ export function MedicalTestEditPage({
   })
 
   const updateMutation = useMutation({
-    mutationFn: ({ animal_type_id: _, ...data }: UpdateMedicalTestFormData) =>
+    mutationFn: (data: UpdateMedicalTestFormData) =>
       updateMedicalTest(medicalTest.id, data),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: medicalTestQueryKeys.list })
