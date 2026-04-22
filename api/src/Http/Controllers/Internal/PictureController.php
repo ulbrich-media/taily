@@ -39,7 +39,7 @@ abstract class PictureController extends Controller
         $media->delete();
 
         return response()->json([
-            'message' => 'Bild erfolgreich gelöscht.',
+            'message' => 'Medium erfolgreich gelöscht.',
         ]);
     }
 

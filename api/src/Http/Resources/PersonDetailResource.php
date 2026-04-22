@@ -17,6 +17,7 @@ class PersonDetailResource extends PersonBaseResource
                     ->map(fn (Media $media) => [
                         'id' => $media->uuid,
                         'sort_order' => $media->order_column,
+                        'type' => 'image',
                         'url' => $media->getTemporaryUrl(now()->addHour(), 'preview'),
                         'full' => $media->getTemporaryUrl(now()->addHour(), 'full'),
                     ])
