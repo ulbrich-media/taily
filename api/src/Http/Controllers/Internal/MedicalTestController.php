@@ -59,7 +59,6 @@ class MedicalTestController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'sometimes|string|max:255',
-            'animal_type_id' => 'required|uuid|exists:animal_types,id',
         ]);
 
         $medicalTest->update($validated);

@@ -1,7 +1,6 @@
 import { apiRequest } from '@/lib/api'
 import type {
   VaccinationsResponse,
-  AnimalTypesResponse,
   CreateVaccinationRequest,
   CreateVaccinationResponse,
   UpdateVaccinationRequest,
@@ -20,10 +19,6 @@ export async function getVaccinations(
   return apiRequest<VaccinationsResponse>(
     params ? `vaccinations?${params}` : 'vaccinations'
   )
-}
-
-export async function getAnimalTypes(): Promise<AnimalTypesResponse> {
-  return apiRequest<AnimalTypesResponse>('animal-types')
 }
 
 export async function createVaccination(

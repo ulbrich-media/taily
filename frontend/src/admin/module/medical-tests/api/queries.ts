@@ -1,5 +1,5 @@
-import { type QueryKey, queryOptions } from '@tanstack/react-query'
-import { getMedicalTests, getAnimalTypes } from './requests'
+import { queryOptions } from '@tanstack/react-query'
+import { getMedicalTests } from './requests'
 
 export const medicalTestQueryKeys = {
   all: ['medicalTests'],
@@ -12,11 +12,6 @@ export const medicalTestQueryKeys = {
   ],
 }
 
-export const animalTypeQueryKeys: Record<string, QueryKey> = {
-  all: ['animalTypes'],
-  list: ['animalTypes', 'list'],
-}
-
 export const listMedicalTestsQuery = queryOptions({
   queryFn: () => getMedicalTests(),
   queryKey: medicalTestQueryKeys.list,
@@ -27,8 +22,3 @@ export const listMedicalTestsByAnimalTypeQuery = (animalTypeId: string) =>
     queryFn: () => getMedicalTests({ animal_type_id: animalTypeId }),
     queryKey: medicalTestQueryKeys.listByAnimalType(animalTypeId),
   })
-
-export const listAnimalTypesQuery = queryOptions({
-  queryFn: getAnimalTypes,
-  queryKey: animalTypeQueryKeys.list,
-})

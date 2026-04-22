@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { VaccinationCreatePage } from '@/admin/module/vaccinations/pages/VaccinationCreatePage'
 import { queryClient } from '@/lib/queryClient.ts'
-import { listAnimalTypesQuery } from '@/admin/module/vaccinations/api/queries'
+import { listAnimalTypesQuery } from '@/admin/module/animal-types/api/queries'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { Route as VaccinationsRoute } from '@/routes/admin/_authenticated/settings/vaccinations/route'
 

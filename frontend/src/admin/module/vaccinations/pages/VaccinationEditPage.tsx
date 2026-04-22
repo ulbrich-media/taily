@@ -54,7 +54,7 @@ export function VaccinationEditPage({
   })
 
   const updateMutation = useMutation({
-    mutationFn: (data: UpdateVaccinationFormData) =>
+    mutationFn: ({ animal_type_id: _, ...data }: UpdateVaccinationFormData) =>
       updateVaccination(vaccination.id, data),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: vaccinationQueryKeys.list })

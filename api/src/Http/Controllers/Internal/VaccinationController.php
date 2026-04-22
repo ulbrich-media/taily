@@ -17,10 +17,14 @@ class VaccinationController extends Controller
 
     public function index(Request $request): JsonResponse
     {
+        $validated = $request->validate([
+            'animal_type_id' => 'sometimes|uuid|exists:animal_types,id',
+        ]);
+
         $query = Vaccination::with('animalType')->orderBy('title');
 
-        if ($request->has('animal_type_id')) {
-            $query->where('animal_type_id', $request->input('animal_type_id'));
+        if (isset($validated['animal_type_id'])) {
+            $query->where('animal_type_id', $validated['animal_type_id']);
         }
 
         return response()->json(VaccinationResource::collection($query->get()));
@@ -55,7 +59,6 @@ class VaccinationController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'sometimes|string|max:255',
-            'animal_type_id' => 'required|uuid|exists:animal_types,id',
         ]);
 
         $vaccination->update($validated);

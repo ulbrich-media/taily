@@ -1,7 +1,6 @@
 import { apiRequest } from '@/lib/api'
 import type {
   MedicalTestsResponse,
-  AnimalTypesResponse,
   CreateMedicalTestRequest,
   CreateMedicalTestResponse,
   UpdateMedicalTestRequest,
@@ -20,10 +19,6 @@ export async function getMedicalTests(
   return apiRequest<MedicalTestsResponse>(
     params ? `medical-tests?${params}` : 'medical-tests'
   )
-}
-
-export async function getAnimalTypes(): Promise<AnimalTypesResponse> {
-  return apiRequest<AnimalTypesResponse>('animal-types')
 }
 
 export async function createMedicalTest(

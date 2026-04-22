@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { MedicalTestCreatePage } from '@/admin/module/medical-tests/pages/MedicalTestCreatePage'
 import { queryClient } from '@/lib/queryClient.ts'
-import { listAnimalTypesQuery } from '@/admin/module/medical-tests/api/queries'
+import { listAnimalTypesQuery } from '@/admin/module/animal-types/api/queries'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { Route as MedicalTestsRoute } from '@/routes/admin/_authenticated/settings/medical-tests/route'
 
