@@ -257,7 +257,10 @@ export function PictureGallery({
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
         >
-          <SortableContext items={effectiveOrder} strategy={rectSortingStrategy}>
+          <SortableContext
+            items={effectiveOrder}
+            strategy={rectSortingStrategy}
+          >
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
               {pictures.map((picture) => (
                 <SortablePicture

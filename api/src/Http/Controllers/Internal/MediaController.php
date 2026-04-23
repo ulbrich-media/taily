@@ -20,13 +20,17 @@ class MediaController extends Controller
 
         $conversion = $request->query('conversion', '');
 
-        // getPathRelativeToRoot() returns a disk-relative path suitable for Storage::disk()->path()
         $path = $media->getPathRelativeToRoot($conversion);
+
+        // Conversions may be stored on a different disk than the original file.
+        $disk = $conversion ? ($media->conversions_disk ?? $media->disk) : $media->disk;
 
         // BinaryFileResponse (unlike StreamedResponse) sets Accept-Ranges and handles
         // Range requests, which Safari requires for video playback.
-        $absolutePath = Storage::disk($media->disk)->path($path);
+        // Let BinaryFileResponse infer Content-Type from the file rather than using
+        // $media->mime_type, which reflects the original file and not the conversion format.
+        $absolutePath = Storage::disk($disk)->path($path);
 
-        return response()->file($absolutePath, ['Content-Type' => $media->mime_type]);
+        return response()->file($absolutePath);
     }
 }
