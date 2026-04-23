@@ -36,6 +36,7 @@ export interface Picture {
 
 interface SortablePictureProps {
   picture: Picture
+  cssOrder: number
   isProfilePicture: boolean
   isDeleting: boolean
   onDelete: (id: string) => void
@@ -43,6 +44,7 @@ interface SortablePictureProps {
 
 function SortablePicture({
   picture,
+  cssOrder,
   isProfilePicture,
   isDeleting,
   onDelete,
@@ -60,6 +62,7 @@ function SortablePicture({
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
+    order: cssOrder,
   }
 
   return (
@@ -161,18 +164,32 @@ export function PictureGallery({
   isDeleting = false,
 }: PictureGalleryProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [localPictures, setLocalPictures] = useState<Picture[] | null>(null)
-  const displayPictures = localPictures ?? pictures
 
-  // Reset optimistic state whenever the source-of-truth updates (after query invalidation)
+  // Tracks visual order as an array of IDs. Kept separate from pictures so the
+  // DOM order of rendered items never changes — only the CSS `order` property
+  // does. This prevents Firefox from reinitialising <video> elements when the
+  // list is sorted.
+  const [sortOrder, setSortOrder] = useState<string[]>([])
+
+  // Reset optimistic order whenever the source-of-truth updates (after query invalidation)
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setLocalPictures(null)
+    setSortOrder([])
   }, [pictures])
 
   const sensors = useSensors(useSensor(PointerSensor))
 
-  const firstImageIndex = displayPictures.findIndex((p) => p.type === 'image')
+  // The display order: either the optimistic sort or the server order
+  const effectiveOrder =
+    sortOrder.length > 0 ? sortOrder : pictures.map((p) => p.id)
+
+  // Map from id → visual position index (used for CSS `order` and profile badge)
+  const orderIndex = Object.fromEntries(effectiveOrder.map((id, i) => [id, i]))
+
+  // Profile picture = first image in visual order
+  const firstImageId = effectiveOrder.find(
+    (id) => pictures.find((p) => p.id === id)?.type === 'image'
+  )
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? [])
@@ -188,12 +205,14 @@ export function PictureGallery({
     const { active, over } = event
     if (!over || active.id === over.id) return
 
-    const oldIndex = displayPictures.findIndex((p) => p.id === active.id)
-    const newIndex = displayPictures.findIndex((p) => p.id === over.id)
-    const reordered = arrayMove(displayPictures, oldIndex, newIndex)
+    const reordered = arrayMove(
+      effectiveOrder,
+      effectiveOrder.indexOf(String(active.id)),
+      effectiveOrder.indexOf(String(over.id))
+    )
 
-    setLocalPictures(reordered)
-    onReorder(reordered.map((p) => p.id))
+    setSortOrder(reordered)
+    onReorder(reordered)
   }
 
   return (
@@ -228,7 +247,7 @@ export function PictureGallery({
         </Button>
       </div>
 
-      {displayPictures.length === 0 ? (
+      {pictures.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           Noch keine Medien vorhanden.
         </p>
@@ -238,16 +257,14 @@ export function PictureGallery({
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
         >
-          <SortableContext
-            items={displayPictures.map((p) => p.id)}
-            strategy={rectSortingStrategy}
-          >
+          <SortableContext items={effectiveOrder} strategy={rectSortingStrategy}>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-              {displayPictures.map((picture, index) => (
+              {pictures.map((picture) => (
                 <SortablePicture
                   key={picture.id}
                   picture={picture}
-                  isProfilePicture={index === firstImageIndex}
+                  cssOrder={orderIndex[picture.id] ?? 0}
+                  isProfilePicture={picture.id === firstImageId}
                   isDeleting={isDeleting}
                   onDelete={onDelete}
                 />
