@@ -39,6 +39,7 @@ export function UnitInput<
             }
             id={field.name}
             type="number"
+            inputMode="numeric"
             step="1"
             min="0"
             aria-invalid={fieldState.invalid}

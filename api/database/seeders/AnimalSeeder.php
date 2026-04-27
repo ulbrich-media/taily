@@ -191,8 +191,8 @@ class AnimalSeeder extends Seeder
                 'alternate_transport_trace' => $faker->boolean(15) ? 'ALT'.$faker->numerify('######') : '',
                 'alternate_arrival_location' => $faker->boolean(10) ? $faker->randomElement($locations) : '',
                 'do_publish' => $faker->boolean(85),
-                'publish_description' => $faker->boolean(60) ? $faker->realText(300) : null,
-                'application_url' => $faker->boolean(50) ? $faker->url() : null,
+                'publish_description' => $faker->boolean(60) ? $faker->realText(300) : '',
+                'application_url' => $faker->boolean(50) ? $faker->url() : '',
                 'is_deceased' => $isDeceased,
                 'date_of_death' => $isDeceased ? $faker->dateTimeBetween($intakeDate, 'now') : null,
             ]);
@@ -290,8 +290,8 @@ class AnimalSeeder extends Seeder
                 'alternate_transport_trace' => $faker->boolean(15) ? 'ALT'.$faker->numerify('######') : '',
                 'alternate_arrival_location' => $faker->boolean(10) ? $faker->randomElement($locations) : '',
                 'do_publish' => $faker->boolean(85),
-                'publish_description' => $faker->boolean(60) ? $faker->realText(300) : null,
-                'application_url' => $faker->boolean(50) ? $faker->url() : null,
+                'publish_description' => $faker->boolean(60) ? $faker->realText(300) : '',
+                'application_url' => $faker->boolean(50) ? $faker->url() : '',
                 'is_deceased' => $isDeceased,
                 'date_of_death' => $isDeceased ? $faker->dateTimeBetween($intakeDate, 'now') : null,
             ]);

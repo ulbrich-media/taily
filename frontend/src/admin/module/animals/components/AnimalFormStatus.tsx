@@ -37,11 +37,12 @@ const animalFormStatusSchema = z.object({
   application_url: z
     .string()
     .trim()
+    .max(2048, 'Darf maximal 2048 Zeichen lang sein')
     .refine((val) => {
       if (!val) return true
       try {
-        new URL(val)
-        return true
+        const u = new URL(val)
+        return u.protocol === 'http:' || u.protocol === 'https:'
       } catch {
         return false
       }

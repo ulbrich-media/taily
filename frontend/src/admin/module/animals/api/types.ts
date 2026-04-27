@@ -56,8 +56,8 @@ export interface UpdateAnimalRequest extends CreateAnimalRequest {
   alternate_transport_trace?: string
   alternate_arrival_location?: string
   do_publish: boolean
-  publish_description?: string
-  application_url?: string
+  publish_description?: string | null
+  application_url?: string | null
   is_deceased: boolean
   date_of_death?: string | null
 }

@@ -10,9 +10,9 @@ return new class extends Migration
     {
         Schema::table('animals', function (Blueprint $table) {
             $table->unsignedInteger('weight_grams')->nullable()->after('color');
-            $table->unsignedInteger('size_cm')->nullable()->after('weight_grams');
+            $table->unsignedSmallInteger('size_cm')->nullable()->after('weight_grams');
             $table->text('publish_description')->nullable()->after('do_publish');
-            $table->string('application_url')->nullable()->after('publish_description');
+            $table->string('application_url', 2048)->nullable()->after('publish_description');
         });
     }
 
