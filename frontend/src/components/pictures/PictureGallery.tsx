@@ -27,6 +27,7 @@ import {
   AlertDialogTrigger,
 } from '@/shadcn/components/ui/alert-dialog.tsx'
 import { Trash2, Upload, Loader2, ImageIcon, Film } from 'lucide-react'
+import { Badge } from '@/shadcn/components/ui/badge.tsx'
 
 export interface Picture {
   id: string
@@ -76,17 +77,14 @@ function SortablePicture({
         <>
           <video
             src={picture.url}
-            className="w-full h-full object-cover select-none"
+            className="w-full h-full object-cover cursor-grab active:cursor-grabbing select-none"
             preload="metadata"
             muted
             playsInline
             draggable={false}
-          />
-          {/* Transparent drag handle covering the tile */}
-          <div
-            className="absolute inset-0 cursor-grab active:cursor-grabbing"
             {...listeners}
           />
+          {/* Transparent drag handle covering the tile */}
         </>
       ) : (
         <img
@@ -99,16 +97,16 @@ function SortablePicture({
         />
       )}
       {/* Type indicator: image or video icon, top-left, visible on hover */}
-      <div className="absolute top-2 left-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+      <div className="absolute top-4 left-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
         {picture.type === 'video' ? (
-          <Film className="size-4 text-white drop-shadow" />
+          <Film className="size-5 text-white drop-shadow" />
         ) : (
-          <ImageIcon className="size-4 text-white drop-shadow" />
+          <ImageIcon className="size-5 text-white drop-shadow" />
         )}
       </div>
       {isProfilePicture && (
-        <span className="absolute bottom-2 left-2 text-xs font-medium bg-black/60 text-white rounded px-1.5 py-0.5 pointer-events-none">
-          Profilbild
+        <span className="absolute bottom-2 left-2">
+          <Badge variant="secondary">Profilbild</Badge>
         </span>
       )}
       <AlertDialog>
