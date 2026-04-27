@@ -19,6 +19,8 @@ class AnimalBaseResource extends JsonResource
             'breed' => $this->breed,
             'gender' => $this->gender,
             'color' => $this->color,
+            'weight_grams' => $this->weight_grams,
+            'size_cm' => $this->size_cm,
             'date_of_birth' => $this->date_of_birth,
             'origin_country' => $this->origin_country,
             'is_boarding_animal' => $this->is_boarding_animal,
@@ -46,6 +48,8 @@ class AnimalBaseResource extends JsonResource
             'alternate_transport_trace' => $this->alternate_transport_trace,
             'alternate_arrival_location' => $this->alternate_arrival_location,
             'do_publish' => $this->do_publish,
+            'publish_description' => $this->publish_description,
+            'application_url' => $this->application_url,
             'is_deceased' => $this->is_deceased,
             'date_of_death' => $this->date_of_death,
             // Metadata

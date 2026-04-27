@@ -18,6 +18,7 @@ import { FormGrid } from '@/components/form/FormGrid'
 import { FormFieldWrapper } from '@/components/form/FormFieldWrapper'
 import { FormBlocker } from '@/components/form/FormBlocker'
 import { TextInput } from '@/components/field/TextInput.tsx'
+import { UnitInput } from '@/components/field/UnitInput.tsx'
 import { DateInput } from '@/components/field/DateInput.tsx'
 import {
   zFieldDate,
@@ -28,6 +29,7 @@ import { SelectInput } from '@/components/field/SelectInput.tsx'
 import type { AnimalTypeResource } from '@/api/types/animal-types'
 import {
   STRING_LENGTH_TEXTAREA,
+  zFieldInt,
   zFieldString,
 } from '@/components/field/TextInput.utils.ts'
 
@@ -41,6 +43,8 @@ const animalFormBasicSchema = z.object({
     error: 'Geschlecht muss gewählt werden',
   }),
   color: zFieldString(),
+  weight_grams: zFieldInt(),
+  size_cm: zFieldInt(),
   date_of_birth: zFieldDate,
   origin_country: zFieldString(),
   intake_date: zFieldDate,
@@ -90,6 +94,8 @@ export function AnimalFormBasic({
       breed: defaultValues?.breed || '',
       gender: defaultValues?.gender,
       color: defaultValues?.color || '',
+      weight_grams: defaultValues?.weight_grams?.toString() ?? null,
+      size_cm: defaultValues?.size_cm?.toString() ?? null,
       date_of_birth: toDateFieldValue(defaultValues?.date_of_birth),
       origin_country: defaultValues?.origin_country || '',
       intake_date: toDateFieldValue(defaultValues?.intake_date),
@@ -184,6 +190,20 @@ export function AnimalFormBasic({
               <TextInput name="breed" control={form.control} label="Rasse" />
 
               <TextInput name="color" control={form.control} label="Farbe" />
+
+              <UnitInput
+                name="weight_grams"
+                control={form.control}
+                label="Gewicht"
+                unit="g"
+              />
+
+              <UnitInput
+                name="size_cm"
+                control={form.control}
+                label="Größe"
+                unit="cm"
+              />
             </FormGrid>
           </FormSection>
 

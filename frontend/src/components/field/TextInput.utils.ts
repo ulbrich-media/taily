@@ -3,6 +3,13 @@ import { z } from 'zod'
 export const STRING_LENGTH_FIELD = 255
 export const STRING_LENGTH_TEXTAREA = 65535
 
+export const zFieldInt = () =>
+  z
+    .string()
+    .regex(/^(0|[1-9]\d{0,9})?$/, 'Nur ganze Zahlen erlaubt')
+    .nullable()
+    .optional()
+
 export const zFieldString = (
   options:
     | {
