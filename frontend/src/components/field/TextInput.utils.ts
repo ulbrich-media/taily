@@ -4,11 +4,7 @@ export const STRING_LENGTH_FIELD = 255
 export const STRING_LENGTH_TEXTAREA = 65535
 
 export const zFieldInt = () =>
-  z
-    .string()
-    .regex(/^\d*$/, 'Nur ganze Zahlen erlaubt')
-    .nullable()
-    .optional()
+  z.string().regex(/^\d*$/, 'Nur ganze Zahlen erlaubt').nullable().optional()
 
 export const zFieldString = (
   options:
