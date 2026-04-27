@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import {
   DndContext,
   closestCenter,
@@ -26,7 +26,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/shadcn/components/ui/alert-dialog.tsx'
-import { Trash2, Upload, Loader2, Play } from 'lucide-react'
+import { Trash2, Upload, Loader2, ImageIcon, Film } from 'lucide-react'
 
 export interface Picture {
   id: string
@@ -69,14 +69,14 @@ function SortablePicture({
     <div
       ref={setNodeRef}
       style={style}
-      className="relative group aspect-square"
+      className="relative group aspect-square bg-muted rounded-lg overflow-hidden"
       {...(picture.type === 'video' ? attributes : {})}
     >
       {picture.type === 'video' ? (
         <>
           <video
             src={picture.url}
-            className="w-full h-full object-cover rounded-lg select-none"
+            className="w-full h-full object-cover select-none"
             preload="metadata"
             muted
             playsInline
@@ -84,24 +84,28 @@ function SortablePicture({
           />
           {/* Transparent drag handle covering the tile */}
           <div
-            className="absolute inset-0 rounded-lg cursor-grab active:cursor-grabbing"
+            className="absolute inset-0 cursor-grab active:cursor-grabbing"
             {...listeners}
           />
-          {/* Play icon to signal this is a video */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <Play className="size-10 text-white opacity-80 drop-shadow-lg" />
-          </div>
         </>
       ) : (
         <img
           src={picture.url}
           alt=""
-          className="w-full h-full object-cover rounded-lg cursor-grab active:cursor-grabbing select-none"
+          className="w-full h-full object-cover cursor-grab active:cursor-grabbing select-none"
           draggable={false}
           {...attributes}
           {...listeners}
         />
       )}
+      {/* Type indicator: image or video icon, top-left, visible on hover */}
+      <div className="absolute top-2 left-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+        {picture.type === 'video' ? (
+          <Film className="size-4 text-white drop-shadow" />
+        ) : (
+          <ImageIcon className="size-4 text-white drop-shadow" />
+        )}
+      </div>
       {isProfilePicture && (
         <span className="absolute bottom-2 left-2 text-xs font-medium bg-black/60 text-white rounded px-1.5 py-0.5 pointer-events-none">
           Profilbild
@@ -153,6 +157,7 @@ export interface PictureGalleryProps {
   onReorder: (ids: string[]) => void
   isUploading?: boolean
   isDeleting?: boolean
+  acceptVideo?: boolean
 }
 
 export function PictureGallery({
@@ -162,6 +167,7 @@ export function PictureGallery({
   onReorder,
   isUploading = false,
   isDeleting = false,
+  acceptVideo = false,
 }: PictureGalleryProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -171,17 +177,19 @@ export function PictureGallery({
   // list is sorted.
   const [sortOrder, setSortOrder] = useState<string[]>([])
 
-  // Reset optimistic order whenever the source-of-truth updates (after query invalidation)
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setSortOrder([])
-  }, [pictures])
-
   const sensors = useSensors(useSensor(PointerSensor))
 
-  // The display order: either the optimistic sort or the server order
-  const effectiveOrder =
-    sortOrder.length > 0 ? sortOrder : pictures.map((p) => p.id)
+  const pictureIds = pictures.map((p) => p.id)
+  const pictureIdSet = new Set(pictureIds)
+
+  // sortOrder is valid only when it contains exactly the same IDs as pictures.
+  // When pictures change (upload, delete, server refresh), this naturally falls
+  // back to server order without needing a useEffect reset.
+  const isSortOrderValid =
+    sortOrder.length === pictureIds.length &&
+    sortOrder.every((id) => pictureIdSet.has(id))
+
+  const effectiveOrder = isSortOrderValid ? sortOrder : pictureIds
 
   // Map from id → visual position index (used for CSS `order` and profile badge)
   const orderIndex = Object.fromEntries(effectiveOrder.map((id, i) => [id, i]))
@@ -221,7 +229,7 @@ export function PictureGallery({
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*,video/*"
+          accept={acceptVideo ? 'image/*,video/*' : 'image/*'}
           multiple
           className="sr-only"
           onChange={handleFileChange}

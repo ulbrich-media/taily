@@ -80,6 +80,7 @@ export function AnimalEditPicturesPage({
           onReorder={(ids) => reorderMutation.mutate(ids)}
           isUploading={uploadMutation.isPending}
           isDeleting={deleteMutation.isPending}
+          acceptVideo
         />
       </CardContent>
     </Card>
