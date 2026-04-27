@@ -15,9 +15,9 @@ export interface UnitInputProps<
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
   TTransformedValues = TFieldValues,
 > extends Omit<
-    FormFieldWrapperProps<TFieldValues, TName, TTransformedValues>,
-    'render'
-  > {
+  FormFieldWrapperProps<TFieldValues, TName, TTransformedValues>,
+  'render'
+> {
   unit: string
 }
 
@@ -25,10 +25,7 @@ export function UnitInput<
   TFieldValues extends FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
   TTransformedValues = TFieldValues,
->({
-  unit,
-  ...props
-}: UnitInputProps<TFieldValues, TName, TTransformedValues>) {
+>({ unit, ...props }: UnitInputProps<TFieldValues, TName, TTransformedValues>) {
   return (
     <FormFieldWrapper
       {...props}
@@ -38,7 +35,9 @@ export function UnitInput<
             {...field}
             value={field.value ?? ''}
             onChange={(e) =>
-              field.onChange(e.target.value === '' ? null : Number(e.target.value))
+              field.onChange(
+                e.target.value === '' ? null : Number(e.target.value)
+              )
             }
             id={field.name}
             type="number"

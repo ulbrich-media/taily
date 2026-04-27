@@ -37,18 +37,15 @@ const animalFormStatusSchema = z.object({
   application_url: z
     .string()
     .trim()
-    .refine(
-      (val) => {
-        if (!val) return true
-        try {
-          new URL(val)
-          return true
-        } catch {
-          return false
-        }
-      },
-      'Muss eine gültige URL sein (z.B. https://...)'
-    ),
+    .refine((val) => {
+      if (!val) return true
+      try {
+        new URL(val)
+        return true
+      } catch {
+        return false
+      }
+    }, 'Muss eine gültige URL sein (z.B. https://...)'),
   is_deceased: z.boolean(),
   date_of_death: zFieldDate,
 })
