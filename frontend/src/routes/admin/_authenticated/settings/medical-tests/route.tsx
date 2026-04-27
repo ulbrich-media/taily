@@ -1,48 +1,48 @@
 import { createFileRoute, Outlet } from '@tanstack/react-router'
-import { HealthConditionListPage } from '@/admin/module/health-conditions/pages/HealthConditionListPage.tsx'
+import { MedicalTestListPage } from '@/admin/module/medical-tests/pages/MedicalTestListPage'
 import { queryClient } from '@/lib/queryClient.ts'
-import { listHealthConditionsQuery } from '@/admin/module/health-conditions/api/queries.ts'
+import { listMedicalTestsQuery } from '@/admin/module/medical-tests/api/queries'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { useAuth } from '@/lib/auth.hook'
 import { Button } from '@/shadcn/components/ui/button'
 import { Edit, PlusIcon, Trash2 } from 'lucide-react'
-import type { HealthConditionResource } from '@/api/types/health-conditions'
-import { Route as CreateRoute } from '@/routes/admin/_authenticated/settings/health-conditions/create'
-import { Route as EditRoute } from '@/routes/admin/_authenticated/settings/health-conditions/$id.edit'
-import { Route as DeleteRoute } from '@/routes/admin/_authenticated/settings/health-conditions/$id.delete'
+import type { MedicalTestResource } from '@/api/types/medical-tests'
+import { Route as CreateRoute } from '@/routes/admin/_authenticated/settings/medical-tests/create'
+import { Route as EditRoute } from '@/routes/admin/_authenticated/settings/medical-tests/$id.edit'
+import { Route as DeleteRoute } from '@/routes/admin/_authenticated/settings/medical-tests/$id.delete'
 
 export const Route = createFileRoute(
-  '/admin/_authenticated/settings/health-conditions'
+  '/admin/_authenticated/settings/medical-tests'
 )({
   loader: async () => {
-    await queryClient.ensureQueryData(listHealthConditionsQuery)
+    await queryClient.ensureQueryData(listMedicalTestsQuery)
   },
   component: RouteComponent,
 })
 
 function RouteComponent() {
   const { isAdmin } = useAuth()
-  const { data: healthConditions } = useSuspenseQuery(listHealthConditionsQuery)
+  const { data: medicalTests } = useSuspenseQuery(listMedicalTestsQuery)
 
   const createAction = isAdmin ? (
     <Button asChild>
       <CreateRoute.Link>
         <PlusIcon />
-        Gesundheitszustand hinzufügen
+        Test hinzufügen
       </CreateRoute.Link>
     </Button>
   ) : undefined
 
   const renderRowActions = isAdmin
-    ? (condition: HealthConditionResource) => (
+    ? (medicalTest: MedicalTestResource) => (
         <div className="flex justify-end gap-2">
           <Button size="sm" variant="outline" asChild>
-            <EditRoute.Link params={{ id: condition.id }}>
+            <EditRoute.Link params={{ id: medicalTest.id }}>
               <Edit /> Bearbeiten
             </EditRoute.Link>
           </Button>
           <Button size="sm" variant="destructive" asChild>
-            <DeleteRoute.Link params={{ id: condition.id }}>
+            <DeleteRoute.Link params={{ id: medicalTest.id }}>
               <Trash2 /> Löschen
             </DeleteRoute.Link>
           </Button>
@@ -52,8 +52,8 @@ function RouteComponent() {
 
   return (
     <>
-      <HealthConditionListPage
-        healthConditions={healthConditions}
+      <MedicalTestListPage
+        medicalTests={medicalTests}
         createAction={createAction}
         renderRowActions={renderRowActions}
       />

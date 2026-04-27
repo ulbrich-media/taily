@@ -1,12 +1,12 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { HealthConditionCreatePage } from '@/admin/module/health-conditions/pages/HealthConditionCreatePage.tsx'
+import { VaccinationCreatePage } from '@/admin/module/vaccinations/pages/VaccinationCreatePage'
 import { queryClient } from '@/lib/queryClient.ts'
-import { listAnimalTypesQuery } from '@/admin/module/health-conditions/api/queries.ts'
+import { listAnimalTypesQuery } from '@/admin/module/animal-types/api/queries'
 import { useSuspenseQuery } from '@tanstack/react-query'
-import { Route as HealthConditionsRoute } from '@/routes/admin/_authenticated/settings/health-conditions/route'
+import { Route as VaccinationsRoute } from '@/routes/admin/_authenticated/settings/vaccinations/route'
 
 export const Route = createFileRoute(
-  '/admin/_authenticated/settings/health-conditions/create'
+  '/admin/_authenticated/settings/vaccinations/create'
 )({
   beforeLoad: ({ context }) => {
     if (!context.isAdmin) {
@@ -20,7 +20,7 @@ export const Route = createFileRoute(
 })
 
 function RouteComponent() {
-  const navigate = HealthConditionsRoute.useNavigate()
+  const navigate = VaccinationsRoute.useNavigate()
   const { data: animalTypesData } = useSuspenseQuery(listAnimalTypesQuery)
 
   const handleClose = () => {
@@ -28,7 +28,7 @@ function RouteComponent() {
   }
 
   return (
-    <HealthConditionCreatePage
+    <VaccinationCreatePage
       animalTypes={animalTypesData.data}
       onClose={handleClose}
     />

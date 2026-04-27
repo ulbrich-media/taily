@@ -8,9 +8,9 @@ use Taily\Http\Controllers\Internal\AnimalTypeController;
 use Taily\Http\Controllers\Internal\ApiTokenController;
 use Taily\Http\Controllers\Internal\Auth\AuthenticatedSessionController;
 use Taily\Http\Controllers\Internal\FormTemplateController;
-use Taily\Http\Controllers\Internal\HealthConditionController;
 use Taily\Http\Controllers\Internal\InvitationController;
 use Taily\Http\Controllers\Internal\MediaController;
+use Taily\Http\Controllers\Internal\MedicalTestController;
 use Taily\Http\Controllers\Internal\OrganizationController;
 use Taily\Http\Controllers\Internal\PersonController;
 use Taily\Http\Controllers\Internal\PersonPictureController;
@@ -18,6 +18,7 @@ use Taily\Http\Controllers\Internal\PreInspectionController;
 use Taily\Http\Controllers\Internal\PreInspectionSubmissionController;
 use Taily\Http\Controllers\Internal\ProfileController;
 use Taily\Http\Controllers\Internal\UserController;
+use Taily\Http\Controllers\Internal\VaccinationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -61,8 +62,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Animal Types
     Route::apiResource('animal-types', AnimalTypeController::class);
 
-    // Health Items
-    Route::apiResource('health-conditions', HealthConditionController::class);
+    // Vaccinations and Medical Tests
+    Route::apiResource('vaccinations', VaccinationController::class);
+    Route::apiResource('medical-tests', MedicalTestController::class);
 
     // People
     Route::apiResource('persons', PersonController::class);
