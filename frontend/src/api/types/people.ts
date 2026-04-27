@@ -8,8 +8,9 @@ import type { OrganizationResource } from './organizations'
 export interface PersonPicture {
   id: string
   sort_order: number
-  url: string // preview 800px
-  full: string // 1440px
+  type: 'image'
+  url: string
+  full: string
 }
 
 // Scalar fields always present in PersonBaseResource.

@@ -112,6 +112,10 @@ class Animal extends Model implements HasMedia
 
     public function registerMediaConversions(?Media $media = null): void
     {
+        if ($media !== null && str_starts_with($media->mime_type ?? '', 'video/')) {
+            return;
+        }
+
         $this->addMediaConversion('thumbnail')
             ->fit(Fit::Crop, 80, 80)
             ->performOnCollections('pictures')

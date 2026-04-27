@@ -14,12 +14,21 @@ class AnimalDetailResource extends AnimalBaseResource
                 $this->relationLoaded('media'),
                 fn () => $this->getMedia('pictures')
                     ->sortBy('order_column')
-                    ->map(fn (Media $media) => [
-                        'id' => $media->uuid,
-                        'sort_order' => $media->order_column,
-                        'url' => $media->getTemporaryUrl(now()->addHour(), 'preview'),
-                        'full' => $media->getTemporaryUrl(now()->addHour(), 'full'),
-                    ])
+                    ->map(function (Media $media) {
+                        $isVideo = str_starts_with($media->mime_type ?? '', 'video/');
+
+                        return [
+                            'id' => $media->uuid,
+                            'sort_order' => $media->order_column,
+                            'type' => $isVideo ? 'video' : 'image',
+                            'url' => $isVideo
+                                ? $media->getTemporaryUrl(now()->addHour())
+                                : $media->getTemporaryUrl(now()->addHour(), 'preview'),
+                            'full' => $isVideo
+                                ? $media->getTemporaryUrl(now()->addHour())
+                                : $media->getTemporaryUrl(now()->addHour(), 'full'),
+                        ];
+                    })
                     ->values()
                     ->all(),
             ),

@@ -8,6 +8,8 @@ interface AnimalSidebarProps {
 }
 
 export function AnimalSidebar({ animal }: AnimalSidebarProps) {
+  const profilePicture = animal.pictures?.find((p) => p.type === 'image')
+
   return (
     <aside className="">
       <div className="lg:min-h-15 pb-3">
@@ -22,9 +24,9 @@ export function AnimalSidebar({ animal }: AnimalSidebarProps) {
         <CardContent>
           {/* Profile Picture */}
           <div className="w-full aspect-square bg-muted rounded-lg flex items-center justify-center mb-6 overflow-hidden">
-            {animal.pictures?.[0]?.url ? (
+            {profilePicture ? (
               <img
-                src={animal.pictures[0].url}
+                src={profilePicture.url}
                 alt={animal.name}
                 className="w-full h-full object-cover"
               />

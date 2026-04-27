@@ -37,8 +37,8 @@ export function AnimalEditPicturesPage({
       const count = responses.length
       toast.success(
         count === 1
-          ? 'Bild erfolgreich hochgeladen.'
-          : `${count} Bilder erfolgreich hochgeladen.`
+          ? 'Medium erfolgreich hochgeladen.'
+          : `${count} Medien erfolgreich hochgeladen.`
       )
     },
     onError: () => {
@@ -70,7 +70,7 @@ export function AnimalEditPicturesPage({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Bilder</CardTitle>
+        <CardTitle>Medien</CardTitle>
       </CardHeader>
       <CardContent>
         <PictureGallery
@@ -80,6 +80,7 @@ export function AnimalEditPicturesPage({
           onReorder={(ids) => reorderMutation.mutate(ids)}
           isUploading={uploadMutation.isPending}
           isDeleting={deleteMutation.isPending}
+          acceptVideo
         />
       </CardContent>
     </Card>
