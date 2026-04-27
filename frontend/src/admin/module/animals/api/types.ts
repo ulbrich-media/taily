@@ -22,8 +22,8 @@ export interface CreateAnimalRequest {
   breed?: string
   gender: 'male' | 'female'
   color?: string
-  weight_grams?: number | null
-  size_cm?: number | null
+  weight_grams?: string | null
+  size_cm?: string | null
   date_of_birth?: string | null
   origin_country?: string
   intake_date?: string | null

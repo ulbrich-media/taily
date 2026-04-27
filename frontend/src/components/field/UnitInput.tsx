@@ -35,9 +35,7 @@ export function UnitInput<
             {...field}
             value={field.value ?? ''}
             onChange={(e) =>
-              field.onChange(
-                e.target.value === '' ? null : Number(e.target.value)
-              )
+              field.onChange(e.target.value === '' ? null : e.target.value)
             }
             id={field.name}
             type="number"
