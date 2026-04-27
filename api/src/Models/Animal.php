@@ -53,6 +53,8 @@ class Animal extends Model implements HasMedia
         'breed',
         'gender',
         'color',
+        'weight_grams',
+        'size_cm',
         'date_of_birth',
         'origin_country',
         'is_boarding_animal',
@@ -80,6 +82,8 @@ class Animal extends Model implements HasMedia
         'alternate_transport_trace',
         'alternate_arrival_location',
         'do_publish',
+        'publish_description',
+        'application_url',
         'is_deceased',
         'date_of_death',
     ];

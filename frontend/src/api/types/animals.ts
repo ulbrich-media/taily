@@ -29,6 +29,8 @@ export interface AnimalBaseResource {
   breed: string | null
   gender: 'male' | 'female'
   color: string | null
+  weight_grams: number | null
+  size_cm: number | null
   date_of_birth: string | null
   origin_country: string | null
   is_boarding_animal: boolean
@@ -56,6 +58,8 @@ export interface AnimalBaseResource {
   alternate_transport_trace: string | null
   alternate_arrival_location: string | null
   do_publish: boolean
+  publish_description: string | null
+  application_url: string | null
   is_deceased: boolean
   date_of_death: string | null
   // Metadata

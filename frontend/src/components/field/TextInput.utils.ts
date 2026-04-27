@@ -3,6 +3,13 @@ import { z } from 'zod'
 export const STRING_LENGTH_FIELD = 255
 export const STRING_LENGTH_TEXTAREA = 65535
 
+export const zFieldInt = () =>
+  z.preprocess(
+    (val) =>
+      val === '' || val === null || val === undefined ? null : Number(val),
+    z.number().int().min(0).nullable()
+  )
+
 export const zFieldString = (
   options:
     | {
