@@ -51,6 +51,8 @@ function TraitInputControl({
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
+  // useQuery is intentional here: useSuspenseQuery doesn't support `enabled`,
+  // and we need lazy loading triggered by user interaction (dropdown open).
   const {
     data: suggestions,
     isLoading,

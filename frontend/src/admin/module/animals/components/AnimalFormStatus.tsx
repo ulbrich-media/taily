@@ -35,8 +35,16 @@ const animalFormStatusSchema = z.object({
   alternate_arrival_location: zFieldString(),
   do_publish: z.boolean(),
   publish_description: zFieldString({ maxLength: STRING_LENGTH_TEXTAREA }),
-  compatibilities: z.array(z.string()),
-  personality_traits: z.array(z.string()),
+  compatibilities: z
+    .array(z.string())
+    .refine((arr) => new Set(arr).size === arr.length, {
+      message: 'Einträge müssen eindeutig sein',
+    }),
+  personality_traits: z
+    .array(z.string())
+    .refine((arr) => new Set(arr).size === arr.length, {
+      message: 'Einträge müssen eindeutig sein',
+    }),
   application_url: z
     .string()
     .trim()

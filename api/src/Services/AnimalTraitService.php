@@ -14,6 +14,8 @@ class AnimalTraitService
      */
     public static function sync(Animal $animal, string $type, array $newValues): void
     {
+        $newValues = array_values(array_unique($newValues));
+
         $currentValues = $animal->traits()
             ->where('type', $type)
             ->pluck('value')
