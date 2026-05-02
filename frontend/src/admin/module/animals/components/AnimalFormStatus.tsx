@@ -168,14 +168,13 @@ export function AnimalFormStatus({
                 name="publish_description"
                 control={form.control}
                 label="Beschreibungstext"
-                description="Dieser Text wird als Tierbeschreibung auf der Website oder in sozialen Medien verwendet."
+                info="Dieser Text wird als Beschreibung auf der Website oder in sozialen Medien verwendet."
               />
 
               <TraitInput
                 name="compatibilities"
                 control={form.control}
                 label="Verträglichkeiten"
-                description="Mit wem oder was verträgt sich das Tier (z.B. Katzen, Kinder, andere Hunde)."
                 animalTypeId={animalTypeId}
                 traitField="compatibilities"
               />
@@ -184,7 +183,6 @@ export function AnimalFormStatus({
                 name="personality_traits"
                 control={form.control}
                 label="Persönlichkeit"
-                description="Charaktereigenschaften des Tieres (z.B. verspielt, Jagdtrieb)."
                 animalTypeId={animalTypeId}
                 traitField="personality_traits"
               />
@@ -193,7 +191,7 @@ export function AnimalFormStatus({
                 name="application_url"
                 control={form.control}
                 label="Bewerbungs-URL"
-                description="Link zum Bewerbungsformular für die Adoption dieses Tieres. Muss eine vollständige URL sein (z.B. https://...)."
+                info="Link zum Bewerbungsformular zur Adoption dieses Tieres. Muss eine vollständige URL sein (z.B. https://...)."
               />
             </FormGrid>
           </FormSection>

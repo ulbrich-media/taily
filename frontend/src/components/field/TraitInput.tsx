@@ -69,10 +69,12 @@ function TraitInputControl({
     const trimmed = inputValue.trim()
     if (!trimmed || value.includes(trimmed)) {
       setInputValue('')
+      inputRef.current?.focus()
       return
     }
     onChange([...value, trimmed])
     setInputValue('')
+    inputRef.current?.focus()
   }
 
   const removeValue = (val: string) => {
@@ -109,6 +111,7 @@ function TraitInputControl({
           type="button"
           variant="outline"
           size="icon"
+          disabled={inputValue.trim().length === 0}
           onClick={addValue}
           aria-label="Hinzufügen"
         >
