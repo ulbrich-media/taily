@@ -54,6 +54,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::apiResource('users', UserController::class);
 
     // Animals
+    Route::get('/animals/trait-suggestions', [AnimalController::class, 'traitSuggestions']);
     Route::apiResource('animals', AnimalController::class);
     Route::post('/animals/{animal}/pictures', [AnimalPictureController::class, 'store']);
     Route::put('/animals/{animal}/pictures/reorder', [AnimalPictureController::class, 'reorder']);

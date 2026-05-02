@@ -10,6 +10,7 @@ use Taily\Http\Controllers\Controller;
 use Taily\Http\Resources\AnimalDetailResource;
 use Taily\Http\Resources\AnimalListResource;
 use Taily\Models\Animal;
+use Taily\Models\AnimalTrait;
 
 class AnimalController extends Controller
 {
@@ -61,7 +62,7 @@ class AnimalController extends Controller
 
         $animal = Animal::create($validated);
 
-        $animal->load(['animalType', 'vaccinations', 'medicalTests', 'assignedAgent', 'owner', 'sponsor', 'adoptions', 'media']);
+        $animal->load(['animalType', 'vaccinations', 'medicalTests', 'assignedAgent', 'owner', 'sponsor', 'adoptions', 'media', 'compatibilities', 'personalityTraits']);
 
         return response()->json([
             'message' => 'Tier erfolgreich angelegt.',
@@ -83,6 +84,8 @@ class AnimalController extends Controller
             'sponsor',
             'adoptions',
             'media',
+            'compatibilities',
+            'personalityTraits',
         ]);
 
         return new AnimalDetailResource($animal);
@@ -136,6 +139,11 @@ class AnimalController extends Controller
             'application_url' => 'sometimes|nullable|url|max:2048',
             'is_deceased' => 'sometimes|boolean',
             'date_of_death' => 'sometimes|nullable|date_format:Y-m-d',
+            // Traits
+            'compatibilities' => 'sometimes|array',
+            'compatibilities.*' => 'string|max:255',
+            'personality_traits' => 'sometimes|array',
+            'personality_traits.*' => 'string|max:255',
             // Vaccinations and Tests
             'vaccinations' => 'sometimes|array',
             'vaccinations.*.vaccination_id' => ['required', 'uuid', Rule::exists('vaccinations', 'id')->where('animal_type_id', $animal->animal_type_id)],
@@ -147,6 +155,21 @@ class AnimalController extends Controller
         ]);
 
         $animal->update($validated);
+
+        // Sync traits if provided
+        if ($request->has('compatibilities')) {
+            $animal->traits()->where('type', 'compatibility')->delete();
+            foreach ($validated['compatibilities'] as $val) {
+                $animal->traits()->create(['type' => 'compatibility', 'value' => $val]);
+            }
+        }
+
+        if ($request->has('personality_traits')) {
+            $animal->traits()->where('type', 'personality_trait')->delete();
+            foreach ($validated['personality_traits'] as $val) {
+                $animal->traits()->create(['type' => 'personality_trait', 'value' => $val]);
+            }
+        }
 
         // Sync vaccinations if provided
         if ($request->has('vaccinations')) {
@@ -167,11 +190,35 @@ class AnimalController extends Controller
             $animal->medicalTests()->sync($testData);
         }
 
-        $animal->load(['animalType', 'vaccinations', 'medicalTests', 'assignedAgent', 'owner', 'sponsor', 'adoptions', 'media']);
+        $animal->load(['animalType', 'vaccinations', 'medicalTests', 'assignedAgent', 'owner', 'sponsor', 'adoptions', 'media', 'compatibilities', 'personalityTraits']);
 
         return response()->json([
             'message' => 'Tier erfolgreich aktualisiert.',
             'data' => new AnimalDetailResource($animal),
+        ]);
+    }
+
+    /**
+     * Return distinct trait suggestion values for a given animal type.
+     */
+    public function traitSuggestions(Request $request): JsonResponse
+    {
+        $animalTypeId = $request->validate([
+            'animal_type_id' => 'required|uuid|exists:animal_types,id',
+        ])['animal_type_id'];
+
+        $query = fn (string $type) => AnimalTrait::whereHas(
+            'animal',
+            fn ($q) => $q->where('animal_type_id', $animalTypeId)
+        )
+            ->where('type', $type)
+            ->distinct()
+            ->orderBy('value')
+            ->pluck('value');
+
+        return response()->json([
+            'compatibilities' => $query('compatibility'),
+            'personality_traits' => $query('personality_trait'),
         ]);
     }
 

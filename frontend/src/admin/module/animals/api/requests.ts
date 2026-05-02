@@ -75,6 +75,14 @@ export async function deleteAnimalPicture(
   })
 }
 
+export async function getAnimalTraitSuggestions(
+  animalTypeId: string
+): Promise<{ compatibilities: string[]; personality_traits: string[] }> {
+  return apiRequest(
+    `animals/trait-suggestions?animal_type_id=${encodeURIComponent(animalTypeId)}`
+  )
+}
+
 export async function reorderAnimalPictures(
   animalId: string,
   ids: string[]

@@ -27,6 +27,7 @@ import {
   STRING_LENGTH_TEXTAREA,
   zFieldString,
 } from '@/components/field/TextInput.utils.ts'
+import { TraitInput } from '@/components/field/TraitInput.tsx'
 
 const animalFormStatusSchema = z.object({
   current_location: zFieldString(),
@@ -34,6 +35,8 @@ const animalFormStatusSchema = z.object({
   alternate_arrival_location: zFieldString(),
   do_publish: z.boolean(),
   publish_description: zFieldString({ maxLength: STRING_LENGTH_TEXTAREA }),
+  compatibilities: z.array(z.string()),
+  personality_traits: z.array(z.string()),
   application_url: z
     .string()
     .trim()
@@ -55,6 +58,7 @@ export type AnimalFormStatusData = z.infer<typeof animalFormStatusSchema>
 
 interface AnimalFormStatusProps {
   defaultValues?: Partial<AnimalDetailResource>
+  animalTypeId: string
   onSubmit: (data: AnimalFormStatusData) => Promise<void>
   onCancel?: () => void
   isSubmitting?: boolean
@@ -63,6 +67,7 @@ interface AnimalFormStatusProps {
 
 export function AnimalFormStatus({
   defaultValues,
+  animalTypeId,
   onSubmit,
   onCancel,
   isSubmitting = false,
@@ -77,6 +82,8 @@ export function AnimalFormStatus({
         defaultValues?.alternate_arrival_location || '',
       do_publish: defaultValues?.do_publish || false,
       publish_description: defaultValues?.publish_description || '',
+      compatibilities: defaultValues?.compatibilities ?? [],
+      personality_traits: defaultValues?.personality_traits ?? [],
       application_url: defaultValues?.application_url || '',
       is_deceased: defaultValues?.is_deceased || false,
       date_of_death: toDateFieldValue(defaultValues?.date_of_death),
@@ -162,6 +169,24 @@ export function AnimalFormStatus({
                 control={form.control}
                 label="Beschreibungstext"
                 description="Dieser Text wird als Tierbeschreibung auf der Website oder in sozialen Medien verwendet."
+              />
+
+              <TraitInput
+                name="compatibilities"
+                control={form.control}
+                label="Verträglichkeiten"
+                description="Mit wem oder was verträgt sich das Tier (z.B. Katzen, Kinder, andere Hunde)."
+                animalTypeId={animalTypeId}
+                traitField="compatibilities"
+              />
+
+              <TraitInput
+                name="personality_traits"
+                control={form.control}
+                label="Persönlichkeit"
+                description="Charaktereigenschaften des Tieres (z.B. verspielt, Jagdtrieb)."
+                animalTypeId={animalTypeId}
+                traitField="personality_traits"
               />
 
               <TextInput

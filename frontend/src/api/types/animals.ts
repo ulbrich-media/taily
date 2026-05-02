@@ -59,6 +59,8 @@ export interface AnimalBaseResource {
   alternate_arrival_location: string | null
   do_publish: boolean
   publish_description: string | null
+  compatibilities: string[]
+  personality_traits: string[]
   application_url: string | null
   is_deceased: boolean
   date_of_death: string | null
