@@ -3,12 +3,21 @@ import { z } from 'zod'
 export const STRING_LENGTH_FIELD = 255
 export const STRING_LENGTH_TEXTAREA = 65535
 
-export const zFieldInt = () =>
-  z
+export const zFieldInt = (options: { max?: number } | undefined = {}) => {
+  let schema = z
     .string()
     .regex(/^(0|[1-9]\d{0,9})?$/, 'Nur ganze Zahlen erlaubt')
-    .nullable()
-    .optional()
+
+  if (options.max !== undefined) {
+    const max = options.max
+    schema = schema.refine(
+      (val) => val === '' || val === null || Number(val) <= max,
+      `Darf maximal ${options.max} sein`
+    ) as typeof schema
+  }
+
+  return schema.nullable().optional()
+}
 
 export const zFieldString = (
   options:

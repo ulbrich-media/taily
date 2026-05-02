@@ -40,15 +40,15 @@ export function AnimalCreatePage({
       queryClient.invalidateQueries({ queryKey: animalQueryKeys.list() })
       toast.success(response.message || 'Tier erfolgreich erstellt')
 
-      if (!saveAndReset.shouldReset) {
+      if (saveAndReset.shouldReset) {
+        saveAndReset.onFormSubmit()
+      } else {
         onCreated(response.data.animal_type_id, response.data.id)
       }
     },
     onError: () => {
       toast.error('Fehler beim Erstellen des Tieres')
-    },
-    onSettled: () => {
-      saveAndReset.onFormSubmit()
+      saveAndReset.disableShouldReset()
     },
   })
 
