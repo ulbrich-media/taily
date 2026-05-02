@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, type ChangeEvent } from 'react'
 import {
   DndContext,
   closestCenter,
@@ -28,27 +28,34 @@ import {
 } from '@/shadcn/components/ui/alert-dialog.tsx'
 import { Trash2, Upload, Loader2, ImageIcon, Film } from 'lucide-react'
 import { Badge } from '@/shadcn/components/ui/badge.tsx'
+import Lightbox from 'yet-another-react-lightbox'
+import Video from 'yet-another-react-lightbox/plugins/video'
+import Download from 'yet-another-react-lightbox/plugins/download'
+import 'yet-another-react-lightbox/styles.css'
 
 export interface Picture {
   id: string
   type: 'image' | 'video'
   url: string
+  full: string
 }
 
 interface SortablePictureProps {
   picture: Picture
-  cssOrder: number
+  index: number
   isProfilePicture: boolean
   isDeleting: boolean
   onDelete: (id: string) => void
+  onOpen: (index: number) => void
 }
 
 function SortablePicture({
   picture,
-  cssOrder,
+  index,
   isProfilePicture,
   isDeleting,
   onDelete,
+  onOpen,
 }: SortablePictureProps) {
   const {
     attributes,
@@ -63,7 +70,6 @@ function SortablePicture({
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
-    order: cssOrder,
   }
 
   return (
@@ -72,20 +78,18 @@ function SortablePicture({
       style={style}
       className="relative group aspect-square bg-muted rounded-lg overflow-hidden"
       {...(picture.type === 'video' ? attributes : {})}
+      onClick={() => onOpen(index)}
     >
       {picture.type === 'video' ? (
-        <>
-          <video
-            src={picture.url}
-            className="w-full h-full object-cover cursor-grab active:cursor-grabbing select-none"
-            preload="metadata"
-            muted
-            playsInline
-            draggable={false}
-            {...listeners}
-          />
-          {/* Transparent drag handle covering the tile */}
-        </>
+        <video
+          src={picture.url}
+          className="w-full h-full object-cover cursor-grab active:cursor-grabbing select-none"
+          preload="metadata"
+          muted
+          playsInline
+          draggable={false}
+          {...listeners}
+        />
       ) : (
         <img
           src={picture.url}
@@ -96,7 +100,6 @@ function SortablePicture({
           {...listeners}
         />
       )}
-      {/* Type indicator: image or video icon, top-left, visible on hover */}
       <div className="absolute top-4 left-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
         {picture.type === 'video' ? (
           <Film className="size-5 text-white drop-shadow" />
@@ -109,41 +112,44 @@ function SortablePicture({
           <Badge variant="secondary">Profilbild</Badge>
         </span>
       )}
-      <AlertDialog>
-        <AlertDialogTrigger asChild>
-          <Button
-            type="button"
-            variant="destructive"
-            size="icon"
-            className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
-            disabled={isDeleting}
-          >
-            {isDeleting ? (
-              <Loader2 className="size-3 animate-spin" />
-            ) : (
-              <Trash2 className="size-3" />
-            )}
-            <span className="sr-only">Medium löschen</span>
-          </Button>
-        </AlertDialogTrigger>
-        <AlertDialogContent size="sm">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Medium löschen?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Dieses Medium wird unwiderruflich gelöscht.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-            <AlertDialogAction
+      {/* Stop propagation so the delete button doesn't trigger the lightbox */}
+      <div onClick={(e) => e.stopPropagation()}>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              type="button"
               variant="destructive"
-              onClick={() => onDelete(picture.id)}
+              size="icon"
+              className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
+              disabled={isDeleting}
             >
-              Löschen
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+              {isDeleting ? (
+                <Loader2 className="size-3 animate-spin" />
+              ) : (
+                <Trash2 className="size-3" />
+              )}
+              <span className="sr-only">Medium löschen</span>
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent size="sm">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Medium löschen?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Dieses Medium wird unwiderruflich gelöscht.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+              <AlertDialogAction
+                variant="destructive"
+                onClick={() => onDelete(picture.id)}
+              >
+                Löschen
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
     </div>
   )
 }
@@ -168,36 +174,41 @@ export function PictureGallery({
   acceptVideo = false,
 }: PictureGalleryProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
-
-  // Tracks visual order as an array of IDs. Kept separate from pictures so the
-  // DOM order of rendered items never changes — only the CSS `order` property
-  // does. This prevents Firefox from reinitialising <video> elements when the
-  // list is sorted.
   const [sortOrder, setSortOrder] = useState<string[]>([])
+  const [lightboxIndex, setLightboxIndex] = useState(-1)
 
-  const sensors = useSensors(useSensor(PointerSensor))
+  // Require 5px of movement before activating drag so taps open the lightbox.
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+  )
 
   const pictureIds = pictures.map((p) => p.id)
   const pictureIdSet = new Set(pictureIds)
 
-  // sortOrder is valid only when it contains exactly the same IDs as pictures.
-  // When pictures change (upload, delete, server refresh), this naturally falls
-  // back to server order without needing a useEffect reset.
   const isSortOrderValid =
     sortOrder.length === pictureIds.length &&
     sortOrder.every((id) => pictureIdSet.has(id))
 
   const effectiveOrder = isSortOrderValid ? sortOrder : pictureIds
 
-  // Map from id → visual position index (used for CSS `order` and profile badge)
-  const orderIndex = Object.fromEntries(effectiveOrder.map((id, i) => [id, i]))
-
-  // Profile picture = first image in visual order
   const firstImageId = effectiveOrder.find(
     (id) => pictures.find((p) => p.id === id)?.type === 'image'
   )
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Build slides in visual order for YARL — use full-size URLs for both display and download
+  const slides = effectiveOrder.map((id) => {
+    const picture = pictures.find((p) => p.id === id)!
+    if (picture.type === 'video') {
+      return {
+        type: 'video' as const,
+        sources: [{ src: picture.full, type: 'video/mp4' }],
+        download: picture.full,
+      }
+    }
+    return { src: picture.full, download: picture.full }
+  })
+
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? [])
     if (files.length > 0) {
       onUpload(files)
@@ -258,29 +269,43 @@ export function PictureGallery({
           Noch keine Medien vorhanden.
         </p>
       ) : (
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext
-            items={effectiveOrder}
-            strategy={rectSortingStrategy}
+        <>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
           >
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-              {pictures.map((picture) => (
-                <SortablePicture
-                  key={picture.id}
-                  picture={picture}
-                  cssOrder={orderIndex[picture.id] ?? 0}
-                  isProfilePicture={picture.id === firstImageId}
-                  isDeleting={isDeleting}
-                  onDelete={onDelete}
-                />
-              ))}
-            </div>
-          </SortableContext>
-        </DndContext>
+            <SortableContext
+              items={effectiveOrder}
+              strategy={rectSortingStrategy}
+            >
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+                {effectiveOrder.map((id, index) => {
+                  const picture = pictures.find((p) => p.id === id)!
+                  return (
+                    <SortablePicture
+                      key={picture.id}
+                      picture={picture}
+                      index={index}
+                      isProfilePicture={picture.id === firstImageId}
+                      isDeleting={isDeleting}
+                      onDelete={onDelete}
+                      onOpen={setLightboxIndex}
+                    />
+                  )
+                })}
+              </div>
+            </SortableContext>
+          </DndContext>
+
+          <Lightbox
+            open={lightboxIndex >= 0}
+            index={lightboxIndex}
+            close={() => setLightboxIndex(-1)}
+            slides={slides}
+            plugins={[Video, Download]}
+          />
+        </>
       )}
     </div>
   )
