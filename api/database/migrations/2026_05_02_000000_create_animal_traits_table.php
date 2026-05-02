@@ -15,6 +15,7 @@ return new class extends Migration
             $table->string('value', 255);
             $table->timestamps();
             $table->index(['animal_id', 'type']);
+            $table->unique(['animal_id', 'type', 'value']);
         });
     }
 
