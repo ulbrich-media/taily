@@ -9,6 +9,10 @@ export const useFormSaveAndResetHook = () => {
     setShouldReset(true)
   }
 
+  const disableShouldReset = () => {
+    setShouldReset(false)
+  }
+
   const onFormSubmit = () => {
     if (shouldReset) {
       setFormKey(getRandomKey())
@@ -20,6 +24,7 @@ export const useFormSaveAndResetHook = () => {
     formKey,
     shouldReset,
     enableShouldReset,
+    disableShouldReset,
     onFormSubmit,
   }
 }

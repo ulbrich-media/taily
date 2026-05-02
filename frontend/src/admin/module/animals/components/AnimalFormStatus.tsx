@@ -16,19 +16,37 @@ import { FormSection } from '@/components/form/FormSection'
 import { FormGrid } from '@/components/form/FormGrid'
 import { FormBlocker } from '@/components/form/FormBlocker'
 import { TextInput } from '@/components/field/TextInput.tsx'
+import { Textarea } from '@/components/field/Textarea.tsx'
 import { SingleCheckbox } from '@/components/field/SingleCheckbox.tsx'
 import { DateInput } from '@/components/field/DateInput.tsx'
 import {
   zFieldDate,
   toDateFieldValue,
 } from '@/components/field/DateInput.utils.ts'
-import { zFieldString } from '@/components/field/TextInput.utils.ts'
+import {
+  STRING_LENGTH_TEXTAREA,
+  zFieldString,
+} from '@/components/field/TextInput.utils.ts'
 
 const animalFormStatusSchema = z.object({
   current_location: zFieldString(),
   alternate_transport_trace: zFieldString(),
   alternate_arrival_location: zFieldString(),
   do_publish: z.boolean(),
+  publish_description: zFieldString({ maxLength: STRING_LENGTH_TEXTAREA }),
+  application_url: z
+    .string()
+    .trim()
+    .max(2048, 'Darf maximal 2048 Zeichen lang sein')
+    .refine((val) => {
+      if (!val) return true
+      try {
+        const u = new URL(val)
+        return u.protocol === 'http:' || u.protocol === 'https:'
+      } catch {
+        return false
+      }
+    }, 'Muss eine gültige URL sein (z.B. https://...)'),
   is_deceased: z.boolean(),
   date_of_death: zFieldDate,
 })
@@ -58,6 +76,8 @@ export function AnimalFormStatus({
       alternate_arrival_location:
         defaultValues?.alternate_arrival_location || '',
       do_publish: defaultValues?.do_publish || false,
+      publish_description: defaultValues?.publish_description || '',
+      application_url: defaultValues?.application_url || '',
       is_deceased: defaultValues?.is_deceased || false,
       date_of_death: toDateFieldValue(defaultValues?.date_of_death),
     },
@@ -135,6 +155,22 @@ export function AnimalFormStatus({
                 </Field>
               )}
             />
+
+            <FormGrid columns={1}>
+              <Textarea
+                name="publish_description"
+                control={form.control}
+                label="Beschreibungstext"
+                description="Dieser Text wird als Tierbeschreibung auf der Website oder in sozialen Medien verwendet."
+              />
+
+              <TextInput
+                name="application_url"
+                control={form.control}
+                label="Bewerbungs-URL"
+                description="Link zum Bewerbungsformular für die Adoption dieses Tieres. Muss eine vollständige URL sein (z.B. https://...)."
+              />
+            </FormGrid>
           </FormSection>
 
           <FieldSeparator />
