@@ -170,7 +170,7 @@ class AnimalController extends Controller
             $vaccinationData = collect($validated['vaccinations'])->mapWithKeys(function ($vaccination) {
                 return [$vaccination['vaccination_id'] => ['vaccinated_at' => $vaccination['vaccinated_at'] ?? null]];
             });
-            $animal->vaccinations()->sync($vaccinationData);
+            $animal->vaccinations()->sync($vaccinationData->toArray());
         }
 
         // Sync tests if provided
@@ -181,7 +181,7 @@ class AnimalController extends Controller
                     'result' => $test['result'],
                 ]];
             });
-            $animal->medicalTests()->sync($testData);
+            $animal->medicalTests()->sync($testData->toArray());
         }
 
         $animal->load(['animalType', 'vaccinations', 'medicalTests', 'assignedAgent', 'owner', 'sponsor', 'adoptions', 'media', 'compatibilities', 'personalityTraits']);

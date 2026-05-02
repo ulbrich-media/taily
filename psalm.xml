@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<psalm
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns="https://getpsalm.org/schema/config"
+    xsi:schemaLocation="https://getpsalm.org/schema/config api/vendor/vimeo/psalm/config.xsd"
+    errorLevel="4"
+    findUnusedCode="false"
+    ensureOverrideAttribute="false"
+    errorBaseline="psalm-baseline.xml"
+>
+    <projectFiles>
+        <directory name="api/src"/>
+        <directory name="api/routes"/>
+        <ignoreFiles allowMissingFiles="true">
+            <directory name="api/vendor"/>
+            <directory name="api/storage"/>
+            <directory name="api/bootstrap/cache"/>
+        </ignoreFiles>
+    </projectFiles>
+
+    <plugins>
+        <pluginClass class="Psalm\LaravelPlugin\Plugin"/>
+    </plugins>
+
+    <issueHandlers>
+        <ClassMustBeFinal errorLevel="suppress"/>
+        <MissingAbstractPureAnnotation errorLevel="suppress"/>
+        <MissingClosureReturnType errorLevel="suppress"/>
+        <MissingImmutableAnnotation errorLevel="suppress"/>
+        <MissingInterfaceImmutableAnnotation errorLevel="suppress"/>
+        <MissingOverrideAttribute errorLevel="suppress"/>
+        <MissingPureAnnotation errorLevel="suppress"/>
+        <RedundantCast errorLevel="suppress"/>
+        <RedundantCondition errorLevel="suppress"/>
+        <UnnecessaryVarAnnotation errorLevel="suppress"/>
+    </issueHandlers>
+</psalm>
