@@ -1,8 +1,18 @@
 import { useState, useRef, type KeyboardEvent } from 'react'
-import { Controller, type Control, type FieldPath, type FieldValues } from 'react-hook-form'
+import {
+  Controller,
+  type Control,
+  type FieldPath,
+  type FieldValues,
+} from 'react-hook-form'
 import { useQuery } from '@tanstack/react-query'
 import { PlusIcon, ChevronDownIcon, XIcon } from 'lucide-react'
-import { Field, FieldDescription, FieldError, FieldLabel } from '@/shadcn/components/ui/field.tsx'
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+} from '@/shadcn/components/ui/field.tsx'
 import { Input } from '@/shadcn/components/ui/input.tsx'
 import { Button } from '@/shadcn/components/ui/button.tsx'
 import { Badge } from '@/shadcn/components/ui/badge.tsx'
@@ -138,7 +148,9 @@ function TraitInputControl({
       </div>
 
       {value.length === 0 ? (
-        <p className="text-muted-foreground text-sm">Keine Einträge vorhanden</p>
+        <p className="text-muted-foreground text-sm">
+          Keine Einträge vorhanden
+        </p>
       ) : (
         <div className="flex flex-wrap gap-1.5">
           {value.map((val) => (
