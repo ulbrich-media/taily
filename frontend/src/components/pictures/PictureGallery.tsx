@@ -23,15 +23,36 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
+  AlertDialogMedia,
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/shadcn/components/ui/alert-dialog.tsx'
-import { Trash2, Upload, Loader2, ImageIcon, Film } from 'lucide-react'
+import {
+  Trash2,
+  Upload,
+  Loader2,
+  Download,
+  Maximize2,
+  GripVertical,
+  Play,
+} from 'lucide-react'
 import { Badge } from '@/shadcn/components/ui/badge.tsx'
 import Lightbox from 'yet-another-react-lightbox'
-import Video from 'yet-another-react-lightbox/plugins/video'
-import Download from 'yet-another-react-lightbox/plugins/download'
+import VideoPlugin from 'yet-another-react-lightbox/plugins/video'
+import DownloadPlugin from 'yet-another-react-lightbox/plugins/download'
 import 'yet-another-react-lightbox/styles.css'
+import { ButtonGroup } from '@/shadcn/components/ui/button-group.tsx'
+
+async function triggerDownload(url: string) {
+  const response = await fetch(url)
+  const blob = await response.blob()
+  const blobUrl = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = blobUrl
+  a.download = url.split('/').pop() ?? 'download'
+  a.click()
+  URL.revokeObjectURL(blobUrl)
+}
 
 export interface Picture {
   id: string
@@ -76,79 +97,129 @@ function SortablePicture({
     <div
       ref={setNodeRef}
       style={style}
-      className="relative group aspect-square bg-muted rounded-lg overflow-hidden"
-      {...(picture.type === 'video' ? attributes : {})}
-      onClick={() => onOpen(index)}
+      className="border border-border rounded-lg"
     >
-      {picture.type === 'video' ? (
-        <video
-          src={picture.url}
-          className="w-full h-full object-cover cursor-grab active:cursor-grabbing select-none"
-          preload="metadata"
-          muted
-          playsInline
-          draggable={false}
-          {...listeners}
-        />
-      ) : (
-        <img
-          src={picture.url}
-          alt=""
-          className="w-full h-full object-cover cursor-grab active:cursor-grabbing select-none"
-          draggable={false}
-          {...attributes}
-          {...listeners}
-        />
-      )}
-      <div className="absolute top-4 left-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+      {/* Media — click opens lightbox */}
+      <div
+        className="relative aspect-square cursor-pointer"
+        onClick={() => onOpen(index)}
+      >
         {picture.type === 'video' ? (
-          <Film className="size-5 text-white drop-shadow" />
+          <video
+            src={picture.url}
+            className="w-full h-full object-cover select-none rounded-lg"
+            preload="metadata"
+            muted
+            playsInline
+            draggable={false}
+          />
         ) : (
-          <ImageIcon className="size-5 text-white drop-shadow" />
+          <img
+            src={picture.url}
+            alt=""
+            className="w-full h-full object-cover select-none rounded-lg"
+            draggable={false}
+          />
         )}
-      </div>
-      {isProfilePicture && (
-        <span className="absolute bottom-2 left-2">
-          <Badge variant="secondary">Profilbild</Badge>
-        </span>
-      )}
-      {/* Stop propagation so the delete button doesn't trigger the lightbox */}
-      <div onClick={(e) => e.stopPropagation()}>
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
+        {picture.type === 'video' && (
+          <div className="absolute inset-0 bottom-10 flex items-center justify-center pointer-events-none">
+            <div className="rounded-full bg-black/50 p-3">
+              <Play className="size-6 text-white fill-white" />
+            </div>
+          </div>
+        )}
+        {isProfilePicture && (
+          <Badge className="absolute top-1 left-1" variant="secondary">
+            Profilbild
+          </Badge>
+        )}
+
+        <ButtonGroup
+          className="absolute bottom-1 inset-x-1 w-auto"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <ButtonGroup>
             <Button
               type="button"
-              variant="destructive"
+              variant="secondary"
               size="icon"
-              className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
-              disabled={isDeleting}
+              className="cursor-grab active:cursor-grabbing touch-none backdrop-blur-xs"
+              {...attributes}
+              {...listeners}
             >
-              {isDeleting ? (
-                <Loader2 className="size-3 animate-spin" />
-              ) : (
-                <Trash2 className="size-3" />
-              )}
-              <span className="sr-only">Medium löschen</span>
+              <GripVertical />
+              <span className="sr-only">Sortieren</span>
             </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent size="sm">
-            <AlertDialogHeader>
-              <AlertDialogTitle>Medium löschen?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Dieses Medium wird unwiderruflich gelöscht.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-              <AlertDialogAction
-                variant="destructive"
-                onClick={() => onDelete(picture.id)}
-              >
-                Löschen
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+
+            {/* Open lightbox */}
+            <Button
+              type="button"
+              variant="secondary"
+              size="icon"
+              className="backdrop-blur-xs"
+              onClick={() => onOpen(index)}
+            >
+              <Maximize2 />
+              <span className="sr-only">Vergrößern</span>
+            </Button>
+
+            {/* Download */}
+            <Button
+              type="button"
+              variant="secondary"
+              size="icon"
+              className="backdrop-blur-xs"
+              onClick={() => triggerDownload(picture.full)}
+            >
+              <Download />
+              <span className="sr-only">Herunterladen</span>
+            </Button>
+          </ButtonGroup>
+
+          <div className="flex-1"></div>
+
+          <ButtonGroup>
+            {/* Delete */}
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  className="backdrop-blur-xs"
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? (
+                    <Loader2 className="animate-spin" />
+                  ) : (
+                    <Trash2 />
+                  )}
+                  <span className="sr-only">Medium löschen</span>
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent size="sm">
+                <AlertDialogHeader>
+                  <AlertDialogMedia>
+                    <Trash2 />
+                  </AlertDialogMedia>
+                  <AlertDialogTitle>Medium löschen?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Dieses Medium wird unwiderruflich gelöscht.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                  <AlertDialogAction
+                    variant="destructive"
+                    onClick={() => onDelete(picture.id)}
+                  >
+                    Löschen
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </ButtonGroup>
+        </ButtonGroup>
       </div>
     </div>
   )
@@ -177,7 +248,6 @@ export function PictureGallery({
   const [sortOrder, setSortOrder] = useState<string[]>([])
   const [lightboxIndex, setLightboxIndex] = useState(-1)
 
-  // Require 5px of movement before activating drag so taps open the lightbox.
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   )
@@ -303,7 +373,7 @@ export function PictureGallery({
             index={lightboxIndex}
             close={() => setLightboxIndex(-1)}
             slides={slides}
-            plugins={[Video, Download]}
+            plugins={[VideoPlugin, DownloadPlugin]}
           />
         </>
       )}
