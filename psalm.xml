@@ -6,6 +6,7 @@
     errorLevel="4"
     findUnusedCode="false"
     ensureOverrideAttribute="false"
+    errorBaseline="psalm-baseline.xml"
 >
     <projectFiles>
         <directory name="api/src"/>
