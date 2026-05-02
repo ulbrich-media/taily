@@ -54,13 +54,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::apiResource('users', UserController::class);
 
     // Animals
-    Route::get('/animals/trait-suggestions', [AnimalController::class, 'traitSuggestions']);
     Route::apiResource('animals', AnimalController::class);
     Route::post('/animals/{animal}/pictures', [AnimalPictureController::class, 'store']);
     Route::put('/animals/{animal}/pictures/reorder', [AnimalPictureController::class, 'reorder']);
     Route::delete('/animals/{animal}/pictures/{picture}', [AnimalPictureController::class, 'destroy']);
 
     // Animal Types
+    Route::get('/animal-types/{animalType}/trait-suggestions', [AnimalTypeController::class, 'traitSuggestions']);
     Route::apiResource('animal-types', AnimalTypeController::class);
 
     // Vaccinations and Medical Tests

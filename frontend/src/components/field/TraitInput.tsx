@@ -6,7 +6,12 @@ import {
   type FieldValues,
 } from 'react-hook-form'
 import { useQuery } from '@tanstack/react-query'
-import { PlusIcon, ChevronDownIcon, XIcon } from 'lucide-react'
+import {
+  PlusIcon,
+  ChevronDownIcon,
+  XIcon,
+  LoaderCircleIcon,
+} from 'lucide-react'
 import {
   Field,
   FieldDescription,
@@ -44,12 +49,15 @@ function TraitInputControl({
 }: TraitInputControlProps) {
   const [inputValue, setInputValue] = useState('')
   const [dropdownOpen, setDropdownOpen] = useState(false)
-  const [queryEnabled, setQueryEnabled] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  const { data: suggestions } = useQuery({
+  const {
+    data: suggestions,
+    isLoading,
+    isError,
+  } = useQuery({
     ...animalTraitSuggestionsQuery(animalTypeId),
-    enabled: queryEnabled,
+    enabled: dropdownOpen,
   })
 
   const availableSuggestions = (suggestions?.[traitField] ?? []).filter(
@@ -83,13 +91,6 @@ function TraitInputControl({
     }
   }
 
-  const handleDropdownOpenChange = (open: boolean) => {
-    if (open && !queryEnabled) {
-      setQueryEnabled(true)
-    }
-    setDropdownOpen(open)
-  }
-
   return (
     <div className="space-y-2">
       <div className="flex gap-1.5">
@@ -112,7 +113,7 @@ function TraitInputControl({
         >
           <PlusIcon className="size-4" />
         </Button>
-        <Popover open={dropdownOpen} onOpenChange={handleDropdownOpenChange}>
+        <Popover open={dropdownOpen} onOpenChange={setDropdownOpen}>
           <PopoverTrigger asChild>
             <Button
               type="button"
@@ -124,7 +125,16 @@ function TraitInputControl({
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-64 p-0" align="end">
-            {availableSuggestions.length === 0 ? (
+            {isLoading ? (
+              <div className="text-muted-foreground flex items-center gap-2 px-3 py-2 text-sm">
+                <LoaderCircleIcon className="size-4 animate-spin" />
+                Lädt...
+              </div>
+            ) : isError ? (
+              <p className="text-destructive px-3 py-2 text-sm">
+                Vorschläge konnten nicht geladen werden.
+              </p>
+            ) : availableSuggestions.length === 0 ? (
               <p className="text-muted-foreground px-3 py-2 text-sm">
                 Keine Vorschläge vorhanden
               </p>
