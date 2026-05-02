@@ -22,6 +22,7 @@ import {
   PopoverContent,
 } from '@/shadcn/components/ui/popover.tsx'
 import { animalTraitSuggestionsQuery } from '@/admin/module/animals/api/queries.ts'
+import { ButtonGroup } from '@/shadcn/components/ui/button-group.tsx'
 
 type TraitField = 'compatibilities' | 'personality_traits'
 
@@ -91,8 +92,8 @@ function TraitInputControl({
   }
 
   return (
-    <div className="space-y-2">
-      <div className="flex gap-1.5">
+    <>
+      <ButtonGroup>
         <Input
           ref={inputRef}
           id={fieldId}
@@ -145,7 +146,7 @@ function TraitInputControl({
             )}
           </PopoverContent>
         </Popover>
-      </div>
+      </ButtonGroup>
 
       {value.length === 0 ? (
         <p className="text-muted-foreground text-sm">
@@ -168,7 +169,7 @@ function TraitInputControl({
           ))}
         </div>
       )}
-    </div>
+    </>
   )
 }
 
