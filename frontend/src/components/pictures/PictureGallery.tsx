@@ -35,6 +35,9 @@ import {
   Maximize2,
   GripVertical,
   Play,
+  X,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react'
 import { Badge } from '@/shadcn/components/ui/badge.tsx'
 import Lightbox from 'yet-another-react-lightbox'
@@ -349,7 +352,7 @@ export function PictureGallery({
               items={effectiveOrder}
               strategy={rectSortingStrategy}
             >
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 xl:grid-cols-4">
                 {effectiveOrder.map((id, index) => {
                   const picture = pictures.find((p) => p.id === id)!
                   return (
@@ -374,6 +377,21 @@ export function PictureGallery({
             close={() => setLightboxIndex(-1)}
             slides={slides}
             plugins={[VideoPlugin, DownloadPlugin]}
+            video={{ muted: true, autoPlay: true, controls: true }}
+            render={{
+              iconClose: () => <X className="size-6" />,
+              iconPrev: () => <ChevronLeft className="size-6" />,
+              iconNext: () => <ChevronRight className="size-6" />,
+              iconLoading: () => <Loader2 className="size-6 animate-spin" />,
+              iconDownload: () => <Download className="size-5" />,
+            }}
+            download={{
+              download: ({ slide }) => {
+                if (typeof slide.download === 'string') {
+                  void triggerDownload(slide.download)
+                }
+              },
+            }}
           />
         </>
       )}
