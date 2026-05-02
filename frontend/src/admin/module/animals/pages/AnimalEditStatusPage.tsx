@@ -53,6 +53,7 @@ export function AnimalEditStatusPage({ animal }: AnimalEditStatusPageProps) {
       <CardContent>
         <AnimalFormStatus
           defaultValues={animal}
+          animalTypeId={animal.animal_type_id}
           onSubmit={handleSubmit}
           isSubmitting={updateMutation.isPending}
         />

@@ -10,6 +10,7 @@ use Taily\Http\Controllers\Controller;
 use Taily\Http\Resources\AnimalDetailResource;
 use Taily\Http\Resources\AnimalListResource;
 use Taily\Models\Animal;
+use Taily\Services\AnimalTraitService;
 
 class AnimalController extends Controller
 {
@@ -61,7 +62,7 @@ class AnimalController extends Controller
 
         $animal = Animal::create($validated);
 
-        $animal->load(['animalType', 'vaccinations', 'medicalTests', 'assignedAgent', 'owner', 'sponsor', 'adoptions', 'media']);
+        $animal->load(['animalType', 'vaccinations', 'medicalTests', 'assignedAgent', 'owner', 'sponsor', 'adoptions', 'media', 'compatibilities', 'personalityTraits']);
 
         return response()->json([
             'message' => 'Tier erfolgreich angelegt.',
@@ -83,6 +84,8 @@ class AnimalController extends Controller
             'sponsor',
             'adoptions',
             'media',
+            'compatibilities',
+            'personalityTraits',
         ]);
 
         return new AnimalDetailResource($animal);
@@ -136,6 +139,11 @@ class AnimalController extends Controller
             'application_url' => 'sometimes|nullable|url|max:2048',
             'is_deceased' => 'sometimes|boolean',
             'date_of_death' => 'sometimes|nullable|date_format:Y-m-d',
+            // Traits
+            'compatibilities' => 'sometimes|array',
+            'compatibilities.*' => 'string|max:255|distinct',
+            'personality_traits' => 'sometimes|array',
+            'personality_traits.*' => 'string|max:255|distinct',
             // Vaccinations and Tests
             'vaccinations' => 'sometimes|array',
             'vaccinations.*.vaccination_id' => ['required', 'uuid', Rule::exists('vaccinations', 'id')->where('animal_type_id', $animal->animal_type_id)],
@@ -147,6 +155,15 @@ class AnimalController extends Controller
         ]);
 
         $animal->update($validated);
+
+        // Sync traits if provided
+        if ($request->has('compatibilities')) {
+            AnimalTraitService::sync($animal, 'compatibility', $validated['compatibilities']);
+        }
+
+        if ($request->has('personality_traits')) {
+            AnimalTraitService::sync($animal, 'personality_trait', $validated['personality_traits']);
+        }
 
         // Sync vaccinations if provided
         if ($request->has('vaccinations')) {
@@ -167,7 +184,7 @@ class AnimalController extends Controller
             $animal->medicalTests()->sync($testData);
         }
 
-        $animal->load(['animalType', 'vaccinations', 'medicalTests', 'assignedAgent', 'owner', 'sponsor', 'adoptions', 'media']);
+        $animal->load(['animalType', 'vaccinations', 'medicalTests', 'assignedAgent', 'owner', 'sponsor', 'adoptions', 'media', 'compatibilities', 'personalityTraits']);
 
         return response()->json([
             'message' => 'Tier erfolgreich aktualisiert.',

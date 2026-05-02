@@ -11,6 +11,7 @@ use Taily\Models\AnimalType;
 use Taily\Models\MedicalTest;
 use Taily\Models\Person;
 use Taily\Models\Vaccination;
+use Taily\Services\AnimalTraitService;
 
 class AnimalSeeder extends Seeder
 {
@@ -147,6 +148,27 @@ class AnimalSeeder extends Seeder
             'Straßenhunde Rumänien e.V.',
         ];
 
+        $dogCompatibilities = [
+            'Katzen', 'Kinder', 'andere Hunde', 'Kleintiere',
+            'Männer', 'Frauen', 'Senioren', 'erfahrene Halter',
+        ];
+
+        $dogPersonalityTraits = [
+            'verspielt', 'verschmust', 'aktiv', 'ruhig', 'Jagdtrieb',
+            'ängstlich', 'dominant', 'selbstständig', 'anhänglich',
+            'lernfreudig', 'ausgeglichen', 'wachsam',
+        ];
+
+        $catCompatibilities = [
+            'Kinder', 'andere Katzen', 'Hunde', 'ruhige Umgebung',
+            'Wohnungshaltung geeignet', 'Freigänger geeignet',
+        ];
+
+        $catPersonalityTraits = [
+            'verschmust', 'verspielt', 'neugierig', 'scheu',
+            'selbstständig', 'anhänglich', 'ruhig', 'aktiv',
+        ];
+
         // Create 25 demo dogs
         for ($i = 1; $i <= 25; $i++) {
             $intakeDate = $faker->dateTimeBetween('-3 years', '-1 month');
@@ -225,6 +247,25 @@ class AnimalSeeder extends Seeder
                     'result' => $faker->randomElement(['positive', 'negative']),
                 ]);
             }
+
+            // Randomly assign trait values to dogs
+            if ($faker->boolean(80)) {
+                $numCompatibilities = $faker->numberBetween(1, 4);
+                AnimalTraitService::sync(
+                    $animal,
+                    'compatibility',
+                    $faker->randomElements($dogCompatibilities, $numCompatibilities)
+                );
+            }
+
+            if ($faker->boolean(85)) {
+                $numPersonalityTraits = $faker->numberBetween(2, 5);
+                AnimalTraitService::sync(
+                    $animal,
+                    'personality_trait',
+                    $faker->randomElements($dogPersonalityTraits, $numPersonalityTraits)
+                );
+            }
         }
 
         // Cat-specific data
@@ -302,6 +343,25 @@ class AnimalSeeder extends Seeder
                 $animal->addMedia($image)
                     ->preservingOriginal()
                     ->toMediaCollection('pictures');
+            }
+
+            // Randomly assign trait values to cats
+            if ($faker->boolean(80)) {
+                $numCompatibilities = $faker->numberBetween(1, 3);
+                AnimalTraitService::sync(
+                    $animal,
+                    'compatibility',
+                    $faker->randomElements($catCompatibilities, $numCompatibilities)
+                );
+            }
+
+            if ($faker->boolean(85)) {
+                $numPersonalityTraits = $faker->numberBetween(2, 4);
+                AnimalTraitService::sync(
+                    $animal,
+                    'personality_trait',
+                    $faker->randomElements($catPersonalityTraits, $numPersonalityTraits)
+                );
             }
         }
 

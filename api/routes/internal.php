@@ -60,6 +60,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::delete('/animals/{animal}/pictures/{picture}', [AnimalPictureController::class, 'destroy']);
 
     // Animal Types
+    Route::get('/animal-types/{animalType}/trait-suggestions', [AnimalTypeController::class, 'traitSuggestions']);
     Route::apiResource('animal-types', AnimalTypeController::class);
 
     // Vaccinations and Medical Tests

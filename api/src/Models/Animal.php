@@ -138,6 +138,21 @@ class Animal extends Model implements HasMedia
             ->nonQueued();
     }
 
+    public function traits(): HasMany
+    {
+        return $this->hasMany(AnimalTrait::class);
+    }
+
+    public function compatibilities(): HasMany
+    {
+        return $this->hasMany(AnimalTrait::class)->where('type', 'compatibility');
+    }
+
+    public function personalityTraits(): HasMany
+    {
+        return $this->hasMany(AnimalTrait::class)->where('type', 'personality_trait');
+    }
+
     /**
      * Get the animal type for this animal.
      */
