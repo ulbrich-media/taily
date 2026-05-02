@@ -79,7 +79,7 @@ export async function getAnimalTraitSuggestions(
   animalTypeId: string
 ): Promise<{ compatibilities: string[]; personality_traits: string[] }> {
   return apiRequest(
-    `animals/trait-suggestions?animal_type_id=${encodeURIComponent(animalTypeId)}`
+    `animal-types/${encodeURIComponent(animalTypeId)}/trait-suggestions`
   )
 }
 

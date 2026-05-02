@@ -10,7 +10,7 @@ use Taily\Http\Controllers\Controller;
 use Taily\Http\Resources\AnimalDetailResource;
 use Taily\Http\Resources\AnimalListResource;
 use Taily\Models\Animal;
-use Taily\Models\AnimalTrait;
+use Taily\Services\AnimalTraitService;
 
 class AnimalController extends Controller
 {
@@ -141,9 +141,9 @@ class AnimalController extends Controller
             'date_of_death' => 'sometimes|nullable|date_format:Y-m-d',
             // Traits
             'compatibilities' => 'sometimes|array',
-            'compatibilities.*' => 'string|max:255',
+            'compatibilities.*' => 'string|max:255|distinct',
             'personality_traits' => 'sometimes|array',
-            'personality_traits.*' => 'string|max:255',
+            'personality_traits.*' => 'string|max:255|distinct',
             // Vaccinations and Tests
             'vaccinations' => 'sometimes|array',
             'vaccinations.*.vaccination_id' => ['required', 'uuid', Rule::exists('vaccinations', 'id')->where('animal_type_id', $animal->animal_type_id)],
@@ -158,17 +158,11 @@ class AnimalController extends Controller
 
         // Sync traits if provided
         if ($request->has('compatibilities')) {
-            $animal->traits()->where('type', 'compatibility')->delete();
-            foreach ($validated['compatibilities'] as $val) {
-                $animal->traits()->create(['type' => 'compatibility', 'value' => $val]);
-            }
+            AnimalTraitService::sync($animal, 'compatibility', $validated['compatibilities']);
         }
 
         if ($request->has('personality_traits')) {
-            $animal->traits()->where('type', 'personality_trait')->delete();
-            foreach ($validated['personality_traits'] as $val) {
-                $animal->traits()->create(['type' => 'personality_trait', 'value' => $val]);
-            }
+            AnimalTraitService::sync($animal, 'personality_trait', $validated['personality_traits']);
         }
 
         // Sync vaccinations if provided
@@ -195,30 +189,6 @@ class AnimalController extends Controller
         return response()->json([
             'message' => 'Tier erfolgreich aktualisiert.',
             'data' => new AnimalDetailResource($animal),
-        ]);
-    }
-
-    /**
-     * Return distinct trait suggestion values for a given animal type.
-     */
-    public function traitSuggestions(Request $request): JsonResponse
-    {
-        $animalTypeId = $request->validate([
-            'animal_type_id' => 'required|uuid|exists:animal_types,id',
-        ])['animal_type_id'];
-
-        $query = fn (string $type) => AnimalTrait::whereHas(
-            'animal',
-            fn ($q) => $q->where('animal_type_id', $animalTypeId)
-        )
-            ->where('type', $type)
-            ->distinct()
-            ->orderBy('value')
-            ->pluck('value');
-
-        return response()->json([
-            'compatibilities' => $query('compatibility'),
-            'personality_traits' => $query('personality_trait'),
         ]);
     }
 
