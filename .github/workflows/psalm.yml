@@ -17,6 +17,8 @@ on:
       - 'psalm-baseline.xml'
 
 permissions:
+  contents: read
+  actions: read
   security-events: write
 
 env:
