@@ -14,6 +14,6 @@ class AnimalTypeController extends Controller
      */
     public function index(): AnonymousResourceCollection
     {
-        return PublicAnimalTypeResource::collection(AnimalType::orderBy('title')->get());
+        return PublicAnimalTypeResource::collection(AnimalType::orderBy('title')->with(['vaccinations', 'medicalTests'])->get());
     }
 }
