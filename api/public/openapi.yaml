@@ -19,7 +19,7 @@ info:
     and is suitable for direct use in `<img src>` and `<video src>` attributes.
 
 servers:
-  - url: https://your-taily-instance.example.com/api
+  - url: https://api.taily.ddev.site/api
     description: Your Taily installation (replace with your actual URL)
 
 security:
