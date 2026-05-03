@@ -48,7 +48,7 @@ jobs:
         run: composer install --no-interaction --prefer-dist --optimize-autoloader
 
       - name: Run Psalm
-        run: api/vendor/bin/psalm --output-format=github --no-progress --report=results.sarif
+        run: api/vendor/bin/psalm --output-format=github --no-progress --report=results.sarif --report-show-info=false
 
       - name: Upload SARIF to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v4
@@ -79,7 +79,7 @@ jobs:
         run: composer install --no-interaction --prefer-dist --optimize-autoloader
 
       - name: Run Psalm taint analysis
-        run: api/vendor/bin/psalm --taint-analysis --output-format=github --no-progress --report=taint-results.sarif
+        run: api/vendor/bin/psalm --taint-analysis --output-format=github --no-progress --report=taint-results.sarif --report-show-info=false
 
       - name: Upload SARIF to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v4

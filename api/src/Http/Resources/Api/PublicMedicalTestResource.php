@@ -10,11 +10,11 @@ class PublicMedicalTestResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
-            'title' => $this->title,
-            'description' => $this->description,
-            'tested_at' => $this->pivot->tested_at,
-            'result' => $this->pivot->result,
+            'id' => $this->resource->id,
+            'title' => $this->resource->title,
+            'description' => $this->resource->description,
+            'tested_at' => $this->resource->pivot->tested_at,
+            'result' => $this->resource->pivot->result,
         ];
     }
 }

@@ -26,42 +26,42 @@ class PublicAnimalResource extends JsonResource
         // All data possibly relevant during public display of an animal.
         // No personal information is returned here.
         return [
-            'id' => $this->id,
-            'animal_type_id' => $this->animal_type_id,
-            'animal_number' => $this->animal_number,
-            'name' => $this->name,
-            'old_name' => $this->old_name,
-            'breed' => $this->breed,
-            'gender' => $this->gender,
-            'color' => $this->color,
-            'weight_grams' => $this->weight_grams,
-            'size_cm' => $this->size_cm,
-            'date_of_birth' => $this->date_of_birth,
-            'origin_country' => $this->origin_country,
-            'intake_date' => $this->intake_date,
-            'character_description' => $this->character_description,
-            'contract_notes' => $this->contract_notes,
-            'is_neutered' => $this->is_neutered,
-            'health_description' => $this->health_description,
-            'adoption_fee' => $this->adoption_fee,
-            'current_location' => $this->current_location,
-            'do_publish' => $this->do_publish,
-            'publish_description' => $this->publish_description,
-            'application_url' => $this->application_url,
-            'compatibilities' => $this->whenLoaded('compatibilities', fn () => $this->compatibilities->pluck('value')->values()->all(), []
+            'id' => $this->resource->id,
+            'animal_type_id' => $this->resource->animal_type_id,
+            'animal_number' => $this->resource->animal_number,
+            'name' => $this->resource->name,
+            'old_name' => $this->resource->old_name,
+            'breed' => $this->resource->breed,
+            'gender' => $this->resource->gender,
+            'color' => $this->resource->color,
+            'weight_grams' => $this->resource->weight_grams,
+            'size_cm' => $this->resource->size_cm,
+            'date_of_birth' => $this->resource->date_of_birth,
+            'origin_country' => $this->resource->origin_country,
+            'intake_date' => $this->resource->intake_date,
+            'character_description' => $this->resource->character_description,
+            'contract_notes' => $this->resource->contract_notes,
+            'is_neutered' => $this->resource->is_neutered,
+            'health_description' => $this->resource->health_description,
+            'adoption_fee' => $this->resource->adoption_fee,
+            'current_location' => $this->resource->current_location,
+            'do_publish' => $this->resource->do_publish,
+            'publish_description' => $this->resource->publish_description,
+            'application_url' => $this->resource->application_url,
+            'compatibilities' => $this->whenLoaded('compatibilities', fn () => $this->resource->compatibilities->pluck('value')->values()->all(), []
             ),
-            'personality_traits' => $this->whenLoaded('personalityTraits', fn () => $this->personalityTraits->pluck('value')->values()->all(), []
+            'personality_traits' => $this->whenLoaded('personalityTraits', fn () => $this->resource->personalityTraits->pluck('value')->values()->all(), []
             ),
             // Metadata
-            'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at,
+            'created_at' => $this->resource->created_at,
+            'updated_at' => $this->resource->updated_at,
             // Relations (only included when eager-loaded)
             'vaccinations' => PublicAnimalVaccinationResource::collection($this->whenLoaded('vaccinations')),
             'medical_tests' => PublicMedicalTestResource::collection($this->whenLoaded('medicalTests')),
-            'media' => $this->getMedia('pictures')
+            'media' => $this->resource->getMedia('pictures')
                 ->sortBy('order_column')
                 ->values()
-                ->map(fn (Media $media) => $this->formatMedia($media)),
+                ->map(fn (Media $media) => $this->resource->formatMedia($media)),
         ];
     }
 }

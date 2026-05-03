@@ -18,4 +18,6 @@ ddev composer ide-helper           # generate helper files for the IDE
 ddev artisan migrate:fresh --seed  # Reset database and fill with seed data and default password
 ddev artisan migrate:freh          # Reset database 
 ddev artisan app:seed --password=<some-password> # seed the database and set the given password for the users
+ddev exec api/vendor/bin/psalm --taint-analysis # run psalm analysis
+ddev exec api/vendor/bin/psalm --set-baseline=psalm-baseline.xml # set new psalm baseline
 ```

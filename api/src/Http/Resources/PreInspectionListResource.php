@@ -9,10 +9,10 @@ class PreInspectionListResource extends PreInspectionBaseResource
 {
     public function toArray(Request $request): array
     {
-        $token = $this->activeToken();
+        $token = $this->resource->activeToken();
 
         return array_merge(parent::toArray($request), [
-            'status' => $this->status,
+            'status' => $this->resource->status,
             'submission_url' => $token ? FrontendUriBuilder::inspect($token->token) : null,
             'person' => $this->whenLoaded('person', fn ($v) => new PersonBaseResource($v)),
             'animal_type' => $this->whenLoaded('animalType', fn ($v) => new AnimalTypeResource($v)),
