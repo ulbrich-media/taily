@@ -9,7 +9,7 @@ use Symfony\Component\HttpFoundation\Response;
 class PublicApiCors
 {
     private const HEADERS = [
-        'Access-Control-Allow-Origin'  => '*',
+        'Access-Control-Allow-Origin' => '*',
         'Access-Control-Allow-Methods' => 'GET, HEAD, OPTIONS',
         'Access-Control-Allow-Headers' => 'Authorization, Content-Type, Accept',
     ];

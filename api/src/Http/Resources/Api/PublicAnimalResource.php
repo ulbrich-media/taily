@@ -13,11 +13,11 @@ class PublicAnimalResource extends JsonResource
         $isVideo = str_starts_with($media->mime_type ?? '', 'video/');
 
         return [
-            'id'        => $media->uuid,
-            'type'      => $isVideo ? 'video' : 'image',
+            'id' => $media->uuid,
+            'type' => $isVideo ? 'video' : 'image',
             'thumbnail' => $isVideo ? null : route('api.media.serve', ['mediaUuid' => $media->uuid, 'conversion' => 'thumbnail']),
-            'url'       => route('api.media.serve', array_filter(['mediaUuid' => $media->uuid, 'conversion' => $isVideo ? null : 'preview'])),
-            'full'      => route('api.media.serve', array_filter(['mediaUuid' => $media->uuid, 'conversion' => $isVideo ? null : 'full'])),
+            'url' => route('api.media.serve', array_filter(['mediaUuid' => $media->uuid, 'conversion' => $isVideo ? null : 'preview'])),
+            'full' => route('api.media.serve', array_filter(['mediaUuid' => $media->uuid, 'conversion' => $isVideo ? null : 'full'])),
         ];
     }
 
