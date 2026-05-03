@@ -17,12 +17,14 @@ class AnimalController extends Controller
      */
     public function index(Request $request): AnonymousResourceCollection
     {
-        $query = Animal::where('is_reserved', false)
+        $query = Animal::where('do_publish', true)
             ->orderBy('intake_date', 'desc');
 
         if ($request->filled('animal_type_id')) {
             $query->where('animal_type_id', $request->input('animal_type_id'));
         }
+
+        $query->with(['vaccinations', 'medicalTests', 'compatibilities', 'personalityTraits']);
 
         return PublicAnimalResource::collection($query->get());
     }
