@@ -22,7 +22,7 @@
       "message": "chore: release v${nextRelease.version}"
     }],
     ["@semantic-release/github", {
-      "draftRelease": true
+      "draftRelease": false
     }]
   ]
 }
