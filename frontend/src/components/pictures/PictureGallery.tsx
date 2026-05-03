@@ -1,4 +1,4 @@
-import { useRef, useState, type ChangeEvent } from 'react'
+import { useRef, useState, type ChangeEvent, type CSSProperties } from 'react'
 import {
   DndContext,
   closestCenter,
@@ -42,7 +42,6 @@ import {
 import { Badge } from '@/shadcn/components/ui/badge.tsx'
 import Lightbox from 'yet-another-react-lightbox'
 import VideoPlugin from 'yet-another-react-lightbox/plugins/video'
-import DownloadPlugin from 'yet-another-react-lightbox/plugins/download'
 import 'yet-another-react-lightbox/styles.css'
 import { ButtonGroup } from '@/shadcn/components/ui/button-group.tsx'
 
@@ -90,17 +89,18 @@ function SortablePicture({
     isDragging,
   } = useSortable({ id: picture.id })
 
-  const style = {
+  const style: CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 10 : undefined,
   }
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className="border border-border rounded-lg"
+      className="border border-border bg-background rounded-lg"
     >
       {/* Media — click opens lightbox */}
       <div
@@ -251,9 +251,7 @@ export function PictureGallery({
   const [sortOrder, setSortOrder] = useState<string[]>([])
   const [lightboxIndex, setLightboxIndex] = useState(-1)
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
-  )
+  const sensors = useSensors(useSensor(PointerSensor))
 
   const pictureIds = pictures.map((p) => p.id)
   const pictureIdSet = new Set(pictureIds)
@@ -376,21 +374,14 @@ export function PictureGallery({
             index={lightboxIndex}
             close={() => setLightboxIndex(-1)}
             slides={slides}
-            plugins={[VideoPlugin, DownloadPlugin]}
+            plugins={[VideoPlugin]}
             video={{ muted: true, autoPlay: true, controls: true }}
+            controller={{ closeOnPullDown: true, closeOnBackdropClick: true }}
             render={{
               iconClose: () => <X className="size-6" />,
               iconPrev: () => <ChevronLeft className="size-6" />,
               iconNext: () => <ChevronRight className="size-6" />,
               iconLoading: () => <Loader2 className="size-6 animate-spin" />,
-              iconDownload: () => <Download className="size-5" />,
-            }}
-            download={{
-              download: ({ slide }) => {
-                if (typeof slide.download === 'string') {
-                  void triggerDownload(slide.download)
-                }
-              },
             }}
           />
         </>
