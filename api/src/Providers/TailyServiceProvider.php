@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
 use Taily\Http\Middleware\EnsureUserIsAdmin;
+use Taily\Http\Middleware\PublicApiCors;
 use Taily\Models\User;
 
 class TailyServiceProvider extends ServiceProvider
@@ -53,7 +54,7 @@ class TailyServiceProvider extends ServiceProvider
     protected function registerRoutes(): void
     {
         Route::prefix('api')
-            ->middleware(['api'])
+            ->middleware(['api', PublicApiCors::class])
             ->group(__DIR__.'/../../routes/api.php');
 
         Route::prefix('internal')
