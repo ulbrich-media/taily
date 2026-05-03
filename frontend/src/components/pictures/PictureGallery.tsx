@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, type ChangeEvent, type CSSProperties } from 'react'
 import {
   DndContext,
   closestCenter,
@@ -23,32 +23,80 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
+  AlertDialogMedia,
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/shadcn/components/ui/alert-dialog.tsx'
-import { Trash2, Upload, Loader2, ImageIcon, Film } from 'lucide-react'
+import {
+  Trash2,
+  Upload,
+  Loader2,
+  Download,
+  Maximize2,
+  GripVertical,
+  Play,
+  X,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react'
 import { Badge } from '@/shadcn/components/ui/badge.tsx'
+import Lightbox from 'yet-another-react-lightbox'
+import VideoPlugin from 'yet-another-react-lightbox/plugins/video'
+import 'yet-another-react-lightbox/styles.css'
+import { ButtonGroup } from '@/shadcn/components/ui/button-group.tsx'
+import { toast } from 'sonner'
+
+async function triggerDownload(url: string) {
+  let blobUrl: string | undefined
+  let a: HTMLAnchorElement | undefined
+  try {
+    const response = await fetch(url)
+    if (!response.ok) {
+      console.error(`Download failed: ${response.status}`)
+      toast.error(`Download failed`)
+      return
+    }
+    const blob = await response.blob()
+    blobUrl = URL.createObjectURL(blob)
+    a = document.createElement('a')
+    a.href = blobUrl
+    a.download = url.split('/').pop() ?? 'download'
+    document.body.appendChild(a)
+    a.click()
+  } catch (error) {
+    console.error(error)
+    toast.error(`Download failed`)
+  } finally {
+    setTimeout(() => {
+      if (blobUrl) URL.revokeObjectURL(blobUrl)
+      if (a) document.body.removeChild(a)
+    }, 1000)
+  }
+}
 
 export interface Picture {
   id: string
   type: 'image' | 'video'
   url: string
+  full: string
 }
 
 interface SortablePictureProps {
   picture: Picture
-  cssOrder: number
+  index: number
   isProfilePicture: boolean
   isDeleting: boolean
   onDelete: (id: string) => void
+  onOpen: (index: number) => void
 }
 
 function SortablePicture({
   picture,
-  cssOrder,
+  index,
   isProfilePicture,
   isDeleting,
   onDelete,
+  onOpen,
 }: SortablePictureProps) {
   const {
     attributes,
@@ -59,91 +107,141 @@ function SortablePicture({
     isDragging,
   } = useSortable({ id: picture.id })
 
-  const style = {
+  const style: CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
-    order: cssOrder,
+    zIndex: isDragging ? 10 : undefined,
   }
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className="relative group aspect-square bg-muted rounded-lg overflow-hidden"
-      {...(picture.type === 'video' ? attributes : {})}
+      className="border border-border bg-background rounded-lg"
     >
-      {picture.type === 'video' ? (
-        <>
+      {/* Media — click opens lightbox */}
+      <div
+        className="relative aspect-square cursor-pointer"
+        onClick={() => onOpen(index)}
+      >
+        {picture.type === 'video' ? (
           <video
             src={picture.url}
-            className="w-full h-full object-cover cursor-grab active:cursor-grabbing select-none"
+            className="w-full h-full object-cover select-none rounded-lg"
             preload="metadata"
             muted
             playsInline
             draggable={false}
-            {...listeners}
           />
-          {/* Transparent drag handle covering the tile */}
-        </>
-      ) : (
-        <img
-          src={picture.url}
-          alt=""
-          className="w-full h-full object-cover cursor-grab active:cursor-grabbing select-none"
-          draggable={false}
-          {...attributes}
-          {...listeners}
-        />
-      )}
-      {/* Type indicator: image or video icon, top-left, visible on hover */}
-      <div className="absolute top-4 left-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-        {picture.type === 'video' ? (
-          <Film className="size-5 text-white drop-shadow" />
         ) : (
-          <ImageIcon className="size-5 text-white drop-shadow" />
+          <img
+            src={picture.url}
+            alt=""
+            className="w-full h-full object-cover select-none rounded-lg"
+            draggable={false}
+          />
         )}
-      </div>
-      {isProfilePicture && (
-        <span className="absolute bottom-2 left-2">
-          <Badge variant="secondary">Profilbild</Badge>
-        </span>
-      )}
-      <AlertDialog>
-        <AlertDialogTrigger asChild>
-          <Button
-            type="button"
-            variant="destructive"
-            size="icon"
-            className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
-            disabled={isDeleting}
-          >
-            {isDeleting ? (
-              <Loader2 className="size-3 animate-spin" />
-            ) : (
-              <Trash2 className="size-3" />
-            )}
-            <span className="sr-only">Medium löschen</span>
-          </Button>
-        </AlertDialogTrigger>
-        <AlertDialogContent size="sm">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Medium löschen?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Dieses Medium wird unwiderruflich gelöscht.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              onClick={() => onDelete(picture.id)}
+        {picture.type === 'video' && (
+          <div className="absolute inset-0 bottom-10 flex items-center justify-center pointer-events-none">
+            <div className="rounded-full bg-black/50 p-3">
+              <Play className="size-6 text-white fill-white" />
+            </div>
+          </div>
+        )}
+        {isProfilePicture && (
+          <Badge className="absolute top-1 left-1" variant="secondary">
+            Profilbild
+          </Badge>
+        )}
+
+        <ButtonGroup
+          className="absolute bottom-1 inset-x-1 w-auto"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <ButtonGroup>
+            <Button
+              type="button"
+              variant="secondary"
+              size="icon"
+              className="cursor-grab active:cursor-grabbing touch-none backdrop-blur-xs"
+              {...attributes}
+              {...listeners}
             >
-              Löschen
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+              <GripVertical />
+              <span className="sr-only">Sortieren</span>
+            </Button>
+
+            {/* Open lightbox */}
+            <Button
+              type="button"
+              variant="secondary"
+              size="icon"
+              className="backdrop-blur-xs"
+              onClick={() => onOpen(index)}
+            >
+              <Maximize2 />
+              <span className="sr-only">Vergrößern</span>
+            </Button>
+
+            {/* Download */}
+            <Button
+              type="button"
+              variant="secondary"
+              size="icon"
+              className="backdrop-blur-xs"
+              onClick={() => triggerDownload(picture.full)}
+            >
+              <Download />
+              <span className="sr-only">Herunterladen</span>
+            </Button>
+          </ButtonGroup>
+
+          <div className="flex-1"></div>
+
+          <ButtonGroup>
+            {/* Delete */}
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  className="backdrop-blur-xs"
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? (
+                    <Loader2 className="animate-spin" />
+                  ) : (
+                    <Trash2 />
+                  )}
+                  <span className="sr-only">Medium löschen</span>
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent size="sm">
+                <AlertDialogHeader>
+                  <AlertDialogMedia>
+                    <Trash2 />
+                  </AlertDialogMedia>
+                  <AlertDialogTitle>Medium löschen?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Dieses Medium wird unwiderruflich gelöscht.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                  <AlertDialogAction
+                    variant="destructive"
+                    onClick={() => onDelete(picture.id)}
+                  >
+                    Löschen
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </ButtonGroup>
+        </ButtonGroup>
+      </div>
     </div>
   )
 }
@@ -168,36 +266,38 @@ export function PictureGallery({
   acceptVideo = false,
 }: PictureGalleryProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
-
-  // Tracks visual order as an array of IDs. Kept separate from pictures so the
-  // DOM order of rendered items never changes — only the CSS `order` property
-  // does. This prevents Firefox from reinitialising <video> elements when the
-  // list is sorted.
   const [sortOrder, setSortOrder] = useState<string[]>([])
+  const [lightboxIndex, setLightboxIndex] = useState(-1)
 
   const sensors = useSensors(useSensor(PointerSensor))
 
   const pictureIds = pictures.map((p) => p.id)
   const pictureIdSet = new Set(pictureIds)
 
-  // sortOrder is valid only when it contains exactly the same IDs as pictures.
-  // When pictures change (upload, delete, server refresh), this naturally falls
-  // back to server order without needing a useEffect reset.
   const isSortOrderValid =
     sortOrder.length === pictureIds.length &&
     sortOrder.every((id) => pictureIdSet.has(id))
 
   const effectiveOrder = isSortOrderValid ? sortOrder : pictureIds
 
-  // Map from id → visual position index (used for CSS `order` and profile badge)
-  const orderIndex = Object.fromEntries(effectiveOrder.map((id, i) => [id, i]))
-
-  // Profile picture = first image in visual order
   const firstImageId = effectiveOrder.find(
     (id) => pictures.find((p) => p.id === id)?.type === 'image'
   )
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Build slides in visual order for YARL — use full-size URLs for both display and download
+  const slides = effectiveOrder.map((id) => {
+    const picture = pictures.find((p) => p.id === id)!
+    if (picture.type === 'video') {
+      return {
+        type: 'video' as const,
+        sources: [{ src: picture.full, type: 'video/mp4' }],
+        download: picture.full,
+      }
+    }
+    return { src: picture.full, download: picture.full }
+  })
+
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? [])
     if (files.length > 0) {
       onUpload(files)
@@ -258,29 +358,51 @@ export function PictureGallery({
           Noch keine Medien vorhanden.
         </p>
       ) : (
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext
-            items={effectiveOrder}
-            strategy={rectSortingStrategy}
+        <>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
           >
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-              {pictures.map((picture) => (
-                <SortablePicture
-                  key={picture.id}
-                  picture={picture}
-                  cssOrder={orderIndex[picture.id] ?? 0}
-                  isProfilePicture={picture.id === firstImageId}
-                  isDeleting={isDeleting}
-                  onDelete={onDelete}
-                />
-              ))}
-            </div>
-          </SortableContext>
-        </DndContext>
+            <SortableContext
+              items={effectiveOrder}
+              strategy={rectSortingStrategy}
+            >
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 xl:grid-cols-4">
+                {effectiveOrder.map((id, index) => {
+                  const picture = pictures.find((p) => p.id === id)!
+                  return (
+                    <SortablePicture
+                      key={picture.id}
+                      picture={picture}
+                      index={index}
+                      isProfilePicture={picture.id === firstImageId}
+                      isDeleting={isDeleting}
+                      onDelete={onDelete}
+                      onOpen={setLightboxIndex}
+                    />
+                  )
+                })}
+              </div>
+            </SortableContext>
+          </DndContext>
+
+          <Lightbox
+            open={lightboxIndex >= 0}
+            index={lightboxIndex}
+            close={() => setLightboxIndex(-1)}
+            slides={slides}
+            plugins={[VideoPlugin]}
+            video={{ muted: true, autoPlay: true, controls: true }}
+            controller={{ closeOnPullDown: true, closeOnBackdropClick: true }}
+            render={{
+              iconClose: () => <X className="size-6" />,
+              iconPrev: () => <ChevronLeft className="size-6" />,
+              iconNext: () => <ChevronRight className="size-6" />,
+              iconLoading: () => <Loader2 className="size-6 animate-spin" />,
+            }}
+          />
+        </>
       )}
     </div>
   )
