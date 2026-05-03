@@ -2,6 +2,13 @@
 
 All notable changes to Taily are documented here.
 
+## [0.2.1](https://github.com/ulbrich-media/taily/compare/v0.2.0...v0.2.1) (2026-05-03)
+
+
+### Bug Fixes
+
+* broken organization links fixed ([e1c60f1](https://github.com/ulbrich-media/taily/commit/e1c60f1c4c7c5ed5c7e3209b25b2b4f037cd63f0))
+
 # [0.2.0](https://github.com/ulbrich-media/taily/compare/v0.1.3...v0.2.0) (2026-05-03)
 
 
