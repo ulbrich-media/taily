@@ -18,6 +18,9 @@ reviews:
     - All backend-generated frontend URLs must go through `FrontendUriBuilder`. Flag any inline construction of callback URLs using `env('FRONTEND_URL')` or string concatenation.
     - Each new action requires a static method on `FrontendUriBuilder` and a corresponding handler in the frontend `/callback` route.
 
+    **Public API spec** (`api/public/openapi.yaml`):
+    - `api/public/openapi.yaml` is a hand-maintained OpenAPI 3.0 spec — there is no auto-generation. Flag any PR that modifies `api/routes/api.php`, `api/src/Http/Controllers/Api/`, or `api/src/Http/Resources/Api/` without a corresponding update to `api/public/openapi.yaml`.
+
     **API type handling** (`docs/coding-patterns/api-type-handling.md`):
     - Every model returned from an endpoint must be wrapped in a Laravel Resource — never a raw Eloquent model. Flag any controller method that returns a raw model or `$model->toArray()` instead of a Resource.
     - Nested relations inside a Resource must themselves be wrapped in the appropriate Resource class. Flag any `$this->whenLoaded('relation')` that returns a raw model instead of e.g. `new PersonBaseResource($v)` or `ResourceClass::collection(...)`.
