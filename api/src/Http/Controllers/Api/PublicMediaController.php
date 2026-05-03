@@ -24,6 +24,10 @@ class PublicMediaController extends Controller
 
         $conversion = $request->query('conversion', '');
 
+        if ($conversion && ! $media->hasGeneratedConversion($conversion)) {
+            abort(404);
+        }
+
         // Conversions may be stored on a different disk than the original file.
         $disk = $conversion ? ($media->conversions_disk ?? $media->disk) : $media->disk;
         $absolutePath = Storage::disk($disk)->path($media->getPathRelativeToRoot($conversion));

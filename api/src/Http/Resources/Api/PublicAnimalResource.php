@@ -41,7 +41,6 @@ class PublicAnimalResource extends JsonResource
             'intake_date' => $this->intake_date,
             'character_description' => $this->character_description,
             'contract_notes' => $this->contract_notes,
-            'internal_notes' => $this->internal_notes,
             'is_neutered' => $this->is_neutered,
             'health_description' => $this->health_description,
             'adoption_fee' => $this->adoption_fee,

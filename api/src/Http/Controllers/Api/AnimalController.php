@@ -24,7 +24,7 @@ class AnimalController extends Controller
             $query->where('animal_type_id', $request->input('animal_type_id'));
         }
 
-        $query->with(['vaccinations', 'medicalTests', 'compatibilities', 'personalityTraits']);
+        $query->with(['vaccinations', 'medicalTests', 'compatibilities', 'personalityTraits', 'media']);
 
         return PublicAnimalResource::collection($query->get());
     }
