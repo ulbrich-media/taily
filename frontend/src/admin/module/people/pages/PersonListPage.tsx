@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react'
 import { Users, User } from 'lucide-react'
-import { cn } from '@/shadcn/lib/utils.ts'
 import type { PersonListResource } from '@/api/types/people'
 import {
   Table,
@@ -13,6 +12,11 @@ import {
 import { Badge } from '@/shadcn/components/ui/badge'
 import { TableListView } from '@/components/list/TableListView'
 import { PageHeader } from '@/components/layout/PageHeader'
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from '@/shadcn/components/ui/avatar.tsx'
 
 interface PersonListResourceListPageProps {
   people: PersonListResource[]
@@ -45,7 +49,7 @@ export function PersonListPage({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-12"></TableHead>
+                <TableHead></TableHead>
                 <TableHead>Name, E-Mail</TableHead>
                 <TableHead>Organisation</TableHead>
                 <TableHead>Herkunft</TableHead>
@@ -56,23 +60,18 @@ export function PersonListPage({
             <TableBody>
               {people.map((person) => (
                 <TableRow key={person.id}>
-                  <TableCell className="w-12">
-                    <div
-                      className={cn(
-                        'size-10 rounded-md bg-muted flex items-center justify-center overflow-hidden shrink-0',
-                        person.profile_picture_url && 'bg-transparent'
-                      )}
-                    >
-                      {person.profile_picture_url ? (
-                        <img
-                          src={person.profile_picture_url}
+                  <TableCell>
+                    <Avatar size="lg">
+                      {person.profile_picture_url && (
+                        <AvatarImage
                           alt={person.full_name}
-                          className="size-full object-cover"
+                          src={person.profile_picture_url}
                         />
-                      ) : (
-                        <User className="size-5 text-muted-foreground" />
                       )}
-                    </div>
+                      <AvatarFallback>
+                        <User className="size-5 text-muted-foreground" />
+                      </AvatarFallback>
+                    </Avatar>
                   </TableCell>
                   <TableCell className="font-medium">
                     <p>
