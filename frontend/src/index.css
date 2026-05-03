@@ -160,6 +160,3 @@
 .yarl__container {
   @apply bg-black/40!;
 }
-.yarl__slide_image {
-  @apply rounded-lg;
-}

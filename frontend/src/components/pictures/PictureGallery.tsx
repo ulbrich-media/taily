@@ -44,16 +44,34 @@ import Lightbox from 'yet-another-react-lightbox'
 import VideoPlugin from 'yet-another-react-lightbox/plugins/video'
 import 'yet-another-react-lightbox/styles.css'
 import { ButtonGroup } from '@/shadcn/components/ui/button-group.tsx'
+import { toast } from 'sonner'
 
 async function triggerDownload(url: string) {
-  const response = await fetch(url)
-  const blob = await response.blob()
-  const blobUrl = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = blobUrl
-  a.download = url.split('/').pop() ?? 'download'
-  a.click()
-  URL.revokeObjectURL(blobUrl)
+  let blobUrl: string | undefined
+  let a: HTMLAnchorElement | undefined
+  try {
+    const response = await fetch(url)
+    if (!response.ok) {
+      console.error(`Download failed: ${response.status}`)
+      toast.error(`Download failed`)
+      return
+    }
+    const blob = await response.blob()
+    blobUrl = URL.createObjectURL(blob)
+    a = document.createElement('a')
+    a.href = blobUrl
+    a.download = url.split('/').pop() ?? 'download'
+    document.body.appendChild(a)
+    a.click()
+  } catch (error) {
+    console.error(error)
+    toast.error(`Download failed`)
+  } finally {
+    setTimeout(() => {
+      if (blobUrl) URL.revokeObjectURL(blobUrl)
+      if (a) document.body.removeChild(a)
+    }, 1000)
+  }
 }
 
 export interface Picture {
