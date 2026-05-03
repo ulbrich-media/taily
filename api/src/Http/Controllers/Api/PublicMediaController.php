@@ -22,7 +22,7 @@ class PublicMediaController extends Controller
             abort(404);
         }
 
-        $conversion = $request->query('conversion', '');
+        $conversion = $request->string('conversion')->toString();
 
         if ($conversion && ! $media->hasGeneratedConversion($conversion)) {
             abort(404);
