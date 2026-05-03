@@ -1,0 +1,1 @@
+import{n as e,r as t,t as n}from"./preload-helper-DIwg6-ix.js";var r=t(`/admin/_authenticated/adoptions/$adoptionId/adoption/`)({component:e(()=>n(()=>import(`./adoption-ZhaX1oUz.js`),[]),`component`)});export{r as t};

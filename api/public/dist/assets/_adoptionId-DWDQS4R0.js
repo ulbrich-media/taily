@@ -1,0 +1,1 @@
+import{o as e,r as t,t as n}from"./compiler-runtime-BVusVIFC.js";import{t as r}from"./adoption-Cg3gISLx.js";var i=n(),a=e(t());function o(){let e=(0,i.c)(2),t=r.useNavigate(),n;return e[0]===t?n=e[1]:(n=()=>{t({})},e[0]=t,e[1]=n),(0,a.useEffect)(n),null}export{o as component};

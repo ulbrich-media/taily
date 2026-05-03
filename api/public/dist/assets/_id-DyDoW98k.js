@@ -1,0 +1,1 @@
+import{n as e,r as t,t as n}from"./preload-helper-DIwg6-ix.js";var r=t(`/admin/_authenticated/pre-inspections/$id/`)({component:e(()=>n(()=>import(`./_id-C1kqfueV.js`),[]),`component`)});export{r as t};

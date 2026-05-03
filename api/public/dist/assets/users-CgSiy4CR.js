@@ -1,0 +1,1 @@
+var e={Admin:`admin`,User:`user`};export{e as t};
