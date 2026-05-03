@@ -1,0 +1,393 @@
+openapi: 3.0.3
+info:
+  title: Taily Public API
+  version: '1.0'
+  description: |
+    Public API for Taily animal shelter management.
+
+    Exposes adoptable animals, animal types, and media for integration with
+    external websites or applications (e.g. shelter adoption pages).
+
+    ## Authentication
+
+    Authenticated endpoints require a personal access token issued through the
+    Taily admin interface. Tokens carry ability scopes that control which
+    endpoints are accessible. Pass the token as a Bearer token in the
+    `Authorization` header.
+
+    The media endpoint (`/api/media/{mediaUuid}`) requires no authentication
+    and is suitable for direct use in `<img src>` and `<video src>` attributes.
+
+servers:
+  - url: https://api.taily.ddev.site/api
+    description: Your Taily installation (replace with your actual URL)
+
+security:
+  - bearerAuth: []
+
+paths:
+  /animals:
+    get:
+      summary: List adoptable animals
+      operationId: listAnimals
+      description: |
+        Returns all animals with `do_publish` set to `true`, ordered by intake
+        date descending.
+
+        Required token ability: `animals:read:adoptable`
+      parameters:
+        - name: animal_type_id
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Filter results to animals of a specific type.
+      responses:
+        '200':
+          description: List of adoptable animals.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Animal'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /animal-types:
+    get:
+      summary: List animal types
+      operationId: listAnimalTypes
+      description: |
+        Returns all animal types with their associated vaccination and medical
+        test templates. Use type IDs to filter the `/animals` endpoint.
+
+        Required token ability: `animals:read:types`
+      responses:
+        '200':
+          description: List of animal types.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AnimalType'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /media/{mediaUuid}:
+    get:
+      summary: Serve animal media
+      operationId: serveMedia
+      security: []
+      description: |
+        Serves an animal image or video file. No authentication required.
+        Suitable for direct use in `<img src>` and `<video src>` attributes.
+
+        URLs for each media item are included in the `/animals` response and
+        are stable — they do not expire. Each upload receives a unique UUID,
+        so the content at a given URL is immutable.
+
+        Returns `404` if the media UUID does not exist or the animal is not
+        currently published.
+
+        Responses carry `Cache-Control: public, max-age=604800` (one week).
+      parameters:
+        - name: mediaUuid
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: UUID of the media item (from the `id` field in the `media` array).
+        - name: conversion
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [thumbnail, preview, full]
+          description: |
+            Image size variant to serve. Omit for the original file (required for videos).
+
+            | Value | Dimensions | Use case |
+            |-------|-----------|----------|
+            | `thumbnail` | 80×80 px (cropped square) | List views, avatars |
+            | `preview` | up to 800×800 px | Detail pages |
+            | `full` | up to 1440×1440 px | Lightbox / full-screen |
+      responses:
+        '200':
+          description: Binary image or video file.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: public, max-age=604800
+          content:
+            image/*:
+              schema:
+                type: string
+                format: binary
+            video/*:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Media not found or animal is not published.
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: |
+        Personal access token issued through the Taily admin interface.
+        Tokens carry ability scopes; see each endpoint for the required scope.
+
+  responses:
+    Unauthenticated:
+      description: Missing or invalid bearer token.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: Unauthenticated.
+    Forbidden:
+      description: Token does not have the required ability scope.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: This action is unauthorized.
+
+  schemas:
+
+    Animal:
+      type: object
+      required: [id, do_publish, compatibilities, personality_traits,
+                 created_at, updated_at, vaccinations, medical_tests, media]
+      properties:
+        id:
+          type: integer
+        animal_type_id:
+          type: integer
+          nullable: true
+        animal_number:
+          type: string
+          nullable: true
+        name:
+          type: string
+          nullable: true
+        old_name:
+          type: string
+          nullable: true
+        breed:
+          type: string
+          nullable: true
+        gender:
+          type: string
+          enum: [male, female]
+          nullable: true
+        color:
+          type: string
+          nullable: true
+        weight_grams:
+          type: integer
+          nullable: true
+        size_cm:
+          type: integer
+          nullable: true
+        date_of_birth:
+          type: string
+          format: date
+          nullable: true
+        origin_country:
+          type: string
+          nullable: true
+          description: ISO 3166-1 alpha-2 country code.
+          example: DE
+        intake_date:
+          type: string
+          format: date
+          nullable: true
+        character_description:
+          type: string
+          nullable: true
+        contract_notes:
+          type: string
+          nullable: true
+        internal_notes:
+          type: string
+          nullable: true
+        is_neutered:
+          type: boolean
+          nullable: true
+        health_description:
+          type: string
+          nullable: true
+        adoption_fee:
+          type: number
+          format: float
+          nullable: true
+          description: Adoption fee in the organisation's currency.
+        current_location:
+          type: string
+          nullable: true
+        do_publish:
+          type: boolean
+          description: Always `true` for animals returned by this endpoint.
+        publish_description:
+          type: string
+          nullable: true
+          description: Public-facing description shown on the adoption listing.
+        application_url:
+          type: string
+          format: uri
+          nullable: true
+          description: URL to an external adoption application form.
+        compatibilities:
+          type: array
+          items:
+            type: string
+          description: Compatibility traits, e.g. `dogs`, `cats`, `children`.
+        personality_traits:
+          type: array
+          items:
+            type: string
+          description: Personality traits, e.g. `playful`, `calm`, `curious`.
+        vaccinations:
+          type: array
+          items:
+            $ref: '#/components/schemas/AnimalVaccination'
+        medical_tests:
+          type: array
+          items:
+            $ref: '#/components/schemas/AnimalMedicalTest'
+        media:
+          type: array
+          items:
+            $ref: '#/components/schemas/Media'
+          description: Images and videos, ordered by display order.
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    AnimalVaccination:
+      type: object
+      required: [id, title, vaccinated_at]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        vaccinated_at:
+          type: string
+          format: date
+
+    AnimalMedicalTest:
+      type: object
+      required: [id, title, tested_at]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        tested_at:
+          type: string
+          format: date
+        result:
+          type: string
+          enum: [positive, negative]
+          nullable: true
+
+    Media:
+      type: object
+      required: [id, type, url, full]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Stable UUID used to construct the media URL.
+        type:
+          type: string
+          enum: [image, video]
+        thumbnail:
+          type: string
+          format: uri
+          nullable: true
+          description: |
+            URL to the 80×80 px cropped thumbnail. `null` for videos.
+            Pass directly to `<img src>`.
+        url:
+          type: string
+          format: uri
+          description: |
+            URL to the preview image (up to 800×800 px) or the original video.
+            Pass directly to `<img src>` or `<video src>`.
+        full:
+          type: string
+          format: uri
+          description: |
+            URL to the full-size image (up to 1440×1440 px) or the original video.
+            Use for lightbox or full-screen display.
+
+    AnimalType:
+      type: object
+      required: [id, title, vaccinations, medical_tests]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        vaccinations:
+          type: array
+          items:
+            $ref: '#/components/schemas/VaccinationTemplate'
+          description: Vaccination types defined as templates for this animal type.
+        medical_tests:
+          type: array
+          items:
+            $ref: '#/components/schemas/MedicalTestTemplate'
+          description: Medical test types defined as templates for this animal type.
+
+    VaccinationTemplate:
+      type: object
+      required: [id, title]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+
+    MedicalTestTemplate:
+      type: object
+      required: [id, title]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
