@@ -10,9 +10,9 @@ class PersonDetailResource extends PersonBaseResource
     public function toArray(Request $request): array
     {
         return array_merge(parent::toArray($request), [
-            'pictures' => $this->when(
-                $this->relationLoaded('media'),
-                fn () => $this->getMedia('pictures')
+            'pictures' => $this->resource->when(
+                $this->resource->relationLoaded('media'),
+                fn () => $this->resource->getMedia('pictures')
                     ->sortBy('order_column')
                     ->map(fn (Media $media) => [
                         'id' => $media->uuid,

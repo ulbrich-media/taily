@@ -10,31 +10,31 @@ class PreInspectionBaseResource extends JsonResource
 {
     protected function activeToken(): ?AccessToken
     {
-        if ($this->verdict !== 'pending') {
+        if ($this->resource->verdict !== 'pending') {
             return null;
         }
 
-        return $this->accessTokens
+        return $this->resource->accessTokens
             ->filter(fn ($t) => ! $t->isExpired())
             ->first();
     }
 
     public function toArray(Request $request): array
     {
-        $token = $this->activeToken();
+        $token = $this->resource->activeToken();
 
         return [
-            'id' => $this->id,
-            'person_id' => $this->person_id,
-            'animal_type_id' => $this->animal_type_id,
-            'inspector_id' => $this->inspector_id,
-            'verdict' => $this->verdict,
-            'notes' => $this->notes,
+            'id' => $this->resource->id,
+            'person_id' => $this->resource->person_id,
+            'animal_type_id' => $this->resource->animal_type_id,
+            'inspector_id' => $this->resource->inspector_id,
+            'verdict' => $this->resource->verdict,
+            'notes' => $this->resource->notes,
             'token' => $token?->token,
             'expires_at' => $token?->expires_at,
-            'submitted_at' => $this->submitted_at,
-            'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at,
+            'submitted_at' => $this->resource->submitted_at,
+            'created_at' => $this->resource->created_at,
+            'updated_at' => $this->resource->updated_at,
         ];
     }
 }

@@ -10,9 +10,9 @@ class AnimalDetailResource extends AnimalBaseResource
     public function toArray(Request $request): array
     {
         return array_merge(parent::toArray($request), [
-            'pictures' => $this->when(
-                $this->relationLoaded('media'),
-                fn () => $this->getMedia('pictures')
+            'pictures' => $this->resource->when(
+                $this->resource->relationLoaded('media'),
+                fn () => $this->resource->getMedia('pictures')
                     ->sortBy('order_column')
                     ->map(function (Media $media) {
                         $isVideo = str_starts_with($media->mime_type ?? '', 'video/');

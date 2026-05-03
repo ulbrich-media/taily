@@ -10,14 +10,14 @@ class FormTemplateResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
-            'type' => $this->type,
-            'name' => $this->name,
-            'schema' => $this->schema,
-            'ui_schema' => $this->ui_schema,
-            'version' => $this->version,
-            'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at,
+            'id' => $this->resource->id,
+            'type' => $this->resource->type,
+            'name' => $this->resource->name,
+            'schema' => $this->resource->schema,
+            'ui_schema' => $this->resource->ui_schema,
+            'version' => $this->resource->version,
+            'created_at' => $this->resource->created_at,
+            'updated_at' => $this->resource->updated_at,
         ];
     }
 }

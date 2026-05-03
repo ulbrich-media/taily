@@ -10,19 +10,19 @@ class OrganizationResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
-            'name' => $this->name,
-            'email' => $this->email,
-            'street_line' => $this->street_line,
-            'street_line_additional' => $this->street_line_additional,
-            'postal_code' => $this->postal_code,
-            'city' => $this->city,
-            'country_code' => $this->country_code,
-            'phone' => $this->phone,
-            'mobile' => $this->mobile,
-            'people_count' => $this->when(isset($this->people_count), fn () => $this->people_count),
-            'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at,
+            'id' => $this->resource->id,
+            'name' => $this->resource->name,
+            'email' => $this->resource->email,
+            'street_line' => $this->resource->street_line,
+            'street_line_additional' => $this->resource->street_line_additional,
+            'postal_code' => $this->resource->postal_code,
+            'city' => $this->resource->city,
+            'country_code' => $this->resource->country_code,
+            'phone' => $this->resource->phone,
+            'mobile' => $this->resource->mobile,
+            'people_count' => $this->resource->when(isset($this->resource->people_count), fn () => $this->resource->people_count),
+            'created_at' => $this->resource->created_at,
+            'updated_at' => $this->resource->updated_at,
         ];
     }
 }

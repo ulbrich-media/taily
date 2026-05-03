@@ -10,29 +10,29 @@ class AdoptionBaseResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
+            'id' => $this->resource->id,
             // Foreign keys
-            'animal_id' => $this->animal_id,
-            'mediator_id' => $this->mediator_id,
-            'applicant_id' => $this->applicant_id,
-            'inspector_id' => $this->inspector_id,
+            'animal_id' => $this->resource->animal_id,
+            'mediator_id' => $this->resource->mediator_id,
+            'applicant_id' => $this->resource->applicant_id,
+            'inspector_id' => $this->resource->inspector_id,
             // Pre-inspection
-            'pre_inspection_result' => $this->pre_inspection_result,
-            'pre_inspection_summary' => $this->pre_inspection_summary,
+            'pre_inspection_result' => $this->resource->pre_inspection_result,
+            'pre_inspection_summary' => $this->resource->pre_inspection_summary,
             // Contract
-            'contract_sent_at' => $this->contract_sent_at,
-            'contract_signed' => $this->contract_signed,
+            'contract_sent_at' => $this->resource->contract_sent_at,
+            'contract_signed' => $this->resource->contract_signed,
             // Transfer
-            'transfer_planned_at' => $this->transfer_planned_at,
-            'transferred_at' => $this->transferred_at,
+            'transfer_planned_at' => $this->resource->transfer_planned_at,
+            'transferred_at' => $this->resource->transferred_at,
             // Computed status attributes
-            'pre_inspection_status' => $this->pre_inspection_status,
-            'contract_status' => $this->contract_status,
-            'transfer_status' => $this->transfer_status,
-            'overall_status' => $this->overall_status,
+            'pre_inspection_status' => $this->resource->pre_inspection_status,
+            'contract_status' => $this->resource->contract_status,
+            'transfer_status' => $this->resource->transfer_status,
+            'overall_status' => $this->resource->overall_status,
             // Metadata
-            'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at,
+            'created_at' => $this->resource->created_at,
+            'updated_at' => $this->resource->updated_at,
             // Relations (only included when eager-loaded)
             'animal' => $this->whenLoaded('animal', fn ($a) => new AnimalBaseResource($a)),
             'mediator' => $this->whenLoaded('mediator', fn ($m) => new PersonBaseResource($m)),

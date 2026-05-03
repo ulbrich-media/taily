@@ -10,11 +10,11 @@ class UserInvitationResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
-            'expires_at' => $this->expires_at,
-            'accepted_at' => $this->accepted_at,
-            'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at,
+            'id' => $this->resource->id,
+            'expires_at' => $this->resource->expires_at,
+            'accepted_at' => $this->resource->accepted_at,
+            'created_at' => $this->resource->created_at,
+            'updated_at' => $this->resource->updated_at,
         ];
     }
 }
