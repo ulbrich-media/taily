@@ -1,0 +1,2 @@
+const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["assets/_adoptionId-DWDQS4R0.js","assets/compiler-runtime-BVusVIFC.js","assets/adoption-Cg3gISLx.js","assets/preload-helper-DIwg6-ix.js","assets/useStore-pp8EFVhb.js","assets/shim-wqZ3Vk2A.js","assets/react-dom-C1LlSk_I.js"])))=>i.map(i=>d[i]);
+import{n as e,r as t,t as n}from"./preload-helper-DIwg6-ix.js";var r=t(`/admin/_authenticated/adoptions/$adoptionId/`)({component:e(()=>n(()=>import(`./_adoptionId-DWDQS4R0.js`),__vite__mapDeps([0,1,2,3,4,5,6])),`component`)});export{r as t};

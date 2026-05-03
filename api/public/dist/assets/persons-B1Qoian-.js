@@ -1,0 +1,1 @@
+import{t as e}from"./api-D2ua9CeG.js";import{t}from"./queryOptions-CMSBCFOf.js";async function n(){return e(`persons`)}var r=t({queryFn:n,queryKey:{all:[`persons`],list:[`persons`,`list`]}.list});export{r as t};

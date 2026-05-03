@@ -1,0 +1,1 @@
+import{n as e,t}from"./compiler-runtime-BVusVIFC.js";var n=t(),r=e();function i(e){let t=(0,n.c)(3),{children:i,columns:a}=e,o=(a===void 0?2:a)===2?`grid grid-cols-1 md:grid-cols-2 gap-6`:`space-y-6`,s;return t[0]!==i||t[1]!==o?(s=(0,r.jsx)(`div`,{className:o,children:i}),t[0]=i,t[1]=o,t[2]=s):s=t[2],s}export{i as t};

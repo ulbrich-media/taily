@@ -1,0 +1,1 @@
+import{o as e,r as t}from"./compiler-runtime-BVusVIFC.js";var n=e(t(),1),r=globalThis?.document?n.useLayoutEffect:()=>{};function i(e){let t=n.useRef(e);return n.useEffect(()=>{t.current=e}),n.useMemo(()=>(...e)=>t.current?.(...e),[])}export{r as n,i as t};

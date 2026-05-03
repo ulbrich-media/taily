@@ -1,1 +1,0 @@
-const e=(t,i="")=>t?new Date(t).toLocaleString("de-DE",{year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"}):i,r=t=>t?new Date(t).toLocaleString("de-DE",{year:"numeric",month:"2-digit",day:"2-digit"}):"";export{e as a,r as f};
