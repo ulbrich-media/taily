@@ -6,19 +6,19 @@ import type {
 } from './types'
 
 export async function getOrganizations(): Promise<OrganizationResource[]> {
-  return apiRequest('/organizations')
+  return apiRequest('organizations')
 }
 
 export async function getOrganization(
   id: string
 ): Promise<OrganizationResource> {
-  return apiRequest(`/organizations/${id}`)
+  return apiRequest(`organizations/${id}`)
 }
 
 export async function createOrganization(
   data: CreateOrganizationRequest
 ): Promise<{ message: string; data: OrganizationResource }> {
-  return apiRequest('/organizations', {
+  return apiRequest('organizations', {
     method: 'POST',
     body: JSON.stringify(data),
   })
@@ -28,7 +28,7 @@ export async function updateOrganization(
   id: string,
   data: UpdateOrganizationRequest
 ): Promise<{ message: string; data: OrganizationResource }> {
-  return apiRequest(`/organizations/${id}`, {
+  return apiRequest(`organizations/${id}`, {
     method: 'PUT',
     body: JSON.stringify(data),
   })
@@ -37,7 +37,7 @@ export async function updateOrganization(
 export async function deleteOrganization(
   id: string
 ): Promise<{ message: string }> {
-  return apiRequest(`/organizations/${id}`, {
+  return apiRequest(`organizations/${id}`, {
     method: 'DELETE',
   })
 }
