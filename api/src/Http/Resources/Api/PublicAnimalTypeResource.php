@@ -12,6 +12,16 @@ class PublicAnimalTypeResource extends JsonResource
         return [
             'id' => $this->id,
             'title' => $this->title,
+            'vaccinations' => $this->vaccinations->map(fn ($v) => [
+                'id' => $v->id,
+                'title' => $v->title,
+                'description' => $v->description,
+            ]),
+            'medical_tests' => $this->medicalTests->map(fn ($t) => [
+                'id' => $t->id,
+                'title' => $t->title,
+                'description' => $t->description,
+            ]),
         ];
     }
 }
