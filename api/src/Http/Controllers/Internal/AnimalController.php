@@ -5,10 +5,12 @@ namespace Taily\Http\Controllers\Internal;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Validation\Rule;
 use Taily\Http\Controllers\Controller;
 use Taily\Http\Resources\AnimalDetailResource;
 use Taily\Http\Resources\AnimalListResource;
 use Taily\Models\Animal;
+use Taily\Services\AnimalTraitService;
 
 class AnimalController extends Controller
 {
@@ -45,6 +47,8 @@ class AnimalController extends Controller
             'breed' => 'nullable|string|max:255',
             'gender' => 'required|in:male,female',
             'color' => 'nullable|string|max:255',
+            'weight_grams' => 'nullable|integer|min:0|max:1000000',
+            'size_cm' => 'nullable|integer|min:0|max:500',
             'date_of_birth' => 'nullable|date',
             'origin_country' => 'nullable|string|max:255',
             'is_boarding_animal' => 'boolean',
@@ -58,7 +62,7 @@ class AnimalController extends Controller
 
         $animal = Animal::create($validated);
 
-        $animal->load(['animalType', 'healthConditionVaccinations', 'healthConditionTests', 'assignedAgent', 'owner', 'sponsor', 'adoptions', 'media']);
+        $animal->load(['animalType', 'vaccinations', 'medicalTests', 'assignedAgent', 'owner', 'sponsor', 'adoptions', 'media', 'compatibilities', 'personalityTraits']);
 
         return response()->json([
             'message' => 'Tier erfolgreich angelegt.',
@@ -73,13 +77,15 @@ class AnimalController extends Controller
     {
         $animal->load([
             'animalType',
-            'healthConditionVaccinations',
-            'healthConditionTests',
+            'vaccinations',
+            'medicalTests',
             'assignedAgent',
             'owner',
             'sponsor',
             'adoptions',
             'media',
+            'compatibilities',
+            'personalityTraits',
         ]);
 
         return new AnimalDetailResource($animal);
@@ -100,6 +106,8 @@ class AnimalController extends Controller
             'breed' => 'sometimes|nullable|string|max:255',
             'gender' => 'sometimes|required|in:male,female',
             'color' => 'sometimes|nullable|string|max:255',
+            'weight_grams' => 'sometimes|nullable|integer|min:0|max:1000000',
+            'size_cm' => 'sometimes|nullable|integer|min:0|max:500',
             'date_of_birth' => 'sometimes|nullable|date',
             'origin_country' => 'sometimes|nullable|string|max:255',
             'is_boarding_animal' => 'sometimes|boolean',
@@ -127,40 +135,56 @@ class AnimalController extends Controller
             'alternate_transport_trace' => 'sometimes|nullable|string|max:255',
             'alternate_arrival_location' => 'sometimes|nullable|string|max:255',
             'do_publish' => 'sometimes|boolean',
+            'publish_description' => 'sometimes|nullable|string',
+            'application_url' => 'sometimes|nullable|url|max:2048',
             'is_deceased' => 'sometimes|boolean',
             'date_of_death' => 'sometimes|nullable|date_format:Y-m-d',
+            // Traits
+            'compatibilities' => 'sometimes|array',
+            'compatibilities.*' => 'string|max:255|distinct',
+            'personality_traits' => 'sometimes|array',
+            'personality_traits.*' => 'string|max:255|distinct',
             // Vaccinations and Tests
             'vaccinations' => 'sometimes|array',
-            'vaccinations.*.health_condition_id' => 'required|uuid|exists:health_conditions,id',
-            'vaccinations.*.vaccinated_at' => 'required|date',
+            'vaccinations.*.vaccination_id' => ['required', 'uuid', Rule::exists('vaccinations', 'id')->where('animal_type_id', $animal->animal_type_id)],
+            'vaccinations.*.vaccinated_at' => 'sometimes|nullable|date',
             'tests' => 'sometimes|array',
-            'tests.*.health_condition_id' => 'required|uuid|exists:health_conditions,id',
-            'tests.*.tested_at' => 'required|date',
+            'tests.*.medical_test_id' => ['required', 'uuid', Rule::exists('medical_tests', 'id')->where('animal_type_id', $animal->animal_type_id)],
+            'tests.*.tested_at' => 'sometimes|nullable|date',
             'tests.*.result' => 'required|in:positive,negative',
         ]);
 
         $animal->update($validated);
 
+        // Sync traits if provided
+        if ($request->has('compatibilities')) {
+            AnimalTraitService::sync($animal, 'compatibility', $validated['compatibilities']);
+        }
+
+        if ($request->has('personality_traits')) {
+            AnimalTraitService::sync($animal, 'personality_trait', $validated['personality_traits']);
+        }
+
         // Sync vaccinations if provided
         if ($request->has('vaccinations')) {
             $vaccinationData = collect($validated['vaccinations'])->mapWithKeys(function ($vaccination) {
-                return [$vaccination['health_condition_id'] => ['vaccinated_at' => $vaccination['vaccinated_at']]];
+                return [$vaccination['vaccination_id'] => ['vaccinated_at' => $vaccination['vaccinated_at'] ?? null]];
             });
-            $animal->healthConditionVaccinations()->sync($vaccinationData);
+            $animal->vaccinations()->sync($vaccinationData->toArray());
         }
 
         // Sync tests if provided
         if ($request->has('tests')) {
             $testData = collect($validated['tests'])->mapWithKeys(function ($test) {
-                return [$test['health_condition_id'] => [
-                    'tested_at' => $test['tested_at'],
+                return [$test['medical_test_id'] => [
+                    'tested_at' => $test['tested_at'] ?? null,
                     'result' => $test['result'],
                 ]];
             });
-            $animal->healthConditionTests()->sync($testData);
+            $animal->medicalTests()->sync($testData->toArray());
         }
 
-        $animal->load(['animalType', 'healthConditionVaccinations', 'healthConditionTests', 'assignedAgent', 'owner', 'sponsor', 'adoptions', 'media']);
+        $animal->load(['animalType', 'vaccinations', 'medicalTests', 'assignedAgent', 'owner', 'sponsor', 'adoptions', 'media', 'compatibilities', 'personalityTraits']);
 
         return response()->json([
             'message' => 'Tier erfolgreich aktualisiert.',

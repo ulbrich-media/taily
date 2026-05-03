@@ -10,16 +10,25 @@ class AnimalDetailResource extends AnimalBaseResource
     public function toArray(Request $request): array
     {
         return array_merge(parent::toArray($request), [
-            'pictures' => $this->when(
-                $this->relationLoaded('media'),
-                fn () => $this->getMedia('pictures')
+            'pictures' => $this->resource->when(
+                $this->resource->relationLoaded('media'),
+                fn () => $this->resource->getMedia('pictures')
                     ->sortBy('order_column')
-                    ->map(fn (Media $media) => [
-                        'id' => $media->uuid,
-                        'sort_order' => $media->order_column,
-                        'url' => $media->getTemporaryUrl(now()->addHour(), 'preview'),
-                        'full' => $media->getTemporaryUrl(now()->addHour(), 'full'),
-                    ])
+                    ->map(function (Media $media) {
+                        $isVideo = str_starts_with($media->mime_type ?? '', 'video/');
+
+                        return [
+                            'id' => $media->uuid,
+                            'sort_order' => $media->order_column,
+                            'type' => $isVideo ? 'video' : 'image',
+                            'url' => $isVideo
+                                ? $media->getTemporaryUrl(now()->addHour())
+                                : $media->getTemporaryUrl(now()->addHour(), 'preview'),
+                            'full' => $isVideo
+                                ? $media->getTemporaryUrl(now()->addHour())
+                                : $media->getTemporaryUrl(now()->addHour(), 'full'),
+                        ];
+                    })
                     ->values()
                     ->all(),
             ),

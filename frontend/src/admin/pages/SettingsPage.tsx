@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react'
 import {
   Settings,
-  Activity,
+  Syringe,
+  FlaskConical,
   Users,
   TriangleAlert,
   Building2,
@@ -20,7 +21,8 @@ import { NavigationCards } from '@/components/navigation/NavigationCards'
 interface SettingsPageProps {
   usersAction: ReactNode
   animalTypesAction: ReactNode
-  healthConditionsAction: ReactNode
+  vaccinationsAction: ReactNode
+  medicalTestsAction: ReactNode
   organizationsAction: ReactNode
   formTemplatesAction: ReactNode
 }
@@ -28,7 +30,8 @@ interface SettingsPageProps {
 export function SettingsPage({
   usersAction,
   animalTypesAction,
-  healthConditionsAction,
+  vaccinationsAction,
+  medicalTestsAction,
   organizationsAction,
   formTemplatesAction,
 }: SettingsPageProps) {
@@ -72,12 +75,19 @@ export function SettingsPage({
             actions: animalTypesAction,
           },
           {
-            icon: Activity,
-            title: 'Gesundheitszustände',
-            subtitle: 'Impfungen und Tests',
+            icon: Syringe,
+            title: 'Impfungen',
+            subtitle: 'Verfügbare Impfungen',
+            description: 'Verwalte die verfügbaren Impfungen der Tiere.',
+            actions: vaccinationsAction,
+          },
+          {
+            icon: FlaskConical,
+            title: 'Tests',
+            subtitle: 'Medizinische Tests',
             description:
-              'Verwalte die Gesundheitszustände der Tiere, welche für Impfungen und Tests verwendet werden.',
-            actions: healthConditionsAction,
+              'Verwalte die verfügbaren medizinischen Tests der Tiere.',
+            actions: medicalTestsAction,
           },
           {
             icon: Building2,

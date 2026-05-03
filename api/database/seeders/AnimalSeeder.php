@@ -8,8 +8,10 @@ use Illuminate\Support\Str;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Taily\Models\Animal;
 use Taily\Models\AnimalType;
-use Taily\Models\HealthCondition;
+use Taily\Models\MedicalTest;
 use Taily\Models\Person;
+use Taily\Models\Vaccination;
+use Taily\Services\AnimalTraitService;
 
 class AnimalSeeder extends Seeder
 {
@@ -57,19 +59,35 @@ class AnimalSeeder extends Seeder
             }
         }
 
-        // Create health conditions for dogs
-        // These can be used as either vaccinations or tests
-        $healthConditions = [
-            HealthCondition::create([
-                'name' => 'Tollwut',
+        // Create vaccinations for dogs
+        $vaccinations = [
+            Vaccination::create([
+                'title' => 'Tollwut',
+                'description' => '',
                 'animal_type_id' => $animalTypeDog->id,
             ]),
-            HealthCondition::create([
-                'name' => 'Borreliose',
+            Vaccination::create([
+                'title' => 'Borreliose',
+                'description' => '',
                 'animal_type_id' => $animalTypeDog->id,
             ]),
-            HealthCondition::create([
-                'name' => 'Leishmaniose',
+            Vaccination::create([
+                'title' => 'DHPPi-L',
+                'description' => 'Staupe, Hepatitis, Parvovirose, Parainfluenza & Leptospirose',
+                'animal_type_id' => $animalTypeDog->id,
+            ]),
+        ];
+
+        // Create medical tests for dogs
+        $medicalTests = [
+            MedicalTest::create([
+                'title' => 'Leishmaniose',
+                'description' => '',
+                'animal_type_id' => $animalTypeDog->id,
+            ]),
+            MedicalTest::create([
+                'title' => '4D Snap Test',
+                'description' => 'Kombinationstest für Heartworm, Ehrlichia, Anaplasma & Borrelia',
                 'animal_type_id' => $animalTypeDog->id,
             ]),
         ];
@@ -130,8 +148,26 @@ class AnimalSeeder extends Seeder
             'Straßenhunde Rumänien e.V.',
         ];
 
-        // Get all persons for relations
-        $persons = Person::all();
+        $dogCompatibilities = [
+            'Katzen', 'Kinder', 'andere Hunde', 'Kleintiere',
+            'Männer', 'Frauen', 'Senioren', 'erfahrene Halter',
+        ];
+
+        $dogPersonalityTraits = [
+            'verspielt', 'verschmust', 'aktiv', 'ruhig', 'Jagdtrieb',
+            'ängstlich', 'dominant', 'selbstständig', 'anhänglich',
+            'lernfreudig', 'ausgeglichen', 'wachsam',
+        ];
+
+        $catCompatibilities = [
+            'Kinder', 'andere Katzen', 'Hunde', 'ruhige Umgebung',
+            'Wohnungshaltung geeignet', 'Freigänger geeignet',
+        ];
+
+        $catPersonalityTraits = [
+            'verschmust', 'verspielt', 'neugierig', 'scheu',
+            'selbstständig', 'anhänglich', 'ruhig', 'aktiv',
+        ];
 
         // Create 25 demo dogs
         for ($i = 1; $i <= 25; $i++) {
@@ -148,6 +184,8 @@ class AnimalSeeder extends Seeder
                 'breed' => $faker->randomElement($breeds),
                 'gender' => $faker->randomElement(['male', 'female']),
                 'color' => $faker->randomElement($colors),
+                'weight_grams' => $faker->boolean(75) ? $faker->numberBetween(5000, 50000) : null,
+                'size_cm' => $faker->boolean(75) ? $faker->numberBetween(25, 80) : null,
                 'date_of_birth' => $dateOfBirth,
                 'origin_country' => $faker->randomElement($countries),
                 'is_boarding_animal' => $faker->boolean(20),
@@ -175,6 +213,8 @@ class AnimalSeeder extends Seeder
                 'alternate_transport_trace' => $faker->boolean(15) ? 'ALT'.$faker->numerify('######') : '',
                 'alternate_arrival_location' => $faker->boolean(10) ? $faker->randomElement($locations) : '',
                 'do_publish' => $faker->boolean(85),
+                'publish_description' => $faker->boolean(60) ? $faker->realText(300) : '',
+                'application_url' => $faker->boolean(50) ? $faker->url() : '',
                 'is_deceased' => $isDeceased,
                 'date_of_death' => $isDeceased ? $faker->dateTimeBetween($intakeDate, 'now') : null,
             ]);
@@ -187,28 +227,44 @@ class AnimalSeeder extends Seeder
                     ->toMediaCollection('pictures');
             }
 
-            // Randomly assign health conditions as vaccinations to dogs
-            // Each animal gets 0-3 vaccinations
-            $numVaccinations = $faker->numberBetween(0, 3);
-            $selectedVaccinations = $faker->randomElements($healthConditions, $numVaccinations);
+            // Randomly assign vaccinations to dogs
+            $numVaccinations = $faker->numberBetween(0, count($vaccinations));
+            $selectedVaccinations = $faker->randomElements($vaccinations, $numVaccinations);
 
-            foreach ($selectedVaccinations as $healthCondition) {
-                $animal->healthConditionVaccinations()->attach($healthCondition->id, [
+            foreach ($selectedVaccinations as $vaccination) {
+                $animal->vaccinations()->attach($vaccination->id, [
                     'vaccinated_at' => $faker->dateTimeBetween('-2 years', 'now'),
                 ]);
             }
 
-            // Randomly assign health conditions as tests to dogs
-            // Each animal gets 0-3 tests
-            // A health condition can be both a vaccination and a test for the same animal
-            $numTests = $faker->numberBetween(0, 3);
-            $selectedTests = $faker->randomElements($healthConditions, $numTests);
+            // Randomly assign medical tests to dogs
+            $numTests = $faker->numberBetween(0, count($medicalTests));
+            $selectedTests = $faker->randomElements($medicalTests, $numTests);
 
-            foreach ($selectedTests as $healthCondition) {
-                $animal->healthConditionTests()->attach($healthCondition->id, [
+            foreach ($selectedTests as $medicalTest) {
+                $animal->medicalTests()->attach($medicalTest->id, [
                     'tested_at' => $faker->dateTimeBetween('-2 years', 'now'),
                     'result' => $faker->randomElement(['positive', 'negative']),
                 ]);
+            }
+
+            // Randomly assign trait values to dogs
+            if ($faker->boolean(80)) {
+                $numCompatibilities = $faker->numberBetween(1, 4);
+                AnimalTraitService::sync(
+                    $animal,
+                    'compatibility',
+                    $faker->randomElements($dogCompatibilities, $numCompatibilities)
+                );
+            }
+
+            if ($faker->boolean(85)) {
+                $numPersonalityTraits = $faker->numberBetween(2, 5);
+                AnimalTraitService::sync(
+                    $animal,
+                    'personality_trait',
+                    $faker->randomElements($dogPersonalityTraits, $numPersonalityTraits)
+                );
             }
         }
 
@@ -246,6 +302,8 @@ class AnimalSeeder extends Seeder
                 'breed' => $faker->randomElement($catBreeds),
                 'gender' => $faker->randomElement(['male', 'female']),
                 'color' => $faker->randomElement($colors),
+                'weight_grams' => $faker->boolean(75) ? $faker->numberBetween(2000, 7000) : null,
+                'size_cm' => $faker->boolean(75) ? $faker->numberBetween(20, 35) : null,
                 'date_of_birth' => $dateOfBirth,
                 'origin_country' => $faker->randomElement($countries),
                 'is_boarding_animal' => $faker->boolean(20),
@@ -273,6 +331,8 @@ class AnimalSeeder extends Seeder
                 'alternate_transport_trace' => $faker->boolean(15) ? 'ALT'.$faker->numerify('######') : '',
                 'alternate_arrival_location' => $faker->boolean(10) ? $faker->randomElement($locations) : '',
                 'do_publish' => $faker->boolean(85),
+                'publish_description' => $faker->boolean(60) ? $faker->realText(300) : '',
+                'application_url' => $faker->boolean(50) ? $faker->url() : '',
                 'is_deceased' => $isDeceased,
                 'date_of_death' => $isDeceased ? $faker->dateTimeBetween($intakeDate, 'now') : null,
             ]);
@@ -283,6 +343,25 @@ class AnimalSeeder extends Seeder
                 $animal->addMedia($image)
                     ->preservingOriginal()
                     ->toMediaCollection('pictures');
+            }
+
+            // Randomly assign trait values to cats
+            if ($faker->boolean(80)) {
+                $numCompatibilities = $faker->numberBetween(1, 3);
+                AnimalTraitService::sync(
+                    $animal,
+                    'compatibility',
+                    $faker->randomElements($catCompatibilities, $numCompatibilities)
+                );
+            }
+
+            if ($faker->boolean(85)) {
+                $numPersonalityTraits = $faker->numberBetween(2, 4);
+                AnimalTraitService::sync(
+                    $animal,
+                    'personality_trait',
+                    $faker->randomElements($catPersonalityTraits, $numPersonalityTraits)
+                );
             }
         }
 

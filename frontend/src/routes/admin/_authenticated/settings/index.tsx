@@ -2,7 +2,8 @@ import { createFileRoute } from '@tanstack/react-router'
 import { SettingsPage } from '@/admin/pages/SettingsPage'
 import { Route as UsersRoute } from '@/routes/admin/_authenticated/settings/users/route'
 import { Route as AnimalTypesRoute } from '@/routes/admin/_authenticated/settings/animal-types/route'
-import { Route as HealthConditionsRoute } from '@/routes/admin/_authenticated/settings/health-conditions/route'
+import { Route as VaccinationsRoute } from '@/routes/admin/_authenticated/settings/vaccinations/route'
+import { Route as MedicalTestsRoute } from '@/routes/admin/_authenticated/settings/medical-tests/route'
 import { Route as OrganizationsRoute } from '@/routes/admin/_authenticated/settings/organizations/index'
 import { Route as FormTemplatesRoute } from '@/routes/admin/_authenticated/settings/form-templates/index'
 import { Button } from '@/shadcn/components/ui/button'
@@ -24,9 +25,14 @@ function RouteComponent() {
           <AnimalTypesRoute.Link>Öffnen</AnimalTypesRoute.Link>
         </Button>
       }
-      healthConditionsAction={
+      vaccinationsAction={
         <Button asChild>
-          <HealthConditionsRoute.Link>Öffnen</HealthConditionsRoute.Link>
+          <VaccinationsRoute.Link>Öffnen</VaccinationsRoute.Link>
+        </Button>
+      }
+      medicalTestsAction={
+        <Button asChild>
+          <MedicalTestsRoute.Link>Öffnen</MedicalTestsRoute.Link>
         </Button>
       }
       organizationsAction={

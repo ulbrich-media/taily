@@ -3,13 +3,13 @@
 // ---------------------------------------------------------------------------
 
 export interface VaccinationFormData {
-  health_condition_id: string
-  vaccinated_at: string
+  vaccination_id: string
+  vaccinated_at: string | null
 }
 
 export interface TestFormData {
-  health_condition_id: string
-  tested_at: string
+  medical_test_id: string
+  tested_at: string | null
   result: 'positive' | 'negative'
 }
 
@@ -22,6 +22,8 @@ export interface CreateAnimalRequest {
   breed?: string
   gender: 'male' | 'female'
   color?: string
+  weight_grams?: string | null
+  size_cm?: string | null
   date_of_birth?: string | null
   origin_country?: string
   intake_date?: string | null
@@ -54,6 +56,10 @@ export interface UpdateAnimalRequest extends CreateAnimalRequest {
   alternate_transport_trace?: string
   alternate_arrival_location?: string
   do_publish: boolean
+  publish_description?: string | null
+  compatibilities?: string[]
+  personality_traits?: string[]
+  application_url?: string | null
   is_deceased: boolean
   date_of_death?: string | null
 }

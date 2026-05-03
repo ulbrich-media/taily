@@ -56,7 +56,7 @@ class FormTemplateService
                 'ui_schema' => $data['ui_schema'] ?? $template->ui_schema,
             ]);
 
-            return ['template' => $template->fresh(), 'new_version_created' => false];
+            return ['template' => $template->fresh() ?? $template, 'new_version_created' => false];
         }
 
         $newTemplate = DB::transaction(function () use ($template, $data) {

@@ -37,6 +37,8 @@ class Animal extends Model implements HasMedia
         'current_location' => '',
         'alternate_transport_trace' => '',
         'alternate_arrival_location' => '',
+        'publish_description' => '',
+        'application_url' => '',
     ];
 
     /**
@@ -53,6 +55,8 @@ class Animal extends Model implements HasMedia
         'breed',
         'gender',
         'color',
+        'weight_grams',
+        'size_cm',
         'date_of_birth',
         'origin_country',
         'is_boarding_animal',
@@ -80,6 +84,8 @@ class Animal extends Model implements HasMedia
         'alternate_transport_trace',
         'alternate_arrival_location',
         'do_publish',
+        'publish_description',
+        'application_url',
         'is_deceased',
         'date_of_death',
     ];
@@ -112,6 +118,10 @@ class Animal extends Model implements HasMedia
 
     public function registerMediaConversions(?Media $media = null): void
     {
+        if ($media !== null && str_starts_with($media->mime_type ?? '', 'video/')) {
+            return;
+        }
+
         $this->addMediaConversion('thumbnail')
             ->fit(Fit::Crop, 80, 80)
             ->performOnCollections('pictures')
@@ -128,6 +138,21 @@ class Animal extends Model implements HasMedia
             ->nonQueued();
     }
 
+    public function traits(): HasMany
+    {
+        return $this->hasMany(AnimalTrait::class);
+    }
+
+    public function compatibilities(): HasMany
+    {
+        return $this->hasMany(AnimalTrait::class)->where('type', 'compatibility');
+    }
+
+    public function personalityTraits(): HasMany
+    {
+        return $this->hasMany(AnimalTrait::class)->where('type', 'personality_trait');
+    }
+
     /**
      * Get the animal type for this animal.
      */
@@ -136,22 +161,16 @@ class Animal extends Model implements HasMedia
         return $this->belongsTo(AnimalType::class);
     }
 
-    /**
-     * Get the health conditions assigned as vaccinations for this animal.
-     */
-    public function healthConditionVaccinations(): BelongsToMany
+    public function vaccinations(): BelongsToMany
     {
-        return $this->belongsToMany(HealthCondition::class, 'animal_health_condition_vaccination')
+        return $this->belongsToMany(Vaccination::class, 'animal_vaccination')
             ->withPivot('vaccinated_at')
             ->withTimestamps();
     }
 
-    /**
-     * Get the health conditions assigned as tests for this animal.
-     */
-    public function healthConditionTests(): BelongsToMany
+    public function medicalTests(): BelongsToMany
     {
-        return $this->belongsToMany(HealthCondition::class, 'animal_health_condition_test')
+        return $this->belongsToMany(MedicalTest::class, 'animal_medical_test')
             ->withPivot('tested_at', 'result')
             ->withTimestamps();
     }

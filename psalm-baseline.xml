@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<files psalm-version="7.0.0-beta19@7e751c06a756fa64dc4c759c09fe4a173afcb433">
+  <file src="api/src/Http/Controllers/Internal/AnimalTypeController.php">
+    <InvalidScalarArgument>
+      <code><![CDATA[$animalType->id]]></code>
+      <code><![CDATA[$animalType->id]]></code>
+    </InvalidScalarArgument>
+  </file>
+  <file src="api/src/Http/Controllers/Internal/ApiTokenController.php">
+    <InvalidMethodCall>
+      <code><![CDATA[toIso8601String]]></code>
+    </InvalidMethodCall>
+    <UndefinedMagicPropertyFetch>
+      <code><![CDATA[$request->user()->tokens]]></code>
+    </UndefinedMagicPropertyFetch>
+  </file>
+  <file src="api/src/Providers/AppServiceProvider.php">
+    <InvalidArgument>
+      <code><![CDATA[PersonalAccessToken::class]]></code>
+    </InvalidArgument>
+  </file>
+</files>

@@ -84,6 +84,12 @@ npm run format
 - **Token patterns** — Use the `HasAccessToken` trait to gate access to an existing record; use a self-contained token model when the token record is the business object. → [tokens](docs/coding-patterns/tokens.md)
 - **Empty strings** — String fields default to `''` (set via `$attributes` in the model), never `null`, unless `null` carries distinct semantic meaning. → [empty-strings](docs/coding-patterns/empty-strings.md)
 
+## Public API
+
+The public API is documented via a static OpenAPI spec at `api/public/openapi.yaml`, served at `{baseUrl}/openapi.yaml`.
+
+**When changing any public API endpoint** (routes in `api/routes/api.php`, controllers in `api/src/Http/Controllers/Api/`, or resources in `api/src/Http/Resources/Api/`), update `api/public/openapi.yaml` to reflect the change. There is no auto-generation — the file is the source of truth for external consumers.
+
 ## Restrictions
 
 - You are not allowed to add packages on your own. You can consider them but have to ask for consent before installation.

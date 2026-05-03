@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react'
 import { PawPrint } from 'lucide-react'
-import { cn } from '@/shadcn/lib/utils.ts'
 import type { AnimalListResource } from '@/api/types/animals'
 import type { AnimalTypeResource } from '@/api/types/animal-types'
 import {
@@ -18,6 +17,11 @@ import {
 import { Field, FieldLabel } from '@/shadcn/components/ui/field.tsx'
 import { TableListView } from '@/components/list/TableListView'
 import { PageHeader } from '@/components/layout/PageHeader'
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from '@/shadcn/components/ui/avatar.tsx'
 
 interface AnimalListPageProps {
   animals: AnimalListResource[]
@@ -97,23 +101,18 @@ export function AnimalListPage({
                 )
                 return (
                   <TableRow key={animal.id}>
-                    <TableCell className="w-12">
-                      <div
-                        className={cn(
-                          'size-10 rounded-md bg-muted flex items-center justify-center overflow-hidden shrink-0',
-                          animal.profile_picture_url && 'bg-transparent'
-                        )}
-                      >
-                        {animal.profile_picture_url ? (
-                          <img
-                            src={animal.profile_picture_url}
+                    <TableCell>
+                      <Avatar size="lg">
+                        {animal.profile_picture_url && (
+                          <AvatarImage
                             alt={animal.name}
-                            className="size-full object-cover"
+                            src={animal.profile_picture_url}
                           />
-                        ) : (
-                          <PawPrint className="size-5 text-muted-foreground" />
                         )}
-                      </div>
+                        <AvatarFallback>
+                          <PawPrint className="size-5 text-muted-foreground" />
+                        </AvatarFallback>
+                      </Avatar>
                     </TableCell>
                     <TableCell className="font-medium">{animal.name}</TableCell>
                     <TableCell>{animalType?.title || '-'}</TableCell>

@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Taily\Http\Controllers\Controller;
 use Taily\Http\Resources\AnimalTypeResource;
 use Taily\Models\AnimalType;
+use Taily\Services\AnimalTraitService;
 
 class AnimalTypeController extends Controller
 {
@@ -77,6 +78,17 @@ class AnimalTypeController extends Controller
         return response()->json([
             'message' => 'Tierart erfolgreich aktualisiert.',
             'data' => new AnimalTypeResource($animalType),
+        ]);
+    }
+
+    /**
+     * Return distinct trait suggestion values for all animals of this type.
+     */
+    public function traitSuggestions(AnimalType $animalType): JsonResponse
+    {
+        return response()->json([
+            'compatibilities' => AnimalTraitService::suggestions($animalType->id, 'compatibility'),
+            'personality_traits' => AnimalTraitService::suggestions($animalType->id, 'personality_trait'),
         ]);
     }
 

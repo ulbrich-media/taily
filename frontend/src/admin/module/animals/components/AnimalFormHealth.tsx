@@ -11,7 +11,8 @@ import {
 } from '@/shadcn/components/ui/field.tsx'
 import { RadioGroup, RadioGroupItem } from '@/shadcn/components/ui/radio-group'
 import type { AnimalDetailResource } from '@/api/types/animals'
-import type { HealthConditionResource } from '@/api/types/health-conditions'
+import type { VaccinationResource } from '@/api/types/vaccinations'
+import type { MedicalTestResource } from '@/api/types/medical-tests'
 import {
   Table,
   TableBody,
@@ -31,7 +32,7 @@ import {
   AlertDescription,
   AlertTitle,
 } from '@/shadcn/components/ui/alert.tsx'
-import { InfoIcon } from 'lucide-react'
+import { CircleHelp, InfoIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
 import {
   STRING_LENGTH_TEXTAREA,
@@ -42,45 +43,32 @@ import {
   toDateFieldValue,
   zFieldDate,
 } from '@/components/field/DateInput.utils.ts'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/shadcn/components/ui/tooltip.tsx'
 
-const vaccinationSchema = z
-  .object({
-    health_condition_id: z.string().min(1, 'Impfung ist erforderlich'),
-    vaccinated_at: zFieldDate,
-    result: z.enum(['done', 'unset'], {
-      error: 'Ergebnis ist erforderlich',
-    }),
-    _name: z.string(),
-  })
-  .superRefine((value, ctx) => {
-    if (value.result === 'done' && value.vaccinated_at === null)
-      ctx.addIssue({
-        code: 'custom',
-        path: ['vaccinated_at'],
-        message: 'Datum ist erforderlich',
-      })
-  })
+const vaccinationSchema = z.object({
+  vaccination_id: z.string().min(1, 'Impfung ist erforderlich'),
+  vaccinated_at: zFieldDate,
+  result: z.enum(['done', 'unset'], {
+    error: 'Ergebnis ist erforderlich',
+  }),
+  _title: z.string(),
+  _description: z.string(),
+})
 
-const testSchema = z
-  .object({
-    health_condition_id: z.string().min(1, 'Test ist erforderlich'),
-    tested_at: zFieldDate,
-    result: z.enum(['positive', 'negative', 'unset'], {
-      error: 'Ergebnis ist erforderlich',
-    }),
-    _name: z.string(),
-  })
-  .superRefine((value, ctx) => {
-    if (
-      ['positive', 'negative'].includes(value.result) &&
-      value.tested_at === null
-    )
-      ctx.addIssue({
-        code: 'custom',
-        path: ['tested_at'],
-        message: 'Datum ist erforderlich',
-      })
-  })
+const testSchema = z.object({
+  medical_test_id: z.string().min(1, 'Test ist erforderlich'),
+  tested_at: zFieldDate,
+  result: z.enum(['positive', 'negative', 'unset'], {
+    error: 'Ergebnis ist erforderlich',
+  }),
+  _title: z.string(),
+  _description: z.string(),
+})
 
 const animalFormHealthSchema = z.object({
   is_neutered: z.boolean(),
@@ -96,22 +84,26 @@ export type AnimalFormHealthData = z.infer<typeof animalFormHealthSchema>
 
 interface AnimalFormHealthProps {
   defaultValues?: Partial<AnimalDetailResource>
-  healthConditions: HealthConditionResource[]
+  vaccinations: VaccinationResource[]
+  medicalTests: MedicalTestResource[]
   onSubmit: (data: AnimalFormHealthData) => Promise<void>
   onCancel?: () => void
   isSubmitting?: boolean
   submitLabel?: string
-  healthConditionsLink?: ReactNode
+  vaccinationsLink?: ReactNode
+  medicalTestsLink?: ReactNode
 }
 
 export function AnimalFormHealth({
   defaultValues,
-  healthConditions,
+  vaccinations,
+  medicalTests,
   onSubmit,
   onCancel,
   isSubmitting = false,
   submitLabel = 'Speichern',
-  healthConditionsLink,
+  vaccinationsLink,
+  medicalTestsLink,
 }: AnimalFormHealthProps) {
   const form = useForm<AnimalFormHealthData>({
     resolver: zodResolver(animalFormHealthSchema),
@@ -121,39 +113,41 @@ export function AnimalFormHealth({
       tasso_id: defaultValues?.tasso_id || '',
       findefix_id: defaultValues?.findefix_id || '',
       trace_id: defaultValues?.trace_id || '',
-      vaccinations: healthConditions.map((healthCondition) => {
-        const vaccination = defaultValues?.health_condition_vaccinations?.find(
-          (v) => v.id === healthCondition.id
+      vaccinations: vaccinations.map((vaccination) => {
+        const existing = defaultValues?.vaccinations?.find(
+          (v) => v.id === vaccination.id
         )
 
         return {
-          health_condition_id: healthCondition.id,
-          vaccinated_at: toDateFieldValue(vaccination?.pivot.vaccinated_at),
-          result: vaccination ? 'done' : 'unset',
-          _name: healthCondition.name,
+          vaccination_id: vaccination.id,
+          vaccinated_at: toDateFieldValue(existing?.pivot.vaccinated_at),
+          result: existing ? 'done' : 'unset',
+          _title: vaccination.title,
+          _description: vaccination.description,
         }
       }),
-      tests: healthConditions.map((healthCondition) => {
-        const test = defaultValues?.health_condition_tests?.find(
-          (t) => t.id === healthCondition.id
+      tests: medicalTests.map((medicalTest) => {
+        const existing = defaultValues?.medical_tests?.find(
+          (t) => t.id === medicalTest.id
         )
 
         return {
-          health_condition_id: healthCondition.id,
-          tested_at: toDateFieldValue(test?.pivot.tested_at),
-          result: test?.pivot.result ?? 'unset',
-          _name: healthCondition.name,
+          medical_test_id: medicalTest.id,
+          tested_at: toDateFieldValue(existing?.pivot.tested_at),
+          result: existing?.pivot.result ?? 'unset',
+          _title: medicalTest.title,
+          _description: medicalTest.description,
         }
       }),
     },
   })
 
-  const vaccinations = useWatch({
+  const vaccinationFields = useWatch({
     control: form.control,
     name: 'vaccinations',
   })
 
-  const tests = useWatch({
+  const testFields = useWatch({
     control: form.control,
     name: 'tests',
   })
@@ -237,7 +231,7 @@ export function AnimalFormHealth({
               </div>
             )}
 
-            {vaccinations.length > 0 ? (
+            {vaccinationFields.length > 0 ? (
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -247,10 +241,24 @@ export function AnimalFormHealth({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {vaccinations.map((vaccination, index) => (
-                    <TableRow key={vaccination.health_condition_id}>
+                  {vaccinationFields.map((vaccination, index) => (
+                    <TableRow key={vaccination.vaccination_id}>
                       <TableCell className="font-medium">
-                        {vaccination._name}
+                        {vaccination._title}
+                        {!!vaccination._description && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button variant="ghost">
+                                  <CircleHelp />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {vaccination._description}
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
                       </TableCell>
                       <TableCell>
                         <Controller
@@ -330,17 +338,17 @@ export function AnimalFormHealth({
                 <InfoIcon />
                 <AlertTitle>Keine Impfungen verfügbar!</AlertTitle>
                 <AlertDescription>
-                  Für diese Tierart konnten keine Gesundheitszustände gefunden
-                  werden. Bitte lege welche an, wenn du für dieses Tier
-                  Impfungen hinterlegen willst.
-                  {healthConditionsLink && (
+                  Für diese Tierart konnten keine Impfungen gefunden werden.
+                  Bitte lege welche an, wenn du für dieses Tier Impfungen
+                  hinterlegen willst.
+                  {vaccinationsLink && (
                     <Button
                       variant="secondary"
                       size="sm"
                       asChild
                       className="mt-2"
                     >
-                      {healthConditionsLink}
+                      {vaccinationsLink}
                     </Button>
                   )}
                 </AlertDescription>
@@ -360,7 +368,7 @@ export function AnimalFormHealth({
               </div>
             )}
 
-            {tests.length > 0 ? (
+            {testFields.length > 0 ? (
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -370,10 +378,24 @@ export function AnimalFormHealth({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {tests.map((test, index) => (
-                    <TableRow key={test.health_condition_id}>
+                  {testFields.map((test, index) => (
+                    <TableRow key={test.medical_test_id}>
                       <TableCell className="font-medium">
-                        {test._name}
+                        {test._title}
+                        {!!test._description && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button variant="ghost">
+                                  <CircleHelp />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {test._description}
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
                       </TableCell>
                       <TableCell>
                         <Controller
@@ -465,17 +487,17 @@ export function AnimalFormHealth({
                 <InfoIcon />
                 <AlertTitle>Keine Tests verfügbar!</AlertTitle>
                 <AlertDescription>
-                  Für diese Tierart konnten keine Gesundheitszustände gefunden
-                  werden. Bitte lege welche an, wenn du für dieses Tier Tests
-                  hinterlegen willst.
-                  {healthConditionsLink && (
+                  Für diese Tierart konnten keine Tests gefunden werden. Bitte
+                  lege welche an, wenn du für dieses Tier Tests hinterlegen
+                  willst.
+                  {medicalTestsLink && (
                     <Button
                       variant="secondary"
                       size="sm"
                       asChild
                       className="mt-2"
                     >
-                      {healthConditionsLink}
+                      {medicalTestsLink}
                     </Button>
                   )}
                 </AlertDescription>

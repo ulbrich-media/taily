@@ -4,17 +4,16 @@
 
 import type { AnimalTypeResource } from './animal-types'
 import type { PersonBaseResource } from './people'
-import type {
-  HealthConditionVaccinationResource,
-  HealthConditionTestResource,
-} from './health-conditions'
+import type { AnimalVaccinationResource } from './vaccinations'
+import type { AnimalMedicalTestResource } from './medical-tests'
 import type { AdoptionBaseResource } from './adoptions'
 
 export interface AnimalPicture {
   id: string
   sort_order: number
-  url: string // preview 800px
-  full: string // 1440px
+  type: 'image' | 'video'
+  url: string
+  full: string
 }
 
 // Scalar fields shared by list and detail resources.
@@ -30,6 +29,8 @@ export interface AnimalBaseResource {
   breed: string | null
   gender: 'male' | 'female'
   color: string | null
+  weight_grams: number | null
+  size_cm: number | null
   date_of_birth: string | null
   origin_country: string | null
   is_boarding_animal: boolean
@@ -57,6 +58,10 @@ export interface AnimalBaseResource {
   alternate_transport_trace: string | null
   alternate_arrival_location: string | null
   do_publish: boolean
+  publish_description: string | null
+  compatibilities: string[]
+  personality_traits: string[]
+  application_url: string | null
   is_deceased: boolean
   date_of_death: string | null
   // Metadata
@@ -79,7 +84,7 @@ export interface AnimalDetailResource extends AnimalBaseResource {
   owner: PersonBaseResource | null
   sponsor: PersonBaseResource | null
   adoptions: AdoptionBaseResource[]
-  health_condition_vaccinations: HealthConditionVaccinationResource[]
-  health_condition_tests: HealthConditionTestResource[]
+  vaccinations: AnimalVaccinationResource[]
+  medical_tests: AnimalMedicalTestResource[]
   pictures: AnimalPicture[]
 }
