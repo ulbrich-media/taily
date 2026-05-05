@@ -33,22 +33,22 @@ return new class extends Migration
 
         Schema::table('adoptions', function (Blueprint $table) {
             // General adoption lifecycle status
-            $table->enum('status', ['pending', 'in_progress', 'canceled', 'done'])->default('pending')->after('applicant_id');
-            $table->timestamp('canceled_at')->nullable()->after('status');
-            $table->text('canceled_reason')->default('')->after('canceled_at');
+            $table->enum('status', ['pending', 'in_progress', 'canceled', 'done'])->default('pending');
+            $table->timestamp('canceled_at')->nullable();
+            $table->text('canceled_reason')->default('');
 
             // Application step
-            $table->text('application_notes')->default('')->after('canceled_reason');
+            $table->text('application_notes')->default('');
 
             // Contract step
-            $table->timestamp('contract_signed_at')->nullable()->after('contract_signed');
+            $table->timestamp('contract_signed_at')->nullable();
 
             // Transport step (stub FK)
-            $table->foreignUuid('transport_id')->nullable()->after('contract_signed_at')
+            $table->foreignUuid('transport_id')->nullable()
                 ->constrained('transports')->nullOnDelete();
 
             // Handover step
-            $table->timestamp('handed_over_at')->nullable()->after('transport_id');
+            $table->timestamp('handed_over_at')->nullable();
         });
     }
 
