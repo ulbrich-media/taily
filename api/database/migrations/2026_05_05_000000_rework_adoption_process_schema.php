@@ -13,7 +13,7 @@ return new class extends Migration
         // ----------------------------------------------------------------
         Schema::create('transports', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->text('notes')->default('');
+            $table->text('notes');
             $table->timestamps();
         });
 
@@ -35,10 +35,10 @@ return new class extends Migration
             // General adoption lifecycle status
             $table->enum('status', ['pending', 'in_progress', 'canceled', 'done'])->default('pending');
             $table->timestamp('canceled_at')->nullable();
-            $table->text('canceled_reason')->default('');
+            $table->text('canceled_reason');
 
             // Application step
-            $table->text('application_notes')->default('');
+            $table->text('application_notes');
 
             // Contract step
             $table->timestamp('contract_signed_at')->nullable();
