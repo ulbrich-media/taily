@@ -165,5 +165,4 @@ class Person extends Model implements HasMedia
     {
         return $this->hasMany(Adoption::class, 'applicant_id');
     }
-
 }
