@@ -10,9 +10,6 @@ use Taily\Models\Person;
 
 class AdoptionSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
         $faker = Faker::create('de_DE');
@@ -20,227 +17,198 @@ class AdoptionSeeder extends Seeder
         $animals = Animal::all();
         $mediators = Person::whereHas('mediatorAnimalTypes')->get();
         $applicants = Person::all();
-        $inspectors = Person::whereHas('inspectorAnimalTypes')->get();
 
         if ($animals->isEmpty() || $applicants->isEmpty()) {
             return;
         }
 
         $adoptions = [
-            // --- Not started (no inspector, no result) ---
+            // --- Pending (application received, mediator hasn't acted yet) ---
             [
+                'status' => 'pending',
                 'mediator_id' => $mediators->isNotEmpty() ? $mediators->random()->id : null,
-                'inspector_id' => null,
-                'pre_inspection_result' => 'not_conducted',
-                'pre_inspection_summary' => '',
+                'application_notes' => '',
+                'pre_inspection_notes' => '',
                 'contract_sent_at' => null,
                 'contract_signed' => false,
-                'transfer_planned_at' => null,
-                'transferred_at' => null,
+                'contract_signed_at' => null,
+                'handed_over_at' => null,
             ],
             [
-                'mediator_id' => null, // no mediator
-                'inspector_id' => null,
-                'pre_inspection_result' => 'not_conducted',
-                'pre_inspection_summary' => '',
+                'status' => 'pending',
+                'mediator_id' => null,
+                'application_notes' => '',
+                'pre_inspection_notes' => '',
                 'contract_sent_at' => null,
                 'contract_signed' => false,
-                'transfer_planned_at' => null,
-                'transferred_at' => null,
+                'contract_signed_at' => null,
+                'handed_over_at' => null,
             ],
             [
+                'status' => 'pending',
                 'mediator_id' => $mediators->isNotEmpty() ? $mediators->random()->id : null,
-                'inspector_id' => null,
-                'pre_inspection_result' => 'not_conducted',
-                'pre_inspection_summary' => '',
+                'application_notes' => $faker->sentence(8),
+                'pre_inspection_notes' => '',
                 'contract_sent_at' => null,
                 'contract_signed' => false,
-                'transfer_planned_at' => null,
-                'transferred_at' => null,
+                'contract_signed_at' => null,
+                'handed_over_at' => null,
             ],
 
-            // --- Pre-inspection in progress (inspector assigned, not yet decided) ---
+            // --- In progress: pre-inspection underway ---
             [
+                'status' => 'in_progress',
                 'mediator_id' => $mediators->isNotEmpty() ? $mediators->random()->id : null,
-                'inspector_id' => $inspectors->isNotEmpty() ? $inspectors->random()->id : null,
-                'pre_inspection_result' => 'not_conducted',
-                'pre_inspection_summary' => '',
+                'application_notes' => $faker->sentence(8),
+                'pre_inspection_notes' => '',
                 'contract_sent_at' => null,
                 'contract_signed' => false,
-                'transfer_planned_at' => null,
-                'transferred_at' => null,
+                'contract_signed_at' => null,
+                'handed_over_at' => null,
             ],
             [
-                'mediator_id' => null, // no mediator
-                'inspector_id' => $inspectors->isNotEmpty() ? $inspectors->random()->id : null,
-                'pre_inspection_result' => 'not_conducted',
-                'pre_inspection_summary' => '',
-                'contract_sent_at' => null,
-                'contract_signed' => false,
-                'transfer_planned_at' => null,
-                'transferred_at' => null,
-            ],
-            [
+                'status' => 'in_progress',
                 'mediator_id' => $mediators->isNotEmpty() ? $mediators->random()->id : null,
-                'inspector_id' => $inspectors->isNotEmpty() ? $inspectors->random()->id : null,
-                'pre_inspection_result' => 'not_conducted',
-                'pre_inspection_summary' => '',
+                'application_notes' => $faker->sentence(8),
+                'pre_inspection_notes' => '',
                 'contract_sent_at' => null,
                 'contract_signed' => false,
-                'transfer_planned_at' => null,
-                'transferred_at' => null,
+                'contract_signed_at' => null,
+                'handed_over_at' => null,
             ],
 
-            // --- Pre-inspection rejected (overall: rejected) ---
+            // --- In progress: pre-inspection done, contract not yet sent ---
             [
+                'status' => 'in_progress',
                 'mediator_id' => $mediators->isNotEmpty() ? $mediators->random()->id : null,
-                'inspector_id' => $inspectors->isNotEmpty() ? $inspectors->random()->id : null,
-                'pre_inspection_result' => 'rejected',
-                'pre_inspection_summary' => $faker->paragraph(2),
+                'application_notes' => $faker->sentence(8),
+                'pre_inspection_notes' => $faker->paragraph(2),
                 'contract_sent_at' => null,
                 'contract_signed' => false,
-                'transfer_planned_at' => null,
-                'transferred_at' => null,
+                'contract_signed_at' => null,
+                'handed_over_at' => null,
             ],
             [
-                'mediator_id' => null, // no mediator
-                'inspector_id' => $inspectors->isNotEmpty() ? $inspectors->random()->id : null,
-                'pre_inspection_result' => 'rejected',
-                'pre_inspection_summary' => $faker->paragraph(2),
-                'contract_sent_at' => null,
-                'contract_signed' => false,
-                'transfer_planned_at' => null,
-                'transferred_at' => null,
-            ],
-
-            // --- Pre-inspection approved, contract not yet started ---
-            [
+                'status' => 'in_progress',
                 'mediator_id' => $mediators->isNotEmpty() ? $mediators->random()->id : null,
-                'inspector_id' => $inspectors->isNotEmpty() ? $inspectors->random()->id : null,
-                'pre_inspection_result' => 'approved',
-                'pre_inspection_summary' => $faker->paragraph(2),
+                'application_notes' => $faker->sentence(8),
+                'pre_inspection_notes' => $faker->paragraph(2),
                 'contract_sent_at' => null,
                 'contract_signed' => false,
-                'transfer_planned_at' => null,
-                'transferred_at' => null,
-            ],
-            [
-                'mediator_id' => $mediators->isNotEmpty() ? $mediators->random()->id : null,
-                'inspector_id' => $inspectors->isNotEmpty() ? $inspectors->random()->id : null,
-                'pre_inspection_result' => 'approved',
-                'pre_inspection_summary' => $faker->paragraph(2),
-                'contract_sent_at' => null,
-                'contract_signed' => false,
-                'transfer_planned_at' => null,
-                'transferred_at' => null,
+                'contract_signed_at' => null,
+                'handed_over_at' => null,
             ],
 
-            // --- Contract in progress (sent, not signed) ---
+            // --- In progress: contract sent, not yet signed ---
             [
+                'status' => 'in_progress',
                 'mediator_id' => $mediators->isNotEmpty() ? $mediators->random()->id : null,
-                'inspector_id' => $inspectors->isNotEmpty() ? $inspectors->random()->id : null,
-                'pre_inspection_result' => 'approved',
-                'pre_inspection_summary' => $faker->paragraph(2),
+                'application_notes' => $faker->sentence(8),
+                'pre_inspection_notes' => $faker->paragraph(2),
                 'contract_sent_at' => $faker->dateTimeBetween('-6 weeks', '-1 week'),
                 'contract_signed' => false,
-                'transfer_planned_at' => null,
-                'transferred_at' => null,
+                'contract_signed_at' => null,
+                'handed_over_at' => null,
             ],
             [
-                'mediator_id' => null, // no mediator
-                'inspector_id' => $inspectors->isNotEmpty() ? $inspectors->random()->id : null,
-                'pre_inspection_result' => 'approved',
-                'pre_inspection_summary' => $faker->paragraph(2),
+                'status' => 'in_progress',
+                'mediator_id' => null,
+                'application_notes' => $faker->sentence(8),
+                'pre_inspection_notes' => $faker->paragraph(2),
                 'contract_sent_at' => $faker->dateTimeBetween('-6 weeks', '-1 week'),
                 'contract_signed' => false,
-                'transfer_planned_at' => null,
-                'transferred_at' => null,
+                'contract_signed_at' => null,
+                'handed_over_at' => null,
             ],
 
-            // --- Contract signed, transfer not yet planned ---
+            // --- In progress: contract signed, awaiting transport ---
             [
+                'status' => 'in_progress',
                 'mediator_id' => $mediators->isNotEmpty() ? $mediators->random()->id : null,
-                'inspector_id' => $inspectors->isNotEmpty() ? $inspectors->random()->id : null,
-                'pre_inspection_result' => 'approved',
-                'pre_inspection_summary' => $faker->paragraph(2),
+                'application_notes' => $faker->sentence(8),
+                'pre_inspection_notes' => $faker->paragraph(2),
                 'contract_sent_at' => $faker->dateTimeBetween('-2 months', '-3 weeks'),
                 'contract_signed' => true,
-                'transfer_planned_at' => null,
-                'transferred_at' => null,
+                'contract_signed_at' => $faker->dateTimeBetween('-3 weeks', '-1 week'),
+                'handed_over_at' => null,
             ],
             [
+                'status' => 'in_progress',
                 'mediator_id' => $mediators->isNotEmpty() ? $mediators->random()->id : null,
-                'inspector_id' => $inspectors->isNotEmpty() ? $inspectors->random()->id : null,
-                'pre_inspection_result' => 'approved',
-                'pre_inspection_summary' => $faker->paragraph(2),
+                'application_notes' => $faker->sentence(8),
+                'pre_inspection_notes' => $faker->paragraph(2),
                 'contract_sent_at' => $faker->dateTimeBetween('-2 months', '-3 weeks'),
                 'contract_signed' => true,
-                'transfer_planned_at' => null,
-                'transferred_at' => null,
+                'contract_signed_at' => $faker->dateTimeBetween('-3 weeks', '-1 week'),
+                'handed_over_at' => null,
             ],
 
-            // --- Transfer in progress (planned, not yet done) ---
+            // --- Canceled ---
             [
+                'status' => 'canceled',
                 'mediator_id' => $mediators->isNotEmpty() ? $mediators->random()->id : null,
-                'inspector_id' => $inspectors->isNotEmpty() ? $inspectors->random()->id : null,
-                'pre_inspection_result' => 'approved',
-                'pre_inspection_summary' => $faker->paragraph(2),
-                'contract_sent_at' => $faker->dateTimeBetween('-3 months', '-6 weeks'),
-                'contract_signed' => true,
-                'transfer_planned_at' => $faker->dateTimeBetween('-1 week', '+2 weeks'),
-                'transferred_at' => null,
+                'application_notes' => $faker->sentence(8),
+                'pre_inspection_notes' => $faker->paragraph(2),
+                'canceled_at' => $faker->dateTimeBetween('-3 months', '-1 week'),
+                'canceled_reason' => $faker->sentence(10),
+                'contract_sent_at' => null,
+                'contract_signed' => false,
+                'contract_signed_at' => null,
+                'handed_over_at' => null,
             ],
             [
+                'status' => 'canceled',
                 'mediator_id' => $mediators->isNotEmpty() ? $mediators->random()->id : null,
-                'inspector_id' => $inspectors->isNotEmpty() ? $inspectors->random()->id : null,
-                'pre_inspection_result' => 'approved',
-                'pre_inspection_summary' => $faker->paragraph(2),
-                'contract_sent_at' => $faker->dateTimeBetween('-3 months', '-6 weeks'),
-                'contract_signed' => true,
-                'transfer_planned_at' => $faker->dateTimeBetween('-1 week', '+2 weeks'),
-                'transferred_at' => null,
+                'application_notes' => $faker->sentence(8),
+                'pre_inspection_notes' => '',
+                'canceled_at' => $faker->dateTimeBetween('-3 months', '-1 week'),
+                'canceled_reason' => $faker->sentence(10),
+                'contract_sent_at' => null,
+                'contract_signed' => false,
+                'contract_signed_at' => null,
+                'handed_over_at' => null,
             ],
 
-            // --- Completed (transferred) ---
+            // --- Done (handed over) ---
             [
+                'status' => 'done',
                 'mediator_id' => $mediators->isNotEmpty() ? $mediators->random()->id : null,
-                'inspector_id' => $inspectors->isNotEmpty() ? $inspectors->random()->id : null,
-                'pre_inspection_result' => 'approved',
-                'pre_inspection_summary' => $faker->paragraph(2),
+                'application_notes' => $faker->sentence(8),
+                'pre_inspection_notes' => $faker->paragraph(2),
                 'contract_sent_at' => $faker->dateTimeBetween('-4 months', '-2 months'),
                 'contract_signed' => true,
-                'transfer_planned_at' => $faker->dateTimeBetween('-6 weeks', '-3 weeks'),
-                'transferred_at' => $faker->dateTimeBetween('-3 weeks', '-1 week'),
+                'contract_signed_at' => $faker->dateTimeBetween('-2 months', '-6 weeks'),
+                'handed_over_at' => $faker->dateTimeBetween('-3 weeks', '-1 week'),
             ],
             [
+                'status' => 'done',
                 'mediator_id' => $mediators->isNotEmpty() ? $mediators->random()->id : null,
-                'inspector_id' => $inspectors->isNotEmpty() ? $inspectors->random()->id : null,
-                'pre_inspection_result' => 'approved',
-                'pre_inspection_summary' => $faker->paragraph(2),
+                'application_notes' => $faker->sentence(8),
+                'pre_inspection_notes' => $faker->paragraph(2),
                 'contract_sent_at' => $faker->dateTimeBetween('-4 months', '-2 months'),
                 'contract_signed' => true,
-                'transfer_planned_at' => $faker->dateTimeBetween('-6 weeks', '-3 weeks'),
-                'transferred_at' => $faker->dateTimeBetween('-3 weeks', '-1 week'),
+                'contract_signed_at' => $faker->dateTimeBetween('-2 months', '-6 weeks'),
+                'handed_over_at' => $faker->dateTimeBetween('-3 weeks', '-1 week'),
             ],
             [
-                'mediator_id' => null, // no mediator
-                'inspector_id' => $inspectors->isNotEmpty() ? $inspectors->random()->id : null,
-                'pre_inspection_result' => 'approved',
-                'pre_inspection_summary' => $faker->paragraph(2),
+                'status' => 'done',
+                'mediator_id' => null,
+                'application_notes' => $faker->sentence(8),
+                'pre_inspection_notes' => $faker->paragraph(2),
                 'contract_sent_at' => $faker->dateTimeBetween('-4 months', '-2 months'),
                 'contract_signed' => true,
-                'transfer_planned_at' => $faker->dateTimeBetween('-6 weeks', '-3 weeks'),
-                'transferred_at' => $faker->dateTimeBetween('-3 weeks', '-1 week'),
+                'contract_signed_at' => $faker->dateTimeBetween('-2 months', '-6 weeks'),
+                'handed_over_at' => $faker->dateTimeBetween('-3 weeks', '-1 week'),
             ],
             [
+                'status' => 'done',
                 'mediator_id' => $mediators->isNotEmpty() ? $mediators->random()->id : null,
-                'inspector_id' => $inspectors->isNotEmpty() ? $inspectors->random()->id : null,
-                'pre_inspection_result' => 'approved',
-                'pre_inspection_summary' => $faker->paragraph(2),
+                'application_notes' => $faker->sentence(8),
+                'pre_inspection_notes' => $faker->paragraph(2),
                 'contract_sent_at' => $faker->dateTimeBetween('-4 months', '-2 months'),
                 'contract_signed' => true,
-                'transfer_planned_at' => $faker->dateTimeBetween('-6 weeks', '-3 weeks'),
-                'transferred_at' => $faker->dateTimeBetween('-3 weeks', '-1 week'),
+                'contract_signed_at' => $faker->dateTimeBetween('-2 months', '-6 weeks'),
+                'handed_over_at' => $faker->dateTimeBetween('-3 weeks', '-1 week'),
             ],
         ];
 

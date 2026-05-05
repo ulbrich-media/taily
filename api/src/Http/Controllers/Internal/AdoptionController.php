@@ -16,9 +16,6 @@ use Taily\Models\Person;
 
 class AdoptionController extends Controller
 {
-    /**
-     * Display a listing of adoptions.
-     */
     public function index(Request $request): AnonymousResourceCollection
     {
         $adoptions = Adoption::with(['animal', 'animal.animalType', 'animal.media', 'mediator', 'mediator.media', 'applicant', 'applicant.media'])
@@ -31,19 +28,17 @@ class AdoptionController extends Controller
         return AdoptionListResource::collection($adoptions);
     }
 
-    /**
-     * Store a newly created adoption in storage.
-     */
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'animal_id' => 'required|exists:animals,id',
             'mediator_id' => 'nullable|exists:people,id',
             'applicant_id' => 'required|exists:people,id',
+            'application_notes' => 'sometimes|string',
         ]);
 
         $adoption = Adoption::create($validated);
-        $adoption->load(['animal', 'mediator', 'applicant', 'inspector']);
+        $adoption->load(['animal', 'mediator', 'applicant']);
 
         return response()->json([
             'message' => 'Vermittlung erfolgreich angelegt.',
@@ -51,38 +46,37 @@ class AdoptionController extends Controller
         ], 201);
     }
 
-    /**
-     * Display the specified adoption.
-     */
     public function show(Adoption $adoption): AdoptionDetailResource
     {
-        $adoption->load(['animal', 'animal.animalType', 'animal.media', 'mediator', 'mediator.media', 'applicant', 'applicant.media', 'inspector']);
+        $adoption->load(['animal', 'animal.animalType', 'animal.media', 'mediator', 'mediator.media', 'applicant', 'applicant.media']);
 
         return new AdoptionDetailResource($adoption);
     }
 
-    /**
-     * Update the specified adoption in storage.
-     */
     public function update(Request $request, Adoption $adoption): JsonResponse
     {
         $validated = $request->validate([
             'animal_id' => 'sometimes|required|exists:animals,id',
             'mediator_id' => 'sometimes|nullable|exists:people,id',
             'applicant_id' => 'sometimes|required|exists:people,id',
-            'inspector_id' => 'sometimes|nullable|exists:people,id',
-            'pre_inspection_result' => 'sometimes|in:not_conducted,approved,rejected',
-            'pre_inspection_summary' => 'sometimes|string',
+            'status' => 'sometimes|in:pending,in_progress,canceled,done',
+            'canceled_at' => 'sometimes|nullable|date',
+            'canceled_reason' => 'sometimes|string',
+            'application_notes' => 'sometimes|string',
+            'pre_inspection_notes' => 'sometimes|string',
             'contract_sent_at' => 'sometimes|nullable|date',
             'contract_signed' => 'sometimes|boolean',
-            'transfer_planned_at' => 'sometimes|nullable|date',
-            'transferred_at' => 'sometimes|nullable|date',
+            'contract_signed_at' => 'sometimes|nullable|date',
+            'transport_id' => 'sometimes|nullable|exists:transports,id',
+            'handed_over_at' => 'sometimes|nullable|date',
         ]);
 
-        $validated['contract_signed'] = $request->boolean('contract_signed');
+        if ($request->has('contract_signed')) {
+            $validated['contract_signed'] = $request->boolean('contract_signed');
+        }
 
         $adoption->update($validated);
-        $adoption->load(['animal', 'mediator', 'applicant', 'inspector']);
+        $adoption->load(['animal', 'mediator', 'applicant']);
 
         return response()->json([
             'message' => 'Vermittlung erfolgreich aktualisiert.',
@@ -90,9 +84,6 @@ class AdoptionController extends Controller
         ]);
     }
 
-    /**
-     * Remove the specified adoption from storage.
-     */
     public function destroy(Adoption $adoption): JsonResponse
     {
         $adoption->delete();
@@ -102,9 +93,6 @@ class AdoptionController extends Controller
         ]);
     }
 
-    /**
-     * Get dropdown options for creating/editing adoptions.
-     */
     public function options(): JsonResponse
     {
         $animals = Animal::with('media')->orderBy('name')->get();
@@ -115,16 +103,11 @@ class AdoptionController extends Controller
         $applicants = Person::with('media')->orderBy('last_name')
             ->orderBy('first_name')
             ->get();
-        $inspectors = Person::with('media')->whereHas('inspectorAnimalTypes')
-            ->orderBy('last_name')
-            ->orderBy('first_name')
-            ->get();
 
         return response()->json([
             'animals' => AnimalListResource::collection($animals),
             'mediators' => PersonListResource::collection($mediators),
             'applicants' => PersonListResource::collection($applicants),
-            'inspectors' => PersonListResource::collection($inspectors),
         ]);
     }
 }
