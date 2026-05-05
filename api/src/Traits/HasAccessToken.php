@@ -32,7 +32,7 @@ trait HasAccessToken
 
     public function activeToken(): ?AccessToken
     {
-        return $this->accessTokens()->where('expires_at', '>', now())->first();
+        return $this->accessTokens()->where('expires_at', '>', now())->orderByDesc('expires_at')->first();
     }
 
     public static function whereHasValidToken(string $token): Builder
