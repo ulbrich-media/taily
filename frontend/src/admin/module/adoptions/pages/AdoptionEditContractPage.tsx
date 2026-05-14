@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -12,7 +12,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { format, isAfter, isValid, parse, startOfDay } from 'date-fns'
-import { FileIcon, Paperclip, Trash2, X } from 'lucide-react'
+import { X } from 'lucide-react'
 import { adoptionQueryKeys } from '@/admin/module/adoptions/api/queries.ts'
 import { updateContract } from '@/admin/module/adoptions/api/requests.ts'
 import { toast } from 'sonner'
@@ -26,6 +26,8 @@ import {
   toDateFieldValue,
   zFieldDate,
 } from '@/components/field/DateInput.utils.ts'
+import { Input } from '@/shadcn/components/ui/input.tsx'
+import { ButtonGroup } from '@/shadcn/components/ui/button-group.tsx'
 
 const noFutureDate = zFieldDate.refine((val) => {
   if (!val) return true
@@ -50,7 +52,6 @@ export function AdoptionEditContractPage({
   onClose,
 }: AdoptionEditContractPageProps) {
   const queryClient = useQueryClient()
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [removeExistingFile, setRemoveExistingFile] = useState(false)
@@ -95,23 +96,20 @@ export function AdoptionEditContractPage({
     }
   }
 
-  const handleRemoveSelected = () => {
-    setSelectedFile(null)
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
+  const handleClearFile = () => {
+    if (selectedFile) {
+      setSelectedFile(null)
+    } else {
+      setRemoveExistingFile(true)
     }
   }
 
-  const handleRemoveExisting = () => {
-    setRemoveExistingFile(true)
-  }
-
-  const handleUndoRemove = () => {
-    setRemoveExistingFile(false)
-  }
-
   const existingFile = adoption.contract_file
-  const showExistingFile = existingFile && !removeExistingFile && !selectedFile
+  const activeFile = selectedFile
+    ? selectedFile.name
+    : existingFile && !removeExistingFile
+      ? existingFile.name
+      : null
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
@@ -145,79 +143,28 @@ export function AdoptionEditContractPage({
           <div className="space-y-2">
             <p className="text-sm font-medium">Schutzvertrag</p>
 
-            {selectedFile && (
-              <div className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
-                <FileIcon className="size-4 shrink-0 text-muted-foreground" />
-                <span className="min-w-0 flex-1 truncate">
-                  {selectedFile.name}
-                </span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="size-6 shrink-0"
-                  aria-label="Auswahl aufheben"
-                  onClick={handleRemoveSelected}
-                >
-                  <X className="size-3" />
-                </Button>
-              </div>
-            )}
-
-            {showExistingFile && (
-              <div className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
-                <FileIcon className="size-4 shrink-0 text-muted-foreground" />
-                <span className="min-w-0 flex-1 truncate">
-                  {existingFile.name}
-                </span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="size-6 shrink-0 text-destructive hover:text-destructive"
-                  aria-label="Datei entfernen"
-                  onClick={handleRemoveExisting}
-                >
-                  <Trash2 className="size-3" />
-                </Button>
-              </div>
-            )}
-
-            {removeExistingFile && !selectedFile && (
-              <div className="flex items-center gap-2 rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
-                <span className="flex-1">Datei wird entfernt</span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 px-2 text-xs"
-                  onClick={handleUndoRemove}
-                >
-                  Rückgängig
-                </Button>
-              </div>
-            )}
-
-            <div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                className="hidden"
-                onChange={handleFileChange}
-                aria-label="Schutzvertrag auswählen"
-              />
+            <ButtonGroup className="w-full">
+              {activeFile ? (
+                <Input value={activeFile} disabled className="flex-1" />
+              ) : (
+                <Input
+                  type="file"
+                  onChange={handleFileChange}
+                  aria-label="Schutzvertrag auswählen"
+                  className="flex-1"
+                />
+              )}
               <Button
                 type="button"
                 variant="outline"
-                size="sm"
-                onClick={() => fileInputRef.current?.click()}
+                size="icon"
+                aria-label="Schutzvertrag entfernen"
+                onClick={handleClearFile}
+                disabled={!activeFile}
               >
-                <Paperclip className="size-4" />
-                {existingFile && !removeExistingFile
-                  ? 'Datei ersetzen'
-                  : 'Datei hochladen'}
+                <X />
               </Button>
-            </div>
+            </ButtonGroup>
           </div>
 
           <DialogFooter>
