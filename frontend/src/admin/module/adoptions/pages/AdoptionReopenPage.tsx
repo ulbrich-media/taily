@@ -30,6 +30,7 @@ export function AdoptionReopenPage({
       updateAdoption(adoption.id, {
         status: 'in_progress',
         canceled_at: null,
+        canceled_reason: '',
       }),
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: adoptionQueryKeys.list() })
@@ -50,8 +51,8 @@ export function AdoptionReopenPage({
         <AlertDialogHeader>
           <AlertDialogTitle>Vermittlung wiedereröffnen?</AlertDialogTitle>
           <AlertDialogDescription>
-            Die Vermittlung wird wieder als in Bearbeitung markiert und kann
-            weiter bearbeitet werden.
+            Die Vermittlung kann weiter bearbeitet werden wo sie vorher beendet
+            wurde.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

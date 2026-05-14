@@ -26,6 +26,9 @@ const schema = z.object({
   notes: zFieldString({
     maxLength: STRING_LENGTH_TEXTAREA,
   }),
+  canceledReason: zFieldString({
+    maxLength: STRING_LENGTH_TEXTAREA,
+  }),
 })
 
 type FormData = z.infer<typeof schema>
@@ -40,11 +43,13 @@ export function AdoptionEditInternalNotesPage({
   onClose,
 }: AdoptionEditInternalNotesPageProps) {
   const queryClient = useQueryClient()
+  const isCanceled = adoption.status === 'canceled'
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
       notes: adoption.notes,
+      canceledReason: adoption.canceled_reason,
     },
   })
 
@@ -52,6 +57,7 @@ export function AdoptionEditInternalNotesPage({
     mutationFn: (data: FormData) =>
       updateAdoption(adoption.id, {
         notes: data.notes.trim(),
+        canceled_reason: data.canceledReason.trim(),
       }),
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: adoptionQueryKeys.list() })
@@ -83,10 +89,20 @@ export function AdoptionEditInternalNotesPage({
             <Textarea
               name="notes"
               control={form.control}
-              label="Notizen"
+              label="Allgemeine Notizen"
               rows={5}
             />
           </FieldGroup>
+          {isCanceled && (
+            <FieldGroup>
+              <Textarea
+                name="canceledReason"
+                control={form.control}
+                label="Grund für den Abbruch"
+                rows={5}
+              />
+            </FieldGroup>
+          )}
           <DialogFooter>
             <Button
               type="button"

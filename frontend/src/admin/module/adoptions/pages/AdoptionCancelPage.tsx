@@ -70,8 +70,8 @@ export function AdoptionCancelPage({
         <DialogHeader>
           <DialogTitle>Vermittlung abbrechen</DialogTitle>
           <DialogDescription>
-            Diese Vermittlung wird als abgebrochen markiert. Bitte dokumentiere
-            den Grund für den Abbruch.
+            Diese Vermittlung wird nicht weiter fortgesetzt. Bitte dokumentiere,
+            warum du dich für diesen Schritt entschieden hast.
           </DialogDescription>
         </DialogHeader>
         <form

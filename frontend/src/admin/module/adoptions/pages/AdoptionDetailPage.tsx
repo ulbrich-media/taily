@@ -44,36 +44,19 @@ export function AdoptionDetailPage({
 
   return (
     <div className="space-y-4">
-      <StepCard
-        title="Über diese Vermittlung"
-        status={
-          <BadgeBySet
-            set={{
-              pending: { label: 'Offen', variant: 'outline' },
-              in_progress: { label: 'In Bearbeitung', variant: 'warning' },
-              canceled: { label: 'Abgebrochen', variant: 'destructive' },
-              done: { label: 'Abgeschlossen', variant: 'success' },
-            }}
-            value={adoption.status}
-          />
-        }
-      >
+      <StepCard title="Über diese Vermittlung">
         <div className="space-y-4">
-          {adoption.notes ? (
-            <InfoRow label="Notizen">
-              <span className="whitespace-pre-wrap">{adoption.notes}</span>
-            </InfoRow>
-          ) : null}
+          <InfoRow label="Allgemeine Notizen">{adoption.notes}</InfoRow>
 
           {isCanceled && (
-            <div className="space-y-2 rounded-md border border-destructive/30 bg-destructive/5 p-3">
+            <>
               <InfoRow label="Abgebrochen am">
                 {formatApiDate(adoption.canceled_at)}
               </InfoRow>
-              {adoption.canceled_reason && (
-                <InfoRow label="Grund">{adoption.canceled_reason}</InfoRow>
-              )}
-            </div>
+              <InfoRow label="Grund für den Abbruch">
+                {adoption.canceled_reason}
+              </InfoRow>
+            </>
           )}
 
           <div className="flex justify-end gap-2">
