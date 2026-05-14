@@ -4,9 +4,12 @@ import { getAdoptionQuery } from '@/admin/module/adoptions/api/queries'
 import { listPreInspectionsByPersonAndAnimalTypeQuery } from '@/admin/module/pre-inspections/api/queries'
 import { AdoptionDetailPage } from '@/admin/module/adoptions/pages/AdoptionDetailPage'
 import { Button } from '@/shadcn/components/ui/button'
-import { Edit, Eye, PlusCircle } from 'lucide-react'
+import { Edit, Eye, PlusCircle, Ban, RotateCcw } from 'lucide-react'
+import { Route as InternalNotesRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/internal-notes'
 import { Route as PreInspectionRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/pre-inspection'
 import { Route as NewInspectionRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/new-inspection'
+import { Route as CancelRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/cancel'
+import { Route as ReopenRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/reopen'
 import { Route as InspectionDetailRoute } from '@/routes/admin/_authenticated/pre-inspections/$id/index.tsx'
 import type { PreInspectionResource } from '@/api/types/pre-inspections'
 
@@ -31,11 +34,38 @@ function RouteComponent() {
     listPreInspectionsByPersonAndAnimalTypeQuery(applicantId, animalTypeId)
   )
 
+  const editInternalNotesAction = (
+    <Button size="sm" variant="outline" asChild>
+      <InternalNotesRoute.Link params={{ adoptionId }}>
+        <Edit className="size-4" />
+        Notizen bearbeiten
+      </InternalNotesRoute.Link>
+    </Button>
+  )
+
+  const cancelAction = (
+    <Button size="sm" variant="outline" asChild>
+      <CancelRoute.Link params={{ adoptionId }}>
+        <Ban className="size-4" />
+        Vermittlung abbrechen
+      </CancelRoute.Link>
+    </Button>
+  )
+
+  const reopenAction = (
+    <Button size="sm" variant="outline" asChild>
+      <ReopenRoute.Link params={{ adoptionId }}>
+        <RotateCcw className="size-4" />
+        Vermittlung fortsetzen
+      </ReopenRoute.Link>
+    </Button>
+  )
+
   const editPreInspectionAction = (
     <Button size="sm" variant="outline" asChild>
       <PreInspectionRoute.Link params={{ adoptionId }}>
         <Edit className="size-4" />
-        Ergebnis bearbeiten
+        Notizen bearbeiten
       </PreInspectionRoute.Link>
     </Button>
   )
@@ -72,6 +102,9 @@ function RouteComponent() {
         inspectionsData={inspectionsData}
         inspectionsLoading={inspectionsLoading}
         inspectionsError={inspectionsError}
+        editInternalNotesAction={editInternalNotesAction}
+        cancelAction={cancelAction}
+        reopenAction={reopenAction}
         editPreInspectionAction={editPreInspectionAction}
         newInspectionAction={newInspectionAction}
         renderInspectionDetailLink={renderInspectionDetailLink}

@@ -9,8 +9,8 @@ import {
 } from 'lucide-react'
 import type {
   AdoptionListResource,
+  AdoptionStatus,
   AdoptionStepStatus,
-  AdoptionOverallStatus,
 } from '@/api/types/adoptions'
 import { Button } from '@/shadcn/components/ui/button'
 import {
@@ -37,11 +37,11 @@ function StepStatusIcon({ status }: { status: AdoptionStepStatus }) {
   return <Circle className="size-5 text-muted-foreground/40" />
 }
 
-function OverallStatusIcon({ status }: { status: AdoptionOverallStatus }) {
-  if (status === 'completed') {
+function OverallStatusIcon({ status }: { status: AdoptionStatus }) {
+  if (status === 'done') {
     return <CheckCircle2 className="size-5 text-green-500" />
   }
-  if (status === 'rejected') {
+  if (status === 'canceled') {
     return <XCircle className="size-5 text-destructive" />
   }
   return <Clock className="size-5 text-amber-500" />
@@ -171,12 +171,12 @@ export function AdoptionList({
             </TableCell>
             <TableCell className="text-center">
               <div className="flex justify-center">
-                <StepStatusIcon status={adoption.transfer_status} />
+                <StepStatusIcon status={adoption.handover_status} />
               </div>
             </TableCell>
             <TableCell className="text-center">
               <div className="flex justify-center">
-                <OverallStatusIcon status={adoption.overall_status} />
+                <OverallStatusIcon status={adoption.status} />
               </div>
             </TableCell>
             <TableCell className="text-right">
