@@ -36,24 +36,15 @@ export function AdoptionDetailPage({
 }: AdoptionDetailPageProps) {
   return (
     <div className="space-y-4">
-      {/* Internal notes – always visible above process steps */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-start justify-between gap-3">
-            <CardTitle>Notizen</CardTitle>
+      <StepCard title="Über diese Vermittlung">
+        <div className="space-y-4">
+          <InfoRow label="Notizen">{adoption.notes}</InfoRow>
+
+          <div className="flex justify-end gap-2">
             {editInternalNotesAction}
           </div>
-        </CardHeader>
-        <CardContent>
-          {adoption.notes ? (
-            <p className="text-sm whitespace-pre-wrap">{adoption.notes}</p>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              Keine Notizen vorhanden.
-            </p>
-          )}
-        </CardContent>
-      </Card>
+        </div>
+      </StepCard>
 
       <StepCard
         title="Vorkontrolle"
@@ -151,7 +142,7 @@ function StepCard({
   children,
 }: {
   title: string
-  status: ReactNode
+  status?: ReactNode
   children: ReactNode
 }) {
   return (

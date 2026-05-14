@@ -36,7 +36,7 @@ function RouteComponent() {
     <Button size="sm" variant="outline" asChild>
       <InternalNotesRoute.Link params={{ adoptionId }}>
         <Edit className="size-4" />
-        Bearbeiten
+        Notizen bearbeiten
       </InternalNotesRoute.Link>
     </Button>
   )
