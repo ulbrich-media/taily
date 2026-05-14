@@ -95,32 +95,38 @@ export function AdoptionSidebar({
 
             <div className="border-t"></div>
 
-            {adoption.mediator && (
-              <div className="flex gap-2 items-center">
-                <Avatar size="lg" key={adoption.mediator.id}>
-                  {adoption.mediator.profile_picture_url && (
-                    <AvatarImage
-                      alt={adoption.mediator.full_name}
-                      src={adoption.mediator.profile_picture_url}
-                    />
-                  )}
-                  <AvatarFallback>
-                    <User className="size-5 text-muted-foreground" />
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <p>{adoption.mediator.full_name}</p>
-                  <p className="text-xs text-muted-foreground">Vermittler</p>
-                </div>
-                {mediatorEditLink && (
-                  <div>
-                    <Button size="icon" variant="secondary" asChild>
-                      {mediatorEditLink}
-                    </Button>
-                  </div>
+            <div className="flex gap-2 items-center">
+              <Avatar size="lg" key={adoption.mediator?.id}>
+                {adoption.mediator?.profile_picture_url && (
+                  <AvatarImage
+                    alt={adoption.mediator.full_name}
+                    src={adoption.mediator.profile_picture_url}
+                  />
+                )}
+                <AvatarFallback>
+                  <User className="size-5 text-muted-foreground" />
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1">
+                {adoption.mediator ? (
+                  <>
+                    <p>{adoption.mediator.full_name}</p>
+                    <p className="text-xs text-muted-foreground">Vermittler</p>
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Kein Vermittler
+                  </p>
                 )}
               </div>
-            )}
+              {mediatorEditLink && (
+                <div>
+                  <Button size="icon" variant="secondary" asChild>
+                    {mediatorEditLink}
+                  </Button>
+                </div>
+              )}
+            </div>
 
             <InfoRow label="Status">
               <OverallStatusBadge status={adoption.status} />
