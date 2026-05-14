@@ -138,8 +138,8 @@ export function AnimalFormPlacement({
               <SingleCheckbox
                 name="is_boarding_animal"
                 control={form.control}
-                label="Pensionsstatus"
-                checkboxLabel="Ist pensioniert"
+                label="Pension"
+                checkboxLabel="Ist in Pension"
               />
 
               <CurrencyInput
