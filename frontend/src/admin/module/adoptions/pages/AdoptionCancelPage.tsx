@@ -48,7 +48,6 @@ export function AdoptionCancelPage({
     mutationFn: (data: FormData) =>
       updateAdoption(adoption.id, {
         status: 'canceled',
-        canceled_at: new Date().toISOString(),
         canceled_reason: data.canceled_reason.trim(),
       }),
     onSuccess: (response) => {

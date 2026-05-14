@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Adoption extends Model
 {
@@ -64,6 +65,13 @@ class Adoption extends Model
         return $this->belongsTo(Transport::class);
     }
 
+    // All pre-inspections for this adoption's applicant, keyed on person_id.
+    // Filter by animal_type_id in application code (see getPreInspectionStatusAttribute).
+    public function preInspections(): HasMany
+    {
+        return $this->hasMany(PreInspection::class, 'person_id', 'applicant_id');
+    }
+
     public function getContractStatusAttribute(): string
     {
         if ($this->contract_signed) {
@@ -98,9 +106,13 @@ class Adoption extends Model
             return 'pending';
         }
 
-        $inspections = PreInspection::where('person_id', $this->applicant_id)
-            ->where('animal_type_id', $animalTypeId)
-            ->get();
+        if ($this->relationLoaded('preInspections')) {
+            $inspections = $this->preInspections->where('animal_type_id', $animalTypeId);
+        } else {
+            $inspections = PreInspection::where('person_id', $this->applicant_id)
+                ->where('animal_type_id', $animalTypeId)
+                ->get();
+        }
 
         if ($inspections->isEmpty()) {
             return 'pending';

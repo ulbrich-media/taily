@@ -5,6 +5,7 @@
 import type {
   AdoptionListResource,
   AdoptionDetailResource,
+  AdoptionStatus,
 } from '@/api/types/adoptions'
 
 /** Single adoption (detail response shape). */
@@ -29,8 +30,7 @@ export interface UpdateAdoptionRequest {
   animal_id?: string
   applicant_id?: string
   mediator_id?: string | null
-  status?: 'pending' | 'in_progress' | 'canceled' | 'done'
-  canceled_at?: string | null
+  status?: AdoptionStatus
   canceled_reason?: string
   notes?: string
   pre_inspection_notes?: string

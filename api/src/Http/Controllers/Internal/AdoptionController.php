@@ -16,9 +16,15 @@ use Taily\Models\Person;
 
 class AdoptionController extends Controller
 {
+    private const DETAIL_RELATIONS = [
+        'animal', 'animal.animalType', 'animal.media',
+        'mediator', 'mediator.media',
+        'applicant', 'applicant.media',
+    ];
+
     public function index(Request $request): AnonymousResourceCollection
     {
-        $adoptions = Adoption::with(['animal', 'animal.animalType', 'animal.media', 'mediator', 'mediator.media', 'applicant', 'applicant.media'])
+        $adoptions = Adoption::with([...self::DETAIL_RELATIONS, 'preInspections'])
             ->when($request->filled('animal_id'), fn ($q) => $q->where('animal_id', $request->input('animal_id')))
             ->when($request->filled('mediator_id'), fn ($q) => $q->where('mediator_id', $request->input('mediator_id')))
             ->when($request->filled('applicant_id'), fn ($q) => $q->where('applicant_id', $request->input('applicant_id')))
@@ -38,7 +44,7 @@ class AdoptionController extends Controller
         ]);
 
         $adoption = Adoption::create($validated);
-        $adoption->load(['animal', 'mediator', 'applicant']);
+        $adoption->load(self::DETAIL_RELATIONS);
 
         return response()->json([
             'message' => 'Vermittlung erfolgreich angelegt.',
@@ -48,7 +54,7 @@ class AdoptionController extends Controller
 
     public function show(Adoption $adoption): AdoptionDetailResource
     {
-        $adoption->load(['animal', 'animal.animalType', 'animal.media', 'mediator', 'mediator.media', 'applicant', 'applicant.media']);
+        $adoption->load(self::DETAIL_RELATIONS);
 
         return new AdoptionDetailResource($adoption);
     }
@@ -60,8 +66,7 @@ class AdoptionController extends Controller
             'mediator_id' => 'sometimes|nullable|exists:people,id',
             'applicant_id' => 'sometimes|required|exists:people,id',
             'status' => 'sometimes|in:pending,in_progress,canceled,done',
-            'canceled_at' => 'sometimes|nullable|date',
-            'canceled_reason' => 'sometimes|string',
+            'canceled_reason' => 'sometimes|required_if:status,canceled|string',
             'notes' => 'sometimes|string',
             'pre_inspection_notes' => 'sometimes|string',
             'contract_sent_at' => 'sometimes|nullable|date',
@@ -75,8 +80,16 @@ class AdoptionController extends Controller
             $validated['contract_signed'] = $request->boolean('contract_signed');
         }
 
+        // Server manages canceled_at: set it on cancel, clear it on reopen.
+        $incomingStatus = $validated['status'] ?? null;
+        if ($incomingStatus === 'canceled') {
+            $validated['canceled_at'] = now();
+        } elseif ($incomingStatus !== null) {
+            $validated['canceled_at'] = null;
+        }
+
         $adoption->update($validated);
-        $adoption->load(['animal', 'mediator', 'applicant']);
+        $adoption->load(self::DETAIL_RELATIONS);
 
         return response()->json([
             'message' => 'Vermittlung erfolgreich aktualisiert.',

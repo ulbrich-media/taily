@@ -29,7 +29,6 @@ export function AdoptionReopenPage({
     mutationFn: () =>
       updateAdoption(adoption.id, {
         status: 'in_progress',
-        canceled_at: null,
         canceled_reason: '',
       }),
     onSuccess: (response) => {

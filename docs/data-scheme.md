@@ -77,7 +77,7 @@ Steps are optional and can be taken in any order. Each step derives its status i
 
 | Step | not_started / pending | in_progress | finished |
 |---|---|---|---|
-| Pre-inspection | no pre-inspections for applicant + animal type | at least one not yet submitted by the inspector | all have a result (regardless of verdict) |
+| Pre-inspection | no pre-inspection records exist for the applicant + animal type (mediator creates them manually) | at least one pre-inspection exists but has not yet been submitted by the inspector | all pre-inspections have been submitted (regardless of verdict) |
 | Contract | `contract_sent_at` is null and `contract_signed` is false | `contract_sent_at` is set, not signed | `contract_signed` is true |
 | Transport | `transport_id` is null | transport assigned (details TBD) | transport completed (TBD) |
 | Handover | `handed_over_at` is null | — | `handed_over_at` is set |

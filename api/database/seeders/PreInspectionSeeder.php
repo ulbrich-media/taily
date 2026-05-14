@@ -19,7 +19,14 @@ class PreInspectionSeeder extends Seeder
             ->whereIn('status', ['in_progress', 'done', 'canceled'])
             ->get();
 
-        $inspectors = Person::whereHas('inspectorAnimalTypes')->get();
+        $inspectorsByAnimalType = Person::with('inspectorAnimalTypes')
+            ->whereHas('inspectorAnimalTypes')
+            ->get()
+            ->flatMap(fn ($person) => $person->inspectorAnimalTypes->map(
+                fn ($type) => ['animal_type_id' => $type->id, 'person' => $person]
+            ))
+            ->groupBy('animal_type_id')
+            ->map(fn ($rows) => $rows->pluck('person'));
 
         foreach ($adoptions as $adoption) {
             $animalTypeId = $adoption->animal?->animal_type_id;
@@ -37,7 +44,8 @@ class PreInspectionSeeder extends Seeder
             $verdict = $isDone ? 'approved' : ($adoption->status === 'canceled' ? 'rejected' : 'pending');
             $submittedAt = $verdict !== 'pending' ? $faker->dateTimeBetween('-8 weeks', '-1 week') : null;
 
-            $inspector = $inspectors->isNotEmpty() ? $inspectors->random() : null;
+            $eligible = $inspectorsByAnimalType->get($animalTypeId);
+            $inspector = ($eligible && $eligible->isNotEmpty()) ? $eligible->random() : null;
 
             $inspection = PreInspection::create([
                 'person_id' => $adoption->applicant_id,
