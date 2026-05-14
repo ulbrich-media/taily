@@ -30,7 +30,6 @@ import {
 import { TraitInput } from '@/components/field/TraitInput.tsx'
 
 const animalFormStatusSchema = z.object({
-  current_location: zFieldString(),
   alternate_transport_trace: zFieldString(),
   alternate_arrival_location: zFieldString(),
   do_publish: z.boolean(),
@@ -84,7 +83,6 @@ export function AnimalFormStatus({
   const form = useForm<AnimalFormStatusData>({
     resolver: zodResolver(animalFormStatusSchema),
     defaultValues: {
-      current_location: defaultValues?.current_location || '',
       alternate_transport_trace: defaultValues?.alternate_transport_trace || '',
       alternate_arrival_location:
         defaultValues?.alternate_arrival_location || '',
@@ -117,15 +115,6 @@ export function AnimalFormStatus({
             description="Für den Transport relevante Informationen."
           >
             <FormGrid>
-              <TextInput
-                name="current_location"
-                control={form.control}
-                label="Aufenthaltsort"
-                info="Aktueller Standort des Tieres"
-              />
-
-              <div></div>
-
               <TextInput
                 name="alternate_transport_trace"
                 control={form.control}
