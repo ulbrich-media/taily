@@ -27,7 +27,7 @@ class AdoptionSeeder extends Seeder
             [
                 'status' => 'pending',
                 'mediator_id' => $mediators->isNotEmpty() ? $mediators->random()->id : null,
-                'application_notes' => '',
+                'notes' => '',
                 'pre_inspection_notes' => '',
                 'contract_sent_at' => null,
                 'contract_signed' => false,
@@ -37,7 +37,7 @@ class AdoptionSeeder extends Seeder
             [
                 'status' => 'pending',
                 'mediator_id' => null,
-                'application_notes' => '',
+                'notes' => '',
                 'pre_inspection_notes' => '',
                 'contract_sent_at' => null,
                 'contract_signed' => false,
@@ -47,7 +47,7 @@ class AdoptionSeeder extends Seeder
             [
                 'status' => 'pending',
                 'mediator_id' => $mediators->isNotEmpty() ? $mediators->random()->id : null,
-                'application_notes' => $faker->sentence(8),
+                'notes' => $faker->sentence(8),
                 'pre_inspection_notes' => '',
                 'contract_sent_at' => null,
                 'contract_signed' => false,
@@ -59,7 +59,7 @@ class AdoptionSeeder extends Seeder
             [
                 'status' => 'in_progress',
                 'mediator_id' => $mediators->isNotEmpty() ? $mediators->random()->id : null,
-                'application_notes' => $faker->sentence(8),
+                'notes' => $faker->sentence(8),
                 'pre_inspection_notes' => '',
                 'contract_sent_at' => null,
                 'contract_signed' => false,
@@ -69,7 +69,7 @@ class AdoptionSeeder extends Seeder
             [
                 'status' => 'in_progress',
                 'mediator_id' => $mediators->isNotEmpty() ? $mediators->random()->id : null,
-                'application_notes' => $faker->sentence(8),
+                'notes' => $faker->sentence(8),
                 'pre_inspection_notes' => '',
                 'contract_sent_at' => null,
                 'contract_signed' => false,
@@ -81,7 +81,7 @@ class AdoptionSeeder extends Seeder
             [
                 'status' => 'in_progress',
                 'mediator_id' => $mediators->isNotEmpty() ? $mediators->random()->id : null,
-                'application_notes' => $faker->sentence(8),
+                'notes' => $faker->sentence(8),
                 'pre_inspection_notes' => $faker->paragraph(2),
                 'contract_sent_at' => null,
                 'contract_signed' => false,
@@ -91,7 +91,7 @@ class AdoptionSeeder extends Seeder
             [
                 'status' => 'in_progress',
                 'mediator_id' => $mediators->isNotEmpty() ? $mediators->random()->id : null,
-                'application_notes' => $faker->sentence(8),
+                'notes' => $faker->sentence(8),
                 'pre_inspection_notes' => $faker->paragraph(2),
                 'contract_sent_at' => null,
                 'contract_signed' => false,
@@ -103,7 +103,7 @@ class AdoptionSeeder extends Seeder
             [
                 'status' => 'in_progress',
                 'mediator_id' => $mediators->isNotEmpty() ? $mediators->random()->id : null,
-                'application_notes' => $faker->sentence(8),
+                'notes' => $faker->sentence(8),
                 'pre_inspection_notes' => $faker->paragraph(2),
                 'contract_sent_at' => $faker->dateTimeBetween('-6 weeks', '-1 week'),
                 'contract_signed' => false,
@@ -113,7 +113,7 @@ class AdoptionSeeder extends Seeder
             [
                 'status' => 'in_progress',
                 'mediator_id' => null,
-                'application_notes' => $faker->sentence(8),
+                'notes' => $faker->sentence(8),
                 'pre_inspection_notes' => $faker->paragraph(2),
                 'contract_sent_at' => $faker->dateTimeBetween('-6 weeks', '-1 week'),
                 'contract_signed' => false,
@@ -125,7 +125,7 @@ class AdoptionSeeder extends Seeder
             [
                 'status' => 'in_progress',
                 'mediator_id' => $mediators->isNotEmpty() ? $mediators->random()->id : null,
-                'application_notes' => $faker->sentence(8),
+                'notes' => $faker->sentence(8),
                 'pre_inspection_notes' => $faker->paragraph(2),
                 'contract_sent_at' => $faker->dateTimeBetween('-2 months', '-3 weeks'),
                 'contract_signed' => true,
@@ -135,7 +135,7 @@ class AdoptionSeeder extends Seeder
             [
                 'status' => 'in_progress',
                 'mediator_id' => $mediators->isNotEmpty() ? $mediators->random()->id : null,
-                'application_notes' => $faker->sentence(8),
+                'notes' => $faker->sentence(8),
                 'pre_inspection_notes' => $faker->paragraph(2),
                 'contract_sent_at' => $faker->dateTimeBetween('-2 months', '-3 weeks'),
                 'contract_signed' => true,
@@ -147,7 +147,7 @@ class AdoptionSeeder extends Seeder
             [
                 'status' => 'canceled',
                 'mediator_id' => $mediators->isNotEmpty() ? $mediators->random()->id : null,
-                'application_notes' => $faker->sentence(8),
+                'notes' => $faker->sentence(8),
                 'pre_inspection_notes' => $faker->paragraph(2),
                 'canceled_at' => $faker->dateTimeBetween('-3 months', '-1 week'),
                 'canceled_reason' => $faker->sentence(10),
@@ -159,7 +159,7 @@ class AdoptionSeeder extends Seeder
             [
                 'status' => 'canceled',
                 'mediator_id' => $mediators->isNotEmpty() ? $mediators->random()->id : null,
-                'application_notes' => $faker->sentence(8),
+                'notes' => $faker->sentence(8),
                 'pre_inspection_notes' => '',
                 'canceled_at' => $faker->dateTimeBetween('-3 months', '-1 week'),
                 'canceled_reason' => $faker->sentence(10),
@@ -173,7 +173,7 @@ class AdoptionSeeder extends Seeder
             [
                 'status' => 'done',
                 'mediator_id' => $mediators->isNotEmpty() ? $mediators->random()->id : null,
-                'application_notes' => $faker->sentence(8),
+                'notes' => $faker->sentence(8),
                 'pre_inspection_notes' => $faker->paragraph(2),
                 'contract_sent_at' => $faker->dateTimeBetween('-4 months', '-2 months'),
                 'contract_signed' => true,
@@ -183,7 +183,7 @@ class AdoptionSeeder extends Seeder
             [
                 'status' => 'done',
                 'mediator_id' => $mediators->isNotEmpty() ? $mediators->random()->id : null,
-                'application_notes' => $faker->sentence(8),
+                'notes' => $faker->sentence(8),
                 'pre_inspection_notes' => $faker->paragraph(2),
                 'contract_sent_at' => $faker->dateTimeBetween('-4 months', '-2 months'),
                 'contract_signed' => true,
@@ -193,7 +193,7 @@ class AdoptionSeeder extends Seeder
             [
                 'status' => 'done',
                 'mediator_id' => null,
-                'application_notes' => $faker->sentence(8),
+                'notes' => $faker->sentence(8),
                 'pre_inspection_notes' => $faker->paragraph(2),
                 'contract_sent_at' => $faker->dateTimeBetween('-4 months', '-2 months'),
                 'contract_signed' => true,
@@ -203,7 +203,7 @@ class AdoptionSeeder extends Seeder
             [
                 'status' => 'done',
                 'mediator_id' => $mediators->isNotEmpty() ? $mediators->random()->id : null,
-                'application_notes' => $faker->sentence(8),
+                'notes' => $faker->sentence(8),
                 'pre_inspection_notes' => $faker->paragraph(2),
                 'contract_sent_at' => $faker->dateTimeBetween('-4 months', '-2 months'),
                 'contract_signed' => true,
