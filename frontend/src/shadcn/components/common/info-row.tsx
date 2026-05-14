@@ -39,5 +39,7 @@ interface InfoRowValueProps {
 }
 
 export function InfoRowValue({ children }: InfoRowValueProps) {
-  return <div className="text-sm font-medium whitespace-pre">{children}</div>
+  return (
+    <div className="text-sm font-medium whitespace-pre-line">{children}</div>
+  )
 }
