@@ -46,9 +46,13 @@ export function AdoptionDetailPage({
         </CardHeader>
         <CardContent>
           {adoption.internal_notes ? (
-            <p className="text-sm whitespace-pre-wrap">{adoption.internal_notes}</p>
+            <p className="text-sm whitespace-pre-wrap">
+              {adoption.internal_notes}
+            </p>
           ) : (
-            <p className="text-sm text-muted-foreground">Keine Notizen vorhanden.</p>
+            <p className="text-sm text-muted-foreground">
+              Keine Notizen vorhanden.
+            </p>
           )}
         </CardContent>
       </Card>

@@ -2,7 +2,10 @@
 // Response types (returned by the API)
 // ---------------------------------------------------------------------------
 
-import type { AdoptionListResource, AdoptionDetailResource } from '@/api/types/adoptions'
+import type {
+  AdoptionListResource,
+  AdoptionDetailResource,
+} from '@/api/types/adoptions'
 
 /** Single adoption (detail response shape). */
 export type Adoption = AdoptionDetailResource

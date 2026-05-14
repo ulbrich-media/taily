@@ -3,7 +3,7 @@ import { Badge } from '@/shadcn/components/ui/badge'
 import { Card, CardContent } from '@/shadcn/components/ui/card'
 import type {
   AdoptionDetailResource,
-  AdoptionOverallStatus,
+  AdoptionStatus,
 } from '@/api/types/adoptions'
 import { Heart, PawPrint, User } from 'lucide-react'
 import {
@@ -15,12 +15,12 @@ import { Button } from '@/shadcn/components/ui/button.tsx'
 import { InfoRow } from '@/shadcn/components/common/info-row.tsx'
 import { formatApiDate } from '@/lib/dates.utils.ts'
 
-function OverallStatusBadge({ status }: { status: AdoptionOverallStatus }) {
-  if (status === 'completed') {
+function OverallStatusBadge({ status }: { status: AdoptionStatus }) {
+  if (status === 'done') {
     return <Badge variant="success">Abgeschlossen</Badge>
   }
-  if (status === 'rejected') {
-    return <Badge variant="destructive">Abgelehnt</Badge>
+  if (status === 'canceled') {
+    return <Badge variant="destructive">Abgebrochen</Badge>
   }
   return <Badge variant="warning">In Bearbeitung</Badge>
 }
@@ -123,7 +123,7 @@ export function AdoptionSidebar({
             )}
 
             <InfoRow label="Status">
-              <OverallStatusBadge status={adoption.overall_status} />
+              <OverallStatusBadge status={adoption.status} />
             </InfoRow>
 
             <InfoRow label="Erstellt am">
