@@ -138,8 +138,8 @@ export function AnimalFormPlacement({
               <Switch
                 name="is_boarding_animal"
                 control={form.control}
-                label="Pensionsstatus"
-                switchLabel="Ist pensioniert"
+                label="Pension"
+                switchLabel="Ist in Pension"
               />
 
               <CurrencyInput

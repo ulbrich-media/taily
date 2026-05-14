@@ -30,7 +30,6 @@ import {
 import { TraitInput } from '@/components/field/TraitInput.tsx'
 
 const animalFormStatusSchema = z.object({
-  current_location: zFieldString(),
   alternate_transport_trace: zFieldString(),
   alternate_arrival_location: zFieldString(),
   do_publish: z.boolean(),
@@ -84,7 +83,6 @@ export function AnimalFormStatus({
   const form = useForm<AnimalFormStatusData>({
     resolver: zodResolver(animalFormStatusSchema),
     defaultValues: {
-      current_location: defaultValues?.current_location || '',
       alternate_transport_trace: defaultValues?.alternate_transport_trace || '',
       alternate_arrival_location:
         defaultValues?.alternate_arrival_location || '',
@@ -112,38 +110,6 @@ export function AnimalFormStatus({
         <FormBlocker />
 
         <FieldGroup>
-          <FormSection
-            title="Transport"
-            description="Für den Transport relevante Informationen."
-          >
-            <FormGrid>
-              <TextInput
-                name="current_location"
-                control={form.control}
-                label="Aufenthaltsort"
-                info="Aktueller Standort des Tieres"
-              />
-
-              <div></div>
-
-              <TextInput
-                name="alternate_transport_trace"
-                control={form.control}
-                label="Abweichende Traces"
-                info="Alternative Transport-Traces-Nummer"
-              />
-
-              <TextInput
-                name="alternate_arrival_location"
-                control={form.control}
-                label="Abweichender Ankunftsort"
-                info="Falls das Tier an einem anderen Ort ankommt"
-              />
-            </FormGrid>
-          </FormSection>
-
-          <FieldSeparator />
-
           <FormSection
             title="Veröffentlichung"
             description="Informationen zur Veröffentlichung und Bewerbung dieses Tieres."
@@ -200,6 +166,29 @@ export function AnimalFormStatus({
                 control={form.control}
                 label="Bewerbungs-URL"
                 info="Link zum Bewerbungsformular zur Adoption dieses Tieres. Muss eine vollständige URL sein (z.B. https://...)."
+              />
+            </FormGrid>
+          </FormSection>
+
+          <FieldSeparator />
+
+          <FormSection
+            title="Transport"
+            description="Für den Transport relevante Informationen."
+          >
+            <FormGrid>
+              <TextInput
+                name="alternate_transport_trace"
+                control={form.control}
+                label="Abweichende Traces"
+                info="Alternative Transport-Traces-Nummer"
+              />
+
+              <TextInput
+                name="alternate_arrival_location"
+                control={form.control}
+                label="Abweichender Ankunftsort"
+                info="Falls das Tier an einem anderen Ort ankommt"
               />
             </FormGrid>
           </FormSection>
