@@ -36,11 +36,11 @@ export function AdoptionReopenPage({
       queryClient.invalidateQueries({
         queryKey: adoptionQueryKeys.detail(adoption.id),
       })
-      toast.success(response.message || 'Vermittlung wiedereröffnet')
+      toast.success(response.message || 'Vermittlung fortgesetzt')
       onClose()
     },
     onError: () => {
-      toast.error('Fehler beim Wiedereröffnen der Vermittlung')
+      toast.error('Fehler beim Fortsetzen der Vermittlung')
     },
   })
 
@@ -48,10 +48,9 @@ export function AdoptionReopenPage({
     <AlertDialog open onOpenChange={(open) => !open && onClose()}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Vermittlung wiedereröffnen?</AlertDialogTitle>
+          <AlertDialogTitle>Vermittlung fortsetzen?</AlertDialogTitle>
           <AlertDialogDescription>
-            Die Vermittlung kann weiter bearbeitet werden wo sie vorher beendet
-            wurde.
+            Die Vermittlung wird dort fortgesetzt, wo sie abgebrochen wurde.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -60,7 +59,7 @@ export function AdoptionReopenPage({
             onClick={() => reopenMutation.mutate()}
             disabled={reopenMutation.isPending}
           >
-            {reopenMutation.isPending ? 'Wird geöffnet...' : 'Wiedereröffnen'}
+            {reopenMutation.isPending ? 'Wird fortgesetzt...' : 'Fortsetzen'}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

@@ -44,10 +44,10 @@ function RouteComponent() {
   )
 
   const cancelAction = (
-    <Button size="sm" variant="destructive" asChild>
+    <Button size="sm" variant="outline" asChild>
       <CancelRoute.Link params={{ adoptionId }}>
         <Ban className="size-4" />
-        Abbrechen
+        Vermittlung abbrechen
       </CancelRoute.Link>
     </Button>
   )
@@ -56,7 +56,7 @@ function RouteComponent() {
     <Button size="sm" variant="outline" asChild>
       <ReopenRoute.Link params={{ adoptionId }}>
         <RotateCcw className="size-4" />
-        Wiedereröffnen
+        Vermittlung fortsetzen
       </ReopenRoute.Link>
     </Button>
   )

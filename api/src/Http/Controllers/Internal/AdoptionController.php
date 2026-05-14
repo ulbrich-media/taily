@@ -66,7 +66,7 @@ class AdoptionController extends Controller
             'mediator_id' => 'sometimes|nullable|exists:people,id',
             'applicant_id' => 'sometimes|required|exists:people,id',
             'status' => 'sometimes|in:pending,in_progress,canceled,done',
-            'canceled_reason' => 'sometimes|required_if:status,canceled|string',
+            'canceled_reason' => 'sometimes',
             'notes' => 'sometimes|string',
             'pre_inspection_notes' => 'sometimes|string',
             'contract_sent_at' => 'sometimes|nullable|date',
