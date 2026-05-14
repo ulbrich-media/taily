@@ -24,7 +24,7 @@ import {
 import { FormSection } from '@/components/form/FormSection'
 import { FormGrid } from '@/components/form/FormGrid'
 import { FormBlocker } from '@/components/form/FormBlocker'
-import { SingleCheckbox } from '@/components/field/SingleCheckbox.tsx'
+import { Switch } from '@/components/field/Switch.tsx'
 import { Textarea } from '@/components/field/Textarea.tsx'
 import { TextInput } from '@/components/field/TextInput.tsx'
 import {
@@ -171,11 +171,11 @@ export function AnimalFormHealth({
             description="Gesundheitliche und medizinische Daten."
           >
             <FormGrid>
-              <SingleCheckbox
+              <Switch
                 name="is_neutered"
                 control={form.control}
                 label="Kastration"
-                checkboxLabel="Ist kastriert"
+                switchLabel="Ist kastriert"
               />
             </FormGrid>
 

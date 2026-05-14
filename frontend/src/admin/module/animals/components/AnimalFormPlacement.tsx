@@ -11,7 +11,7 @@ import { FormBlocker } from '@/components/form/FormBlocker'
 import { CurrencyInput } from '@/components/field/CurrencyInput.tsx'
 import { PersonSelect } from '@/components/field/PersonSelect.tsx'
 import { TextInput } from '@/components/field/TextInput.tsx'
-import { SingleCheckbox } from '@/components/field/SingleCheckbox.tsx'
+import { Switch } from '@/components/field/Switch.tsx'
 
 const nullableDecimal = z
   .string()
@@ -135,11 +135,11 @@ export function AnimalFormPlacement({
 
           <FormSection title="Pension" titleHidden>
             <FormGrid>
-              <SingleCheckbox
+              <Switch
                 name="is_boarding_animal"
                 control={form.control}
                 label="Pension"
-                checkboxLabel="Ist in Pension"
+                switchLabel="Ist in Pension"
               />
 
               <CurrencyInput

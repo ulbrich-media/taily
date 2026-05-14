@@ -9,7 +9,7 @@ import {
   FieldLabel,
   FieldSet,
 } from '@/shadcn/components/ui/field.tsx'
-import { Checkbox } from '@/shadcn/components/ui/checkbox.tsx'
+import { Switch as SwitchComponent } from '@/shadcn/components/ui/switch.tsx'
 
 export interface SingleCheckboxProps<
   TFieldValues extends FieldValues = FieldValues,
@@ -19,15 +19,15 @@ export interface SingleCheckboxProps<
   FormFieldWrapperProps<TFieldValues, TName, TTransformedValues>,
   'render'
 > {
-  checkboxLabel: string
+  switchLabel: string
 }
 
-export function SingleCheckbox<
+export function Switch<
   TFieldValues extends FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
   TTransformedValues = TFieldValues,
 >({
-  checkboxLabel,
+  switchLabel,
   ...props
 }: SingleCheckboxProps<TFieldValues, TName, TTransformedValues>) {
   return (
@@ -37,12 +37,12 @@ export function SingleCheckbox<
         <FieldSet>
           <FieldGroup data-slot="checkbox-group">
             <Field orientation="horizontal">
-              <Checkbox
+              <SwitchComponent
                 id={field.name}
                 checked={field.value}
                 onCheckedChange={field.onChange}
               />
-              <FieldLabel htmlFor={field.name}>{checkboxLabel}</FieldLabel>
+              <FieldLabel htmlFor={field.name}>{switchLabel}</FieldLabel>
             </Field>
           </FieldGroup>
         </FieldSet>
