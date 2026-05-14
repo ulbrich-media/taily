@@ -62,6 +62,7 @@ class AdoptionController extends Controller
             'status' => 'sometimes|in:pending,in_progress,canceled,done',
             'canceled_at' => 'sometimes|nullable|date',
             'canceled_reason' => 'sometimes|string',
+            'internal_notes' => 'sometimes|string',
             'application_notes' => 'sometimes|string',
             'pre_inspection_notes' => 'sometimes|string',
             'contract_sent_at' => 'sometimes|nullable|date',

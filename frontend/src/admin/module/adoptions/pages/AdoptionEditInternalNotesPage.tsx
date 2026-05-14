@@ -23,46 +23,46 @@ import {
 } from '@/components/field/TextInput.utils.ts'
 
 const schema = z.object({
-  pre_inspection_notes: zFieldString({
+  internal_notes: zFieldString({
     maxLength: STRING_LENGTH_TEXTAREA,
   }),
 })
 
 type FormData = z.infer<typeof schema>
 
-interface AdoptionEditPreInspectionPageProps {
+interface AdoptionEditInternalNotesPageProps {
   adoption: AdoptionDetailResource
   onClose: () => void
 }
 
-export function AdoptionEditPreInspectionPage({
+export function AdoptionEditInternalNotesPage({
   adoption,
   onClose,
-}: AdoptionEditPreInspectionPageProps) {
+}: AdoptionEditInternalNotesPageProps) {
   const queryClient = useQueryClient()
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
-      pre_inspection_notes: adoption.pre_inspection_notes,
+      internal_notes: adoption.internal_notes,
     },
   })
 
   const updateMutation = useMutation({
     mutationFn: (data: FormData) =>
       updateAdoption(adoption.id, {
-        pre_inspection_notes: data.pre_inspection_notes.trim(),
+        internal_notes: data.internal_notes.trim(),
       }),
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: adoptionQueryKeys.list() })
       queryClient.invalidateQueries({
         queryKey: adoptionQueryKeys.detail(adoption.id),
       })
-      toast.success(response.message || 'Vorkontrolle erfolgreich aktualisiert')
+      toast.success(response.message || 'Notizen erfolgreich gespeichert')
       onClose()
     },
     onError: () => {
-      toast.error('Fehler beim Aktualisieren der Vorkontrolle')
+      toast.error('Fehler beim Speichern der Notizen')
     },
   })
 
@@ -70,9 +70,9 @@ export function AdoptionEditPreInspectionPage({
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Vorkontrolle – Notizen</DialogTitle>
+          <DialogTitle>Interne Notizen</DialogTitle>
           <DialogDescription>
-            Notizen zur Vorkontrolle festhalten.
+            Interne Notizen zur Vermittlung festhalten.
           </DialogDescription>
         </DialogHeader>
         <form
@@ -81,10 +81,10 @@ export function AdoptionEditPreInspectionPage({
         >
           <FieldGroup>
             <Textarea
-              name="pre_inspection_notes"
+              name="internal_notes"
               control={form.control}
               label="Notizen"
-              rows={4}
+              rows={5}
             />
           </FieldGroup>
           <DialogFooter>

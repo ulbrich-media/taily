@@ -5,6 +5,7 @@ import { listPreInspectionsByPersonAndAnimalTypeQuery } from '@/admin/module/pre
 import { AdoptionDetailPage } from '@/admin/module/adoptions/pages/AdoptionDetailPage'
 import { Button } from '@/shadcn/components/ui/button'
 import { Edit, Eye, PlusCircle } from 'lucide-react'
+import { Route as InternalNotesRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/internal-notes'
 import { Route as PreInspectionRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/pre-inspection'
 import { Route as NewInspectionRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/new-inspection'
 import { Route as InspectionDetailRoute } from '@/routes/admin/_authenticated/pre-inspections/$id/index.tsx'
@@ -31,11 +32,20 @@ function RouteComponent() {
     listPreInspectionsByPersonAndAnimalTypeQuery(applicantId, animalTypeId)
   )
 
+  const editInternalNotesAction = (
+    <Button size="sm" variant="outline" asChild>
+      <InternalNotesRoute.Link params={{ adoptionId }}>
+        <Edit className="size-4" />
+        Bearbeiten
+      </InternalNotesRoute.Link>
+    </Button>
+  )
+
   const editPreInspectionAction = (
     <Button size="sm" variant="outline" asChild>
       <PreInspectionRoute.Link params={{ adoptionId }}>
         <Edit className="size-4" />
-        Ergebnis bearbeiten
+        Notizen bearbeiten
       </PreInspectionRoute.Link>
     </Button>
   )
@@ -72,6 +82,7 @@ function RouteComponent() {
         inspectionsData={inspectionsData}
         inspectionsLoading={inspectionsLoading}
         inspectionsError={inspectionsError}
+        editInternalNotesAction={editInternalNotesAction}
         editPreInspectionAction={editPreInspectionAction}
         newInspectionAction={newInspectionAction}
         renderInspectionDetailLink={renderInspectionDetailLink}

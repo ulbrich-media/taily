@@ -18,6 +18,7 @@ interface AdoptionDetailPageProps {
   inspectionsData: PreInspectionResource[] | undefined
   inspectionsLoading: boolean
   inspectionsError: boolean
+  editInternalNotesAction: ReactNode
   editPreInspectionAction: ReactNode
   newInspectionAction: ReactNode
   renderInspectionDetailLink?: (inspection: PreInspectionResource) => ReactNode
@@ -28,34 +29,42 @@ export function AdoptionDetailPage({
   inspectionsData,
   inspectionsLoading,
   inspectionsError,
+  editInternalNotesAction,
   editPreInspectionAction,
   newInspectionAction,
   renderInspectionDetailLink,
 }: AdoptionDetailPageProps) {
   return (
     <div className="space-y-4">
+      {/* Internal notes – always visible above process steps */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-start justify-between gap-3">
+            <CardTitle>Interne Notizen</CardTitle>
+            {editInternalNotesAction}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {adoption.internal_notes ? (
+            <p className="text-sm whitespace-pre-wrap">{adoption.internal_notes}</p>
+          ) : (
+            <p className="text-sm text-muted-foreground">Keine Notizen vorhanden.</p>
+          )}
+        </CardContent>
+      </Card>
+
       <StepCard
         title="Vorkontrolle"
         status={
-          adoption.pre_inspection_result && (
-            <BadgeBySet
-              set={{
-                not_conducted: {
-                  label: 'Offen',
-                  variant: 'outline',
-                },
-                approved: {
-                  label: 'Akzeptiert',
-                  variant: 'success',
-                },
-                rejected: {
-                  label: 'Abgelehnt',
-                  variant: 'destructive',
-                },
-              }}
-              value={adoption.pre_inspection_result}
-            />
-          )
+          <BadgeBySet
+            set={{
+              pending: { label: 'Offen', variant: 'outline' },
+              not_started: { label: 'Offen', variant: 'outline' },
+              in_progress: { label: 'In Bearbeitung', variant: 'warning' },
+              finished: { label: 'Abgeschlossen', variant: 'success' },
+            }}
+            value={adoption.pre_inspection_status}
+          />
         }
       >
         <div className="space-y-4">
@@ -77,10 +86,8 @@ export function AdoptionDetailPage({
             )}
           </InfoRow>
 
-          {adoption.pre_inspection_summary && (
-            <InfoRow label="Zusammenfassung">
-              {adoption.pre_inspection_summary}
-            </InfoRow>
+          {adoption.pre_inspection_notes && (
+            <InfoRow label="Notizen">{adoption.pre_inspection_notes}</InfoRow>
           )}
 
           <div className="flex justify-end gap-2">
@@ -95,18 +102,10 @@ export function AdoptionDetailPage({
         status={
           <BadgeBySet
             set={{
-              not_started: {
-                label: 'Nicht begonnen',
-                variant: 'outline',
-              },
-              in_progress: {
-                label: 'In Bearbeitung',
-                variant: 'warning',
-              },
-              finished: {
-                label: 'Abgeschlossen',
-                variant: 'success',
-              },
+              not_started: { label: 'Nicht begonnen', variant: 'outline' },
+              pending: { label: 'Nicht begonnen', variant: 'outline' },
+              in_progress: { label: 'In Bearbeitung', variant: 'warning' },
+              finished: { label: 'Abgeschlossen', variant: 'success' },
             }}
             value={adoption.contract_status}
           />
@@ -127,31 +126,18 @@ export function AdoptionDetailPage({
         status={
           <BadgeBySet
             set={{
-              not_started: {
-                label: 'Nicht begonnen',
-                variant: 'outline',
-              },
-              in_progress: {
-                label: 'In Bearbeitung',
-                variant: 'warning',
-              },
-              finished: {
-                label: 'Abgeschlossen',
-                variant: 'success',
-              },
+              not_started: { label: 'Nicht begonnen', variant: 'outline' },
+              pending: { label: 'Nicht begonnen', variant: 'outline' },
+              in_progress: { label: 'In Bearbeitung', variant: 'warning' },
+              finished: { label: 'Abgeschlossen', variant: 'success' },
             }}
-            value={adoption.transfer_status}
+            value={adoption.handover_status}
           />
         }
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <InfoRow label="Geplant am">
-            {formatApiDate(adoption.transfer_planned_at)}
-          </InfoRow>
-          <InfoRow label="Übergeben am">
-            {formatApiDate(adoption.transferred_at)}
-          </InfoRow>
-        </div>
+        <InfoRow label="Übergeben am">
+          {formatApiDate(adoption.handed_over_at)}
+        </InfoRow>
       </StepCard>
     </div>
   )
