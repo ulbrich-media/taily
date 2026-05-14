@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Taily\Http\Controllers\Internal\AdoptionContractController;
 use Taily\Http\Controllers\Internal\AdoptionController;
 use Taily\Http\Controllers\Internal\AnimalController;
 use Taily\Http\Controllers\Internal\AnimalPictureController;
@@ -79,6 +80,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Adoptions
     Route::get('/adoptions/options', [AdoptionController::class, 'options']);
     Route::apiResource('adoptions', AdoptionController::class);
+    Route::post('/adoptions/{adoption}/contract', [AdoptionContractController::class, 'store']);
+    Route::delete('/adoptions/{adoption}/contract', [AdoptionContractController::class, 'destroy']);
 
     // API Tokens
     Route::get('/api-tokens/abilities', [ApiTokenController::class, 'abilities']);

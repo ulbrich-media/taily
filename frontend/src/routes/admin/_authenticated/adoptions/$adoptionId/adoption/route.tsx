@@ -8,6 +8,7 @@ import { Edit, Eye, PlusCircle, Ban, RotateCcw } from 'lucide-react'
 import { Route as InternalNotesRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/internal-notes'
 import { Route as PreInspectionRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/pre-inspection'
 import { Route as NewInspectionRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/new-inspection'
+import { Route as ContractRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/contract'
 import { Route as CancelRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/cancel'
 import { Route as ReopenRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/reopen'
 import { Route as InspectionDetailRoute } from '@/routes/admin/_authenticated/pre-inspections/$id/index.tsx'
@@ -61,6 +62,15 @@ function RouteComponent() {
     </Button>
   )
 
+  const editContractAction = (
+    <Button size="sm" variant="outline" asChild>
+      <ContractRoute.Link params={{ adoptionId }}>
+        <Edit className="size-4" />
+        Vertrag bearbeiten
+      </ContractRoute.Link>
+    </Button>
+  )
+
   const editPreInspectionAction = (
     <Button size="sm" variant="outline" asChild>
       <PreInspectionRoute.Link params={{ adoptionId }}>
@@ -103,6 +113,7 @@ function RouteComponent() {
         inspectionsLoading={inspectionsLoading}
         inspectionsError={inspectionsError}
         editInternalNotesAction={editInternalNotesAction}
+        editContractAction={editContractAction}
         cancelAction={cancelAction}
         reopenAction={reopenAction}
         editPreInspectionAction={editPreInspectionAction}

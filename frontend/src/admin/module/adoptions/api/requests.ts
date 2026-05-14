@@ -3,6 +3,7 @@ import type {
   Adoption,
   AdoptionResponse,
   AdoptionsResponse,
+  ContractFileResponse,
   CreateAdoptionRequest,
   UpdateAdoptionRequest,
 } from './types'
@@ -44,5 +45,25 @@ export async function updateAdoption(
   return apiRequest<AdoptionResponse>(`adoptions/${id}`, {
     method: 'PATCH',
     body: JSON.stringify(data),
+  })
+}
+
+export async function uploadContractFile(
+  id: string,
+  file: File
+): Promise<ContractFileResponse> {
+  const formData = new FormData()
+  formData.append('file', file)
+  return apiRequest<ContractFileResponse>(`adoptions/${id}/contract`, {
+    method: 'POST',
+    body: formData,
+  })
+}
+
+export async function deleteContractFile(
+  id: string
+): Promise<{ message: string }> {
+  return apiRequest<{ message: string }>(`adoptions/${id}/contract`, {
+    method: 'DELETE',
   })
 }
