@@ -31,6 +31,7 @@ class AdoptionBaseResource extends JsonResource
             // Handover step
             'handed_over_at' => $this->resource->handed_over_at,
             // Computed step statuses
+            'pre_inspection_status' => $this->resource->pre_inspection_status,
             'contract_status' => $this->resource->contract_status,
             'transport_status' => $this->resource->transport_status,
             'handover_status' => $this->resource->handover_status,

@@ -89,4 +89,27 @@ class Adoption extends Model
     {
         return $this->handed_over_at !== null ? 'finished' : 'not_started';
     }
+
+    public function getPreInspectionStatusAttribute(): string
+    {
+        $animalTypeId = $this->animal?->animal_type_id;
+
+        if (! $animalTypeId) {
+            return 'pending';
+        }
+
+        $inspections = PreInspection::where('person_id', $this->applicant_id)
+            ->where('animal_type_id', $animalTypeId)
+            ->get();
+
+        if ($inspections->isEmpty()) {
+            return 'pending';
+        }
+
+        if ($inspections->whereNull('submitted_at')->isNotEmpty()) {
+            return 'in_progress';
+        }
+
+        return 'finished';
+    }
 }

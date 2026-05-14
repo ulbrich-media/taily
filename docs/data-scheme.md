@@ -81,11 +81,11 @@ Steps are optional and can be taken in any order. Each step derives its status i
 | Transport | `transport_id` is null | transport assigned (details TBD) | transport completed (TBD) |
 | Handover | `handed_over_at` is null | — | `handed_over_at` is set |
 
-The pre-inspection step is tracked via `pre_inspection_notes` and indirectly through pre-inspection records linked to the applicant.
+The pre-inspection step status is derived from the applicant's pre-inspection records for the animal's animal type: `pending` when none exist, `in_progress` when at least one has not yet been submitted by the inspector, `finished` when all have a result (regardless of verdict).
 
 #### Relations
 
-- Pre-inspections are not stored directly on the adoption. They are linked to the applicant (person) and can be viewed from the person's profile.
+- Pre-inspections are not stored directly on the adoption. The relation is resolved through the applicant: all pre-inspections for the applicant and the animal's animal type are considered, including older ones, since any prior inspection result may be relevant to the adoption decision.
 - Transport is a separate entity (`transports` table) shared across multiple adoptions. Its full lifecycle is implemented in a later phase.
 
 ### Transport
