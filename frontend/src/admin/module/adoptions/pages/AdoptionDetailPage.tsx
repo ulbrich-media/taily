@@ -155,9 +155,7 @@ export function AdoptionDetailPage({
               </InfoRow>
             )}
           </div>
-          <div className="flex justify-end">
-            {editContractAction}
-          </div>
+          <div className="flex justify-end">{editContractAction}</div>
         </div>
       </StepCard>
 

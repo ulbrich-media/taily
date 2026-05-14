@@ -155,7 +155,9 @@ export function AdoptionEditContractPage({
             {selectedFile && (
               <div className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
                 <FileIcon className="size-4 shrink-0 text-muted-foreground" />
-                <span className="min-w-0 flex-1 truncate">{selectedFile.name}</span>
+                <span className="min-w-0 flex-1 truncate">
+                  {selectedFile.name}
+                </span>
                 <Button
                   type="button"
                   variant="ghost"
@@ -172,7 +174,9 @@ export function AdoptionEditContractPage({
             {showExistingFile && (
               <div className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
                 <FileIcon className="size-4 shrink-0 text-muted-foreground" />
-                <span className="min-w-0 flex-1 truncate">{existingFile.name}</span>
+                <span className="min-w-0 flex-1 truncate">
+                  {existingFile.name}
+                </span>
                 <Button
                   type="button"
                   variant="ghost"
