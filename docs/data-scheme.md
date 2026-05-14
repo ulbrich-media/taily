@@ -54,8 +54,8 @@ Learn more in [features/adoption.md](./features/adoption.md)
 | `transport_id` | uuid FK → transports, nullable | The transport the animal is assigned to (stub — full transport lifecycle TBD) |
 | `status` | enum | General lifecycle status: `pending`, `in_progress`, `canceled`, `done` |
 | `canceled_at` | timestamp, nullable | When the adoption was canceled |
-| `canceled_reason` | text | Why the adoption was canceled (specific, separate from internal_notes) |
-| `application_notes` | text | Mediator notes on the application |
+| `canceled_reason` | text | Why the adoption was canceled (specific, separate from notes) |
+| `notes` | text | General mediator notes about the adoption |
 | `pre_inspection_notes` | text | Mediator notes on the pre-inspection step |
 | `contract_sent_at` | date, nullable | When the contract was sent to the adopter |
 | `contract_signed` | boolean | Whether the contract has been signed by both parties |

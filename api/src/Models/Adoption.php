@@ -12,9 +12,8 @@ class Adoption extends Model
     use HasFactory, HasUuids;
 
     protected $attributes = [
-        'internal_notes' => '',
+        'notes' => '',
         'canceled_reason' => '',
-        'application_notes' => '',
         'pre_inspection_notes' => '',
     ];
 
@@ -25,8 +24,7 @@ class Adoption extends Model
         'status',
         'canceled_at',
         'canceled_reason',
-        'internal_notes',
-        'application_notes',
+        'notes',
         'pre_inspection_notes',
         'contract_sent_at',
         'contract_signed',

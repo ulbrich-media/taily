@@ -34,7 +34,7 @@ class AdoptionController extends Controller
             'animal_id' => 'required|exists:animals,id',
             'mediator_id' => 'nullable|exists:people,id',
             'applicant_id' => 'required|exists:people,id',
-            'application_notes' => 'sometimes|string',
+            'notes' => 'sometimes|string',
         ]);
 
         $adoption = Adoption::create($validated);
@@ -62,8 +62,7 @@ class AdoptionController extends Controller
             'status' => 'sometimes|in:pending,in_progress,canceled,done',
             'canceled_at' => 'sometimes|nullable|date',
             'canceled_reason' => 'sometimes|string',
-            'internal_notes' => 'sometimes|string',
-            'application_notes' => 'sometimes|string',
+            'notes' => 'sometimes|string',
             'pre_inspection_notes' => 'sometimes|string',
             'contract_sent_at' => 'sometimes|nullable|date',
             'contract_signed' => 'sometimes|boolean',

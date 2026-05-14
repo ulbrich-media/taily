@@ -40,15 +40,13 @@ export function AdoptionDetailPage({
       <Card>
         <CardHeader>
           <div className="flex items-start justify-between gap-3">
-            <CardTitle>Interne Notizen</CardTitle>
+            <CardTitle>Notizen</CardTitle>
             {editInternalNotesAction}
           </div>
         </CardHeader>
         <CardContent>
-          {adoption.internal_notes ? (
-            <p className="text-sm whitespace-pre-wrap">
-              {adoption.internal_notes}
-            </p>
+          {adoption.notes ? (
+            <p className="text-sm whitespace-pre-wrap">{adoption.notes}</p>
           ) : (
             <p className="text-sm text-muted-foreground">
               Keine Notizen vorhanden.

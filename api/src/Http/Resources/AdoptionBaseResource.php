@@ -21,9 +21,7 @@ class AdoptionBaseResource extends JsonResource
             'canceled_at' => $this->resource->canceled_at,
             'canceled_reason' => $this->resource->canceled_reason,
             // General notes
-            'internal_notes' => $this->resource->internal_notes,
-            // Application step
-            'application_notes' => $this->resource->application_notes,
+            'notes' => $this->resource->notes,
             // Pre-inspection step
             'pre_inspection_notes' => $this->resource->pre_inspection_notes,
             // Contract step

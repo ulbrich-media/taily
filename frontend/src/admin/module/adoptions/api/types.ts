@@ -32,8 +32,7 @@ export interface UpdateAdoptionRequest {
   status?: 'pending' | 'in_progress' | 'canceled' | 'done'
   canceled_at?: string | null
   canceled_reason?: string
-  internal_notes?: string
-  application_notes?: string
+  notes?: string
   pre_inspection_notes?: string
   contract_sent_at?: string | null
   contract_signed?: boolean

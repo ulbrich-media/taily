@@ -23,7 +23,7 @@ import {
 } from '@/components/field/TextInput.utils.ts'
 
 const schema = z.object({
-  internal_notes: zFieldString({
+  notes: zFieldString({
     maxLength: STRING_LENGTH_TEXTAREA,
   }),
 })
@@ -44,14 +44,14 @@ export function AdoptionEditInternalNotesPage({
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
-      internal_notes: adoption.internal_notes,
+      notes: adoption.notes,
     },
   })
 
   const updateMutation = useMutation({
     mutationFn: (data: FormData) =>
       updateAdoption(adoption.id, {
-        internal_notes: data.internal_notes.trim(),
+        notes: data.notes.trim(),
       }),
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: adoptionQueryKeys.list() })
@@ -70,9 +70,9 @@ export function AdoptionEditInternalNotesPage({
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Interne Notizen</DialogTitle>
+          <DialogTitle>Notizen</DialogTitle>
           <DialogDescription>
-            Interne Notizen zur Vermittlung festhalten.
+            Notizen zur Vermittlung festhalten.
           </DialogDescription>
         </DialogHeader>
         <form
@@ -81,7 +81,7 @@ export function AdoptionEditInternalNotesPage({
         >
           <FieldGroup>
             <Textarea
-              name="internal_notes"
+              name="notes"
               control={form.control}
               label="Notizen"
               rows={5}

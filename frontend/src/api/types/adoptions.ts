@@ -26,9 +26,7 @@ export interface AdoptionBaseResource {
   canceled_at: string | null
   canceled_reason: string
   // General notes
-  internal_notes: string
-  // Application step
-  application_notes: string
+  notes: string
   // Pre-inspection step
   pre_inspection_notes: string
   // Contract step

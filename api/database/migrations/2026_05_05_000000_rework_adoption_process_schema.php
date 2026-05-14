@@ -37,8 +37,8 @@ return new class extends Migration
             $table->timestamp('canceled_at')->nullable();
             $table->text('canceled_reason');
 
-            // Application step
-            $table->text('application_notes');
+            // General notes
+            $table->text('notes');
 
             // Contract step
             $table->timestamp('contract_signed_at')->nullable();
@@ -60,7 +60,7 @@ return new class extends Migration
                 'status',
                 'canceled_at',
                 'canceled_reason',
-                'application_notes',
+                'notes',
                 'contract_signed_at',
                 'transport_id',
                 'handed_over_at',

@@ -17,7 +17,7 @@ An adoption in progress can go through several steps. These steps are not enforc
 
 The typical sequence is:
 
-1. **Application** — Someone has expressed interest and their basic information is collected. The mediator can add notes to document their assessment of the application.
+1. **Application** — Someone has expressed interest and their basic information is collected.
 2. **Pre-inspection** — A visit or video call is conducted to verify that the applicant's home is actually suitable for the animal. See [pre-inspection.md](./pre-inspection.md) for details.
 3. **Contract** — A Schutzvertrag is signed by both the adopter and the mediator, defining rights and responsibilities. See [contract.md](./contract.md) for details.
 4. **Transport** — The animal is transported to the adopter or a staging location. See [transport.md](./transport.md) for details.
@@ -25,7 +25,7 @@ The typical sequence is:
 
 ## Cancellation
 
-An adoption can be canceled at any point, regardless of which steps have been completed. The mediator documents a reason for the cancellation, which is kept separate from general internal notes to make it easy to understand why the adoption ended.
+An adoption can be canceled at any point, regardless of which steps have been completed. The mediator documents a reason for the cancellation, which is kept separate from the general notes field to make it easy to understand why the adoption ended.
 
 ## Follow-up Inspection
 
