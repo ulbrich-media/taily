@@ -53,6 +53,7 @@ export async function updateContract(
   data: UpdateContractRequest
 ): Promise<AdoptionResponse> {
   const formData = new FormData()
+  formData.append('_method', 'PUT')
   formData.append('contract_signed', data.contract_signed ? '1' : '0')
   if (data.contract_signed_at !== undefined) {
     formData.append('contract_signed_at', data.contract_signed_at ?? '')
@@ -64,7 +65,7 @@ export async function updateContract(
     formData.append('remove_file', '1')
   }
   return apiRequest<AdoptionResponse>(`adoptions/${id}/contract`, {
-    method: 'PUT',
+    method: 'POST',
     body: formData,
   })
 }
