@@ -21,6 +21,8 @@ interface AdoptionDetailPageProps {
   editInternalNotesAction: ReactNode
   editPreInspectionAction: ReactNode
   newInspectionAction: ReactNode
+  cancelAction: ReactNode
+  reopenAction: ReactNode
   renderInspectionDetailLink?: (inspection: PreInspectionResource) => ReactNode
 }
 
@@ -32,16 +34,52 @@ export function AdoptionDetailPage({
   editInternalNotesAction,
   editPreInspectionAction,
   newInspectionAction,
+  cancelAction,
+  reopenAction,
   renderInspectionDetailLink,
 }: AdoptionDetailPageProps) {
+  const isCanceled = adoption.status === 'canceled'
+  const canCancel =
+    adoption.status === 'pending' || adoption.status === 'in_progress'
+
   return (
     <div className="space-y-4">
-      <StepCard title="Über diese Vermittlung">
+      <StepCard
+        title="Über diese Vermittlung"
+        status={
+          <BadgeBySet
+            set={{
+              pending: { label: 'Offen', variant: 'outline' },
+              in_progress: { label: 'In Bearbeitung', variant: 'warning' },
+              canceled: { label: 'Abgebrochen', variant: 'destructive' },
+              done: { label: 'Abgeschlossen', variant: 'success' },
+            }}
+            value={adoption.status}
+          />
+        }
+      >
         <div className="space-y-4">
-          <InfoRow label="Notizen">{adoption.notes}</InfoRow>
+          {adoption.notes ? (
+            <InfoRow label="Notizen">
+              <span className="whitespace-pre-wrap">{adoption.notes}</span>
+            </InfoRow>
+          ) : null}
+
+          {isCanceled && (
+            <div className="space-y-2 rounded-md border border-destructive/30 bg-destructive/5 p-3">
+              <InfoRow label="Abgebrochen am">
+                {formatApiDate(adoption.canceled_at)}
+              </InfoRow>
+              {adoption.canceled_reason && (
+                <InfoRow label="Grund">{adoption.canceled_reason}</InfoRow>
+              )}
+            </div>
+          )}
 
           <div className="flex justify-end gap-2">
             {editInternalNotesAction}
+            {canCancel && cancelAction}
+            {isCanceled && reopenAction}
           </div>
         </div>
       </StepCard>
