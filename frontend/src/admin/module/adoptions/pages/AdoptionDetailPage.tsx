@@ -142,7 +142,7 @@ export function AdoptionDetailPage({
               </InfoRow>
             )}
             {adoption.contract_file && (
-              <InfoRow label="Vertragsdatei">
+              <InfoRow label="Schutzvertrag">
                 <a
                   href={adoption.contract_file.url}
                   target="_blank"

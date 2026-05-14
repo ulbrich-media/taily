@@ -66,7 +66,7 @@ function RouteComponent() {
     <Button size="sm" variant="outline" asChild>
       <ContractRoute.Link params={{ adoptionId }}>
         <Edit className="size-4" />
-        Vertrag bearbeiten
+        Schutzvertrag bearbeiten
       </ContractRoute.Link>
     </Button>
   )

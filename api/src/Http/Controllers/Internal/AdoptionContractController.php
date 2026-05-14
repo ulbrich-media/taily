@@ -19,7 +19,7 @@ class AdoptionContractController extends Controller
         $media = $adoption->addMedia($request->file('file'))->toMediaCollection('contract');
 
         return response()->json([
-            'message' => 'Vertragsdatei erfolgreich hochgeladen.',
+            'message' => 'Schutzvertrag erfolgreich hochgeladen.',
             'data' => [
                 'uuid' => $media->uuid,
                 'name' => $media->file_name,
@@ -33,7 +33,7 @@ class AdoptionContractController extends Controller
         $adoption->clearMediaCollection('contract');
 
         return response()->json([
-            'message' => 'Vertragsdatei erfolgreich entfernt.',
+            'message' => 'Schutzvertrag erfolgreich entfernt.',
         ]);
     }
 }

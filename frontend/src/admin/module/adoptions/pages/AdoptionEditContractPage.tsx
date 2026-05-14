@@ -11,7 +11,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { format } from 'date-fns'
+import { format, isAfter, parse, isValid, startOfDay } from 'date-fns'
 import { FileIcon, Paperclip, Trash2, X } from 'lucide-react'
 import { adoptionQueryKeys } from '@/admin/module/adoptions/api/queries.ts'
 import {
@@ -30,9 +30,15 @@ import {
   zFieldDate,
 } from '@/components/field/DateInput.utils.ts'
 
+const noFutureDate = zFieldDate.refine((val) => {
+  if (!val) return true
+  const parsed = parse(val, 'dd.MM.yyyy', new Date())
+  return isValid(parsed) && !isAfter(startOfDay(parsed), startOfDay(new Date()))
+}, 'Datum darf nicht in der Zukunft liegen')
+
 const schema = z.object({
-  contract_sent_at: zFieldDate,
-  contract_signed_at: zFieldDate,
+  contract_sent_at: noFutureDate,
+  contract_signed_at: noFutureDate,
 })
 
 type FormData = z.infer<typeof schema>
@@ -68,6 +74,7 @@ export function AdoptionEditContractPage({
       })
 
       if (selectedFile) {
+        // Upload replaces any existing file via clearMediaCollection in the backend
         await uploadContractFile(adoption.id, selectedFile)
       } else if (removeExistingFile) {
         await deleteContractFile(adoption.id)
@@ -78,18 +85,17 @@ export function AdoptionEditContractPage({
       queryClient.invalidateQueries({
         queryKey: adoptionQueryKeys.detail(adoption.id),
       })
-      toast.success('Vertrag erfolgreich gespeichert')
+      toast.success('Schutzvertrag erfolgreich gespeichert')
       onClose()
     },
     onError: () => {
-      toast.error('Fehler beim Speichern des Vertrags')
+      toast.error('Fehler beim Speichern des Schutzvertrags')
     },
   })
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] ?? null
     setSelectedFile(file)
-    setRemoveExistingFile(false)
 
     if (file && !form.getValues('contract_signed_at')) {
       form.setValue('contract_signed_at', format(new Date(), 'dd.MM.yyyy'), {
@@ -107,10 +113,6 @@ export function AdoptionEditContractPage({
 
   const handleRemoveExisting = () => {
     setRemoveExistingFile(true)
-    setSelectedFile(null)
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
-    }
   }
 
   const handleUndoRemove = () => {
@@ -124,9 +126,9 @@ export function AdoptionEditContractPage({
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Vertrag bearbeiten</DialogTitle>
+          <DialogTitle>Schutzvertrag bearbeiten</DialogTitle>
           <DialogDescription>
-            Vertragsdaten und Vertragsdatei verwalten.
+            Schutzvertragsdaten und -datei verwalten.
           </DialogDescription>
         </DialogHeader>
         <form
@@ -138,6 +140,7 @@ export function AdoptionEditContractPage({
               name="contract_sent_at"
               control={form.control}
               label="Versendet am"
+              disableFutureDates
             />
           </FieldGroup>
 
@@ -146,11 +149,12 @@ export function AdoptionEditContractPage({
               name="contract_signed_at"
               control={form.control}
               label="Unterzeichnet am"
+              disableFutureDates
             />
           </FieldGroup>
 
           <div className="space-y-2">
-            <p className="text-sm font-medium">Vertragsdatei</p>
+            <p className="text-sm font-medium">Schutzvertrag</p>
 
             {selectedFile && (
               <div className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
@@ -190,7 +194,7 @@ export function AdoptionEditContractPage({
               </div>
             )}
 
-            {removeExistingFile && (
+            {removeExistingFile && !selectedFile && (
               <div className="flex items-center gap-2 rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
                 <span className="flex-1">Datei wird entfernt</span>
                 <Button
@@ -211,7 +215,7 @@ export function AdoptionEditContractPage({
                 type="file"
                 className="hidden"
                 onChange={handleFileChange}
-                aria-label="Vertragsdatei auswählen"
+                aria-label="Schutzvertrag auswählen"
               />
               <Button
                 type="button"
