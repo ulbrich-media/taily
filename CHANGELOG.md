@@ -2,6 +2,20 @@
 
 All notable changes to Taily are documented here.
 
+# [0.3.0](https://github.com/ulbrich-media/taily/compare/v0.2.1...v0.3.0) (2026-05-14)
+
+
+### Bug Fixes
+
+* single checkbox removed in favour of switch  ([#37](https://github.com/ulbrich-media/taily/issues/37)) ([23e5f8d](https://github.com/ulbrich-media/taily/commit/23e5f8d5999597bf6e9ba5a77b2b42de04f03727))
+* some animal fields moved and renamed ([#36](https://github.com/ulbrich-media/taily/issues/36)) ([b4b48c6](https://github.com/ulbrich-media/taily/commit/b4b48c6e57baa4dc1f254f2b76b4f732f9aa0e6b))
+* token trait issues resolved ([#32](https://github.com/ulbrich-media/taily/issues/32)) ([772c0f5](https://github.com/ulbrich-media/taily/commit/772c0f51879f4443a40603cbc34725a7c70c357d))
+
+
+### Features
+
+* adoption process to use status-based workflow ([#33](https://github.com/ulbrich-media/taily/issues/33)) ([e12d144](https://github.com/ulbrich-media/taily/commit/e12d1447a837f05dda61957937e2c1da1257ae4f))
+
 ## [0.2.1](https://github.com/ulbrich-media/taily/compare/v0.2.0...v0.2.1) (2026-05-03)
 
 
