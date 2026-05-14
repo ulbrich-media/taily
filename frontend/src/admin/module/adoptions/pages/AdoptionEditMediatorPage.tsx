@@ -26,13 +26,13 @@ type FormData = z.infer<typeof schema>
 
 interface AdoptionEditMediatorPageProps {
   adoption: AdoptionDetailResource
-  persons: PersonListResource[]
+  mediators: PersonListResource[]
   onClose: () => void
 }
 
 export function AdoptionEditMediatorPage({
   adoption,
-  persons,
+  mediators,
   onClose,
 }: AdoptionEditMediatorPageProps) {
   const queryClient = useQueryClient()
@@ -87,7 +87,12 @@ export function AdoptionEditMediatorPage({
             name="mediator_id"
             control={form.control}
             label="Vermittler"
-            persons={persons}
+            persons={mediators}
+            renderSubline={(person) =>
+              person.mediator_animal_types
+                ? `Vermittlung für ${person.mediator_animal_types.map((animalType) => animalType.title).join(', ')}`
+                : ''
+            }
             canRemove
           />
           <DialogFooter>

@@ -3,7 +3,7 @@ import { Badge } from '@/shadcn/components/ui/badge'
 import { Card, CardContent } from '@/shadcn/components/ui/card'
 import type {
   AdoptionDetailResource,
-  AdoptionOverallStatus,
+  AdoptionStatus,
 } from '@/api/types/adoptions'
 import { Heart, PawPrint, User } from 'lucide-react'
 import {
@@ -15,12 +15,12 @@ import { Button } from '@/shadcn/components/ui/button.tsx'
 import { InfoRow } from '@/shadcn/components/common/info-row.tsx'
 import { formatApiDate } from '@/lib/dates.utils.ts'
 
-function OverallStatusBadge({ status }: { status: AdoptionOverallStatus }) {
-  if (status === 'completed') {
+function OverallStatusBadge({ status }: { status: AdoptionStatus }) {
+  if (status === 'done') {
     return <Badge variant="success">Abgeschlossen</Badge>
   }
-  if (status === 'rejected') {
-    return <Badge variant="destructive">Abgelehnt</Badge>
+  if (status === 'canceled') {
+    return <Badge variant="destructive">Abgebrochen</Badge>
   }
   return <Badge variant="warning">In Bearbeitung</Badge>
 }
@@ -95,35 +95,41 @@ export function AdoptionSidebar({
 
             <div className="border-t"></div>
 
-            {adoption.mediator && (
-              <div className="flex gap-2 items-center">
-                <Avatar size="lg" key={adoption.mediator.id}>
-                  {adoption.mediator.profile_picture_url && (
-                    <AvatarImage
-                      alt={adoption.mediator.full_name}
-                      src={adoption.mediator.profile_picture_url}
-                    />
-                  )}
-                  <AvatarFallback>
-                    <User className="size-5 text-muted-foreground" />
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <p>{adoption.mediator.full_name}</p>
-                  <p className="text-xs text-muted-foreground">Vermittler</p>
-                </div>
-                {mediatorEditLink && (
-                  <div>
-                    <Button size="icon" variant="secondary" asChild>
-                      {mediatorEditLink}
-                    </Button>
-                  </div>
+            <div className="flex gap-2 items-center">
+              <Avatar size="lg" key={adoption.mediator?.id}>
+                {adoption.mediator?.profile_picture_url && (
+                  <AvatarImage
+                    alt={adoption.mediator.full_name}
+                    src={adoption.mediator.profile_picture_url}
+                  />
+                )}
+                <AvatarFallback>
+                  <User className="size-5 text-muted-foreground" />
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1">
+                {adoption.mediator ? (
+                  <>
+                    <p>{adoption.mediator.full_name}</p>
+                    <p className="text-xs text-muted-foreground">Vermittler</p>
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Kein Vermittler
+                  </p>
                 )}
               </div>
-            )}
+              {mediatorEditLink && (
+                <div>
+                  <Button size="icon" variant="secondary" asChild>
+                    {mediatorEditLink}
+                  </Button>
+                </div>
+              )}
+            </div>
 
             <InfoRow label="Status">
-              <OverallStatusBadge status={adoption.overall_status} />
+              <OverallStatusBadge status={adoption.status} />
             </InfoRow>
 
             <InfoRow label="Erstellt am">

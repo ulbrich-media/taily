@@ -165,12 +165,4 @@ class Person extends Model implements HasMedia
     {
         return $this->hasMany(Adoption::class, 'applicant_id');
     }
-
-    /**
-     * Get adoptions where this person is the inspector.
-     */
-    public function adoptionsAsInspector(): HasMany
-    {
-        return $this->hasMany(Adoption::class, 'inspector_id');
-    }
 }

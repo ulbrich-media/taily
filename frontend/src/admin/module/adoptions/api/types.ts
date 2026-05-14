@@ -5,7 +5,7 @@
 import type {
   AdoptionListResource,
   AdoptionDetailResource,
-  AdoptionPreInspectionResult,
+  AdoptionStatus,
 } from '@/api/types/adoptions'
 
 /** Single adoption (detail response shape). */
@@ -27,14 +27,16 @@ export interface CreateAdoptionRequest {
 }
 
 export interface UpdateAdoptionRequest {
-  animal_id: string
-  applicant_id: string
+  animal_id?: string
+  applicant_id?: string
   mediator_id?: string | null
-  inspector_id?: string | null
-  pre_inspection_result?: AdoptionPreInspectionResult
-  pre_inspection_summary?: string
+  status?: AdoptionStatus
+  canceled_reason?: string
+  notes?: string
+  pre_inspection_notes?: string
   contract_sent_at?: string | null
   contract_signed?: boolean
-  transfer_planned_at?: string | null
-  transferred_at?: string | null
+  contract_signed_at?: string | null
+  transport_id?: string | null
+  handed_over_at?: string | null
 }

@@ -23,46 +23,43 @@ import {
 } from '@/components/field/TextInput.utils.ts'
 
 const schema = z.object({
-  pre_inspection_notes: zFieldString({
-    maxLength: STRING_LENGTH_TEXTAREA,
-  }),
+  canceled_reason: zFieldString({ maxLength: STRING_LENGTH_TEXTAREA }),
 })
 
 type FormData = z.infer<typeof schema>
 
-interface AdoptionEditPreInspectionPageProps {
+interface AdoptionCancelPageProps {
   adoption: AdoptionDetailResource
   onClose: () => void
 }
 
-export function AdoptionEditPreInspectionPage({
+export function AdoptionCancelPage({
   adoption,
   onClose,
-}: AdoptionEditPreInspectionPageProps) {
+}: AdoptionCancelPageProps) {
   const queryClient = useQueryClient()
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: {
-      pre_inspection_notes: adoption.pre_inspection_notes,
-    },
+    defaultValues: { canceled_reason: '' },
   })
 
-  const updateMutation = useMutation({
+  const cancelMutation = useMutation({
     mutationFn: (data: FormData) =>
       updateAdoption(adoption.id, {
-        pre_inspection_notes: data.pre_inspection_notes.trim(),
+        status: 'canceled',
+        canceled_reason: data.canceled_reason.trim(),
       }),
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: adoptionQueryKeys.list() })
       queryClient.invalidateQueries({
         queryKey: adoptionQueryKeys.detail(adoption.id),
       })
-      toast.success(response.message || 'Vorkontrolle erfolgreich aktualisiert')
+      toast.success(response.message || 'Vermittlung abgebrochen')
       onClose()
     },
     onError: () => {
-      toast.error('Fehler beim Aktualisieren der Vorkontrolle')
+      toast.error('Fehler beim Abbrechen der Vermittlung')
     },
   })
 
@@ -70,20 +67,21 @@ export function AdoptionEditPreInspectionPage({
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Vorkontrolle – Notizen</DialogTitle>
+          <DialogTitle>Vermittlung abbrechen</DialogTitle>
           <DialogDescription>
-            Notizen zur Vorkontrolle festhalten.
+            Diese Vermittlung wird nicht weiter fortgesetzt. Bitte dokumentiere,
+            warum du dich für diesen Schritt entschieden hast.
           </DialogDescription>
         </DialogHeader>
         <form
-          onSubmit={form.handleSubmit((data) => updateMutation.mutate(data))}
+          onSubmit={form.handleSubmit((data) => cancelMutation.mutate(data))}
           className="space-y-4"
         >
           <FieldGroup>
             <Textarea
-              name="pre_inspection_notes"
+              name="canceled_reason"
               control={form.control}
-              label="Notizen"
+              label="Grund für den Abbruch"
               rows={4}
             />
           </FieldGroup>
@@ -92,12 +90,18 @@ export function AdoptionEditPreInspectionPage({
               type="button"
               variant="outline"
               onClick={onClose}
-              disabled={updateMutation.isPending}
+              disabled={cancelMutation.isPending}
             >
               Abbrechen
             </Button>
-            <Button type="submit" disabled={updateMutation.isPending}>
-              {updateMutation.isPending ? 'Speichern...' : 'Speichern'}
+            <Button
+              type="submit"
+              variant="destructive"
+              disabled={cancelMutation.isPending}
+            >
+              {cancelMutation.isPending
+                ? 'Wird abgebrochen...'
+                : 'Vermittlung abbrechen'}
             </Button>
           </DialogFooter>
         </form>

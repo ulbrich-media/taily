@@ -10,14 +10,14 @@ import {
   FieldLabel,
   FieldSeparator,
 } from '@/shadcn/components/ui/field.tsx'
-import { Checkbox } from '@/shadcn/components/ui/checkbox.tsx'
+import { Switch as SwitchComponent } from '@/shadcn/components/ui/switch.tsx'
 import type { AnimalDetailResource } from '@/api/types/animals'
 import { FormSection } from '@/components/form/FormSection'
 import { FormGrid } from '@/components/form/FormGrid'
 import { FormBlocker } from '@/components/form/FormBlocker'
 import { TextInput } from '@/components/field/TextInput.tsx'
 import { Textarea } from '@/components/field/Textarea.tsx'
-import { SingleCheckbox } from '@/components/field/SingleCheckbox.tsx'
+import { Switch } from '@/components/field/Switch.tsx'
 import { DateInput } from '@/components/field/DateInput.tsx'
 import {
   zFieldDate,
@@ -30,7 +30,6 @@ import {
 import { TraitInput } from '@/components/field/TraitInput.tsx'
 
 const animalFormStatusSchema = z.object({
-  current_location: zFieldString(),
   alternate_transport_trace: zFieldString(),
   alternate_arrival_location: zFieldString(),
   do_publish: z.boolean(),
@@ -84,7 +83,6 @@ export function AnimalFormStatus({
   const form = useForm<AnimalFormStatusData>({
     resolver: zodResolver(animalFormStatusSchema),
     defaultValues: {
-      current_location: defaultValues?.current_location || '',
       alternate_transport_trace: defaultValues?.alternate_transport_trace || '',
       alternate_arrival_location:
         defaultValues?.alternate_arrival_location || '',
@@ -113,38 +111,6 @@ export function AnimalFormStatus({
 
         <FieldGroup>
           <FormSection
-            title="Transport"
-            description="Für den Transport relevante Informationen."
-          >
-            <FormGrid>
-              <TextInput
-                name="current_location"
-                control={form.control}
-                label="Aufenthaltsort"
-                info="Aktueller Standort des Tieres"
-              />
-
-              <div></div>
-
-              <TextInput
-                name="alternate_transport_trace"
-                control={form.control}
-                label="Abweichende Traces"
-                info="Alternative Transport-Traces-Nummer"
-              />
-
-              <TextInput
-                name="alternate_arrival_location"
-                control={form.control}
-                label="Abweichender Ankunftsort"
-                info="Falls das Tier an einem anderen Ort ankommt"
-              />
-            </FormGrid>
-          </FormSection>
-
-          <FieldSeparator />
-
-          <FormSection
             title="Veröffentlichung"
             description="Informationen zur Veröffentlichung und Bewerbung dieses Tieres."
           >
@@ -153,7 +119,7 @@ export function AnimalFormStatus({
               control={form.control}
               render={({ field }) => (
                 <Field orientation="horizontal">
-                  <Checkbox
+                  <SwitchComponent
                     id={field.name}
                     checked={field.value}
                     onCheckedChange={field.onChange}
@@ -206,13 +172,36 @@ export function AnimalFormStatus({
 
           <FieldSeparator />
 
+          <FormSection
+            title="Transport"
+            description="Für den Transport relevante Informationen."
+          >
+            <FormGrid>
+              <TextInput
+                name="alternate_transport_trace"
+                control={form.control}
+                label="Abweichende Traces"
+                info="Alternative Transport-Traces-Nummer"
+              />
+
+              <TextInput
+                name="alternate_arrival_location"
+                control={form.control}
+                label="Abweichender Ankunftsort"
+                info="Falls das Tier an einem anderen Ort ankommt"
+              />
+            </FormGrid>
+          </FormSection>
+
+          <FieldSeparator />
+
           <FormSection title="Verstorben" titleHidden>
             <FormGrid columns={2}>
-              <SingleCheckbox
+              <Switch
                 name="is_deceased"
                 control={form.control}
                 label="Verstorben"
-                checkboxLabel="Ist verstorben"
+                switchLabel="Ist verstorben"
               />
               <DateInput
                 name="date_of_death"

@@ -4,7 +4,7 @@ tone_instructions: "Focus on logic errors, security issues, and performance bott
 
 reviews:
   auto_review:
-    enabled: true
+    enabled: false
   review_status: true
   instructions: |
     Apply the following project-specific coding patterns during review:

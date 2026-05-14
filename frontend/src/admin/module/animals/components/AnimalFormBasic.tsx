@@ -47,6 +47,7 @@ const animalFormBasicSchema = z.object({
   size_cm: zFieldInt({ max: 500 }),
   date_of_birth: zFieldDate,
   origin_country: zFieldString(),
+  current_location: zFieldString(),
   intake_date: zFieldDate,
   character_description: zFieldString({ maxLength: STRING_LENGTH_TEXTAREA }),
   contract_notes: zFieldString({ maxLength: STRING_LENGTH_TEXTAREA }),
@@ -98,6 +99,7 @@ export function AnimalFormBasic({
       size_cm: defaultValues?.size_cm?.toString() ?? null,
       date_of_birth: toDateFieldValue(defaultValues?.date_of_birth),
       origin_country: defaultValues?.origin_country || '',
+      current_location: defaultValues?.current_location || '',
       intake_date: toDateFieldValue(defaultValues?.intake_date),
       character_description: defaultValues?.character_description || '',
       contract_notes: defaultValues?.contract_notes || '',
@@ -215,6 +217,13 @@ export function AnimalFormBasic({
                 name="origin_country"
                 control={form.control}
                 label="Herkunftsland"
+              />
+
+              <TextInput
+                name="current_location"
+                control={form.control}
+                label="Aufenthaltsort"
+                info="Aktueller Standort des Tieres"
               />
 
               <DateInput
