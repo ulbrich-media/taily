@@ -6,7 +6,6 @@ import type {
   AdoptionListResource,
   AdoptionDetailResource,
   AdoptionStatus,
-  ContractFile,
 } from '@/api/types/adoptions'
 
 /** Single adoption (detail response shape). */
@@ -16,9 +15,12 @@ export interface AdoptionResponse {
   message: string
   data: AdoptionDetailResource
 }
-export interface ContractFileResponse {
-  message: string
-  data: ContractFile
+
+export interface UpdateContractRequest {
+  contract_signed: boolean
+  contract_signed_at?: string | null
+  file?: File | null
+  remove_file?: boolean
 }
 
 // ---------------------------------------------------------------------------

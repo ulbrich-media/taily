@@ -3,9 +3,9 @@ import type {
   Adoption,
   AdoptionResponse,
   AdoptionsResponse,
-  ContractFileResponse,
   CreateAdoptionRequest,
   UpdateAdoptionRequest,
+  UpdateContractRequest,
 } from './types'
 
 export interface AdoptionsFilters {
@@ -48,22 +48,23 @@ export async function updateAdoption(
   })
 }
 
-export async function uploadContractFile(
+export async function updateContract(
   id: string,
-  file: File
-): Promise<ContractFileResponse> {
+  data: UpdateContractRequest
+): Promise<AdoptionResponse> {
   const formData = new FormData()
-  formData.append('file', file)
-  return apiRequest<ContractFileResponse>(`adoptions/${id}/contract`, {
-    method: 'POST',
+  formData.append('contract_signed', data.contract_signed ? '1' : '0')
+  if (data.contract_signed_at !== undefined) {
+    formData.append('contract_signed_at', data.contract_signed_at ?? '')
+  }
+  if (data.file) {
+    formData.append('file', data.file)
+  }
+  if (data.remove_file) {
+    formData.append('remove_file', '1')
+  }
+  return apiRequest<AdoptionResponse>(`adoptions/${id}/contract`, {
+    method: 'PUT',
     body: formData,
-  })
-}
-
-export async function deleteContractFile(
-  id: string
-): Promise<{ message: string }> {
-  return apiRequest<{ message: string }>(`adoptions/${id}/contract`, {
-    method: 'DELETE',
   })
 }

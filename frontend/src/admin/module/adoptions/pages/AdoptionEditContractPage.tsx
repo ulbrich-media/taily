@@ -11,17 +11,14 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { format, isAfter, parse, isValid, startOfDay } from 'date-fns'
+import { format, isAfter, isValid, parse, startOfDay } from 'date-fns'
 import { FileIcon, Paperclip, Trash2, X } from 'lucide-react'
 import { adoptionQueryKeys } from '@/admin/module/adoptions/api/queries.ts'
-import {
-  deleteContractFile,
-  updateAdoption,
-  uploadContractFile,
-} from '@/admin/module/adoptions/api/requests.ts'
+import { updateContract } from '@/admin/module/adoptions/api/requests.ts'
 import { toast } from 'sonner'
 import { Button } from '@/shadcn/components/ui/button.tsx'
 import { DateInput } from '@/components/field/DateInput.tsx'
+import { Switch } from '@/components/field/Switch.tsx'
 import { FieldGroup } from '@/shadcn/components/ui/field.tsx'
 import type { AdoptionDetailResource } from '@/api/types/adoptions'
 import {
@@ -37,7 +34,7 @@ const noFutureDate = zFieldDate.refine((val) => {
 }, 'Datum darf nicht in der Zukunft liegen')
 
 const schema = z.object({
-  contract_sent_at: noFutureDate,
+  contract_signed: z.boolean(),
   contract_signed_at: noFutureDate,
 })
 
@@ -61,31 +58,25 @@ export function AdoptionEditContractPage({
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
-      contract_sent_at: toDateFieldValue(adoption.contract_sent_at),
+      contract_signed: adoption.contract_signed,
       contract_signed_at: toDateFieldValue(adoption.contract_signed_at),
     },
   })
 
   const mutation = useMutation({
-    mutationFn: async (data: FormData) => {
-      await updateAdoption(adoption.id, {
-        contract_sent_at: toApiDate(data.contract_sent_at),
+    mutationFn: (data: FormData) =>
+      updateContract(adoption.id, {
+        contract_signed: data.contract_signed,
         contract_signed_at: toApiDate(data.contract_signed_at),
-      })
-
-      if (selectedFile) {
-        // Upload replaces any existing file via clearMediaCollection in the backend
-        await uploadContractFile(adoption.id, selectedFile)
-      } else if (removeExistingFile) {
-        await deleteContractFile(adoption.id)
-      }
-    },
-    onSuccess: () => {
+        file: selectedFile ?? undefined,
+        remove_file: removeExistingFile && !selectedFile,
+      }),
+    onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: adoptionQueryKeys.list() })
       queryClient.invalidateQueries({
         queryKey: adoptionQueryKeys.detail(adoption.id),
       })
-      toast.success('Schutzvertrag erfolgreich gespeichert')
+      toast.success(response.message || 'Schutzvertrag erfolgreich gespeichert')
       onClose()
     },
     onError: () => {
@@ -128,21 +119,19 @@ export function AdoptionEditContractPage({
         <DialogHeader>
           <DialogTitle>Schutzvertrag bearbeiten</DialogTitle>
           <DialogDescription>
-            Schutzvertragsdaten und -datei verwalten.
+            Unterzeichnungsstatus und Schutzvertragsdatei verwalten.
           </DialogDescription>
         </DialogHeader>
         <form
           onSubmit={form.handleSubmit((data) => mutation.mutate(data))}
           className="space-y-4"
         >
-          <FieldGroup>
-            <DateInput
-              name="contract_sent_at"
-              control={form.control}
-              label="Versendet am"
-              disableFutureDates
-            />
-          </FieldGroup>
+          <Switch
+            name="contract_signed"
+            control={form.control}
+            label="Unterzeichnet"
+            switchLabel="Schutzvertrag wurde unterzeichnet"
+          />
 
           <FieldGroup>
             <DateInput

@@ -80,8 +80,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Adoptions
     Route::get('/adoptions/options', [AdoptionController::class, 'options']);
     Route::apiResource('adoptions', AdoptionController::class);
-    Route::post('/adoptions/{adoption}/contract', [AdoptionContractController::class, 'store']);
-    Route::delete('/adoptions/{adoption}/contract', [AdoptionContractController::class, 'destroy']);
+    Route::put('/adoptions/{adoption}/contract', [AdoptionContractController::class, 'store']);
 
     // API Tokens
     Route::get('/api-tokens/abilities', [ApiTokenController::class, 'abilities']);
