@@ -22,6 +22,8 @@ function RouteComponent() {
   const { data: adoption } = useSuspenseQuery(getAdoptionQuery(adoptionId))
   const { data: persons } = useSuspenseQuery(listPersonsQuery)
 
+  const mediators = persons.filter((p) => p.mediator_animal_types.length > 0)
+
   const handleClose = () => {
     navigate({ params: { adoptionId } })
   }
@@ -29,7 +31,7 @@ function RouteComponent() {
   return (
     <AdoptionEditMediatorPage
       adoption={adoption}
-      persons={persons}
+      mediators={mediators}
       onClose={handleClose}
     />
   )
