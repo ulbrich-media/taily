@@ -8,7 +8,7 @@ import type {
   FieldValues,
 } from 'react-hook-form'
 import { useState } from 'react'
-import { format } from 'date-fns'
+import { format, isAfter, startOfDay } from 'date-fns'
 import {
   Popover,
   PopoverContent,
@@ -28,7 +28,9 @@ export type DateInputProps<
 > = Omit<
   FormFieldWrapperProps<TFieldValues, TName, TTransformedValues>,
   'render'
->
+> & {
+  disableFutureDates?: boolean
+}
 
 interface DatePickerControlProps {
   field: {
@@ -37,11 +39,13 @@ interface DatePickerControlProps {
     onChange: (value: string | null) => void
   }
   fieldState: ControllerFieldState
+  disableFutureDates?: boolean
 }
 
 export function DatePickerControl({
   field,
   fieldState,
+  disableFutureDates = false,
 }: DatePickerControlProps) {
   const [open, setOpen] = useState(false)
   const [date, setDate] = useState<Date | undefined>(() =>
@@ -96,6 +100,11 @@ export function DatePickerControl({
             selected={date}
             month={month}
             onMonthChange={setMonth}
+            disabled={
+              disableFutureDates
+                ? (d) => isAfter(startOfDay(d), startOfDay(new Date()))
+                : undefined
+            }
             onSelect={(selected) => {
               setDate(selected)
               setOpen(false)
@@ -126,12 +135,19 @@ export function DateInput<
   TFieldValues extends FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
   TTransformedValues = TFieldValues,
->(props: DateInputProps<TFieldValues, TName, TTransformedValues>) {
+>({
+  disableFutureDates,
+  ...props
+}: DateInputProps<TFieldValues, TName, TTransformedValues>) {
   return (
     <FormFieldWrapper
       {...props}
       render={({ field, fieldState }) => (
-        <DatePickerControl field={field} fieldState={fieldState} />
+        <DatePickerControl
+          field={field}
+          fieldState={fieldState}
+          disableFutureDates={disableFutureDates}
+        />
       )}
     />
   )

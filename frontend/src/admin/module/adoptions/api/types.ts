@@ -16,6 +16,13 @@ export interface AdoptionResponse {
   data: AdoptionDetailResource
 }
 
+export interface UpdateContractRequest {
+  contract_signed: boolean
+  contract_signed_at?: string | null
+  file?: File | null
+  remove_file?: boolean
+}
+
 // ---------------------------------------------------------------------------
 // Request / input types (sent to the API — not resource shapes)
 // ---------------------------------------------------------------------------

@@ -12,6 +12,7 @@ import { BadgeBySet } from '@/shadcn/components/ui/badge-utils.tsx'
 import { InfoRow } from '@/shadcn/components/common/info-row.tsx'
 import { formatApiDate } from '@/lib/dates.utils.ts'
 import { Spinner } from '@/shadcn/components/ui/spinner.tsx'
+import { FileIcon } from 'lucide-react'
 
 interface AdoptionDetailPageProps {
   adoption: AdoptionDetailResource
@@ -19,6 +20,7 @@ interface AdoptionDetailPageProps {
   inspectionsLoading: boolean
   inspectionsError: boolean
   editInternalNotesAction: ReactNode
+  editContractAction: ReactNode
   editPreInspectionAction: ReactNode
   newInspectionAction: ReactNode
   cancelAction: ReactNode
@@ -32,6 +34,7 @@ export function AdoptionDetailPage({
   inspectionsLoading,
   inspectionsError,
   editInternalNotesAction,
+  editContractAction,
   editPreInspectionAction,
   newInspectionAction,
   cancelAction,
@@ -125,13 +128,31 @@ export function AdoptionDetailPage({
           />
         }
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <InfoRow label="Versendet am">
-            {formatApiDate(adoption.contract_sent_at)}
-          </InfoRow>
-          <InfoRow label="Unterzeichnet">
-            {adoption.contract_signed ? 'Ja' : 'Nein'}
-          </InfoRow>
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <InfoRow label="Unterzeichnet">
+              {adoption.contract_signed ? 'Ja' : 'Nein'}
+            </InfoRow>
+            {adoption.contract_signed_at && (
+              <InfoRow label="Unterzeichnet am">
+                {formatApiDate(adoption.contract_signed_at)}
+              </InfoRow>
+            )}
+            {adoption.contract_file && (
+              <InfoRow label="Schutzvertrag">
+                <a
+                  href={adoption.contract_file.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-1.5 text-sm text-primary underline-offset-4 hover:underline"
+                >
+                  <FileIcon className="size-4 shrink-0" />
+                  {adoption.contract_file.name}
+                </a>
+              </InfoRow>
+            )}
+          </div>
+          <div className="flex justify-end">{editContractAction}</div>
         </div>
       </StepCard>
 

@@ -20,6 +20,7 @@ class AdoptionController extends Controller
         'animal', 'animal.animalType', 'animal.media',
         'mediator', 'mediator.media',
         'applicant', 'applicant.media',
+        'media',
     ];
 
     public function index(Request $request): AnonymousResourceCollection
