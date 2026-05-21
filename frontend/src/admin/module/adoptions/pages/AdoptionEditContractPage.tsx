@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { type ChangeEvent, useEffect, useState } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -8,7 +8,7 @@ import {
   DialogTitle,
 } from '@/shadcn/components/ui/dialog.tsx'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { format, isAfter, isValid, parse, startOfDay } from 'date-fns'
@@ -64,6 +64,11 @@ export function AdoptionEditContractPage({
     },
   })
 
+  const contractSigned = useWatch({
+    name: 'contract_signed',
+    control: form.control,
+  })
+
   const mutation = useMutation({
     mutationFn: (data: FormData) =>
       updateContract(adoption.id, {
@@ -85,7 +90,17 @@ export function AdoptionEditContractPage({
     },
   })
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  useEffect(() => {
+    if (!contractSigned) {
+      form.setValue('contract_signed_at', null, { shouldValidate: false })
+      // cascading renders is fine here and there is no loop risk as well
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSelectedFile(null)
+      setRemoveExistingFile(true)
+    }
+  }, [contractSigned, form])
+
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] ?? null
     setSelectedFile(file)
 
@@ -137,6 +152,7 @@ export function AdoptionEditContractPage({
               control={form.control}
               label="Unterzeichnet am"
               disableFutureDates
+              disabled={!contractSigned}
             />
           </FieldGroup>
 
@@ -152,6 +168,7 @@ export function AdoptionEditContractPage({
                   onChange={handleFileChange}
                   aria-label="Schutzvertrag auswählen"
                   className="flex-1"
+                  disabled={!contractSigned}
                 />
               )}
               <Button
@@ -160,7 +177,7 @@ export function AdoptionEditContractPage({
                 size="icon"
                 aria-label="Schutzvertrag entfernen"
                 onClick={handleClearFile}
-                disabled={!activeFile}
+                disabled={!activeFile || !contractSigned}
               >
                 <X />
               </Button>

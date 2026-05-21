@@ -20,6 +20,7 @@ export interface SingleCheckboxProps<
   'render'
 > {
   switchLabel: string
+  onChange?: (checked: boolean) => void
 }
 
 export function Switch<
@@ -28,6 +29,7 @@ export function Switch<
   TTransformedValues = TFieldValues,
 >({
   switchLabel,
+  onChange,
   ...props
 }: SingleCheckboxProps<TFieldValues, TName, TTransformedValues>) {
   return (
@@ -40,7 +42,10 @@ export function Switch<
               <SwitchComponent
                 id={field.name}
                 checked={field.value}
-                onCheckedChange={field.onChange}
+                onCheckedChange={(checked) => {
+                  field.onChange(checked)
+                  onChange?.(checked)
+                }}
               />
               <FieldLabel htmlFor={field.name}>{switchLabel}</FieldLabel>
             </Field>

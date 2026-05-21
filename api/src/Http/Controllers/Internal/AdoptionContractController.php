@@ -19,6 +19,11 @@ class AdoptionContractController extends Controller
 
     public function store(Request $request, Adoption $adoption): JsonResponse
     {
+        // multiform data needs us to convert an empty date string to null
+        $request->merge([
+            'contract_signed_at' => $request->input('contract_signed_at') ?: null,
+        ]);
+
         $validated = $request->validate([
             'contract_signed' => 'required|boolean',
             'contract_signed_at' => 'sometimes|nullable|date',

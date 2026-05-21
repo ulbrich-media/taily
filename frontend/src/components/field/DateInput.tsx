@@ -30,6 +30,7 @@ export type DateInputProps<
   'render'
 > & {
   disableFutureDates?: boolean
+  disabled?: boolean
 }
 
 interface DatePickerControlProps {
@@ -40,12 +41,14 @@ interface DatePickerControlProps {
   }
   fieldState: ControllerFieldState
   disableFutureDates?: boolean
+  disabled?: boolean
 }
 
 export function DatePickerControl({
   field,
   fieldState,
   disableFutureDates = false,
+  disabled = false,
 }: DatePickerControlProps) {
   const [open, setOpen] = useState(false)
   const [date, setDate] = useState<Date | undefined>(() =>
@@ -61,6 +64,7 @@ export function DatePickerControl({
         placeholder="TT.MM.YYYY"
         aria-invalid={fieldState.invalid}
         autoComplete="off"
+        disabled={disabled}
         onChange={(e) => {
           const raw = e.target.value
           field.onChange(raw || null)
@@ -84,6 +88,7 @@ export function DatePickerControl({
             variant="outline"
             size="icon"
             aria-label="Datum auswählen"
+            disabled={disabled}
           >
             <CalendarIcon />
           </Button>
@@ -118,7 +123,7 @@ export function DatePickerControl({
         variant="outline"
         size="icon"
         aria-label="Datum entfernen"
-        disabled={!field.value}
+        disabled={disabled || !field.value}
         onClick={() => {
           setDate(undefined)
           setOpen(false)
@@ -137,6 +142,7 @@ export function DateInput<
   TTransformedValues = TFieldValues,
 >({
   disableFutureDates,
+  disabled,
   ...props
 }: DateInputProps<TFieldValues, TName, TTransformedValues>) {
   return (
@@ -147,6 +153,7 @@ export function DateInput<
           field={field}
           fieldState={fieldState}
           disableFutureDates={disableFutureDates}
+          disabled={disabled}
         />
       )}
     />
