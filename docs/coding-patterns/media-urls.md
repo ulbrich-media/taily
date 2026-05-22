@@ -35,7 +35,7 @@ $media->getTemporaryUrl(now()->addHour());              // original file
 
 **Key properties:**
 - Responses carry `Cache-Control: public, max-age=604800` (1 week). Safe because each upload gets a new UUID, making the URL→content mapping immutable.
-- URL non-guessability (UUID v4 entropy) is the only access barrier, which is sufficient for data that is already publicly intended.
+- Model-level gating ensures only published animals are served (`do_publish === true`); UUID v4 entropy then prevents enumeration of valid UUIDs.
 
 **Route:** defined in `api/routes/api.php`, served at `/api/media/{uuid}`.
 

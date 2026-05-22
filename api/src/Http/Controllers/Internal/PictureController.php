@@ -49,7 +49,7 @@ abstract class PictureController extends Controller
         $existingUuids = $mediaItems->pluck('uuid')->all();
 
         $request->validate([
-            'ids' => ['required', 'array', 'size:'.count($existingUuids)],
+            'ids' => ['required', 'array', 'size:'.count($existingUuids), 'distinct'],
             'ids.*' => ['string', Rule::in($existingUuids)],
         ]);
 
