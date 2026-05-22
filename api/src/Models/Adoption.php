@@ -7,10 +7,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
-class Adoption extends Model
+class Adoption extends Model implements HasMedia
 {
-    use HasFactory, HasUuids;
+    use HasFactory, HasUuids, InteractsWithMedia;
 
     protected $attributes = [
         'notes' => '',
@@ -27,7 +29,6 @@ class Adoption extends Model
         'canceled_reason',
         'notes',
         'pre_inspection_notes',
-        'contract_sent_at',
         'contract_signed',
         'contract_signed_at',
         'transport_id',
@@ -37,7 +38,6 @@ class Adoption extends Model
     protected function casts(): array
     {
         return [
-            'contract_sent_at' => 'date',
             'contract_signed' => 'boolean',
             'contract_signed_at' => 'datetime',
             'canceled_at' => 'datetime',
@@ -72,16 +72,14 @@ class Adoption extends Model
         return $this->hasMany(PreInspection::class, 'person_id', 'applicant_id');
     }
 
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('contract')->singleFile()->useDisk('contracts');
+    }
+
     public function getContractStatusAttribute(): string
     {
-        if ($this->contract_signed) {
-            return 'finished';
-        }
-        if ($this->contract_sent_at !== null) {
-            return 'in_progress';
-        }
-
-        return 'not_started';
+        return $this->contract_signed ? 'finished' : 'not_started';
     }
 
     public function getTransportStatusAttribute(): string
