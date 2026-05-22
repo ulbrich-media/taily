@@ -27,7 +27,7 @@ class AdoptionContractController extends Controller
         $validated = $request->validate([
             'contract_signed' => 'required|boolean',
             'contract_signed_at' => 'sometimes|nullable|date',
-            'file' => 'sometimes|nullable|file|max:20480',
+            'file' => 'sometimes|nullable|file|mimes:pdf,jpg,jpeg,png,webp|max:20480',
             'remove_file' => 'sometimes|boolean',
         ]);
 

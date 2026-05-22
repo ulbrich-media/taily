@@ -74,7 +74,7 @@ class Adoption extends Model implements HasMedia
 
     public function registerMediaCollections(): void
     {
-        $this->addMediaCollection('contract')->singleFile()->useDisk('contracts');
+        $this->addMediaCollection('contract')->singleFile()->useDisk('adoption-contract');
     }
 
     public function getContractStatusAttribute(): string
