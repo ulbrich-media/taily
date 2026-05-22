@@ -38,10 +38,23 @@ return [
             'report' => false,
         ],
 
+        'animal-pictures' => [
+            'driver' => 'local',
+            'root' => storage_path('app/animal-pictures'),
+            'throw' => false,
+            'report' => false,
+        ],
+
+        'person-pictures' => [
+            'driver' => 'local',
+            'root' => storage_path('app/person-pictures'),
+            'throw' => false,
+            'report' => false,
+        ],
+
         'contracts' => [
             'driver' => 'local',
-            'root' => storage_path('app/private/contracts'),
-            'serve' => true,
+            'root' => storage_path('app/contracts'),
             'throw' => false,
             'report' => false,
         ],

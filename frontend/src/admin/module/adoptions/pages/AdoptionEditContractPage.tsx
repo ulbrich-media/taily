@@ -166,6 +166,7 @@ export function AdoptionEditContractPage({
               ) : (
                 <Input
                   type="file"
+                  accept="application/pdf,image/*"
                   onChange={handleFileChange}
                   aria-label="Schutzvertrag auswählen"
                   className="flex-1"

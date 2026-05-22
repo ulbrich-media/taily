@@ -45,18 +45,17 @@ abstract class PictureController extends Controller
 
     protected function reorderAction(Request $request, Model&HasMedia $parent): JsonResponse
     {
-        $existingUuids = $parent->getMedia('pictures')->pluck('uuid')->all();
+        $mediaItems = $parent->getMedia('pictures');
+        $existingUuids = $mediaItems->pluck('uuid')->all();
 
         $request->validate([
             'ids' => ['required', 'array', 'size:'.count($existingUuids)],
             'ids.*' => ['string', Rule::in($existingUuids)],
         ]);
 
-        foreach ($request->input('ids') as $index => $uuid) {
-            $parent->getMedia('pictures')
-                ->firstWhere('uuid', $uuid)
-                ?->update(['order_column' => $index]);
-        }
+        $uuidToId = $mediaItems->pluck('id', 'uuid');
+        $orderedIds = array_map(fn ($uuid) => $uuidToId[$uuid], $request->input('ids'));
+        Media::setNewOrder($orderedIds);
 
         return response()->json([
             'message' => 'Reihenfolge erfolgreich gespeichert.',

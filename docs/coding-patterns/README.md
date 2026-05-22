@@ -10,6 +10,18 @@ there are no reasons against it, it should be enforced as documented.
 
 These patterns ensure maintainability through similar approaches and can keep code clean. 
 
+## Patterns
+
+- [API Type Handling](api-type-handling.md) — Resources, type safety, frontend type locations
+- [Empty Strings](empty-strings.md) — Non-nullable string columns, empty-string defaults
+- [Decoupled Route and Page](decoupled-route-and-page.md) — Route/page separation
+- [File Storage](file-storage.md) — One disk per file type, disk naming, cloud migration path
+- [Form Reset After Submit](form-reset-after-submit.md) — Form state after mutation
+- [Frontend Links](frontend-links.md) — Backend-generated frontend URLs via `FrontendUriBuilder`
+- [Media URLs](media-urls.md) — Signed temporary URLs vs. direct UUID access
+- [Route Hooks and Components](route-hooks-and-components.md) — Data loading patterns
+- [Tokens](tokens.md) — `HasAccessToken` trait vs. self-contained token models
+
 ## Introducing new coding patterns
 
 A new pattern should be documented every time something was done in a similar way or was noted multiple times during a 
