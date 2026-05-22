@@ -30,7 +30,6 @@ export interface AdoptionBaseResource {
   // Pre-inspection step
   pre_inspection_notes: string
   // Contract step
-  contract_sent_at: string | null
   contract_signed: boolean
   contract_signed_at: string | null
   // Handover step

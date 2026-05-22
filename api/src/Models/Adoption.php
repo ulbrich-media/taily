@@ -29,7 +29,6 @@ class Adoption extends Model implements HasMedia
         'canceled_reason',
         'notes',
         'pre_inspection_notes',
-        'contract_sent_at',
         'contract_signed',
         'contract_signed_at',
         'transport_id',
@@ -39,7 +38,6 @@ class Adoption extends Model implements HasMedia
     protected function casts(): array
     {
         return [
-            'contract_sent_at' => 'date',
             'contract_signed' => 'boolean',
             'contract_signed_at' => 'datetime',
             'canceled_at' => 'datetime',
@@ -81,14 +79,7 @@ class Adoption extends Model implements HasMedia
 
     public function getContractStatusAttribute(): string
     {
-        if ($this->contract_signed) {
-            return 'finished';
-        }
-        if ($this->contract_sent_at !== null) {
-            return 'in_progress';
-        }
-
-        return 'not_started';
+        return $this->contract_signed ? 'finished' : 'not_started';
     }
 
     public function getTransportStatusAttribute(): string
