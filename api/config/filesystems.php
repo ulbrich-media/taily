@@ -52,9 +52,9 @@ return [
             'report' => false,
         ],
 
-        'contracts' => [
+        'adoption-contract' => [
             'driver' => 'local',
-            'root' => storage_path('app/contracts'),
+            'root' => storage_path('app/adoption-contract'),
             'throw' => false,
             'report' => false,
         ],

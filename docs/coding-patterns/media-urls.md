@@ -12,7 +12,7 @@ URLs are generated via [`MediaUrlGenerator`](../../api/src/Support/MediaUrlGener
 
 **Key properties:**
 - The signature IS the credential — no additional database authorization check is needed per request. This keeps media serving stateless and efficient (important for list views that load many thumbnails at once).
-- URLs expire after 1 hour. Because the frontend always re-fetches resource data on navigation (staleTime: 0), fresh URLs are generated with each data load. There is no risk of users seeing expired URLs as long as they reload the data rather than holding stale JSON.
+- URLs expire after 1 hour. Data containing a URL will not be considered up-to-date for longer than 1 hour, ensuring fresh URLs are generated before expiry.
 - Expiry limits the window if a URL leaks (e.g. captured in a log).
 
 **How to generate a URL:**
