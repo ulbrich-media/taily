@@ -90,6 +90,7 @@ export function AdoptionEditContractPage({
     },
   })
 
+  // Reset date and file when contract signed flag was disabled
   useEffect(() => {
     if (!contractSigned) {
       form.setValue('contract_signed_at', null, { shouldValidate: false })

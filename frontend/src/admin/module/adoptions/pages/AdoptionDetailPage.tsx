@@ -12,7 +12,8 @@ import { BadgeBySet } from '@/shadcn/components/ui/badge-utils.tsx'
 import { InfoRow } from '@/shadcn/components/common/info-row.tsx'
 import { formatApiDate } from '@/lib/dates.utils.ts'
 import { Spinner } from '@/shadcn/components/ui/spinner.tsx'
-import { FileIcon } from 'lucide-react'
+import { FilePenLineIcon } from 'lucide-react'
+import { Button } from '@/shadcn/components/ui/button.tsx'
 
 interface AdoptionDetailPageProps {
   adoption: AdoptionDetailResource
@@ -140,15 +141,16 @@ export function AdoptionDetailPage({
             )}
             {adoption.contract_file && (
               <InfoRow label="Schutzvertrag">
-                <a
-                  href={adoption.contract_file.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-1.5 text-sm text-primary underline-offset-4 hover:underline"
-                >
-                  <FileIcon className="size-4 shrink-0" />
-                  {adoption.contract_file.name}
-                </a>
+                <Button variant="ghost" size="sm" asChild>
+                  <a
+                    href={adoption.contract_file.url}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <FilePenLineIcon className="size-4" />
+                    {adoption.contract_file.name}
+                  </a>
+                </Button>
               </InfoRow>
             )}
           </div>
