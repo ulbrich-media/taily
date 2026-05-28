@@ -30,7 +30,6 @@ export interface AdoptionBaseResource {
   // Pre-inspection step
   pre_inspection_notes: string
   // Contract step
-  contract_sent_at: string | null
   contract_signed: boolean
   contract_signed_at: string | null
   // Handover step
@@ -52,9 +51,16 @@ export interface AdoptionListResource extends AdoptionBaseResource {
   applicant: PersonListResource
 }
 
+export interface ContractFile {
+  uuid: string
+  name: string
+  url: string
+}
+
 // Returned by GET /adoptions/:id (show), POST /adoptions (store), PATCH /adoptions/:id (update).
 export interface AdoptionDetailResource extends AdoptionBaseResource {
   animal: AnimalDetailResource
   mediator: PersonListResource | null
   applicant: PersonDetailResource
+  contract_file: ContractFile | null
 }

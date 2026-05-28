@@ -25,7 +25,6 @@ class AdoptionBaseResource extends JsonResource
             // Pre-inspection step
             'pre_inspection_notes' => $this->resource->pre_inspection_notes,
             // Contract step
-            'contract_sent_at' => $this->resource->contract_sent_at,
             'contract_signed' => $this->resource->contract_signed,
             'contract_signed_at' => $this->resource->contract_signed_at,
             // Handover step

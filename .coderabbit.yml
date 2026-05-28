@@ -31,6 +31,14 @@ reviews:
     - String/text columns must be non-nullable by default. Flag any migration that adds `->nullable()` to a string column unless there is a clear semantic reason for `null` to be distinct from empty.
     - Empty-string defaults must be set in the model via `protected $attributes`, not via `->default('')` in the migration.
     - Flag any seeder or factory that sets a string field to `null` where the column is non-nullable.
+
+    **File storage** (`docs/coding-patterns/file-storage.md`):
+    - Every model that stores media must use a dedicated disk in `registerMediaCollections()`. Flag any `useDisk('local')` or `useDisk('public')` on a model-specific collection — each file type needs its own named disk.
+    - Flag any new disk in `filesystems.php` whose `root` path is nested inside another disk's root.
+
+    **Media URLs** (`docs/coding-patterns/media-urls.md`):
+    - Private/internal media must be served via signed temporary URLs through `MediaController` (`media.serve` route). Flag any new internal media-serving route that does not call `$request->hasValidSignature()`.
+    - Public media must be served via direct UUID access through `PublicMediaController` with a `do_publish`-style model-level gate. Flag any public media endpoint that skips the model-level authorization check.
   path_filters:
     - "!**/vendor/**"
     - "!**/node_modules/**"

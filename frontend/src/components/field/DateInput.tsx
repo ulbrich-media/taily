@@ -8,7 +8,7 @@ import type {
   FieldValues,
 } from 'react-hook-form'
 import { useState } from 'react'
-import { format } from 'date-fns'
+import { format, isAfter, startOfDay } from 'date-fns'
 import {
   Popover,
   PopoverContent,
@@ -28,7 +28,10 @@ export type DateInputProps<
 > = Omit<
   FormFieldWrapperProps<TFieldValues, TName, TTransformedValues>,
   'render'
->
+> & {
+  disableFutureDates?: boolean
+  disabled?: boolean
+}
 
 interface DatePickerControlProps {
   field: {
@@ -37,11 +40,15 @@ interface DatePickerControlProps {
     onChange: (value: string | null) => void
   }
   fieldState: ControllerFieldState
+  disableFutureDates?: boolean
+  disabled?: boolean
 }
 
 export function DatePickerControl({
   field,
   fieldState,
+  disableFutureDates = false,
+  disabled = false,
 }: DatePickerControlProps) {
   const [open, setOpen] = useState(false)
   const [date, setDate] = useState<Date | undefined>(() =>
@@ -57,6 +64,7 @@ export function DatePickerControl({
         placeholder="TT.MM.YYYY"
         aria-invalid={fieldState.invalid}
         autoComplete="off"
+        disabled={disabled}
         onChange={(e) => {
           const raw = e.target.value
           field.onChange(raw || null)
@@ -80,6 +88,7 @@ export function DatePickerControl({
             variant="outline"
             size="icon"
             aria-label="Datum auswählen"
+            disabled={disabled}
           >
             <CalendarIcon />
           </Button>
@@ -96,6 +105,11 @@ export function DatePickerControl({
             selected={date}
             month={month}
             onMonthChange={setMonth}
+            disabled={
+              disableFutureDates
+                ? (d) => isAfter(startOfDay(d), startOfDay(new Date()))
+                : undefined
+            }
             onSelect={(selected) => {
               setDate(selected)
               setOpen(false)
@@ -109,7 +123,7 @@ export function DatePickerControl({
         variant="outline"
         size="icon"
         aria-label="Datum entfernen"
-        disabled={!field.value}
+        disabled={disabled || !field.value}
         onClick={() => {
           setDate(undefined)
           setOpen(false)
@@ -126,12 +140,21 @@ export function DateInput<
   TFieldValues extends FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
   TTransformedValues = TFieldValues,
->(props: DateInputProps<TFieldValues, TName, TTransformedValues>) {
+>({
+  disableFutureDates,
+  disabled,
+  ...props
+}: DateInputProps<TFieldValues, TName, TTransformedValues>) {
   return (
     <FormFieldWrapper
       {...props}
       render={({ field, fieldState }) => (
-        <DatePickerControl field={field} fieldState={fieldState} />
+        <DatePickerControl
+          field={field}
+          fieldState={fieldState}
+          disableFutureDates={disableFutureDates}
+          disabled={disabled}
+        />
       )}
     />
   )

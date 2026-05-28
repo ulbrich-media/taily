@@ -20,6 +20,7 @@ class AdoptionController extends Controller
         'animal', 'animal.animalType', 'animal.media',
         'mediator', 'mediator.media',
         'applicant', 'applicant.media',
+        'media',
     ];
 
     public function index(Request $request): AnonymousResourceCollection
@@ -69,7 +70,6 @@ class AdoptionController extends Controller
             'canceled_reason' => 'sometimes',
             'notes' => 'sometimes|string',
             'pre_inspection_notes' => 'sometimes|string',
-            'contract_sent_at' => 'sometimes|nullable|date',
             'contract_signed' => 'sometimes|boolean',
             'contract_signed_at' => 'sometimes|nullable|date',
             'transport_id' => 'sometimes|nullable|exists:transports,id',

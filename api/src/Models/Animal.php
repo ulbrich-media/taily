@@ -113,7 +113,7 @@ class Animal extends Model implements HasMedia
 
     public function registerMediaCollections(): void
     {
-        $this->addMediaCollection('pictures')->useDisk('local');
+        $this->addMediaCollection('pictures')->useDisk('animal-pictures');
     }
 
     public function registerMediaConversions(?Media $media = null): void
