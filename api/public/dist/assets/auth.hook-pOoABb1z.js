@@ -1,1 +1,0 @@
-import{o as e,r as t}from"./compiler-runtime-DP5OMuBG.js";import{Vn as n}from"./index-DDR3Tp6N.js";var r=e(t(),1);function i(){let e=(0,r.useContext)(n);if(e===void 0)throw Error(`useAuth must be used within an AuthProvider`);return e}export{i as t};

@@ -1,1 +1,0 @@
-import{Qn as e}from"./index-DDR3Tp6N.js";var t=e(`check`,[[`path`,{d:`M20 6 9 17l-5-5`,key:`1gmf2c`}]]);export{t};
