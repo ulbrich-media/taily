@@ -2,6 +2,13 @@
 
 All notable changes to Taily are documented here.
 
+# [0.4.0](https://github.com/ulbrich-media/taily/compare/v0.3.0...v0.4.0) (2026-05-28)
+
+
+### Features
+
+* contract file management added to adoption ([#39](https://github.com/ulbrich-media/taily/issues/39)) ([bf24e8e](https://github.com/ulbrich-media/taily/commit/bf24e8ea980f18790d886ed4758eb8b1fdeda054))
+
 # [0.3.0](https://github.com/ulbrich-media/taily/compare/v0.2.1...v0.3.0) (2026-05-14)
 
 

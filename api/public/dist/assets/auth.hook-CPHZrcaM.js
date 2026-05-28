@@ -1,0 +1,1 @@
+import{Ur as e,Vr as t,er as n}from"./index-SRHnb_rw.js";var r=e(t(),1);function i(){let e=(0,r.useContext)(n);if(e===void 0)throw Error(`useAuth must be used within an AuthProvider`);return e}export{i as t};
