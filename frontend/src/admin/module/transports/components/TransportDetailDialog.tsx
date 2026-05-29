@@ -49,7 +49,7 @@ import {
   zFieldString,
 } from '@/components/field/TextInput.utils'
 import { formatApiDate, formatApiDateTime } from '@/lib/dates.utils'
-import { CheckCircle2, Pencil, Trash2, ExternalLink } from 'lucide-react'
+import { CheckCircle2, Pencil, Trash2 } from 'lucide-react'
 import type { TransportDetailResource } from '@/api/types/transports'
 import type { ReactNode } from 'react'
 

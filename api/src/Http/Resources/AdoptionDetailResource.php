@@ -9,17 +9,18 @@ class AdoptionDetailResource extends AdoptionBaseResource
     public function toArray(Request $request): array
     {
         $contractMedia = $this->resource->getFirstMedia('contract');
+        $transport = $this->resource->transport;
 
         return array_merge(parent::toArray($request), [
             'animal' => $this->whenLoaded('animal', fn ($a) => new AnimalDetailResource($a)),
             'mediator' => $this->whenLoaded('mediator', fn ($m) => new PersonListResource($m)),
             'applicant' => $this->whenLoaded('applicant', fn ($m) => new PersonDetailResource($m)),
-            'transport' => $this->whenLoaded('transport', fn ($t) => $t ? [
-                'id' => $t->id,
-                'planned_at' => $t->planned_at,
-                'done_at' => $t->done_at,
-                'is_done' => $t->isDone(),
-            ] : null),
+            'transport' => $transport ? [
+                'id' => $transport->id,
+                'planned_at' => $transport->planned_at,
+                'done_at' => $transport->done_at,
+                'is_done' => $transport->isDone(),
+            ] : null,
             'contract_file' => $contractMedia ? [
                 'uuid' => $contractMedia->uuid,
                 'name' => $contractMedia->file_name,
