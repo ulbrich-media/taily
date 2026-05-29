@@ -36,9 +36,7 @@ function RouteComponent() {
   )
 
   const renderDetailAction = (transport: TransportListResource) => (
-    <TransportDetailRoute.Link
-      params={{ transportId: transport.id }}
-    >
+    <TransportDetailRoute.Link params={{ transportId: transport.id }}>
       <ExternalLink className="size-4" />
       Öffnen
     </TransportDetailRoute.Link>

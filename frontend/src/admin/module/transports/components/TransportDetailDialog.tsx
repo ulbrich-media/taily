@@ -25,9 +25,7 @@ import {
   markTransportDone,
   deleteTransport,
 } from '@/admin/module/transports/api/requests'
-import {
-  transportQueryKeys,
-} from '@/admin/module/transports/api/queries'
+import { transportQueryKeys } from '@/admin/module/transports/api/queries'
 import { adoptionQueryKeys } from '@/admin/module/adoptions/api/queries'
 import { toast } from 'sonner'
 import { Button } from '@/shadcn/components/ui/button'
@@ -230,9 +228,7 @@ export function TransportDetailDialog({
                       <TableBody>
                         {transport.adoptions.map((adoption) => (
                           <TableRow key={adoption.id}>
-                            <TableCell>
-                              {adoption.animal_name ?? '–'}
-                            </TableCell>
+                            <TableCell>{adoption.animal_name ?? '–'}</TableCell>
                             <TableCell>
                               {adoption.applicant_name ?? '–'}
                             </TableCell>
@@ -316,16 +312,15 @@ export function TransportDetailDialog({
               onClick={() => markDoneMutation.mutate()}
               disabled={markDoneMutation.isPending}
             >
-              {markDoneMutation.isPending ? 'Wird gespeichert...' : 'Abschließen'}
+              {markDoneMutation.isPending
+                ? 'Wird gespeichert...'
+                : 'Abschließen'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog
-        open={showDeleteConfirm}
-        onOpenChange={setShowDeleteConfirm}
-      >
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Transport löschen</AlertDialogTitle>

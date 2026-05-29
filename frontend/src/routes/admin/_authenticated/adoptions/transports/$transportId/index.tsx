@@ -1,9 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { queryClient } from '@/lib/queryClient'
-import {
-  getTransportQuery,
-} from '@/admin/module/transports/api/queries'
+import { getTransportQuery } from '@/admin/module/transports/api/queries'
 import { TransportDetailDialog } from '@/admin/module/transports/components/TransportDetailDialog'
 import { Route as TransportsRoute } from '@/routes/admin/_authenticated/adoptions/transports/route'
 import { Route as AdoptionDetailRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/route'
@@ -13,9 +11,7 @@ export const Route = createFileRoute(
   '/admin/_authenticated/adoptions/transports/$transportId/'
 )({
   loader: async ({ params }) => {
-    await queryClient.ensureQueryData(
-      getTransportQuery(params.transportId)
-    )
+    await queryClient.ensureQueryData(getTransportQuery(params.transportId))
   },
   component: RouteComponent,
 })

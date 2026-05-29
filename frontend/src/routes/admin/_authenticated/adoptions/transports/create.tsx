@@ -21,5 +21,7 @@ function RouteComponent() {
     navigateToTransports({})
   }
 
-  return <TransportCreateDialog onCreated={handleCreated} onClose={handleClose} />
+  return (
+    <TransportCreateDialog onCreated={handleCreated} onClose={handleClose} />
+  )
 }

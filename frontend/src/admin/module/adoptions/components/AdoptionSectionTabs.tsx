@@ -8,7 +8,5 @@ interface AdoptionSectionTabsProps {
 }
 
 export function AdoptionSectionTabs({ children }: AdoptionSectionTabsProps) {
-  return (
-    <nav className="flex gap-1 border-b pb-1 mb-2">{children}</nav>
-  )
+  return <nav className="flex gap-1 border-b pb-1 mb-2">{children}</nav>
 }
