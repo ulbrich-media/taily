@@ -88,7 +88,15 @@ class Adoption extends Model implements HasMedia
             return 'not_started';
         }
 
-        return 'in_progress';
+        $transport = $this->relationLoaded('transport')
+            ? $this->transport
+            : $this->transport()->first();
+
+        if ($transport?->isDone()) {
+            return 'finished';
+        }
+
+        return 'pending';
     }
 
     public function getHandoverStatusAttribute(): string

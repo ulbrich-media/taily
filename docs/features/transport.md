@@ -4,17 +4,52 @@ The transport step covers getting the animal from its current location to the ad
 
 ## How Transport Works
 
-A single transport can cover multiple animals going to different adopters. Animals are assigned to a transport once one is scheduled, and the transport is then marked as completed when the animals arrive.
+A single transport can cover multiple animals going to different adopters. Animals are assigned to a transport through their adoption record once a transport run is scheduled. The transport is then marked as done when the animals have arrived.
 
-From the adoption's perspective, the transport step is:
-- **Not started**: No transport has been assigned to the adoption yet.
-- **In progress / Done**: Tracked through the transport record itself once the transport feature is fully built.
+### Transport record
 
-## Current Status
+Each transport has:
+- **Planned date** (optional) — the calendar day the transport is scheduled to happen
+- **Notes** — a free-text field for any relevant information about the run
+- **Done** — a flag set when the transport is marked as completed; this is a one-way action and cannot be undone
 
-Transport management is not yet fully implemented in Taily. The adoption record holds a reference to a transport, but the full transport lifecycle (scheduling, assignment, departure, arrival) will be added in a later phase.
+### Transport status on an adoption
 
-For now, when a transport is not relevant or the animal is handed over directly, this step can simply be skipped.
+From the adoption's perspective the transport step has three states:
+
+| Status | Meaning |
+|--------|---------|
+| **Not started** | No transport has been assigned to the adoption yet |
+| **Transport planned** | A transport is assigned but not yet done |
+| **Done** | The assigned transport has been marked as done |
+
+## Managing Transports
+
+Transports are managed from the **Vermittlungen** section in the main navigation. The section has two tabs: *Vermittlungen* (adoption list) and *Transporte* (transport list).
+
+### Transport list
+
+The transport list shows all transports — both open and completed — with:
+- Planned date
+- Number of animals
+- Status badge (open / completed)
+
+A new transport can be created via the *Transport anlegen* button. Clicking *Öffnen* on any row opens a dialog with the full transport details.
+
+### Transport detail dialog
+
+The dialog shows all information about the transport and allows:
+- **Editing** the planned date and notes
+- **Marking as done** — opens a confirmation prompt; this cannot be undone
+- **Deleting** the transport — adoptions linked to it will have their transport reference cleared
+- **Viewing linked adoptions** — lists the animal name and applicant for each adoption, with a link to the adoption detail
+
+## Assigning a Transport to an Adoption
+
+From the adoption detail page, the *Transport* step card shows the currently assigned transport (planned date, done status) or a placeholder when none is assigned.
+
+- **Transport zuweisen / Transport ändern** — opens a dialog to select any open (not yet done) transport
+- **Transport entfernen** — removes the transport reference from the adoption after confirmation
 
 ## Relation to Handover
 

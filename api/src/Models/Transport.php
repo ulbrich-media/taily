@@ -17,7 +17,21 @@ class Transport extends Model
 
     protected $fillable = [
         'notes',
+        'planned_at',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'planned_at' => 'date',
+            'done_at' => 'datetime',
+        ];
+    }
+
+    public function isDone(): bool
+    {
+        return $this->done_at !== null;
+    }
 
     public function adoptions(): HasMany
     {

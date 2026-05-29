@@ -26,6 +26,8 @@ interface AdoptionDetailPageProps {
   newInspectionAction: ReactNode
   cancelAction: ReactNode
   reopenAction: ReactNode
+  assignTransportAction: ReactNode
+  removeTransportAction: ReactNode | null
   renderInspectionDetailLink?: (inspection: PreInspectionResource) => ReactNode
 }
 
@@ -40,6 +42,8 @@ export function AdoptionDetailPage({
   newInspectionAction,
   cancelAction,
   reopenAction,
+  assignTransportAction,
+  removeTransportAction,
   renderInspectionDetailLink,
 }: AdoptionDetailPageProps) {
   const isCanceled = adoption.status === 'canceled'
@@ -155,6 +159,44 @@ export function AdoptionDetailPage({
             )}
           </div>
           <div className="flex justify-end">{editContractAction}</div>
+        </div>
+      </StepCard>
+
+      <StepCard
+        title="Transport"
+        status={
+          <BadgeBySet
+            set={{
+              not_started: { label: 'Nicht begonnen', variant: 'outline' },
+              pending: { label: 'Transport geplant', variant: 'warning' },
+              in_progress: { label: 'Transport geplant', variant: 'warning' },
+              finished: { label: 'Abgeschlossen', variant: 'success' },
+            }}
+            value={adoption.transport_status}
+          />
+        }
+      >
+        <div className="space-y-4">
+          {adoption.transport ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <InfoRow label="Geplantes Datum">
+                {formatApiDate(adoption.transport.planned_at)}
+              </InfoRow>
+              {adoption.transport.is_done && adoption.transport.done_at && (
+                <InfoRow label="Abgeschlossen am">
+                  {formatApiDate(adoption.transport.done_at)}
+                </InfoRow>
+              )}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Kein Transport zugewiesen.
+            </p>
+          )}
+          <div className="flex justify-end gap-2">
+            {removeTransportAction}
+            {assignTransportAction}
+          </div>
         </div>
       </StepCard>
 

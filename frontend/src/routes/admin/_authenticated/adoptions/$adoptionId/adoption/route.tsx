@@ -4,13 +4,15 @@ import { getAdoptionQuery } from '@/admin/module/adoptions/api/queries'
 import { listPreInspectionsByPersonAndAnimalTypeQuery } from '@/admin/module/pre-inspections/api/queries'
 import { AdoptionDetailPage } from '@/admin/module/adoptions/pages/AdoptionDetailPage'
 import { Button } from '@/shadcn/components/ui/button'
-import { Edit, Eye, PlusCircle, Ban, RotateCcw } from 'lucide-react'
+import { Edit, Eye, PlusCircle, Ban, RotateCcw, Truck, X } from 'lucide-react'
 import { Route as InternalNotesRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/internal-notes'
 import { Route as PreInspectionRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/pre-inspection'
 import { Route as NewInspectionRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/new-inspection'
 import { Route as ContractRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/contract'
 import { Route as CancelRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/cancel'
 import { Route as ReopenRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/reopen'
+import { Route as TransportAssignRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/transport-assign'
+import { Route as TransportRemoveRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/transport-remove'
 import { Route as InspectionDetailRoute } from '@/routes/admin/_authenticated/pre-inspections/$id/index.tsx'
 import type { PreInspectionResource } from '@/api/types/pre-inspections'
 
@@ -105,6 +107,24 @@ function RouteComponent() {
     </InspectionDetailRoute.Link>
   )
 
+  const assignTransportAction = (
+    <Button size="sm" variant="outline" asChild>
+      <TransportAssignRoute.Link params={{ adoptionId }}>
+        <Truck className="size-4" />
+        {adoption.transport_id ? 'Transport ändern' : 'Transport zuweisen'}
+      </TransportAssignRoute.Link>
+    </Button>
+  )
+
+  const removeTransportAction = adoption.transport_id ? (
+    <Button size="sm" variant="outline" asChild>
+      <TransportRemoveRoute.Link params={{ adoptionId }}>
+        <X className="size-4" />
+        Transport entfernen
+      </TransportRemoveRoute.Link>
+    </Button>
+  ) : null
+
   return (
     <>
       <AdoptionDetailPage
@@ -118,6 +138,8 @@ function RouteComponent() {
         reopenAction={reopenAction}
         editPreInspectionAction={editPreInspectionAction}
         newInspectionAction={newInspectionAction}
+        assignTransportAction={assignTransportAction}
+        removeTransportAction={removeTransportAction}
         renderInspectionDetailLink={renderInspectionDetailLink}
       />
       <Outlet />
