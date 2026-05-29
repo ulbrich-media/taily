@@ -1,24 +1,14 @@
-import { Route as AdoptionsListRoute } from '@/routes/admin/_authenticated/adoptions/_list/route'
-import { Route as TransportsRoute } from '@/routes/admin/_authenticated/adoptions/transports/route'
+import type { ReactNode } from 'react'
 
-const tabLinkClass =
+export const adoptionSectionTabLinkClass =
   'px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground rounded-md hover:bg-accent transition-colors [&.active]:bg-accent [&.active]:text-foreground'
 
-export function AdoptionSectionTabs() {
+interface AdoptionSectionTabsProps {
+  children: ReactNode
+}
+
+export function AdoptionSectionTabs({ children }: AdoptionSectionTabsProps) {
   return (
-    <nav className="flex gap-1 border-b pb-1 mb-2">
-      <AdoptionsListRoute.Link
-        className={tabLinkClass}
-        activeOptions={{ exact: false }}
-      >
-        Vermittlungen
-      </AdoptionsListRoute.Link>
-      <TransportsRoute.Link
-        className={tabLinkClass}
-        activeOptions={{ exact: false }}
-      >
-        Transporte
-      </TransportsRoute.Link>
-    </nav>
+    <nav className="flex gap-1 border-b pb-1 mb-2">{children}</nav>
   )
 }

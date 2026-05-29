@@ -3,7 +3,11 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 import { queryClient } from '@/lib/queryClient'
 import { listTransportsQuery } from '@/admin/module/transports/api/queries'
 import { TransportListPage } from '@/admin/module/transports/pages/TransportListPage'
-import { AdoptionSectionTabs } from '@/admin/module/adoptions/components/AdoptionSectionTabs'
+import { Route as AdoptionsListRoute } from '@/routes/admin/_authenticated/adoptions/_list/route'
+import {
+  AdoptionSectionTabs,
+  adoptionSectionTabLinkClass,
+} from '@/admin/module/adoptions/components/AdoptionSectionTabs'
 import { Route as CreateRoute } from '@/routes/admin/_authenticated/adoptions/transports/create'
 import { Route as TransportDetailRoute } from '@/routes/admin/_authenticated/adoptions/transports/$transportId/index'
 import type { TransportListResource } from '@/api/types/transports'
@@ -42,7 +46,20 @@ function RouteComponent() {
 
   return (
     <>
-      <AdoptionSectionTabs />
+      <AdoptionSectionTabs>
+        <AdoptionsListRoute.Link
+          className={adoptionSectionTabLinkClass}
+          activeOptions={{ exact: false }}
+        >
+          Vermittlungen
+        </AdoptionsListRoute.Link>
+        <Route.Link
+          className={adoptionSectionTabLinkClass}
+          activeOptions={{ exact: false }}
+        >
+          Transporte
+        </Route.Link>
+      </AdoptionSectionTabs>
       <TransportListPage
         transports={transports}
         createAction={createAction}
