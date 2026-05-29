@@ -18,8 +18,8 @@ use Taily\Http\Controllers\Internal\PersonPictureController;
 use Taily\Http\Controllers\Internal\PreInspectionController;
 use Taily\Http\Controllers\Internal\PreInspectionSubmissionController;
 use Taily\Http\Controllers\Internal\ProfileController;
-use Taily\Http\Controllers\Internal\UserController;
 use Taily\Http\Controllers\Internal\TransportController;
+use Taily\Http\Controllers\Internal\UserController;
 use Taily\Http\Controllers\Internal\VaccinationController;
 
 /*
