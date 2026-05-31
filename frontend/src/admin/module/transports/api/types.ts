@@ -1,13 +1,9 @@
-import type {
-  TransportListResource,
-  TransportDetailResource,
-} from '@/api/types/transports'
+import type { TransportListResource } from '@/api/types/transports'
 
-export type Transport = TransportDetailResource
 export type TransportsResponse = TransportListResource[]
 export interface TransportResponse {
   message: string
-  data: TransportDetailResource
+  data: TransportListResource
 }
 
 export interface CreateTransportRequest {

@@ -8,7 +8,7 @@ import type {
   FieldValues,
 } from 'react-hook-form'
 import { useState } from 'react'
-import { format, isAfter, startOfDay } from 'date-fns'
+import { format, isAfter, isBefore, startOfDay } from 'date-fns'
 import {
   Popover,
   PopoverContent,
@@ -30,6 +30,7 @@ export type DateInputProps<
   'render'
 > & {
   disableFutureDates?: boolean
+  disablePastDates?: boolean
   disabled?: boolean
 }
 
@@ -41,6 +42,7 @@ interface DatePickerControlProps {
   }
   fieldState: ControllerFieldState
   disableFutureDates?: boolean
+  disablePastDate?: boolean
   disabled?: boolean
 }
 
@@ -48,6 +50,7 @@ export function DatePickerControl({
   field,
   fieldState,
   disableFutureDates = false,
+  disablePastDate = false,
   disabled = false,
 }: DatePickerControlProps) {
   const [open, setOpen] = useState(false)
@@ -108,7 +111,9 @@ export function DatePickerControl({
             disabled={
               disableFutureDates
                 ? (d) => isAfter(startOfDay(d), startOfDay(new Date()))
-                : undefined
+                : disablePastDate
+                  ? (d) => isBefore(startOfDay(d), startOfDay(new Date()))
+                  : undefined
             }
             onSelect={(selected) => {
               setDate(selected)
@@ -142,6 +147,7 @@ export function DateInput<
   TTransformedValues = TFieldValues,
 >({
   disableFutureDates,
+  disablePastDates,
   disabled,
   ...props
 }: DateInputProps<TFieldValues, TName, TTransformedValues>) {
@@ -153,6 +159,7 @@ export function DateInput<
           field={field}
           fieldState={fieldState}
           disableFutureDates={disableFutureDates}
+          disablePastDate={disablePastDates}
           disabled={disabled}
         />
       )}

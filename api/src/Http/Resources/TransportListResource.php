@@ -15,9 +15,9 @@ class TransportListResource extends JsonResource
             'notes' => $this->resource->notes,
             'done_at' => $this->resource->done_at,
             'is_done' => $this->resource->isDone(),
-            'animal_count' => $this->resource->relationLoaded('adoptions')
-                ? $this->resource->adoptions->count()
-                : 0,
+            'adoptions' => $this->resource->relationLoaded('adoptions')
+                ? AdoptionListResource::collection($this->resource->adoptions)
+                : [],
             'created_at' => $this->resource->created_at,
             'updated_at' => $this->resource->updated_at,
         ];

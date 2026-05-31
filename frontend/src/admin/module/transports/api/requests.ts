@@ -1,6 +1,5 @@
 import { apiRequest } from '@/lib/api'
 import type {
-  Transport,
   TransportResponse,
   TransportsResponse,
   CreateTransportRequest,
@@ -9,10 +8,6 @@ import type {
 
 export async function getTransports(): Promise<TransportsResponse> {
   return apiRequest<TransportsResponse>('transports')
-}
-
-export async function getTransport(id: string): Promise<Transport> {
-  return apiRequest<Transport>(`transports/${id}`)
 }
 
 export async function createTransport(

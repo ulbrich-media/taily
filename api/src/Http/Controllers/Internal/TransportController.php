@@ -6,15 +6,18 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Taily\Http\Controllers\Controller;
-use Taily\Http\Resources\TransportDetailResource;
 use Taily\Http\Resources\TransportListResource;
 use Taily\Models\Transport;
 
 class TransportController extends Controller
 {
-    private const LIST_RELATIONS = ['adoptions'];
-
-    private const DETAIL_RELATIONS = ['adoptions', 'adoptions.animal', 'adoptions.applicant'];
+    private const LIST_RELATIONS = [
+        'adoptions',
+        'adoptions.animal', 'adoptions.animal.animalType', 'adoptions.animal.media',
+        'adoptions.mediator', 'adoptions.mediator.media',
+        'adoptions.applicant', 'adoptions.applicant.media',
+        'adoptions.media',
+    ];
 
     public function index(): AnonymousResourceCollection
     {
@@ -35,19 +38,12 @@ class TransportController extends Controller
         ]);
 
         $transport = Transport::create($validated);
-        $transport->load(self::DETAIL_RELATIONS);
+        $transport->load(self::LIST_RELATIONS);
 
         return response()->json([
             'message' => 'Transport erfolgreich angelegt.',
-            'data' => new TransportDetailResource($transport),
+            'data' => new TransportListResource($transport),
         ], 201);
-    }
-
-    public function show(Transport $transport): TransportDetailResource
-    {
-        $transport->load(self::DETAIL_RELATIONS);
-
-        return new TransportDetailResource($transport);
     }
 
     public function update(Request $request, Transport $transport): JsonResponse
@@ -58,11 +54,11 @@ class TransportController extends Controller
         ]);
 
         $transport->update($validated);
-        $transport->load(self::DETAIL_RELATIONS);
+        $transport->load(self::LIST_RELATIONS);
 
         return response()->json([
             'message' => 'Transport erfolgreich aktualisiert.',
-            'data' => new TransportDetailResource($transport),
+            'data' => new TransportListResource($transport),
         ]);
     }
 
@@ -85,11 +81,11 @@ class TransportController extends Controller
 
         $transport->done_at = now();
         $transport->save();
-        $transport->load(self::DETAIL_RELATIONS);
+        $transport->load(self::LIST_RELATIONS);
 
         return response()->json([
             'message' => 'Transport erfolgreich abgeschlossen.',
-            'data' => new TransportDetailResource($transport),
+            'data' => new TransportListResource($transport),
         ]);
     }
 }

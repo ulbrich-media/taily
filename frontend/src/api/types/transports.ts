@@ -1,13 +1,7 @@
 // Mirrors: api/src/Http/Resources/TransportListResource.php
 //          api/src/Http/Resources/TransportDetailResource.php
 
-export interface TransportAdoptionItem {
-  id: string
-  animal_id: string
-  applicant_id: string
-  animal_name: string | null
-  applicant_name: string | null
-}
+import type { AdoptionListResource } from '@/api/types/adoptions.ts'
 
 export interface TransportBaseResource {
   id: string
@@ -19,10 +13,10 @@ export interface TransportBaseResource {
   updated_at: string
 }
 
-export interface TransportListResource extends TransportBaseResource {
-  animal_count: number
+export interface TransportDetailResource extends TransportBaseResource {
+  adoptions: AdoptionListResource[]
 }
 
-export interface TransportDetailResource extends TransportBaseResource {
-  adoptions: TransportAdoptionItem[]
+export interface TransportListResource extends TransportBaseResource {
+  adoptions: AdoptionListResource[]
 }

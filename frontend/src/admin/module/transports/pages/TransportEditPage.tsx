@@ -9,7 +9,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { createTransport } from '@/admin/module/transports/api/requests'
+import { updateTransport } from '@/admin/module/transports/api/requests'
 import { transportQueryKeys } from '@/admin/module/transports/api/queries'
 import { toast } from 'sonner'
 import { Button } from '@/shadcn/components/ui/button'
@@ -20,8 +20,11 @@ import {
   STRING_LENGTH_TEXTAREA,
   zFieldString,
 } from '@/components/field/TextInput.utils'
+import { formatApiDate } from '@/lib/dates.utils'
+import type { TransportListResource } from '@/api/types/transports'
 import {
   toApiDate,
+  toDateFieldValue,
   zFieldDateNoPast,
 } from '@/components/field/DateInput.utils.ts'
 
@@ -32,50 +35,53 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>
 
-interface TransportCreateDialogProps {
-  onCreated: (id: string) => void
+interface TransportEditPageProps {
+  transport: TransportListResource
   onClose: () => void
 }
 
-export function TransportCreateDialog({
-  onCreated,
+export function TransportEditPage({
+  transport,
   onClose,
-}: TransportCreateDialogProps) {
+}: TransportEditPageProps) {
   const queryClient = useQueryClient()
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
-      planned_at: null,
-      notes: '',
+      planned_at: toDateFieldValue(transport.planned_at),
+      notes: transport.notes,
     },
   })
 
-  const createMutation = useMutation({
-    mutationFn: createTransport,
+  const mutation = useMutation({
+    mutationFn: (data: FormData) =>
+      updateTransport(transport.id, {
+        planned_at: toApiDate(data.planned_at),
+        notes: data.notes,
+      }),
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: transportQueryKeys.list() })
       toast.success(response.message)
-      onCreated(response.data.id)
+      onClose()
     },
     onError: () => {
-      toast.error('Fehler beim Erstellen des Transports')
+      toast.error('Fehler beim Speichern des Transports')
     },
   })
+
+  const title = transport.planned_at
+    ? `Transport am ${formatApiDate(transport.planned_at)} bearbeiten`
+    : 'Transport bearbeiten'
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Transport anlegen</DialogTitle>
+          <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
         <form
-          onSubmit={form.handleSubmit((data) =>
-            createMutation.mutate({
-              planned_at: toApiDate(data.planned_at),
-              notes: data.notes,
-            })
-          )}
+          onSubmit={form.handleSubmit((data) => mutation.mutate(data))}
           className="space-y-4"
         >
           <FieldGroup>
@@ -99,12 +105,12 @@ export function TransportCreateDialog({
               type="button"
               variant="outline"
               onClick={onClose}
-              disabled={createMutation.isPending}
+              disabled={mutation.isPending}
             >
               Abbrechen
             </Button>
-            <Button type="submit" disabled={createMutation.isPending}>
-              {createMutation.isPending ? 'Speichern...' : 'Speichern'}
+            <Button type="submit" disabled={mutation.isPending}>
+              {mutation.isPending ? 'Speichern...' : 'Speichern'}
             </Button>
           </DialogFooter>
         </form>

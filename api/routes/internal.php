@@ -79,7 +79,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::apiResource('organizations', OrganizationController::class);
 
     // Transports
-    Route::apiResource('transports', TransportController::class);
+    Route::apiResource('transports', TransportController::class)->except('show');
     Route::post('/transports/{transport}/mark-done', [TransportController::class, 'markDone']);
 
     // Adoptions
