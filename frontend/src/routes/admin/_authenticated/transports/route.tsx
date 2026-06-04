@@ -32,6 +32,15 @@ function RouteComponent() {
     </Button>
   )
 
+  const createActionForEmpty = (
+    <Button asChild variant="secondary" size="sm">
+      <CreateRoute.Link>
+        <Plus />
+        Transport anlegen
+      </CreateRoute.Link>
+    </Button>
+  )
+
   const renderActions = (transport: TransportListResource) => (
     <>
       <Button size="icon-sm" variant="destructive" asChild aria-label="Löschen">
@@ -68,6 +77,7 @@ function RouteComponent() {
       <TransportListPage
         transports={transports}
         createAction={createAction}
+        createActionForEmpty={createActionForEmpty}
         renderActions={renderActions}
         renderAdoptionDetailLink={renderAdoptionDetailLink}
       />

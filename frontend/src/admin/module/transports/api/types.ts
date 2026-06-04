@@ -7,11 +7,21 @@ export interface TransportResponse {
 }
 
 export interface CreateTransportRequest {
+  name?: string
   planned_at?: string | null
   notes?: string
+  responsible_id?: string | null
+  transporter?: string
 }
 
 export interface UpdateTransportRequest {
+  name?: string
   planned_at?: string | null
   notes?: string
+  responsible_id?: string | null
+  transporter?: string
+}
+
+export interface MarkTransportDoneRequest {
+  done_at?: string | null
 }

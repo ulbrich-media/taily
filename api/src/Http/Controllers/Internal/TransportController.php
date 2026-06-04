@@ -12,6 +12,7 @@ use Taily\Models\Transport;
 class TransportController extends Controller
 {
     private const LIST_RELATIONS = [
+        'responsible', 'responsible.media',
         'adoptions',
         'adoptions.animal', 'adoptions.animal.animalType', 'adoptions.animal.media',
         'adoptions.mediator', 'adoptions.mediator.media',
@@ -33,8 +34,11 @@ class TransportController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
+            'name' => 'sometimes|string|max:255',
             'planned_at' => 'nullable|date',
             'notes' => 'sometimes|string',
+            'responsible_id' => 'sometimes|nullable|uuid|exists:people,id',
+            'transporter' => 'sometimes|string|max:255',
         ]);
 
         $transport = Transport::create($validated);
@@ -49,8 +53,11 @@ class TransportController extends Controller
     public function update(Request $request, Transport $transport): JsonResponse
     {
         $validated = $request->validate([
+            'name' => 'sometimes|string|max:255',
             'planned_at' => 'sometimes|nullable|date',
             'notes' => 'sometimes|string',
+            'responsible_id' => 'sometimes|nullable|uuid|exists:people,id',
+            'transporter' => 'sometimes|string|max:255',
         ]);
 
         $transport->update($validated);
@@ -71,7 +78,7 @@ class TransportController extends Controller
         ]);
     }
 
-    public function markDone(Transport $transport): JsonResponse
+    public function markDone(Request $request, Transport $transport): JsonResponse
     {
         if ($transport->isDone()) {
             return response()->json([
@@ -79,7 +86,11 @@ class TransportController extends Controller
             ], 422);
         }
 
-        $transport->done_at = now();
+        $validated = $request->validate([
+            'done_at' => 'nullable|date|before_or_equal:today',
+        ]);
+
+        $transport->done_at = $validated['done_at'] ?? now();
         $transport->save();
         $transport->load(self::LIST_RELATIONS);
 

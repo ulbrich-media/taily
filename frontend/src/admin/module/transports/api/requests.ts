@@ -4,6 +4,7 @@ import type {
   TransportsResponse,
   CreateTransportRequest,
   UpdateTransportRequest,
+  MarkTransportDoneRequest,
 } from './types'
 
 export async function getTransports(): Promise<TransportsResponse> {
@@ -38,9 +39,11 @@ export async function deleteTransport(
 }
 
 export async function markTransportDone(
-  id: string
+  id: string,
+  data?: MarkTransportDoneRequest
 ): Promise<TransportResponse> {
   return apiRequest<TransportResponse>(`transports/${id}/mark-done`, {
     method: 'POST',
+    body: JSON.stringify(data ?? {}),
   })
 }

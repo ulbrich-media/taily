@@ -4,6 +4,7 @@ import type { TransportListResource } from '@/api/types/transports'
 import { PageHeader } from '@/components/layout/PageHeader'
 import {
   Empty,
+  EmptyContent,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
@@ -15,6 +16,7 @@ import type { AdoptionListResource } from '@/api/types/adoptions.ts'
 interface TransportListPageProps {
   transports: TransportListResource[]
   createAction: ReactNode
+  createActionForEmpty: ReactNode
   renderActions: (t: TransportListResource) => ReactNode
   renderAdoptionDetailLink?: (adoption: AdoptionListResource) => ReactNode
 }
@@ -22,6 +24,7 @@ interface TransportListPageProps {
 export function TransportListPage({
   transports,
   createAction,
+  createActionForEmpty,
   renderActions,
   renderAdoptionDetailLink,
 }: TransportListPageProps) {
@@ -63,6 +66,7 @@ export function TransportListPage({
             </EmptyMedia>
             <EmptyTitle>Keine Transporte gefunden</EmptyTitle>
             <EmptyDescription>Noch keine Transporte angelegt.</EmptyDescription>
+            <EmptyContent>{createActionForEmpty}</EmptyContent>
           </EmptyHeader>
         </Empty>
       )}
@@ -71,6 +75,18 @@ export function TransportListPage({
         <>
           <div className="space-y-4">
             <SectionHeader title="Geplante Transporte" />
+
+            {plannedTransports.length === 0 && (
+              <Empty>
+                <EmptyHeader>
+                  <EmptyTitle>Keine Transporte geplant</EmptyTitle>
+                  <EmptyDescription>
+                    Plane jetzt deinen nächsten Transport!
+                  </EmptyDescription>
+                  <EmptyContent>{createActionForEmpty}</EmptyContent>
+                </EmptyHeader>
+              </Empty>
+            )}
 
             {plannedTransports.map((transport) => (
               <TransportDetailCard
@@ -82,18 +98,20 @@ export function TransportListPage({
             ))}
           </div>
 
-          <div className="space-y-4">
-            <SectionHeader title="Abgeschlossene Transporte" />
+          {doneTransports.length > 0 && (
+            <div className="space-y-4">
+              <SectionHeader title="Abgeschlossene Transporte" />
 
-            {doneTransports.map((transport) => (
-              <TransportDetailCard
-                key={transport.id}
-                transport={transport}
-                actions={renderActions(transport)}
-                renderAdoptionDetailLink={renderAdoptionDetailLink}
-              />
-            ))}
-          </div>
+              {doneTransports.map((transport) => (
+                <TransportDetailCard
+                  key={transport.id}
+                  transport={transport}
+                  actions={renderActions(transport)}
+                  renderAdoptionDetailLink={renderAdoptionDetailLink}
+                />
+              ))}
+            </div>
+          )}
         </>
       )}
     </div>

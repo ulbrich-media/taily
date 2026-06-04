@@ -21,6 +21,12 @@ interface TransportDetailCardProps {
   renderAdoptionDetailLink?: (adoption: AdoptionListResource) => ReactNode
 }
 
+function getTransportTitle(transport: TransportListResource): string {
+  if (transport.name) return transport.name
+  if (transport.planned_at) return `Transport am ${formatApiDate(transport.planned_at)}`
+  return 'Transport'
+}
+
 export function TransportDetailCard({
   transport,
   actions,
@@ -29,11 +35,7 @@ export function TransportDetailCard({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>
-          {transport.planned_at
-            ? `Transport am ${formatApiDate(transport.planned_at)}`
-            : 'Transport'}
-        </CardTitle>
+        <CardTitle>{getTransportTitle(transport)}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
@@ -48,6 +50,22 @@ export function TransportDetailCard({
             <InfoRow label="Abgeschlossen am">
               {transport.done_at ? (
                 formatApiDate(transport.done_at)
+              ) : (
+                <InfoRowEmptyValue />
+              )}
+            </InfoRow>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <InfoRow label="Verantwortliche Person">
+              {transport.responsible ? (
+                transport.responsible.full_name
+              ) : (
+                <InfoRowEmptyValue />
+              )}
+            </InfoRow>
+            <InfoRow label="Transporteur">
+              {transport.transporter ? (
+                transport.transporter
               ) : (
                 <InfoRowEmptyValue />
               )}

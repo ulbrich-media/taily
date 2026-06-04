@@ -1,14 +1,19 @@
 import { createFileRoute, notFound } from '@tanstack/react-router'
+import { useSuspenseQuery } from '@tanstack/react-query'
 import { queryClient } from '@/lib/queryClient'
 import { listTransportsQuery } from '@/admin/module/transports/api/queries'
 import { TransportEditPage } from '@/admin/module/transports/pages/TransportEditPage'
 import { Route as TransportsRoute } from '@/routes/admin/_authenticated/transports/route'
+import { listPersonsQuery } from '@/lib/api/persons'
 
 export const Route = createFileRoute(
   '/admin/_authenticated/transports/$transportId/edit'
 )({
   loader: async ({ params }) => {
-    const transports = await queryClient.ensureQueryData(listTransportsQuery())
+    const [transports] = await Promise.all([
+      queryClient.ensureQueryData(listTransportsQuery()),
+      queryClient.ensureQueryData(listPersonsQuery),
+    ])
 
     const transport = transports.find((t) => t.id === params.transportId)
     if (!transport) {
@@ -23,8 +28,15 @@ export const Route = createFileRoute(
 function RouteComponent() {
   const transport = Route.useLoaderData()
   const navigate = TransportsRoute.useNavigate()
+  const { data: persons } = useSuspenseQuery(listPersonsQuery)
+
+  const mediators = persons.filter((p) => p.mediator_animal_types?.length > 0)
 
   return (
-    <TransportEditPage transport={transport} onClose={() => navigate({})} />
+    <TransportEditPage
+      transport={transport}
+      mediators={mediators}
+      onClose={() => navigate({})}
+    />
   )
 }
