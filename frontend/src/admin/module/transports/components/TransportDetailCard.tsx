@@ -14,7 +14,7 @@ import {
 } from '@/shadcn/components/common/info-row.tsx'
 import type { AdoptionListResource } from '@/api/types/adoptions.ts'
 import type { ReactNode } from 'react'
-import { getTransportTitle } from '@/admin/module/transports/components/utils.ts'
+import { getTransportTitle } from '@/admin/module/transports/utils.ts'
 
 interface TransportDetailCardProps {
   transport: TransportListResource

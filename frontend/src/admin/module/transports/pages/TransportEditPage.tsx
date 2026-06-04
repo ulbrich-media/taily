@@ -29,7 +29,7 @@ import {
 } from '@/components/field/DateInput.utils.ts'
 import { PersonSelect } from '@/components/field/PersonSelect'
 import type { PersonListResource } from '@/api/types/people'
-import { getTransportTitle } from '@/admin/module/transports/components/utils.ts'
+import { getTransportTitle } from '@/admin/module/transports/utils.ts'
 
 const schema = z.object({
   name: zFieldString({ maxLength: 255 }),

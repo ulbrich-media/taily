@@ -1,5 +1,4 @@
 // Mirrors: api/src/Http/Resources/TransportListResource.php
-//          api/src/Http/Resources/TransportDetailResource.php
 
 import type { AdoptionListResource } from '@/api/types/adoptions.ts'
 import type { PersonListResource } from '@/api/types/people.ts'

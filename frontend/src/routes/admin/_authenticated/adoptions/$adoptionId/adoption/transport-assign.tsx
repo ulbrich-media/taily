@@ -34,7 +34,7 @@ import { Label } from '@/shadcn/components/ui/label'
 import { toast } from 'sonner'
 import { useState } from 'react'
 import { Route as AdoptionRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/route'
-import { getTransportTitle } from '@/admin/module/transports/components/utils.ts'
+import { getTransportTitle } from '@/admin/module/transports/utils.ts'
 
 export const Route = createFileRoute(
   '/admin/_authenticated/adoptions/$adoptionId/adoption/transport-assign'

@@ -17,7 +17,7 @@ import { formatApiDate } from '@/lib/dates.utils.ts'
 import { Spinner } from '@/shadcn/components/ui/spinner.tsx'
 import { FilePenLineIcon } from 'lucide-react'
 import { Button } from '@/shadcn/components/ui/button.tsx'
-import { getTransportTitle } from '@/admin/module/transports/components/utils.ts'
+import { getTransportTitle } from '@/admin/module/transports/utils.ts'
 
 interface AdoptionDetailPageProps {
   adoption: AdoptionDetailResource
