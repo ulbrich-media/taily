@@ -38,8 +38,8 @@ export function TransportList({
               {transport.planned_at ? formatApiDate(transport.planned_at) : '–'}
             </TableCell>
             <TableCell>
-              {transport.animal_count}{' '}
-              {transport.animal_count === 1 ? 'Tier' : 'Tiere'}
+              {transport.adoptions.length}{' '}
+              {transport.adoptions.length === 1 ? 'Tier' : 'Tiere'}
             </TableCell>
             <TableCell>
               {transport.is_done ? (

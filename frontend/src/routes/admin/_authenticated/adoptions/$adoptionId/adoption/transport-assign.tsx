@@ -109,8 +109,8 @@ function RouteComponent() {
                     {transport.planned_at
                       ? formatApiDate(transport.planned_at)
                       : 'Datum nicht gesetzt'}{' '}
-                    ({transport.animal_count}{' '}
-                    {transport.animal_count === 1 ? 'Tier' : 'Tiere'})
+                    ({transport.adoptions.length}{' '}
+                    {transport.adoptions.length === 1 ? 'Tier' : 'Tiere'})
                   </SelectItem>
                 ))}
               </SelectContent>
