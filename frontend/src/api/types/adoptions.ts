@@ -58,13 +58,6 @@ export interface ContractFile {
   url: string
 }
 
-export interface AdoptionTransportInline {
-  id: string
-  planned_at: string | null
-  done_at: string | null
-  is_done: boolean
-}
-
 // Returned by GET /adoptions/:id (show), POST /adoptions (store), PATCH /adoptions/:id (update).
 export interface AdoptionDetailResource extends AdoptionBaseResource {
   animal: AnimalDetailResource
