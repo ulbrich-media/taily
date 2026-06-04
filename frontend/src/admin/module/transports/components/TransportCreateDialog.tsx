@@ -65,7 +65,7 @@ export function TransportCreateDialog({
   const createMutation = useMutation({
     mutationFn: createTransport,
     onSuccess: (response) => {
-      queryClient.invalidateQueries({ queryKey: transportQueryKeys.list() })
+      queryClient.invalidateQueries({ queryKey: transportQueryKeys.all })
       toast.success(response.message)
       onCreated(response.data.id)
     },

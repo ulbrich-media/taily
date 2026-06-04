@@ -25,3 +25,7 @@ export interface UpdateTransportRequest {
 export interface MarkTransportDoneRequest {
   done_at?: string | null
 }
+
+export interface ListTransportsParams {
+  is_done?: boolean
+}

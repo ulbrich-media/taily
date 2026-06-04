@@ -29,7 +29,7 @@ export function TransportDeletePage({
   const mutation = useMutation({
     mutationFn: () => deleteTransport(transport.id),
     onSuccess: (response) => {
-      queryClient.invalidateQueries({ queryKey: transportQueryKeys.list() })
+      queryClient.invalidateQueries({ queryKey: transportQueryKeys.all })
       queryClient.invalidateQueries({ queryKey: adoptionQueryKeys.all })
       toast.success(response.message)
       onClose()

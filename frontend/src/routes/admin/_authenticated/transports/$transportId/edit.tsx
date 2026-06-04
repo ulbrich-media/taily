@@ -1,7 +1,8 @@
 import { createFileRoute, notFound } from '@tanstack/react-router'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { queryClient } from '@/lib/queryClient'
-import { listTransportsQuery } from '@/admin/module/transports/api/queries'
+import { transportQueryKeys } from '@/admin/module/transports/api/queries'
+import type { TransportListResource } from '@/api/types/transports'
 import { TransportEditPage } from '@/admin/module/transports/pages/TransportEditPage'
 import { Route as TransportsRoute } from '@/routes/admin/_authenticated/transports/route'
 import { listPersonsQuery } from '@/lib/api/persons'
@@ -10,15 +11,23 @@ export const Route = createFileRoute(
   '/admin/_authenticated/transports/$transportId/edit'
 )({
   loader: async ({ params }) => {
-    const [transports] = await Promise.all([
-      queryClient.ensureQueryData(listTransportsQuery()),
-      queryClient.ensureQueryData(listPersonsQuery),
-    ])
+    await queryClient.ensureQueryData(listPersonsQuery)
 
-    const transport = transports.find((t) => t.id === params.transportId)
-    if (!transport) {
-      throw notFound()
-    }
+    // We could do a single query to fetch both planned and done transports. Instead, we
+    // replicate the parents route requests, so no additional requests are fired.
+    const planned =
+      queryClient.getQueryData<TransportListResource[]>(
+        transportQueryKeys.list({ is_done: false })
+      ) ?? []
+    const done =
+      queryClient.getQueryData<TransportListResource[]>(
+        transportQueryKeys.list({ is_done: true })
+      ) ?? []
+
+    const transport = [...planned, ...done].find(
+      (t) => t.id === params.transportId
+    )
+    if (!transport) throw notFound()
 
     return transport
   },

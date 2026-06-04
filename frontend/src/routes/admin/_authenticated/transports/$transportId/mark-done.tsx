@@ -1,22 +1,23 @@
 import { createFileRoute, notFound } from '@tanstack/react-router'
 import { queryClient } from '@/lib/queryClient'
-import { listTransportsQuery } from '@/admin/module/transports/api/queries'
+import {
+  transportQueryKeys,
+} from '@/admin/module/transports/api/queries'
+import type { TransportListResource } from '@/api/types/transports'
 import { TransportMarkDonePage } from '@/admin/module/transports/pages/TransportMarkDonePage'
 import { Route as TransportsRoute } from '@/routes/admin/_authenticated/transports/route'
 
 export const Route = createFileRoute(
   '/admin/_authenticated/transports/$transportId/mark-done'
 )({
-  loader: async ({ params }) => {
-    const transports = await queryClient.ensureQueryData(listTransportsQuery())
+  loader: ({ params }) => {
+    const planned =
+      queryClient.getQueryData<TransportListResource[]>(
+        transportQueryKeys.list({ is_done: false })
+      ) ?? []
 
-    const transport = transports.find((t) => t.id === params.transportId)
-    if (!transport) {
-      throw notFound()
-    }
-    if (transport.is_done) {
-      throw new Error('Dieser Transport ist bereits abgeschlossen')
-    }
+    const transport = planned.find((t) => t.id === params.transportId)
+    if (!transport) throw notFound()
 
     return transport
   },

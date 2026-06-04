@@ -20,15 +20,28 @@ class TransportController extends Controller
         'adoptions.media',
     ];
 
-    public function index(): AnonymousResourceCollection
+    public function index(Request $request): AnonymousResourceCollection
     {
-        $transports = Transport::with(self::LIST_RELATIONS)
-            ->orderByRaw('planned_at IS NULL')
-            ->orderBy('planned_at', 'desc')
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $query = Transport::with(self::LIST_RELATIONS);
 
-        return TransportListResource::collection($transports);
+        if ($request->has('is_done')) {
+            $isDone = filter_var($request->query('is_done'), FILTER_VALIDATE_BOOLEAN);
+
+            if ($isDone) {
+                $query->whereNotNull('done_at')
+                    ->orderBy('done_at', 'desc');
+            } else {
+                $query->whereNull('done_at')
+                    ->orderByRaw('planned_at IS NULL')
+                    ->orderBy('planned_at', 'asc');
+            }
+        } else {
+            $query->orderByRaw('planned_at IS NULL')
+                ->orderBy('planned_at', 'desc')
+                ->orderBy('created_at', 'desc');
+        }
+
+        return TransportListResource::collection($query->get());
     }
 
     public function store(Request $request): JsonResponse

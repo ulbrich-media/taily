@@ -42,7 +42,7 @@ export const Route = createFileRoute(
   loader: async ({ params }) => {
     await Promise.all([
       appQueryClient.ensureQueryData(getAdoptionQuery(params.adoptionId)),
-      appQueryClient.ensureQueryData(listTransportsQuery()),
+      appQueryClient.ensureQueryData(listTransportsQuery({ is_done: false })),
     ])
   },
   component: RouteComponent,
@@ -51,11 +51,11 @@ export const Route = createFileRoute(
 function RouteComponent() {
   const { adoptionId } = Route.useParams()
   const { data: adoption } = useSuspenseQuery(getAdoptionQuery(adoptionId))
-  const { data: allTransports } = useSuspenseQuery(listTransportsQuery())
+  const { data: openTransports } = useSuspenseQuery(
+    listTransportsQuery({ is_done: false })
+  )
   const queryClientHook = useQueryClient()
   const navigateToAdoption = AdoptionRoute.useNavigate()
-
-  const openTransports = allTransports.filter((t) => !t.is_done)
 
   const [selectedId, setSelectedId] = useState<string>(
     adoption.transport_id ?? ''

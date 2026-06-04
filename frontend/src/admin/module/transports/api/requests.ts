@@ -5,10 +5,17 @@ import type {
   CreateTransportRequest,
   UpdateTransportRequest,
   MarkTransportDoneRequest,
+  ListTransportsParams,
 } from './types'
 
-export async function getTransports(): Promise<TransportsResponse> {
-  return apiRequest<TransportsResponse>('transports')
+export async function getTransports(
+  params?: ListTransportsParams
+): Promise<TransportsResponse> {
+  const search =
+    params?.is_done !== undefined
+      ? `?is_done=${params.is_done}`
+      : ''
+  return apiRequest<TransportsResponse>(`transports${search}`)
 }
 
 export async function createTransport(

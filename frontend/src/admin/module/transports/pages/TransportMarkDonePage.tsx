@@ -53,7 +53,7 @@ export function TransportMarkDonePage({
     mutationFn: (data: FormData) =>
       markTransportDone(transport.id, { done_at: toApiDate(data.done_at) }),
     onSuccess: (response) => {
-      queryClient.invalidateQueries({ queryKey: transportQueryKeys.list() })
+      queryClient.invalidateQueries({ queryKey: transportQueryKeys.all })
       queryClient.invalidateQueries({ queryKey: adoptionQueryKeys.all })
       toast.success(response.message)
       onClose()

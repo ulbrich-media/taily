@@ -14,7 +14,8 @@ import { TransportDetailCard } from '@/admin/module/transports/components/Transp
 import type { AdoptionListResource } from '@/api/types/adoptions.ts'
 
 interface TransportListPageProps {
-  transports: TransportListResource[]
+  plannedTransports: TransportListResource[]
+  doneTransports: TransportListResource[]
   createAction: ReactNode
   createActionForEmpty: ReactNode
   renderActions: (t: TransportListResource) => ReactNode
@@ -22,32 +23,14 @@ interface TransportListPageProps {
 }
 
 export function TransportListPage({
-  transports,
+  plannedTransports,
+  doneTransports,
   createAction,
   createActionForEmpty,
   renderActions,
   renderAdoptionDetailLink,
 }: TransportListPageProps) {
-  const hasData = transports && transports.length > 0
-
-  const { plannedTransports, doneTransports } = transports.reduce<{
-    plannedTransports: TransportListResource[]
-    doneTransports: TransportListResource[]
-  }>(
-    (map, transport) => {
-      return {
-        doneTransports: [
-          ...map.doneTransports,
-          ...(transport.is_done ? [transport] : []),
-        ],
-        plannedTransports: [
-          ...map.plannedTransports,
-          ...(!transport.is_done ? [transport] : []),
-        ],
-      }
-    },
-    { plannedTransports: [], doneTransports: [] }
-  )
+  const hasData = plannedTransports.length > 0 || doneTransports.length > 0
 
   return (
     <div className="space-y-8">

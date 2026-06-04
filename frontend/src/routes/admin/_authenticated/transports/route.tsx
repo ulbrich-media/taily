@@ -15,13 +15,21 @@ import { CheckCircle2, Pencil, Plus, Trash2, ExternalLink } from 'lucide-react'
 
 export const Route = createFileRoute('/admin/_authenticated/transports')({
   loader: async () => {
-    await queryClient.ensureQueryData(listTransportsQuery())
+    await Promise.all([
+      queryClient.ensureQueryData(listTransportsQuery({ is_done: false })),
+      queryClient.ensureQueryData(listTransportsQuery({ is_done: true })),
+    ])
   },
   component: RouteComponent,
 })
 
 function RouteComponent() {
-  const { data: transports } = useSuspenseQuery(listTransportsQuery())
+  const { data: plannedTransports } = useSuspenseQuery(
+    listTransportsQuery({ is_done: false })
+  )
+  const { data: doneTransports } = useSuspenseQuery(
+    listTransportsQuery({ is_done: true })
+  )
 
   const createAction = (
     <Button asChild>
@@ -75,7 +83,8 @@ function RouteComponent() {
   return (
     <>
       <TransportListPage
-        transports={transports}
+        plannedTransports={plannedTransports}
+        doneTransports={doneTransports}
         createAction={createAction}
         createActionForEmpty={createActionForEmpty}
         renderActions={renderActions}

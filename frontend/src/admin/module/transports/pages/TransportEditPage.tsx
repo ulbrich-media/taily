@@ -75,7 +75,7 @@ export function TransportEditPage({
         transporter: data.transporter,
       }),
     onSuccess: (response) => {
-      queryClient.invalidateQueries({ queryKey: transportQueryKeys.list() })
+      queryClient.invalidateQueries({ queryKey: transportQueryKeys.all })
       toast.success(response.message)
       onClose()
     },
