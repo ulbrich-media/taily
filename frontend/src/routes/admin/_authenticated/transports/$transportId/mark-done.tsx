@@ -14,6 +14,9 @@ export const Route = createFileRoute(
     if (!transport) {
       throw notFound()
     }
+    if (transport.is_done) {
+      throw new Error('Dieser Transport ist bereits abgeschlossen')
+    }
 
     return transport
   },

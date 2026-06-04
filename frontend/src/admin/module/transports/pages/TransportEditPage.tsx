@@ -21,7 +21,6 @@ import {
   STRING_LENGTH_TEXTAREA,
   zFieldString,
 } from '@/components/field/TextInput.utils'
-import { formatApiDate } from '@/lib/dates.utils'
 import type { TransportListResource } from '@/api/types/transports'
 import {
   toApiDate,
@@ -30,6 +29,7 @@ import {
 } from '@/components/field/DateInput.utils.ts'
 import { PersonSelect } from '@/components/field/PersonSelect'
 import type { PersonListResource } from '@/api/types/people'
+import { getTransportTitle } from '@/admin/module/transports/components/utils.ts'
 
 const schema = z.object({
   name: zFieldString({ maxLength: 255 }),
@@ -84,9 +84,7 @@ export function TransportEditPage({
     },
   })
 
-  const title = transport.planned_at
-    ? `Transport am ${formatApiDate(transport.planned_at)} bearbeiten`
-    : 'Transport bearbeiten'
+  const title = `${getTransportTitle(transport)} bearbeiten`
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>

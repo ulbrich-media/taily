@@ -14,17 +14,12 @@ import {
 } from '@/shadcn/components/common/info-row.tsx'
 import type { AdoptionListResource } from '@/api/types/adoptions.ts'
 import type { ReactNode } from 'react'
+import { getTransportTitle } from '@/admin/module/transports/components/utils.ts'
 
 interface TransportDetailCardProps {
   transport: TransportListResource
   actions?: ReactNode
   renderAdoptionDetailLink?: (adoption: AdoptionListResource) => ReactNode
-}
-
-function getTransportTitle(transport: TransportListResource): string {
-  if (transport.name) return transport.name
-  if (transport.planned_at) return `Transport am ${formatApiDate(transport.planned_at)}`
-  return 'Transport'
 }
 
 export function TransportDetailCard({
@@ -87,7 +82,9 @@ export function TransportDetailCard({
           </InfoRow>
         </div>
       </CardContent>
-      {actions && <CardFooter className="justify-end gap-2">{actions}</CardFooter>}
+      {actions && (
+        <CardFooter className="justify-end gap-2">{actions}</CardFooter>
+      )}
     </Card>
   )
 }
