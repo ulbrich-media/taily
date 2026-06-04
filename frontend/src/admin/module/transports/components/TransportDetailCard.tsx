@@ -49,8 +49,6 @@ export function TransportDetailCard({
                 <InfoRowEmptyValue />
               )}
             </InfoRow>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <InfoRow label="Verantwortliche Person">
               {transport.responsible ? (
                 transport.responsible.full_name

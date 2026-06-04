@@ -18,10 +18,6 @@ export interface TransportBaseResource {
   updated_at: string
 }
 
-export interface TransportDetailResource extends TransportBaseResource {
-  adoptions: AdoptionListResource[]
-}
-
 export interface TransportListResource extends TransportBaseResource {
   adoptions: AdoptionListResource[]
 }

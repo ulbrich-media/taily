@@ -33,8 +33,8 @@ import {
 import { Label } from '@/shadcn/components/ui/label'
 import { toast } from 'sonner'
 import { useState } from 'react'
-import { formatApiDate } from '@/lib/dates.utils'
 import { Route as AdoptionRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/route'
+import { getTransportTitle } from '@/admin/module/transports/components/utils.ts'
 
 export const Route = createFileRoute(
   '/admin/_authenticated/adoptions/$adoptionId/adoption/transport-assign'
@@ -96,20 +96,17 @@ function RouteComponent() {
           <Label>Transport</Label>
           {openTransports.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              Keine offenen Transporte verfügbar.
+              Keine geplanten Transporte verfügbar.
             </p>
           ) : (
             <Select value={selectedId} onValueChange={setSelectedId}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Transport wählen..." />
               </SelectTrigger>
               <SelectContent>
                 {openTransports.map((transport) => (
                   <SelectItem key={transport.id} value={transport.id}>
-                    {transport.planned_at
-                      ? formatApiDate(transport.planned_at)
-                      : 'Datum nicht gesetzt'}{' '}
-                    ({transport.adoptions.length}{' '}
+                    {getTransportTitle(transport)} ({transport.adoptions.length}{' '}
                     {transport.adoptions.length === 1 ? 'Tier' : 'Tiere'})
                   </SelectItem>
                 ))}

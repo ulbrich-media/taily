@@ -4,6 +4,7 @@
 
 import type { AnimalListResource, AnimalDetailResource } from './animals'
 import type { PersonListResource, PersonDetailResource } from './people'
+import type { TransportListResource } from '@/api/types/transports.ts'
 
 export type AdoptionStepStatus =
   | 'not_started'
@@ -70,5 +71,5 @@ export interface AdoptionDetailResource extends AdoptionBaseResource {
   mediator: PersonListResource | null
   applicant: PersonDetailResource
   contract_file: ContractFile | null
-  transport: AdoptionTransportInline | null
+  transport: TransportListResource | null
 }
