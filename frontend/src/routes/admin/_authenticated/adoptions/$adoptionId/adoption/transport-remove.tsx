@@ -35,7 +35,7 @@ function RouteComponent() {
         queryKey: adoptionQueryKeys.detail(adoptionId),
       })
       queryClientHook.invalidateQueries({
-        queryKey: transportQueryKeys.list(),
+        queryKey: transportQueryKeys.all,
       })
       toast.success(response.message)
       navigateToAdoption({})

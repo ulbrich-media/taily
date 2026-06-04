@@ -58,7 +58,9 @@ function RouteComponent() {
   const navigateToAdoption = AdoptionRoute.useNavigate()
 
   const [selectedId, setSelectedId] = useState<string>(
-    adoption.transport_id ?? ''
+    openTransports.some((t) => t.id === adoption.transport_id)
+      ? adoption.transport_id!
+      : ''
   )
 
   const assignMutation = useMutation({
@@ -70,7 +72,7 @@ function RouteComponent() {
         queryKey: adoptionQueryKeys.detail(adoptionId),
       })
       queryClientHook.invalidateQueries({
-        queryKey: transportQueryKeys.list(),
+        queryKey: transportQueryKeys.all,
       })
       toast.success(response.message)
       navigateToAdoption({})
@@ -126,7 +128,10 @@ function RouteComponent() {
           </Button>
           <Button
             type="button"
-            disabled={assignMutation.isPending || !selectedId}
+            disabled={
+              assignMutation.isPending ||
+              !openTransports.some((t) => t.id === selectedId)
+            }
             onClick={() => assignMutation.mutate(selectedId || null)}
           >
             {assignMutation.isPending ? 'Speichern...' : 'Zuweisen'}

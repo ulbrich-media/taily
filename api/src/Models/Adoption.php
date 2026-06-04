@@ -88,9 +88,7 @@ class Adoption extends Model implements HasMedia
             return 'not_started';
         }
 
-        $transport = $this->relationLoaded('transport')
-            ? $this->transport
-            : $this->transport()->first();
+        $transport = $this->getRelationValue('transport');
 
         if ($transport?->isDone()) {
             return 'finished';

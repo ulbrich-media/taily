@@ -109,11 +109,16 @@ export function DatePickerControl({
             month={month}
             onMonthChange={setMonth}
             disabled={
-              disableFutureDates
-                ? (d) => isAfter(startOfDay(d), startOfDay(new Date()))
-                : disablePastDate
-                  ? (d) => isBefore(startOfDay(d), startOfDay(new Date()))
-                  : undefined
+              disableFutureDates || disablePastDate
+                ? (d) => {
+                    const day = startOfDay(d)
+                    const today = startOfDay(new Date())
+                    return (
+                      (disableFutureDates && isAfter(day, today)) ||
+                      (disablePastDate && isBefore(day, today))
+                    )
+                  }
+                : undefined
             }
             onSelect={(selected) => {
               setDate(selected)

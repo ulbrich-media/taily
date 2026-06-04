@@ -22,12 +22,14 @@ class TransportController extends Controller
 
     public function index(Request $request): AnonymousResourceCollection
     {
+        $request->validate([
+            'is_done' => 'nullable|boolean',
+        ]);
+
         $query = Transport::with(self::LIST_RELATIONS);
 
         if ($request->has('is_done')) {
-            $isDone = filter_var($request->query('is_done'), FILTER_VALIDATE_BOOLEAN);
-
-            if ($isDone) {
+            if ($request->boolean('is_done')) {
                 $query->whereNotNull('done_at')
                     ->orderBy('done_at', 'desc');
             } else {
@@ -93,18 +95,23 @@ class TransportController extends Controller
 
     public function markDone(Request $request, Transport $transport): JsonResponse
     {
-        if ($transport->isDone()) {
+        $validated = $request->validate([
+            'done_at' => 'nullable|date|before_or_equal:today',
+        ]);
+
+        $doneAt = $validated['done_at'] ?? now();
+
+        $affected = Transport::whereKey($transport->id)
+            ->whereNull('done_at')
+            ->update(['done_at' => $doneAt]);
+
+        if ($affected === 0) {
             return response()->json([
                 'message' => 'Transport ist bereits abgeschlossen.',
             ], 422);
         }
 
-        $validated = $request->validate([
-            'done_at' => 'nullable|date|before_or_equal:today',
-        ]);
-
-        $transport->done_at = $validated['done_at'] ?? now();
-        $transport->save();
+        $transport->refresh();
         $transport->load(self::LIST_RELATIONS);
 
         return response()->json([
