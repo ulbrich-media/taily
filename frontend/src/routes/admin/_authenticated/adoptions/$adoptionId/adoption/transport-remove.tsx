@@ -5,7 +5,6 @@ import { adoptionQueryKeys } from '@/admin/module/adoptions/api/queries'
 import { transportQueryKeys } from '@/admin/module/transports/api/queries'
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -13,6 +12,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/shadcn/components/ui/alert-dialog'
+import { Button } from '@/shadcn/components/ui/button'
 import { toast } from 'sonner'
 import { Route as AdoptionRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/route'
 
@@ -63,12 +63,13 @@ function RouteComponent() {
           >
             Abbrechen
           </AlertDialogCancel>
-          <AlertDialogAction
+          <Button
+            variant="destructive"
             onClick={() => removeMutation.mutate()}
             disabled={removeMutation.isPending}
           >
             {removeMutation.isPending ? 'Entfernen...' : 'Entfernen'}
-          </AlertDialogAction>
+          </Button>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
