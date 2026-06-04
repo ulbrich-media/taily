@@ -20,6 +20,7 @@ class AdoptionController extends Controller
         'animal', 'animal.animalType', 'animal.media',
         'mediator', 'mediator.media',
         'applicant', 'applicant.media',
+        'transport', 'transport.responsible', 'transport.responsible.media',
         'media',
     ];
 

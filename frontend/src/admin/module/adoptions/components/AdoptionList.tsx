@@ -34,6 +34,9 @@ function StepStatusIcon({ status }: { status: AdoptionStepStatus }) {
   if (status === 'in_progress') {
     return <Clock className="size-5 text-amber-500" />
   }
+  if (status === 'pending') {
+    return <Clock className="size-5 text-amber-500" />
+  }
   return <Circle className="size-5 text-muted-foreground/40" />
 }
 
@@ -71,6 +74,7 @@ export function AdoptionList({
           {showMediator && <TableHead>Vermittler</TableHead>}
           <TableHead className="text-center th-contain">Vorkontrolle</TableHead>
           <TableHead className="text-center th-contain">Vertrag</TableHead>
+          <TableHead className="text-center th-contain">Transport</TableHead>
           <TableHead className="text-center th-contain">Übergabe</TableHead>
           <TableHead className="text-center th-contain">Status</TableHead>
           <TableHead className="th-contain"></TableHead>
@@ -167,6 +171,11 @@ export function AdoptionList({
             <TableCell className="text-center">
               <div className="flex justify-center">
                 <StepStatusIcon status={adoption.contract_status} />
+              </div>
+            </TableCell>
+            <TableCell className="text-center">
+              <div className="flex justify-center">
+                <StepStatusIcon status={adoption.transport_status} />
               </div>
             </TableCell>
             <TableCell className="text-center">

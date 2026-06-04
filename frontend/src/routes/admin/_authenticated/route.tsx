@@ -6,7 +6,8 @@ import { UserRole } from '@/api/types/users'
 import { Route as DashboardRoute } from '@/routes/admin/_authenticated/index'
 import { Route as AnimalsRoute } from '@/routes/admin/_authenticated/animals/_animalsList/route'
 import { Route as PeopleRoute } from '@/routes/admin/_authenticated/people/index'
-import { Route as AdoptionsRoute } from '@/routes/admin/_authenticated/adoptions/_list/route'
+import { Route as AdoptionsRoute } from '@/routes/admin/_authenticated/adoptions/_list/index'
+import { Route as TransportsRoute } from '@/routes/admin/_authenticated/transports/index'
 import { Route as SettingsRoute } from '@/routes/admin/_authenticated/settings/index'
 import { Route as ProfileRoute } from '@/routes/admin/_authenticated/profile/index'
 import { Route as PersonalSettingsRoute } from '@/routes/admin/_authenticated/personal-settings/index'
@@ -48,6 +49,9 @@ function RouteComponent() {
       <AdoptionsRoute.Link className={navLinkClass}>
         Vermittlungen
       </AdoptionsRoute.Link>
+      <TransportsRoute.Link className={navLinkClass}>
+        Transporte
+      </TransportsRoute.Link>
       <SettingsRoute.Link className={navLinkClass}>
         Einstellungen
       </SettingsRoute.Link>
