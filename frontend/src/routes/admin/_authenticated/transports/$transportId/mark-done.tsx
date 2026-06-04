@@ -1,8 +1,6 @@
 import { createFileRoute, notFound } from '@tanstack/react-router'
 import { queryClient } from '@/lib/queryClient'
-import {
-  transportQueryKeys,
-} from '@/admin/module/transports/api/queries'
+import { transportQueryKeys } from '@/admin/module/transports/api/queries'
 import type { TransportListResource } from '@/api/types/transports'
 import { TransportMarkDonePage } from '@/admin/module/transports/pages/TransportMarkDonePage'
 import { Route as TransportsRoute } from '@/routes/admin/_authenticated/transports/route'

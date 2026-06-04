@@ -12,9 +12,7 @@ export async function getTransports(
   params?: ListTransportsParams
 ): Promise<TransportsResponse> {
   const search =
-    params?.is_done !== undefined
-      ? `?is_done=${params.is_done ? 1 : 0}`
-      : ''
+    params?.is_done !== undefined ? `?is_done=${params.is_done ? 1 : 0}` : ''
   return apiRequest<TransportsResponse>(`transports${search}`)
 }
 
