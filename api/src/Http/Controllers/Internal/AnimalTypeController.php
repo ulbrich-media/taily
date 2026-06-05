@@ -22,7 +22,7 @@ class AnimalTypeController extends Controller
      */
     public function index(): JsonResponse
     {
-        $animalTypes = AnimalType::with('formTemplate')->get();
+        $animalTypes = AnimalType::with('preInspectionFormTemplate')->get();
 
         return response()->json([
             'data' => AnimalTypeResource::collection($animalTypes),
@@ -37,11 +37,11 @@ class AnimalTypeController extends Controller
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255|unique:animal_types,title',
-            'form_template_id' => 'nullable|uuid|exists:form_templates,id',
+            'pre_inspection_form_template_id' => 'nullable|uuid|exists:form_templates,id',
         ]);
 
         $animalType = AnimalType::create($validated);
-        $animalType->load('formTemplate');
+        $animalType->load('preInspectionFormTemplate');
 
         return response()->json([
             'message' => 'Tierart erfolgreich angelegt.',
@@ -54,7 +54,7 @@ class AnimalTypeController extends Controller
      */
     public function show(AnimalType $animalType): JsonResponse
     {
-        $animalType->load('formTemplate');
+        $animalType->load('preInspectionFormTemplate');
 
         return response()->json([
             'message' => 'Tierart gefunden.',
@@ -69,11 +69,11 @@ class AnimalTypeController extends Controller
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255|unique:animal_types,title,'.$animalType->id,
-            'form_template_id' => 'nullable|uuid|exists:form_templates,id',
+            'pre_inspection_form_template_id' => 'nullable|uuid|exists:form_templates,id',
         ]);
 
         $animalType->update($validated);
-        $animalType->load('formTemplate');
+        $animalType->load('preInspectionFormTemplate');
 
         return response()->json([
             'message' => 'Tierart erfolgreich aktualisiert.',

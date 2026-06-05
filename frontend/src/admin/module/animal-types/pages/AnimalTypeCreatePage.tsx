@@ -24,7 +24,7 @@ import { zFieldString } from '@/components/field/TextInput.utils.ts'
 
 const createAnimalTypeSchema = z.object({
   title: zFieldString({ required: true }),
-  form_template_id: z.string().nullable(),
+  pre_inspection_form_template_id: z.string().nullable(),
 })
 
 type CreateAnimalTypeFormData = z.infer<typeof createAnimalTypeSchema>
@@ -44,7 +44,7 @@ export function AnimalTypeCreatePage({
     resolver: zodResolver(createAnimalTypeSchema),
     defaultValues: {
       title: '',
-      form_template_id: null,
+      pre_inspection_form_template_id: null,
     },
   })
 
@@ -67,7 +67,7 @@ export function AnimalTypeCreatePage({
   const onSubmit = async (data: CreateAnimalTypeFormData) => {
     await createMutation.mutateAsync({
       title: data.title,
-      form_template_id: data.form_template_id,
+      pre_inspection_form_template_id: data.pre_inspection_form_template_id,
     })
   }
 
@@ -102,11 +102,11 @@ export function AnimalTypeCreatePage({
               />
 
               <SelectInput
-                name="form_template_id"
+                name="pre_inspection_form_template_id"
                 control={form.control}
-                label="Formularvorlage"
+                label="Vorkontrolle-Formular"
                 options={formTemplateOptions}
-                placeholder="Keine Vorlage"
+                placeholder="Kein Formular"
               />
             </FieldGroup>
 

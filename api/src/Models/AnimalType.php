@@ -20,15 +20,12 @@ class AnimalType extends Model
      */
     protected $fillable = [
         'title',
-        'form_template_id',
+        'pre_inspection_form_template_id',
     ];
 
-    /**
-     * Get the form template assigned to this animal type.
-     */
-    public function formTemplate(): BelongsTo
+    public function preInspectionFormTemplate(): BelongsTo
     {
-        return $this->belongsTo(FormTemplate::class);
+        return $this->belongsTo(FormTemplate::class, 'pre_inspection_form_template_id');
     }
 
     /**

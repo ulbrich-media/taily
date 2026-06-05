@@ -8,6 +8,12 @@ export interface PublicInspectionPerson {
   country_code?: string
 }
 
+export interface PublicInspectionFormTemplate {
+  id: string
+  schema: Record<string, unknown>
+  ui_schema: Record<string, unknown> | null
+}
+
 export interface PublicInspection {
   id: string
   person: PublicInspectionPerson
@@ -15,9 +21,11 @@ export interface PublicInspection {
     id: string
     title: string
   }
+  pre_inspection_form_template: PublicInspectionFormTemplate | null
 }
 
 export interface SubmitInspectionRequest {
   verdict: 'approved' | 'rejected'
   notes?: string | null
+  form_data?: Record<string, unknown>
 }

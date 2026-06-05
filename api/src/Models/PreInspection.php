@@ -6,10 +6,11 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Taily\Traits\HasAccessToken;
+use Taily\Traits\HasFormSubmission;
 
 class PreInspection extends Model
 {
-    use HasAccessToken, HasUuids;
+    use HasAccessToken, HasFormSubmission, HasUuids;
 
     protected $attributes = [
         'notes' => '',
@@ -45,7 +46,7 @@ class PreInspection extends Model
 
     public static function findByToken(string $token): ?self
     {
-        return static::whereHasValidToken($token)->where('verdict', 'pending')->first();
+        return static::whereHasValidToken($token)->whereNull('submitted_at')->first();
     }
 
     public function isSubmitted(): bool

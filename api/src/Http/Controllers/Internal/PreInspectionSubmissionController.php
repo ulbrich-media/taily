@@ -5,11 +5,18 @@ namespace Taily\Http\Controllers\Internal;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Taily\Http\Controllers\Controller;
+use Taily\Models\FormTemplate;
 use Taily\Models\PreInspection;
+use Taily\Support\FormTemplateService;
 
 class PreInspectionSubmissionController extends Controller
 {
+    public function __construct(
+        private FormTemplateService $formTemplateService
+    ) {}
+
     /**
      * Display the pre-inspection data for public token access.
      */
@@ -23,7 +30,7 @@ class PreInspectionSubmissionController extends Controller
             ], 404);
         }
 
-        $inspection->load(['person', 'animalType']);
+        $inspection->load(['person', 'animalType.preInspectionFormTemplate']);
 
         if (! $inspection->person) {
             return response()->json(['message' => 'Interessent nicht gefunden.'], 422);
@@ -32,6 +39,8 @@ class PreInspectionSubmissionController extends Controller
         if (! $inspection->animalType) {
             return response()->json(['message' => 'Tierart nicht gefunden.'], 422);
         }
+
+        $template = $inspection->animalType->preInspectionFormTemplate;
 
         return response()->json([
             'id' => $inspection->id,
@@ -52,6 +61,11 @@ class PreInspectionSubmissionController extends Controller
                 'id' => $inspection->animalType->id,
                 'title' => $inspection->animalType->title,
             ],
+            'pre_inspection_form_template' => $template ? [
+                'id' => $template->id,
+                'schema' => $template->schema,
+                'ui_schema' => $template->ui_schema,
+            ] : null,
         ]);
     }
 
@@ -63,11 +77,12 @@ class PreInspectionSubmissionController extends Controller
         $validated = $request->validate([
             'verdict' => 'required|in:approved,rejected',
             'notes' => 'nullable|string',
+            'form_data' => 'nullable|array',
         ]);
 
         $submitted = DB::transaction(function () use ($token, $validated) {
             $inspection = PreInspection::whereHasValidToken($token)
-                ->where('verdict', 'pending')
+                ->whereNull('submitted_at')
                 ->lockForUpdate()
                 ->first();
 
@@ -75,8 +90,35 @@ class PreInspectionSubmissionController extends Controller
                 return false;
             }
 
+            $inspection->load('animalType');
+            $templateId = $inspection->animalType?->pre_inspection_form_template_id;
+
+            if ($templateId) {
+                $template = FormTemplate::find($templateId);
+
+                if ($template && ! empty($validated['form_data'])) {
+                    $result = $this->formTemplateService->validateSubmissionData(
+                        $template,
+                        $validated['form_data']
+                    );
+
+                    if (! $result['valid']) {
+                        throw ValidationException::withMessages(
+                            collect($result['errors'])
+                                ->mapWithKeys(fn ($msgs, $key) => ["form_data.{$key}" => $msgs])
+                                ->toArray()
+                        );
+                    }
+                }
+
+                $inspection->formSubmission()->create([
+                    'form_template_id' => $templateId,
+                    'data' => $validated['form_data'] ?? [],
+                ]);
+            }
+
             $inspection->verdict = $validated['verdict'];
-            $inspection->notes = $validated['notes'] ?? null;
+            $inspection->notes = $validated['notes'] ?? '';
             $inspection->submitted_at = now();
             $inspection->save();
 

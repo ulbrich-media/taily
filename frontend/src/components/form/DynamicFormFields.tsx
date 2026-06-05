@@ -1,8 +1,6 @@
-import type { ReactNode } from 'react'
 import { Controller, type Control, type FieldValues } from 'react-hook-form'
 import { Input } from '@/shadcn/components/ui/input'
 import { Textarea } from '@/shadcn/components/ui/textarea'
-import { Checkbox } from '@/shadcn/components/ui/checkbox'
 import {
   Select,
   SelectContent,
@@ -10,33 +8,47 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/shadcn/components/ui/select'
-import { Label } from '@/shadcn/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/shadcn/components/ui/radio-group'
+import { Badge } from '@/shadcn/components/ui/badge'
+import {
+  Field,
+  FieldLabel,
+  FieldDescription,
+  FieldError,
+  FieldSet,
+} from '@/shadcn/components/ui/field'
+import { Switch } from '@/shadcn/components/ui/switch.tsx'
 
 interface JsonSchemaProperty {
   type?: string
   title?: string
   description?: string
   enum?: string[]
-  enumNames?: string[]
   format?: string
   minimum?: number
   maximum?: number
+  minLength?: number
+  maxLength?: number
 }
 
 interface JsonSchema {
-  type?: string
-  title?: string
   properties?: Record<string, JsonSchemaProperty>
   required?: string[]
 }
 
-interface UiSchema {
-  [key: string]: {
-    'ui:widget'?: string
-    'ui:placeholder'?: string
-    'ui:rows'?: number
+interface UiSchemaFieldOptions {
+  'ui:title'?: string
+  'ui:widget'?: string
+  'ui:placeholder'?: string
+  'ui:options'?: {
+    labels?: Array<{ value: string; label: string }>
+    rows?: number
   }
+}
+
+interface UiSchema {
+  'ui:order'?: string[]
+  [key: string]: UiSchemaFieldOptions | string[] | undefined
 }
 
 interface DynamicFormFieldsProps {
@@ -45,33 +57,6 @@ interface DynamicFormFieldsProps {
   control: Control<FieldValues>
   disabled?: boolean
   namePrefix?: string
-}
-
-function FieldWrapper({
-  fieldName,
-  title,
-  description,
-  required,
-  children,
-}: {
-  fieldName: string
-  title: string
-  description?: string
-  required?: boolean
-  children: ReactNode
-}) {
-  return (
-    <div className="space-y-1.5">
-      <Label htmlFor={fieldName}>
-        {title}
-        {required && <span className="text-destructive ml-1">*</span>}
-      </Label>
-      {children}
-      {description && (
-        <p className="text-xs text-muted-foreground">{description}</p>
-      )}
-    </div>
-  )
 }
 
 function buildRules(
@@ -101,15 +86,22 @@ function buildRules(
   }
 
   if (prop.type === 'string') {
+    if (prop.minLength !== undefined) {
+      rules.minLength = {
+        value: prop.minLength,
+        message: `Mindestens ${prop.minLength} Zeichen`,
+      }
+    }
+    if (prop.maxLength !== undefined) {
+      rules.maxLength = {
+        value: prop.maxLength,
+        message: `Maximal ${prop.maxLength} Zeichen`,
+      }
+    }
     if (prop.format === 'email') {
       rules.pattern = {
         value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
         message: 'Bitte eine gültige E-Mail-Adresse eingeben',
-      }
-    } else if (prop.format === 'date') {
-      rules.pattern = {
-        value: /^\d{4}-\d{2}-\d{2}$/,
-        message: 'Bitte ein gültiges Datum eingeben',
       }
     }
   }
@@ -122,6 +114,22 @@ function buildRules(
   return rules
 }
 
+function resolveFieldOrder(
+  properties: Record<string, JsonSchemaProperty>,
+  uiOrder: string[] | undefined
+): string[] {
+  if (uiOrder && uiOrder.length > 0) {
+    const inOrder = uiOrder.filter((k) => k in properties)
+    const rest = Object.keys(properties).filter((k) => !uiOrder.includes(k))
+    return [...inOrder, ...rest]
+  }
+  return Object.keys(properties)
+}
+
+function RequiredBadge() {
+  return <Badge variant="secondary">Pflicht</Badge>
+}
+
 export function DynamicFormFields({
   schema,
   uiSchema = {},
@@ -132,104 +140,124 @@ export function DynamicFormFields({
   if (!schema.properties) return null
 
   const required = schema.required ?? []
+  const uiOrder = uiSchema['ui:order'] as string[] | undefined
+  const orderedKeys = resolveFieldOrder(schema.properties, uiOrder)
 
   return (
     <div className="space-y-4">
-      {Object.entries(schema.properties).map(([key, prop]) => {
+      {orderedKeys.map((key) => {
+        const prop = schema.properties![key]
         const fieldName = `${namePrefix}.${key}`
-        const title = prop.title ?? key
-        const uiOptions = uiSchema[key] ?? {}
-        const isRequired = required.includes(key)
+        const uiOptions = (uiSchema[key] ?? {}) as UiSchemaFieldOptions
+        const title = uiOptions['ui:title'] ?? prop.title ?? key
         const widget = uiOptions['ui:widget']
-
-        // Determine field type
-        const type = prop.type
-        const format = prop.format
-
-        // Checkbox
+        const placeholder = uiOptions['ui:placeholder']
+        const isRequired = required.includes(key)
         const rules = buildRules(key, prop, required)
 
-        if (type === 'boolean') {
+        // Heading — layout-only, no input
+        if (prop.type === 'null' || widget === 'heading') {
           return (
-            <div key={key} className="flex items-center space-x-2">
-              <Controller
-                name={fieldName}
-                control={control}
-                rules={rules}
-                render={({ field }) => (
-                  <Checkbox
-                    id={fieldName}
-                    checked={!!field.value}
-                    onCheckedChange={field.onChange}
-                    disabled={disabled}
-                  />
-                )}
-              />
-              <Label htmlFor={fieldName}>{title}</Label>
-            </div>
+            <h3 key={key} className="text-sm font-semibold pt-2">
+              {title}
+            </h3>
           )
         }
 
-        // Select / Enum
-        if (type === 'string' && prop.enum) {
-          const options = prop.enum.map((val, i) => ({
+        // Checkbox (boolean)
+        if (prop.type === 'boolean') {
+          return (
+            <Controller
+              key={key}
+              name={fieldName}
+              control={control}
+              rules={rules}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldSet>
+                    <Field orientation="horizontal">
+                      <Switch
+                        id={fieldName}
+                        checked={!!field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={disabled}
+                      />
+                      <FieldLabel htmlFor={fieldName}>
+                        {title}
+                        {isRequired && <RequiredBadge />}
+                      </FieldLabel>
+                    </Field>
+                  </FieldSet>
+                  {prop.description && (
+                    <FieldDescription>{prop.description}</FieldDescription>
+                  )}
+                  <FieldError errors={[fieldState.error]} />
+                </Field>
+              )}
+            />
+          )
+        }
+
+        // Select / Radio (enum)
+        if (prop.type === 'string' && prop.enum) {
+          const labelMap = uiOptions['ui:options']?.labels
+          const options = prop.enum.map((val) => ({
             value: val,
-            label: prop.enumNames?.[i] ?? val,
+            label: labelMap?.find((l) => l.value === val)?.label ?? val,
           }))
 
           if (widget === 'radio') {
             return (
-              <FieldWrapper
+              <Controller
                 key={key}
-                fieldName={fieldName}
-                title={title}
-                description={prop.description}
-                required={isRequired}
-              >
-                <Controller
-                  name={fieldName}
-                  control={control}
-                  rules={rules}
-                  render={({ field }) => (
+                name={fieldName}
+                control={control}
+                rules={rules}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel>
+                      {title}
+                      {isRequired && <RequiredBadge />}
+                    </FieldLabel>
                     <RadioGroup
                       value={field.value ?? ''}
                       onValueChange={field.onChange}
                       disabled={disabled}
                     >
                       {options.map((opt) => (
-                        <div
-                          key={opt.value}
-                          className="flex items-center space-x-2"
-                        >
+                        <Field key={opt.value} orientation="horizontal">
                           <RadioGroupItem
                             value={opt.value}
                             id={`${fieldName}-${opt.value}`}
                           />
-                          <Label htmlFor={`${fieldName}-${opt.value}`}>
+                          <FieldLabel htmlFor={`${fieldName}-${opt.value}`}>
                             {opt.label}
-                          </Label>
-                        </div>
+                          </FieldLabel>
+                        </Field>
                       ))}
                     </RadioGroup>
-                  )}
-                />
-              </FieldWrapper>
+                    {prop.description && (
+                      <FieldDescription>{prop.description}</FieldDescription>
+                    )}
+                    <FieldError errors={[fieldState.error]} />
+                  </Field>
+                )}
+              />
             )
           }
 
           return (
-            <FieldWrapper
+            <Controller
               key={key}
-              fieldName={fieldName}
-              title={title}
-              description={prop.description}
-              required={isRequired}
-            >
-              <Controller
-                name={fieldName}
-                control={control}
-                rules={rules}
-                render={({ field }) => (
+              name={fieldName}
+              control={control}
+              rules={rules}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={fieldName}>
+                    {title}
+                    {isRequired && <RequiredBadge />}
+                  </FieldLabel>
                   <Select
                     value={field.value ?? ''}
                     onValueChange={field.onChange}
@@ -237,9 +265,7 @@ export function DynamicFormFields({
                   >
                     <SelectTrigger id={fieldName}>
                       <SelectValue
-                        placeholder={
-                          uiOptions['ui:placeholder'] ?? 'Bitte wählen...'
-                        }
+                        placeholder={placeholder ?? 'Bitte wählen...'}
                       />
                     </SelectTrigger>
                     <SelectContent>
@@ -250,55 +276,62 @@ export function DynamicFormFields({
                       ))}
                     </SelectContent>
                   </Select>
-                )}
-              />
-            </FieldWrapper>
+                  {prop.description && (
+                    <FieldDescription>{prop.description}</FieldDescription>
+                  )}
+                  <FieldError errors={[fieldState.error]} />
+                </Field>
+              )}
+            />
           )
         }
 
         // Textarea
-        if (type === 'string' && widget === 'textarea') {
+        if (widget === 'textarea') {
+          const rows = uiOptions['ui:options']?.rows ?? 4
           return (
-            <FieldWrapper
+            <Controller
               key={key}
-              fieldName={fieldName}
-              title={title}
-              description={prop.description}
-              required={isRequired}
-            >
-              <Controller
-                name={fieldName}
-                control={control}
-                rules={rules}
-                render={({ field }) => (
+              name={fieldName}
+              control={control}
+              rules={rules}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={fieldName}>
+                    {title}
+                    {isRequired && <RequiredBadge />}
+                  </FieldLabel>
                   <Textarea
                     {...field}
                     id={fieldName}
                     disabled={disabled}
-                    rows={uiOptions['ui:rows'] ?? 4}
-                    placeholder={uiOptions['ui:placeholder']}
+                    rows={rows}
+                    placeholder={placeholder}
                   />
-                )}
-              />
-            </FieldWrapper>
+                  {prop.description && (
+                    <FieldDescription>{prop.description}</FieldDescription>
+                  )}
+                  <FieldError errors={[fieldState.error]} />
+                </Field>
+              )}
+            />
           )
         }
 
-        // Number
-        if (type === 'number' || type === 'integer') {
+        // Number / Integer
+        if (prop.type === 'number' || prop.type === 'integer') {
           return (
-            <FieldWrapper
+            <Controller
               key={key}
-              fieldName={fieldName}
-              title={title}
-              description={prop.description}
-              required={isRequired}
-            >
-              <Controller
-                name={fieldName}
-                control={control}
-                rules={rules}
-                render={({ field }) => (
+              name={fieldName}
+              control={control}
+              rules={rules}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={fieldName}>
+                    {title}
+                    {isRequired && <RequiredBadge />}
+                  </FieldLabel>
                   <Input
                     {...field}
                     id={fieldName}
@@ -306,7 +339,7 @@ export function DynamicFormFields({
                     disabled={disabled}
                     min={prop.minimum}
                     max={prop.maximum}
-                    placeholder={uiOptions['ui:placeholder']}
+                    placeholder={placeholder}
                     onChange={(e) =>
                       field.onChange(
                         e.target.value === ''
@@ -315,119 +348,135 @@ export function DynamicFormFields({
                       )
                     }
                   />
-                )}
-              />
-            </FieldWrapper>
+                  {prop.description && (
+                    <FieldDescription>{prop.description}</FieldDescription>
+                  )}
+                  <FieldError errors={[fieldState.error]} />
+                </Field>
+              )}
+            />
           )
         }
 
         // Date
-        if (type === 'string' && (format === 'date' || widget === 'date')) {
+        if (prop.format === 'date' || widget === 'date') {
           return (
-            <FieldWrapper
+            <Controller
               key={key}
-              fieldName={fieldName}
-              title={title}
-              description={prop.description}
-              required={isRequired}
-            >
-              <Controller
-                name={fieldName}
-                control={control}
-                rules={rules}
-                render={({ field }) => (
+              name={fieldName}
+              control={control}
+              rules={rules}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={fieldName}>
+                    {title}
+                    {isRequired && <RequiredBadge />}
+                  </FieldLabel>
                   <Input
                     {...field}
                     id={fieldName}
                     type="date"
                     disabled={disabled}
                   />
-                )}
-              />
-            </FieldWrapper>
+                  {prop.description && (
+                    <FieldDescription>{prop.description}</FieldDescription>
+                  )}
+                  <FieldError errors={[fieldState.error]} />
+                </Field>
+              )}
+            />
           )
         }
 
         // Email
-        if (type === 'string' && (format === 'email' || widget === 'email')) {
+        if (prop.format === 'email' || widget === 'email') {
           return (
-            <FieldWrapper
+            <Controller
               key={key}
-              fieldName={fieldName}
-              title={title}
-              description={prop.description}
-              required={isRequired}
-            >
-              <Controller
-                name={fieldName}
-                control={control}
-                rules={rules}
-                render={({ field }) => (
+              name={fieldName}
+              control={control}
+              rules={rules}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={fieldName}>
+                    {title}
+                    {isRequired && <RequiredBadge />}
+                  </FieldLabel>
                   <Input
                     {...field}
                     id={fieldName}
                     type="email"
                     disabled={disabled}
-                    placeholder={uiOptions['ui:placeholder']}
+                    placeholder={placeholder}
                   />
-                )}
-              />
-            </FieldWrapper>
+                  {prop.description && (
+                    <FieldDescription>{prop.description}</FieldDescription>
+                  )}
+                  <FieldError errors={[fieldState.error]} />
+                </Field>
+              )}
+            />
           )
         }
 
         // Phone
-        if (type === 'string' && (format === 'phone' || widget === 'phone')) {
+        if (widget === 'phone') {
           return (
-            <FieldWrapper
+            <Controller
               key={key}
-              fieldName={fieldName}
-              title={title}
-              description={prop.description}
-              required={isRequired}
-            >
-              <Controller
-                name={fieldName}
-                control={control}
-                rules={rules}
-                render={({ field }) => (
+              name={fieldName}
+              control={control}
+              rules={rules}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={fieldName}>
+                    {title}
+                    {isRequired && <RequiredBadge />}
+                  </FieldLabel>
                   <Input
                     {...field}
                     id={fieldName}
                     type="tel"
                     disabled={disabled}
-                    placeholder={uiOptions['ui:placeholder']}
+                    placeholder={placeholder}
                   />
-                )}
-              />
-            </FieldWrapper>
+                  {prop.description && (
+                    <FieldDescription>{prop.description}</FieldDescription>
+                  )}
+                  <FieldError errors={[fieldState.error]} />
+                </Field>
+              )}
+            />
           )
         }
 
-        // Default: text input
+        // Default: text
         return (
-          <FieldWrapper
+          <Controller
             key={key}
-            fieldName={fieldName}
-            title={title}
-            description={prop.description}
-            required={isRequired}
-          >
-            <Controller
-              name={fieldName}
-              control={control}
-              rules={rules}
-              render={({ field }) => (
+            name={fieldName}
+            control={control}
+            rules={rules}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor={fieldName}>
+                  {title}
+                  {isRequired && <RequiredBadge />}
+                </FieldLabel>
                 <Input
                   {...field}
                   id={fieldName}
                   type="text"
                   disabled={disabled}
-                  placeholder={uiOptions['ui:placeholder']}
+                  placeholder={placeholder}
                 />
-              )}
-            />
-          </FieldWrapper>
+                {prop.description && (
+                  <FieldDescription>{prop.description}</FieldDescription>
+                )}
+                <FieldError errors={[fieldState.error]} />
+              </Field>
+            )}
+          />
         )
       })}
     </div>
