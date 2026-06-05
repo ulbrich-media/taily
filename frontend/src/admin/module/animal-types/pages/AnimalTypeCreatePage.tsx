@@ -19,8 +19,8 @@ import { FieldGroup } from '@/shadcn/components/ui/field'
 import { toast } from 'sonner'
 import { FormBlocker } from '@/components/form/FormBlocker'
 import { TextInput } from '@/components/field/TextInput'
-import { SelectInput } from '@/components/field/SelectInput'
 import { zFieldString } from '@/components/field/TextInput.utils.ts'
+import { FormTemplateSelect } from '@/components/field/FormTemplateSelect.tsx'
 
 const createAnimalTypeSchema = z.object({
   title: zFieldString({ required: true }),
@@ -71,11 +71,6 @@ export function AnimalTypeCreatePage({
     })
   }
 
-  const formTemplateOptions = formTemplates.map((ft) => ({
-    value: ft.id,
-    label: ft.name,
-  }))
-
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
@@ -101,12 +96,12 @@ export function AnimalTypeCreatePage({
                 required
               />
 
-              <SelectInput
+              <FormTemplateSelect
                 name="pre_inspection_form_template_id"
                 control={form.control}
-                label="Vorkontrolle-Formular"
-                options={formTemplateOptions}
-                placeholder="Kein Formular"
+                label="Formular für Vorkontrollen"
+                formTemplates={formTemplates}
+                canRemove
               />
             </FieldGroup>
 

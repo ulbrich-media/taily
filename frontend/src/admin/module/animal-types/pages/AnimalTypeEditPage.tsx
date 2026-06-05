@@ -20,8 +20,8 @@ import { FieldGroup } from '@/shadcn/components/ui/field'
 import { toast } from 'sonner'
 import { FormBlocker } from '@/components/form/FormBlocker'
 import { TextInput } from '@/components/field/TextInput'
-import { SelectInput } from '@/components/field/SelectInput'
 import { zFieldString } from '@/components/field/TextInput.utils.ts'
+import { FormTemplateSelect } from '@/components/field/FormTemplateSelect.tsx'
 
 const updateAnimalTypeSchema = z.object({
   title: zFieldString({ required: true }),
@@ -47,7 +47,8 @@ export function AnimalTypeEditPage({
     resolver: zodResolver(updateAnimalTypeSchema),
     defaultValues: {
       title: animalType.title,
-      pre_inspection_form_template_id: animalType.pre_inspection_form_template_id ?? null,
+      pre_inspection_form_template_id:
+        animalType.pre_inspection_form_template_id ?? null,
     },
   })
 
@@ -55,7 +56,8 @@ export function AnimalTypeEditPage({
     mutationFn: (data: UpdateAnimalTypeFormData) =>
       updateAnimalType(animalType.id, {
         title: data.title,
-        pre_inspection_form_template_id: data.pre_inspection_form_template_id || null,
+        pre_inspection_form_template_id:
+          data.pre_inspection_form_template_id || null,
       }),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: animalTypeQueryKeys.list })
@@ -77,11 +79,6 @@ export function AnimalTypeEditPage({
   const onSubmit = async (data: UpdateAnimalTypeFormData) => {
     await updateMutation.mutateAsync(data)
   }
-
-  const formTemplateOptions = formTemplates.map((ft) => ({
-    value: ft.id,
-    label: ft.name,
-  }))
 
   return (
     <Dialog open onOpenChange={onClose}>
@@ -107,12 +104,12 @@ export function AnimalTypeEditPage({
                 required
               />
 
-              <SelectInput
+              <FormTemplateSelect
                 name="pre_inspection_form_template_id"
                 control={form.control}
-                label="Vorkontrolle-Formular"
-                options={formTemplateOptions}
-                placeholder="Kein Formular"
+                label="Formular für Vorkontrollen"
+                formTemplates={formTemplates}
+                canRemove
               />
             </FieldGroup>
 
