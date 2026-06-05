@@ -1,4 +1,17 @@
+// Mirrors: FormTemplateVersionResource (embedded in the detail response)
+export interface FormTemplateVersionResource {
+  id: string              // version UUID
+  form_template_id: string
+  version: number
+  submissions_count: number
+  schema: Record<string, unknown>
+  ui_schema: Record<string, unknown> | null
+  created_at: string
+  updated_at: string
+}
+
 // Mirrors: FormTemplateResource (stable form entity with latest version flattened in)
+// The `versions` array is only present on the detail (show) response, not the list.
 export interface FormTemplateResource {
   id: string         // stable form UUID — never changes across version bumps
   name: string
@@ -6,18 +19,8 @@ export interface FormTemplateResource {
   version_id: string // latest version UUID — used for submission pinning
   schema: Record<string, unknown>
   ui_schema: Record<string, unknown> | null
+  submissions_count: number
   created_at: string
   updated_at: string
-}
-
-// Mirrors: FormTemplateVersionResource (a specific version, returned by the versions list)
-export interface FormTemplateVersionResource {
-  id: string              // version UUID
-  form_template_id: string
-  name: string
-  version: number
-  schema: Record<string, unknown>
-  ui_schema: Record<string, unknown> | null
-  created_at: string
-  updated_at: string
+  versions?: FormTemplateVersionResource[]
 }

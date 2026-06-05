@@ -8,7 +8,6 @@ use Taily\Http\Controllers\Controller;
 use Taily\Http\Requests\StoreFormTemplateRequest;
 use Taily\Http\Requests\UpdateFormTemplateRequest;
 use Taily\Http\Resources\FormTemplateResource;
-use Taily\Http\Resources\FormTemplateVersionResource;
 use Taily\Models\FormTemplate;
 use Taily\Support\FormTemplateService;
 
@@ -19,26 +18,13 @@ class FormTemplateController extends Controller
     ) {}
 
     /**
-     * List all form templates with their latest version.
+     * List all form templates with their latest version and total submission count.
      */
     public function index(): JsonResponse
     {
-        $templates = FormTemplate::with('latestVersion')->get();
+        $templates = FormTemplate::with('latestVersion')->withCount('formSubmissions')->get();
 
         return response()->json(['data' => FormTemplateResource::collection($templates)]);
-    }
-
-    /**
-     * List all versions of a specific form template, newest first.
-     */
-    public function versions(FormTemplate $formTemplate): JsonResponse
-    {
-        $versions = $formTemplate->versions()
-            ->orderBy('version', 'desc')
-            ->with('formTemplate')
-            ->get();
-
-        return response()->json(['data' => FormTemplateVersionResource::collection($versions)]);
     }
 
     /**
@@ -55,11 +41,15 @@ class FormTemplateController extends Controller
     }
 
     /**
-     * Display the specified form template with its latest version.
+     * Display a form template with its latest version, all versions, and submission counts.
      */
     public function show(FormTemplate $formTemplate): JsonResponse
     {
-        $formTemplate->load('latestVersion');
+        $formTemplate->load([
+            'latestVersion',
+            'versions' => fn ($q) => $q->withCount('formSubmissions')->orderBy('version', 'desc'),
+        ]);
+        $formTemplate->loadCount('formSubmissions');
 
         return response()->json(['data' => new FormTemplateResource($formTemplate)]);
     }

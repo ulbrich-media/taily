@@ -12,8 +12,8 @@ class FormTemplateVersionResource extends JsonResource
         return [
             'id' => $this->resource->id,
             'form_template_id' => $this->resource->form_template_id,
-            'name' => $this->resource->formTemplate?->name,
             'version' => $this->resource->version,
+            'submissions_count' => $this->resource->form_submissions_count ?? 0,
             'schema' => $this->resource->schema,
             'ui_schema' => $this->resource->ui_schema,
             'created_at' => $this->resource->created_at,

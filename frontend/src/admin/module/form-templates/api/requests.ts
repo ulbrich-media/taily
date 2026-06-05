@@ -2,25 +2,15 @@ import { apiRequest } from '@/lib/api'
 import type {
   FormTemplatesResponse,
   FormTemplateResponse,
-  FormTemplateVersionsResponse,
   UpdateFormTemplateRequest,
   UpdateFormTemplateResponse,
   CreateFormTemplateRequest,
   CreateFormTemplateResponse,
 } from './types'
 
-/** Returns all form templates with their latest version. */
+/** Returns all form templates with their latest version and total submission count. */
 export async function getFormTemplates(): Promise<FormTemplatesResponse> {
   return apiRequest<FormTemplatesResponse>('form-templates')
-}
-
-/** Returns all versions for a specific form template by its stable UUID. */
-export async function getFormTemplateVersions(
-  formTemplateId: string
-): Promise<FormTemplateVersionsResponse> {
-  return apiRequest<FormTemplateVersionsResponse>(
-    `form-templates/${formTemplateId}/versions`
-  )
 }
 
 /** Returns a form template by its stable UUID. */
