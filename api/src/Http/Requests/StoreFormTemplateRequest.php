@@ -15,7 +15,6 @@ class StoreFormTemplateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'type' => ['required', 'string', 'max:100'],
             'name' => ['required', 'string', 'max:255'],
             'schema' => ['required', 'array'],
             'schema.type' => ['required_without_all:schema.properties,schema.$schema', 'string'],
@@ -58,7 +57,6 @@ class StoreFormTemplateRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'type.required' => 'Der Formulartyp ist erforderlich.',
             'name.required' => 'Der Formularname ist erforderlich.',
             'schema.required' => 'Das Schema ist erforderlich.',
             'schema.array' => 'Das Schema muss ein JSON-Objekt sein.',

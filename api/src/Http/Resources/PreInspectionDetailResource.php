@@ -18,13 +18,14 @@ class PreInspectionDetailResource extends PreInspectionBaseResource
             'animal_type' => $this->whenLoaded('animalType', fn ($v) => new AnimalTypeResource($v)),
             'inspector' => $this->whenLoaded('inspector', fn ($v) => $v ? new PersonBaseResource($v) : null),
             'pre_inspection_form_template' => $this->whenLoaded('animalType', function ($animalType) {
-                $template = $animalType->preInspectionFormTemplate;
+                $formTemplate = $animalType->preInspectionFormTemplate;
+                $latestVersion = $formTemplate?->latestVersion;
 
-                return $template ? [
-                    'id' => $template->id,
-                    'name' => $template->name,
-                    'schema' => $template->schema,
-                    'ui_schema' => $template->ui_schema,
+                return $latestVersion ? [
+                    'id' => $formTemplate->id,
+                    'name' => $formTemplate->name,
+                    'schema' => $latestVersion->schema,
+                    'ui_schema' => $latestVersion->ui_schema,
                 ] : null;
             }),
             'form_submission' => $this->whenLoaded('formSubmission', function ($submission) {
@@ -32,14 +33,14 @@ class PreInspectionDetailResource extends PreInspectionBaseResource
                     return null;
                 }
 
-                $template = $submission->formTemplate;
+                $version = $submission->formTemplateVersion;
 
                 return [
-                    'form_template_id' => $submission->form_template_id,
+                    'form_template_version_id' => $submission->form_template_version_id,
                     'data' => $submission->data,
-                    'template' => $template ? [
-                        'schema' => $template->schema,
-                        'ui_schema' => $template->ui_schema,
+                    'template' => $version ? [
+                        'schema' => $version->schema,
+                        'ui_schema' => $version->ui_schema,
                     ] : null,
                 ];
             }),

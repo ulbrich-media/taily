@@ -9,9 +9,9 @@ class FormTemplateSeeder extends Seeder
 {
     public function run(): void
     {
-        FormTemplate::create([
-            'type' => 'inspection',
-            'name' => 'Veterinär Inspektion',
+        $inspection = FormTemplate::create(['name' => 'Veterinär Inspektion']);
+
+        $inspection->versions()->create([
             'version' => 1,
             'schema' => [
                 '$schema' => 'http://json-schema.org/draft-07/schema#',
@@ -55,25 +55,15 @@ class FormTemplateSeeder extends Seeder
                         ],
                     ],
                 ],
-                'weight' => [
-                    'ui:title' => 'Gewicht (kg)',
-                ],
-                'temperature' => [
-                    'ui:title' => 'Körpertemperatur (°C)',
-                ],
-                'notes' => [
-                    'ui:title' => 'Anmerkungen',
-                ],
-                'follow_up_required' => [
-                    'ui:title' => 'Nachkontrolle erforderlich',
-                ],
+                'weight' => ['ui:title' => 'Gewicht (kg)'],
+                'temperature' => ['ui:title' => 'Körpertemperatur (°C)'],
+                'notes' => ['ui:title' => 'Anmerkungen'],
+                'follow_up_required' => ['ui:title' => 'Nachkontrolle erforderlich'],
             ],
         ]);
 
         // V2: removes `temperature`, adds `parasite_status`
-        FormTemplate::create([
-            'type' => 'inspection',
-            'name' => 'Veterinär Inspektion',
+        $inspection->versions()->create([
             'version' => 2,
             'schema' => [
                 '$schema' => 'http://json-schema.org/draft-07/schema#',
@@ -116,9 +106,7 @@ class FormTemplateSeeder extends Seeder
                         ],
                     ],
                 ],
-                'weight' => [
-                    'ui:title' => 'Gewicht (kg)',
-                ],
+                'weight' => ['ui:title' => 'Gewicht (kg)'],
                 'parasite_status' => [
                     'ui:title' => 'Parasitenbehandlung',
                     'ui:options' => [
@@ -129,18 +117,14 @@ class FormTemplateSeeder extends Seeder
                         ],
                     ],
                 ],
-                'notes' => [
-                    'ui:title' => 'Anmerkungen',
-                ],
-                'follow_up_required' => [
-                    'ui:title' => 'Nachkontrolle erforderlich',
-                ],
+                'notes' => ['ui:title' => 'Anmerkungen'],
+                'follow_up_required' => ['ui:title' => 'Nachkontrolle erforderlich'],
             ],
         ]);
 
-        FormTemplate::create([
-            'type' => 'application',
-            'name' => 'Adoptionsbewerbung',
+        $adoption = FormTemplate::create(['name' => 'Adoptionsbewerbung']);
+
+        $adoption->versions()->create([
             'version' => 1,
             'schema' => [
                 '$schema' => 'http://json-schema.org/draft-07/schema#',
@@ -199,12 +183,8 @@ class FormTemplateSeeder extends Seeder
                         ],
                     ],
                 ],
-                'has_garden' => [
-                    'ui:title' => 'Garten vorhanden',
-                ],
-                'garden_size_sqm' => [
-                    'ui:title' => 'Gartengröße (m²)',
-                ],
+                'has_garden' => ['ui:title' => 'Garten vorhanden'],
+                'garden_size_sqm' => ['ui:title' => 'Gartengröße (m²)'],
                 'previous_pets' => [
                     'ui:title' => 'Frühere Haustiererfahrung',
                     'ui:options' => [
@@ -217,18 +197,10 @@ class FormTemplateSeeder extends Seeder
                         ],
                     ],
                 ],
-                'adults_in_household' => [
-                    'ui:title' => 'Erwachsene im Haushalt',
-                ],
-                'children_in_household' => [
-                    'ui:title' => 'Kinder im Haushalt',
-                ],
-                'hours_alone_per_day' => [
-                    'ui:title' => 'Stunden allein pro Tag',
-                ],
-                'motivation' => [
-                    'ui:title' => 'Motivation zur Adoption',
-                ],
+                'adults_in_household' => ['ui:title' => 'Erwachsene im Haushalt'],
+                'children_in_household' => ['ui:title' => 'Kinder im Haushalt'],
+                'hours_alone_per_day' => ['ui:title' => 'Stunden allein pro Tag'],
+                'motivation' => ['ui:title' => 'Motivation zur Adoption'],
             ],
         ]);
     }

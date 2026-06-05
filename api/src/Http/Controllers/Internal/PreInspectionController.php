@@ -10,7 +10,6 @@ use Illuminate\Validation\ValidationException;
 use Taily\Http\Controllers\Controller;
 use Taily\Http\Resources\PreInspectionDetailResource;
 use Taily\Http\Resources\PreInspectionListResource;
-use Taily\Models\FormTemplate;
 use Taily\Models\Person;
 use Taily\Models\PreInspection;
 use Taily\Support\FormTemplateService;
@@ -21,9 +20,6 @@ class PreInspectionController extends Controller
         private FormTemplateService $formTemplateService
     ) {}
 
-    /**
-     * Display a listing of pre-inspections.
-     */
     public function index(Request $request): AnonymousResourceCollection
     {
         $query = PreInspection::with(['person', 'animalType', 'inspector', 'accessTokens'])
@@ -45,9 +41,6 @@ class PreInspectionController extends Controller
         return PreInspectionListResource::collection($query->get());
     }
 
-    /**
-     * Store a newly created pre-inspection.
-     */
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -68,7 +61,7 @@ class PreInspectionController extends Controller
         $inspection->save();
         $inspection->issueToken(now()->addDays(30));
 
-        $inspection->load(['person', 'animalType.preInspectionFormTemplate', 'inspector', 'accessTokens', 'formSubmission.formTemplate']);
+        $inspection->load($this->detailRelations());
 
         return response()->json([
             'message' => 'Vorkontrolle erfolgreich angelegt.',
@@ -76,19 +69,14 @@ class PreInspectionController extends Controller
         ], 201);
     }
 
-    /**
-     * Display the specified pre-inspection.
-     */
     public function show(PreInspection $preInspection): PreInspectionDetailResource
     {
-        $preInspection->load(['person', 'animalType.preInspectionFormTemplate', 'inspector', 'accessTokens', 'formSubmission.formTemplate']);
+        $preInspection->load($this->detailRelations());
 
         return new PreInspectionDetailResource($preInspection);
     }
 
     /**
-     * Update the specified pre-inspection.
-     *
      * Pre-submission: only inspector_id is accepted.
      * Post-submission: verdict, notes, form_data, and inspector_id are accepted.
      */
@@ -107,12 +95,13 @@ class PreInspectionController extends Controller
             }
 
             if (array_key_exists('form_data', $validated)) {
-                $preInspection->load('formSubmission.formTemplate');
+                $preInspection->load('formSubmission.formTemplateVersion');
                 $submission = $preInspection->formSubmission;
+                $version = $submission?->formTemplateVersion;
 
-                if ($submission?->formTemplate) {
+                if ($version) {
                     $result = $this->formTemplateService->validateSubmissionData(
-                        $submission->formTemplate,
+                        $version,
                         $validated['form_data']
                     );
 
@@ -153,7 +142,7 @@ class PreInspectionController extends Controller
             $preInspection->save();
         }
 
-        $preInspection->load(['person', 'animalType.preInspectionFormTemplate', 'inspector', 'accessTokens', 'formSubmission.formTemplate']);
+        $preInspection->load($this->detailRelations());
 
         return response()->json([
             'message' => 'Vorkontrolle erfolgreich aktualisiert.',
@@ -162,10 +151,7 @@ class PreInspectionController extends Controller
     }
 
     /**
-     * Submit a pre-inspection from the admin interface.
-     *
-     * Equivalent to the public token submit but authenticated.
-     * Returns 422 if already submitted.
+     * First submission from the admin interface (equivalent to the public token submit).
      */
     public function submit(Request $request, PreInspection $preInspection): JsonResponse
     {
@@ -180,29 +166,27 @@ class PreInspectionController extends Controller
         ]);
 
         $result = DB::transaction(function () use ($preInspection, $validated) {
-            $preInspection->load('animalType');
-            $templateId = $preInspection->animalType?->pre_inspection_form_template_id;
+            $preInspection->load('animalType.preInspectionFormTemplate.latestVersion');
+            $latestVersion = $preInspection->animalType?->preInspectionFormTemplate?->latestVersion;
 
-            if ($templateId) {
-                $template = FormTemplate::find($templateId);
+            if ($latestVersion && ! empty($validated['form_data'])) {
+                $validation = $this->formTemplateService->validateSubmissionData(
+                    $latestVersion,
+                    $validated['form_data']
+                );
 
-                if ($template && ! empty($validated['form_data'])) {
-                    $validation = $this->formTemplateService->validateSubmissionData(
-                        $template,
-                        $validated['form_data']
+                if (! $validation['valid']) {
+                    throw ValidationException::withMessages(
+                        collect($validation['errors'])
+                            ->mapWithKeys(fn ($msgs, $key) => ["form_data.{$key}" => $msgs])
+                            ->toArray()
                     );
-
-                    if (! $validation['valid']) {
-                        throw ValidationException::withMessages(
-                            collect($validation['errors'])
-                                ->mapWithKeys(fn ($msgs, $key) => ["form_data.{$key}" => $msgs])
-                                ->toArray()
-                        );
-                    }
                 }
+            }
 
+            if ($latestVersion) {
                 $preInspection->formSubmission()->create([
-                    'form_template_id' => $templateId,
+                    'form_template_version_id' => $latestVersion->id,
                     'data' => $validated['form_data'] ?? [],
                 ]);
             }
@@ -212,7 +196,7 @@ class PreInspectionController extends Controller
             $preInspection->submitted_at = now();
             $preInspection->save();
 
-            $preInspection->load(['person', 'animalType.preInspectionFormTemplate', 'inspector', 'accessTokens', 'formSubmission.formTemplate']);
+            $preInspection->load($this->detailRelations());
 
             return $preInspection;
         });
@@ -223,16 +207,22 @@ class PreInspectionController extends Controller
         ]);
     }
 
-    /**
-     * Remove the specified pre-inspection.
-     */
     public function destroy(PreInspection $preInspection): JsonResponse
     {
         $preInspection->delete();
 
-        return response()->json([
-            'message' => 'Vorkontrolle erfolgreich gelöscht.',
-        ]);
+        return response()->json(['message' => 'Vorkontrolle erfolgreich gelöscht.']);
+    }
+
+    private function detailRelations(): array
+    {
+        return [
+            'person',
+            'animalType.preInspectionFormTemplate.latestVersion',
+            'inspector',
+            'accessTokens',
+            'formSubmission.formTemplateVersion',
+        ];
     }
 
     private function assertInspectorEligible(string $inspectorId, string $animalTypeId): void

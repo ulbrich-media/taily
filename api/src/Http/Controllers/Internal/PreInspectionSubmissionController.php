@@ -7,7 +7,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Taily\Http\Controllers\Controller;
-use Taily\Models\FormTemplate;
 use Taily\Models\PreInspection;
 use Taily\Support\FormTemplateService;
 
@@ -30,7 +29,7 @@ class PreInspectionSubmissionController extends Controller
             ], 404);
         }
 
-        $inspection->load(['person', 'animalType.preInspectionFormTemplate']);
+        $inspection->load(['person', 'animalType.preInspectionFormTemplate.latestVersion']);
 
         if (! $inspection->person) {
             return response()->json(['message' => 'Interessent nicht gefunden.'], 422);
@@ -40,7 +39,8 @@ class PreInspectionSubmissionController extends Controller
             return response()->json(['message' => 'Tierart nicht gefunden.'], 422);
         }
 
-        $template = $inspection->animalType->preInspectionFormTemplate;
+        $formTemplate = $inspection->animalType->preInspectionFormTemplate;
+        $latestVersion = $formTemplate?->latestVersion;
 
         return response()->json([
             'id' => $inspection->id,
@@ -61,10 +61,10 @@ class PreInspectionSubmissionController extends Controller
                 'id' => $inspection->animalType->id,
                 'title' => $inspection->animalType->title,
             ],
-            'pre_inspection_form_template' => $template ? [
-                'id' => $template->id,
-                'schema' => $template->schema,
-                'ui_schema' => $template->ui_schema,
+            'pre_inspection_form_template' => $latestVersion ? [
+                'id' => $formTemplate->id,
+                'schema' => $latestVersion->schema,
+                'ui_schema' => $latestVersion->ui_schema,
             ] : null,
         ]);
     }
@@ -90,29 +90,27 @@ class PreInspectionSubmissionController extends Controller
                 return false;
             }
 
-            $inspection->load('animalType');
-            $templateId = $inspection->animalType?->pre_inspection_form_template_id;
+            $inspection->load('animalType.preInspectionFormTemplate.latestVersion');
+            $latestVersion = $inspection->animalType?->preInspectionFormTemplate?->latestVersion;
 
-            if ($templateId) {
-                $template = FormTemplate::find($templateId);
+            if ($latestVersion && ! empty($validated['form_data'])) {
+                $result = $this->formTemplateService->validateSubmissionData(
+                    $latestVersion,
+                    $validated['form_data']
+                );
 
-                if ($template && ! empty($validated['form_data'])) {
-                    $result = $this->formTemplateService->validateSubmissionData(
-                        $template,
-                        $validated['form_data']
+                if (! $result['valid']) {
+                    throw ValidationException::withMessages(
+                        collect($result['errors'])
+                            ->mapWithKeys(fn ($msgs, $key) => ["form_data.{$key}" => $msgs])
+                            ->toArray()
                     );
-
-                    if (! $result['valid']) {
-                        throw ValidationException::withMessages(
-                            collect($result['errors'])
-                                ->mapWithKeys(fn ($msgs, $key) => ["form_data.{$key}" => $msgs])
-                                ->toArray()
-                        );
-                    }
                 }
+            }
 
+            if ($latestVersion) {
                 $inspection->formSubmission()->create([
-                    'form_template_id' => $templateId,
+                    'form_template_version_id' => $latestVersion->id,
                     'data' => $validated['form_data'] ?? [],
                 ]);
             }
@@ -131,8 +129,6 @@ class PreInspectionSubmissionController extends Controller
             ], 404);
         }
 
-        return response()->json([
-            'message' => 'Vorkontrolle erfolgreich eingereicht.',
-        ]);
+        return response()->json(['message' => 'Vorkontrolle erfolgreich eingereicht.']);
     }
 }

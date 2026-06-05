@@ -117,14 +117,6 @@ export function FormBuilderEditor({
             <div className="flex items-center gap-6 sm:pt-6 shrink-0">
               <div className="flex flex-col gap-1">
                 <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Typ
-                </span>
-                <code className="bg-muted rounded px-2 py-1 text-sm font-mono">
-                  {template.type}
-                </code>
-              </div>
-              <div className="flex flex-col gap-1">
-                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Version
                 </span>
                 <Badge variant="secondary" className="w-fit">

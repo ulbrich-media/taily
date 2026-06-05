@@ -15,7 +15,7 @@ export interface FormTemplateShape {
 }
 
 export interface FormSubmissionShape {
-  form_template_id: string
+  form_template_version_id: string
   data: Record<string, unknown>
   template: FormTemplateShape | null
 }

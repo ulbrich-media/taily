@@ -17,14 +17,6 @@ import { useMemo } from 'react'
 import { buildJsonSchema } from './schema'
 
 const createTemplateSchema = z.object({
-  type: z
-    .string()
-    .min(1, 'Typ ist erforderlich')
-    .max(100)
-    .regex(
-      /^[a-z0-9_-]+$/,
-      'Nur Kleinbuchstaben, Ziffern, Unterstrich und Bindestrich erlaubt'
-    ),
   name: z.string().min(1, 'Name ist erforderlich').max(255),
 })
 
@@ -43,7 +35,7 @@ export function FormBuilderCreate({
 
   const form = useForm<CreateTemplateFormData>({
     resolver: zodResolver(createTemplateSchema),
-    defaultValues: { type: '', name: '' },
+    defaultValues: { name: '' },
     mode: 'onChange',
   })
 
@@ -57,7 +49,6 @@ export function FormBuilderCreate({
     mutationFn: (data: CreateTemplateFormData) => {
       const { schema, uiSchema } = buildJsonSchema(fb.fields, data.name)
       return createFormTemplate({
-        type: data.type,
         name: data.name,
         schema,
         ui_schema: uiSchema,
@@ -91,14 +82,7 @@ export function FormBuilderCreate({
         </div>
 
         {/* Meta card */}
-        <div className="rounded-lg border bg-card p-4 grid sm:grid-cols-2 gap-4">
-          <TextInput
-            name="type"
-            control={form.control}
-            label="Typ"
-            required
-            description="Eindeutiger Bezeichner, z. B. inspection oder adoption_application"
-          />
+        <div className="rounded-lg border bg-card p-4">
           <TextInput name="name" control={form.control} label="Name" required />
         </div>
 

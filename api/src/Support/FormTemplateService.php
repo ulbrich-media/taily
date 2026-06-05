@@ -4,6 +4,7 @@ namespace Taily\Support;
 
 use Illuminate\Support\Facades\DB;
 use Taily\Models\FormTemplate;
+use Taily\Models\FormTemplateVersion;
 
 class FormTemplateService
 {
@@ -13,75 +14,67 @@ class FormTemplateService
     ) {}
 
     /**
-     * Create a new form template version for a type.
-     * If no version exists for the type yet, starts at version 1.
+     * Create a new form template with its initial version.
      */
     public function createTemplate(array $data): FormTemplate
     {
         return DB::transaction(function () use ($data) {
-            $nextVersion = FormTemplate::latestVersionForType($data['type']) + 1;
+            $template = FormTemplate::create(['name' => $data['name']]);
 
-            return FormTemplate::create([
-                'type' => $data['type'],
-                'name' => $data['name'],
+            $template->versions()->create([
                 'schema' => $data['schema'],
                 'ui_schema' => $data['ui_schema'] ?? null,
-                'version' => $nextVersion,
+                'version' => 1,
             ]);
+
+            return $template->load('latestVersion');
         });
     }
 
     /**
-     * Update a form template, automatically deciding whether to bump the version.
-     *
-     * A new version is created when the schema change is breaking (e.g. removed
-     * properties, type changes, new required fields, tightened constraints).
-     * Non-breaking changes (text edits, adding optional fields) update in place.
-     *
-     * Returns the saved template and a flag indicating whether a new version was created.
+     * Update a form template. Non-breaking changes update the current version in place.
+     * Breaking schema changes create a new version.
      *
      * @return array{template: FormTemplate, new_version_created: bool}
      */
-    public function updateTemplate(FormTemplate $template, array $data): array
+    public function updateTemplate(FormTemplate $template, FormTemplateVersion $currentVersion, array $data): array
     {
         $newVersionRequired = $this->changeAnalyzer->requiresNewVersion(
-            $template->schema,
+            $currentVersion->schema,
             $data['schema']
         );
 
+        $template->update(['name' => $data['name']]);
+
         if (! $newVersionRequired) {
-            $template->update([
-                'name' => $data['name'],
+            $currentVersion->update([
                 'schema' => $data['schema'],
-                'ui_schema' => $data['ui_schema'] ?? $template->ui_schema,
+                'ui_schema' => $data['ui_schema'] ?? $currentVersion->ui_schema,
             ]);
 
-            return ['template' => $template->fresh() ?? $template, 'new_version_created' => false];
+            return ['template' => $template->load('latestVersion'), 'new_version_created' => false];
         }
 
-        $newTemplate = DB::transaction(function () use ($template, $data) {
-            $nextVersion = FormTemplate::latestVersionForType($template->type) + 1;
+        DB::transaction(function () use ($template, $data) {
+            $nextVersion = FormTemplateVersion::latestVersionNumberFor($template->id) + 1;
 
-            return FormTemplate::create([
-                'type' => $template->type,
-                'name' => $data['name'],
+            $template->versions()->create([
                 'schema' => $data['schema'],
                 'ui_schema' => $data['ui_schema'] ?? null,
                 'version' => $nextVersion,
             ]);
         });
 
-        return ['template' => $newTemplate, 'new_version_created' => true];
+        return ['template' => $template->load('latestVersion'), 'new_version_created' => true];
     }
 
     /**
-     * Validate submitted data against a template's schema.
+     * Validate submitted data against a template version's schema.
      *
-     * @param  array  $data  Submitted form data
      * @return array{valid: bool, errors: array<string, mixed>}
      */
-    public function validateSubmissionData(FormTemplate $template, array $data): array
+    public function validateSubmissionData(FormTemplateVersion $version, array $data): array
     {
-        return $this->schemaValidator->validate($template->schema, $data);
+        return $this->schemaValidator->validate($version->schema, $data);
     }
 }

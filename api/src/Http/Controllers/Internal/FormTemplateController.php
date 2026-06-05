@@ -8,6 +8,7 @@ use Taily\Http\Controllers\Controller;
 use Taily\Http\Requests\StoreFormTemplateRequest;
 use Taily\Http\Requests\UpdateFormTemplateRequest;
 use Taily\Http\Resources\FormTemplateResource;
+use Taily\Http\Resources\FormTemplateVersionResource;
 use Taily\Models\FormTemplate;
 use Taily\Support\FormTemplateService;
 
@@ -18,35 +19,30 @@ class FormTemplateController extends Controller
     ) {}
 
     /**
-     * List all form template types, each showing only their latest version.
+     * List all form templates with their latest version.
      */
     public function index(): JsonResponse
     {
-        $templates = FormTemplate::whereRaw(
-            'version = (SELECT MAX(version) FROM form_templates ft2 WHERE ft2.type = form_templates.type)'
-        )->orderBy('type')->get();
+        $templates = FormTemplate::with('latestVersion')->get();
 
         return response()->json(['data' => FormTemplateResource::collection($templates)]);
     }
 
     /**
-     * List all versions of a specific type, ordered newest first.
+     * List all versions of a specific form template, newest first.
      */
-    public function versions(string $type): JsonResponse
+    public function versions(FormTemplate $formTemplate): JsonResponse
     {
-        $templates = FormTemplate::ofType($type)->orderBy('version', 'desc')->get();
+        $versions = $formTemplate->versions()
+            ->orderBy('version', 'desc')
+            ->with('formTemplate')
+            ->get();
 
-        if ($templates->isEmpty()) {
-            return response()->json([
-                'message' => "Keine Formularvorlagen für Typ \"{$type}\" gefunden.",
-            ], 404);
-        }
-
-        return response()->json(['data' => FormTemplateResource::collection($templates)]);
+        return response()->json(['data' => FormTemplateVersionResource::collection($versions)]);
     }
 
     /**
-     * Store a new form template. If the type already exists, auto-increments the version.
+     * Create a new form template with an initial version.
      */
     public function store(StoreFormTemplateRequest $request): JsonResponse
     {
@@ -59,24 +55,30 @@ class FormTemplateController extends Controller
     }
 
     /**
-     * Display the specified form template.
+     * Display the specified form template with its latest version.
      */
     public function show(FormTemplate $formTemplate): JsonResponse
     {
+        $formTemplate->load('latestVersion');
+
         return response()->json(['data' => new FormTemplateResource($formTemplate)]);
     }
 
     /**
-     * Update a form template.
-     *
-     * The version is bumped automatically when the schema change is breaking
-     * (removed properties, type changes, new required fields, tightened constraints).
-     * Non-breaking changes (text edits, new optional fields) are applied in place.
+     * Update a form template. Non-breaking changes update the current version in place;
+     * breaking schema changes create a new version automatically.
      */
     public function update(UpdateFormTemplateRequest $request, FormTemplate $formTemplate): JsonResponse
     {
+        $formTemplate->load('latestVersion');
+        $latestVersion = $formTemplate->latestVersion;
+
+        if (! $latestVersion) {
+            return response()->json(['message' => 'Keine Version gefunden.'], 404);
+        }
+
         ['template' => $template, 'new_version_created' => $newVersionCreated] =
-            $this->service->updateTemplate($formTemplate, $request->validated());
+            $this->service->updateTemplate($formTemplate, $latestVersion, $request->validated());
 
         $message = $newVersionCreated
             ? 'Neue Version der Formularvorlage erstellt.'
@@ -84,20 +86,26 @@ class FormTemplateController extends Controller
 
         return response()->json([
             'message' => $message,
+            'new_version_created' => $newVersionCreated,
             'data' => new FormTemplateResource($template),
         ]);
     }
 
     /**
-     * Validate submitted data against the template's JSON Schema.
+     * Validate a data payload against the template's latest version schema.
      */
     public function validateData(Request $request, FormTemplate $formTemplate): JsonResponse
     {
-        $request->validate([
-            'data' => ['required', 'array'],
-        ]);
+        $formTemplate->load('latestVersion');
+        $version = $formTemplate->latestVersion;
 
-        $result = $this->service->validateSubmissionData($formTemplate, $request->input('data'));
+        if (! $version) {
+            return response()->json(['message' => 'Keine Version gefunden.'], 404);
+        }
+
+        $request->validate(['data' => ['required', 'array']]);
+
+        $result = $this->service->validateSubmissionData($version, $request->input('data'));
 
         return response()->json([
             'valid' => $result['valid'],

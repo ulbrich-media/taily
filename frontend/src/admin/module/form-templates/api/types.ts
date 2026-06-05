@@ -2,13 +2,19 @@
 // Response types (returned by the API)
 // ---------------------------------------------------------------------------
 
-import type { FormTemplateResource } from '@/api/types/form-templates'
+import type {
+  FormTemplateResource,
+  FormTemplateVersionResource,
+} from '@/api/types/form-templates'
 
 export interface FormTemplatesResponse {
   data: FormTemplateResource[]
 }
 export interface FormTemplateResponse {
   data: FormTemplateResource
+}
+export interface FormTemplateVersionsResponse {
+  data: FormTemplateVersionResource[]
 }
 export interface UpdateFormTemplateResponse {
   message: string
@@ -25,7 +31,6 @@ export interface CreateFormTemplateResponse {
 // ---------------------------------------------------------------------------
 
 export interface CreateFormTemplateRequest {
-  type: string
   name: string
   schema: Record<string, unknown>
   ui_schema: Record<string, unknown>

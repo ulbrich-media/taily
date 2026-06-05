@@ -2,59 +2,25 @@
 
 namespace Taily\Models;
 
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class FormTemplate extends Model
 {
     use HasFactory, HasUuids;
 
-    protected $fillable = [
-        'type',
-        'name',
-        'schema',
-        'ui_schema',
-        'version',
-    ];
+    protected $fillable = ['name'];
 
-    protected function casts(): array
+    public function versions(): HasMany
     {
-        return [
-            'schema' => 'array',
-            'ui_schema' => 'array',
-            'version' => 'integer',
-        ];
+        return $this->hasMany(FormTemplateVersion::class);
     }
 
-    /**
-     * Scope to filter by type.
-     */
-    public function scopeOfType(Builder $query, string $type): Builder
+    public function latestVersion(): HasOne
     {
-        return $query->where('type', $type);
-    }
-
-    /**
-     * Get the previous version of this template (version - 1).
-     */
-    public function previousVersion(): ?static
-    {
-        if ($this->version <= 1) {
-            return null;
-        }
-
-        return static::where('type', $this->type)
-            ->where('version', $this->version - 1)
-            ->first();
-    }
-
-    /**
-     * Get the latest version number for a given type.
-     */
-    public static function latestVersionForType(string $type): int
-    {
-        return static::where('type', $type)->max('version') ?? 0;
+        return $this->hasOne(FormTemplateVersion::class)->latestOfMany('version');
     }
 }

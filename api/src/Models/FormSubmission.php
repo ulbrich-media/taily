@@ -12,7 +12,7 @@ class FormSubmission extends Model
     use HasUuids;
 
     protected $fillable = [
-        'form_template_id',
+        'form_template_version_id',
         'data',
     ];
 
@@ -28,8 +28,8 @@ class FormSubmission extends Model
         return $this->morphTo();
     }
 
-    public function formTemplate(): BelongsTo
+    public function formTemplateVersion(): BelongsTo
     {
-        return $this->belongsTo(FormTemplate::class);
+        return $this->belongsTo(FormTemplateVersion::class);
     }
 }
