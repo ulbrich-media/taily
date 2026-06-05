@@ -11,7 +11,9 @@ return new class extends Migration
         Schema::create('form_submissions', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->uuidMorphs('submittable');
-            $table->foreignUuid('form_template_id')->constrained('form_templates')->restrictOnDelete();
+            $table->foreignUuid('form_template_version_id')
+                ->constrained('form_template_versions')
+                ->restrictOnDelete();
             $table->json('data');
             $table->timestamps();
         });

@@ -9,9 +9,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Drop dependents first (use dropIfExists / conditional drops for idempotency)
-        Schema::dropIfExists('form_submissions');
-
+        // Drop any existing FK on animal_types pointing at the old form_templates table
         $foreignKeys = DB::select("
             SELECT CONSTRAINT_NAME FROM information_schema.TABLE_CONSTRAINTS
             WHERE TABLE_SCHEMA = DATABASE()
@@ -28,7 +26,7 @@ return new class extends Migration
         Schema::dropIfExists('form_template_versions');
         Schema::dropIfExists('form_templates');
 
-        // form_templates: stable parent entity (replaces type string as identity)
+        // form_templates: stable parent entity
         Schema::create('form_templates', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('name');
@@ -49,33 +47,19 @@ return new class extends Migration
             $table->unique(['form_template_id', 'version']);
         });
 
-        // Clear stale references so the new FK constraint can be applied cleanly
+        // Clear stale references before re-adding the FK constraint
         DB::table('animal_types')->update(['pre_inspection_form_template_id' => null]);
 
-        // Re-add FK on animal_types (column already exists, just add constraint)
         Schema::table('animal_types', function (Blueprint $table) {
             $table->foreign('pre_inspection_form_template_id')
                 ->references('id')
                 ->on('form_templates')
                 ->nullOnDelete();
         });
-
-        // form_submissions now pins to a specific version
-        Schema::create('form_submissions', function (Blueprint $table) {
-            $table->uuid('id')->primary();
-            $table->uuidMorphs('submittable');
-            $table->foreignUuid('form_template_version_id')
-                ->constrained('form_template_versions')
-                ->restrictOnDelete();
-            $table->json('data');
-            $table->timestamps();
-        });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('form_submissions');
-
         Schema::table('animal_types', function (Blueprint $table) {
             $table->dropForeign(['pre_inspection_form_template_id']);
         });
@@ -100,16 +84,6 @@ return new class extends Migration
                 ->references('id')
                 ->on('form_templates')
                 ->nullOnDelete();
-        });
-
-        Schema::create('form_submissions', function (Blueprint $table) {
-            $table->uuid('id')->primary();
-            $table->uuidMorphs('submittable');
-            $table->foreignUuid('form_template_id')
-                ->constrained('form_templates')
-                ->restrictOnDelete();
-            $table->json('data');
-            $table->timestamps();
         });
     }
 };
