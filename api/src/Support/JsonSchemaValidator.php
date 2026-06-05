@@ -34,11 +34,60 @@ class JsonSchemaValidator
     }
 
     /**
-     * Check whether the given array represents a valid JSON Schema structure.
+     * Check whether the given array represents a valid form schema.
+     *
+     * Validates the subset of JSON Schema Draft-07 that the form builder produces:
+     * - Top level must be type:object with a properties map
+     * - Each property type, if set, must be a recognised JSON Schema type
+     * - enum values must be non-empty arrays
+     * - Numeric constraints must be numeric
+     * - required entries must be strings referencing existing properties
      */
     public function isValidSchema(array $schema): bool
     {
-        return isset($schema['type']) || isset($schema['properties']) || isset($schema['$schema']);
+        if (($schema['type'] ?? null) !== 'object') {
+            return false;
+        }
+
+        if (! isset($schema['properties']) || ! is_array($schema['properties'])) {
+            return false;
+        }
+
+        $validTypes = ['string', 'number', 'integer', 'boolean', 'array', 'object', 'null'];
+
+        foreach ($schema['properties'] as $prop) {
+            if (! is_array($prop)) {
+                return false;
+            }
+
+            if (isset($prop['type']) && ! in_array($prop['type'], $validTypes, true)) {
+                return false;
+            }
+
+            if (isset($prop['enum']) && (! is_array($prop['enum']) || empty($prop['enum']))) {
+                return false;
+            }
+
+            foreach (['minimum', 'maximum', 'minLength', 'maxLength'] as $constraint) {
+                if (isset($prop[$constraint]) && ! is_numeric($prop[$constraint])) {
+                    return false;
+                }
+            }
+        }
+
+        if (isset($schema['required'])) {
+            if (! is_array($schema['required'])) {
+                return false;
+            }
+
+            foreach ($schema['required'] as $field) {
+                if (! is_string($field) || ! array_key_exists($field, $schema['properties'])) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     /**

@@ -15,6 +15,8 @@ class FormTemplateService
 
     /**
      * Create a new form template with its initial version.
+     *
+     * @param array{name: string, schema: array<string, mixed>, ui_schema?: array<string, mixed>|null} $data
      */
     public function createTemplate(array $data): FormTemplate
     {
@@ -35,6 +37,7 @@ class FormTemplateService
      * Update a form template. Non-breaking changes update the current version in place.
      * Breaking schema changes create a new version.
      *
+     * @param array{name: string, schema: array<string, mixed>, ui_schema?: array<string, mixed>|null} $data
      * @return array{template: FormTemplate, new_version_created: bool}
      */
     public function updateTemplate(FormTemplate $template, FormTemplateVersion $currentVersion, array $data): array
@@ -46,7 +49,9 @@ class FormTemplateService
 
         $template->update(['name' => $data['name']]);
 
-        if (! $newVersionRequired) {
+        // If the change is non-breaking, or breaking but the version has no submissions yet
+        // (no existing data can be invalidated), update the current version in place.
+        if (! $newVersionRequired || ! $currentVersion->formSubmissions()->exists()) {
             $currentVersion->update([
                 'schema' => $data['schema'],
                 'ui_schema' => $data['ui_schema'] ?? $currentVersion->ui_schema,

@@ -6,9 +6,14 @@ Form templates are reusable, versioned schemas that define the structure of dyna
 
 ## Concepts
 
-### Type
+### Two-table structure
 
-Every template belongs to a **type** — a free-form string identifier such as `inspection` or `application`. A type is the stable identity of a form across versions. The API always exposes the latest version for each type by default.
+Form templates are split across two tables:
+
+- **`form_templates`** — the stable parent entity. Holds only the template name and a UUID that never changes across version bumps. Foreign keys from other models (e.g. `animal_types.pre_inspection_form_template_id`) always point here.
+- **`form_template_versions`** — the versioned schemas. Each row holds a `schema`, `ui_schema`, a `version` integer, and a FK back to the parent `form_templates` row.
+
+This separation means a feature's FK to a template never goes stale when a breaking schema change creates a new version — the FK always resolves to the same parent, which in turn always surfaces the latest version.
 
 ### Version
 
@@ -16,7 +21,7 @@ Whenever a template is edited in a way that would break already-submitted data, 
 
 ### Schema format
 
-Each template stores two complementary documents:
+Each template version stores two complementary documents:
 
 | Field | Purpose | Standard |
 |---|---|---|
@@ -67,9 +72,9 @@ The builder supports ten field types. Each type knows how to serialize itself in
 | `date` | `type: string`, `format: date` | — |
 | `email` | `type: string`, `format: email` | — |
 | `phone` | `type: string` | `ui:widget: phone` |
-| `heading` | `type: null` | `ui:widget: heading` |
+| `heading` | — (not in `properties`) | `ui:widget: heading` |
 
-**Heading** is a layout-only element — it carries no validation meaning and produces no key in submitted data. Renderers must handle `type: null` or `ui:widget: heading` fields explicitly and skip them when collecting submission data.
+**Heading** is a layout-only element — it carries no validation meaning and produces no key in `schema.properties` or in submitted data. Headings appear only in `ui_schema` (in `ui:order` and as a `ui:widget: heading` entry). Renderers discover headings by scanning `ui:order` for keys that have `ui:widget: heading` but no corresponding entry in `properties`.
 
 Each field type implements the `FieldTypeDefinition` interface (`field-types/types.ts`), which enforces a consistent contract:
 
@@ -83,21 +88,23 @@ Each field type implements the `FieldTypeDefinition` interface (`field-types/typ
 
 ## Versioning
 
-The backend automatically decides whether a save is an **in-place update** or a **new version**. The decision is made by `SchemaChangeAnalyzer` by comparing the old and new schemas.
+The backend automatically decides whether a save is an **in-place update** or a **new version**. The decision is made by `SchemaChangeAnalyzer` by comparing the old and new schemas, combined with a submission check.
 
-### Breaking changes → new version
+### Breaking changes → new version (if submissions exist)
 
-A new version is created when:
+A new version is created when the schema change is breaking **and** the current version already has at least one submission. If no submissions exist, even breaking changes are applied in place — no historical data can be invalidated.
+
+A schema change is considered breaking when:
 - An existing property is **removed**
-- A property's **type** changes
+- A property's **type** or **format** changes
 - A field is added to **`required`** (already-submitted data may lack that field)
 - An **enum value is removed** (existing submissions may contain that value)
 - A numeric or string **constraint is tightened** (higher `minimum`, lower `maximum`, added `minLength`/`maxLength`)
 - `additionalProperties: false` is **added** (previously accepted extra keys are now rejected)
 
-### Non-breaking changes → in-place update
+### Non-breaking changes → always in-place update
 
-A save updates the existing record when:
+A save always updates the existing record when:
 - Only **labels, titles, or descriptions** change
 - A new **optional** field is added (not in `required`)
 - An **enum value is added** (more permissive)
@@ -112,7 +119,7 @@ When the frontend receives `new_version_created: true` in the response it naviga
 
 ### Overview
 
-Any model can persist a submitted form payload as a `FormSubmission` record. Submissions are version-pinned: they record the exact `form_template_id` (UUID) that was active at the time of first submission, so historical data remains renderable even after the template has evolved through breaking changes.
+Any model can persist a submitted form payload as a `FormSubmission` record. Submissions are version-pinned: they record the exact `form_template_version_id` (UUID) that was active at the time of first submission, so historical data remains renderable even after the template has evolved through breaking changes.
 
 ### Database structure
 
@@ -120,11 +127,11 @@ The `form_submissions` table uses a polymorphic relation (`submittable_type` / `
 
 ```
 form_submissions
-  id                 uuid, PK
-  submittable_type   string  (e.g. "Taily\Models\PreInspection")
-  submittable_id     uuid
-  form_template_id   uuid FK → form_templates.id (RESTRICT delete)
-  data               json
+  id                        uuid, PK
+  submittable_type          string  (e.g. "Taily\Models\PreInspection")
+  submittable_id            uuid
+  form_template_version_id  uuid FK → form_template_versions.id (RESTRICT delete)
+  data                      json
   created_at / updated_at
 ```
 
@@ -138,18 +145,18 @@ The FK is set to `RESTRICT` on delete — a template version cannot be removed w
 
 ```php
 $model->formSubmission()->create([
-    'form_template_id' => $templateId,
-    'data'             => $validatedFormData,
+    'form_template_version_id' => $latestVersion->id,
+    'data'                     => $validatedFormData,
 ]);
 ```
 
-4. Validate `$validatedFormData` against the template before saving using `FormTemplateService::validate()`.
+4. Validate `$validatedFormData` against the template version before saving using `FormTemplateService::validateSubmissionData()`.
 
 ### Version pinning
 
 The snapshot is taken **at first submission**, not at template assignment. This means:
-- The inspector/user always sees the **latest** template when opening a form.
-- Once submitted, the `FormSubmission` locks to that specific template UUID.
+- The inspector/user always sees the **latest** template version when opening a form.
+- Once submitted, the `FormSubmission` locks to that specific version UUID.
 - If the template is later updated to a new version, the submission still renders correctly against its pinned version.
 
 ---
@@ -166,9 +173,11 @@ Templates are assigned to features via dedicated named foreign-key columns (not 
 |---|---|
 | `pre_inspection_form_template_id` | Form shown to the inspector during a pre-inspection |
 
+The FK points to `form_templates.id` (the stable parent), never to a specific version. This means the feature always automatically uses the latest version without any FK updates when the schema evolves.
+
 When an animal type has no template assigned the feature falls back to verdict + notes only (acceptable default — the dynamic fields card is simply not shown).
 
-To add a new form type to animal types: add a named FK column via migration, update `AnimalType::$fillable`, add a `belongsTo` relation, and expose it through the resource.
+To add a new form type to animal types: add a named FK column via migration pointing to `form_templates.id`, update `AnimalType::$fillable`, add a `belongsTo` relation, and expose it through the resource.
 
 ---
 
@@ -186,9 +195,9 @@ Pre-inspections are the first feature that uses form submissions. The flow cover
 
 Both the inspector (public token endpoint) and the admin (authenticated endpoint) perform a **first submission** in the same way:
 
-1. Validate `verdict`, `notes`, and `form_data` (against the pinned template schema).
+1. Validate `verdict`, `notes`, and `form_data` (against the latest template version's schema).
 2. In a DB transaction:
-   - Create a `FormSubmission` pinned to the current template version.
+   - Create a `FormSubmission` pinned to the current version (`form_template_version_id`).
    - Set `verdict`, `notes`, and `submitted_at` on the `PreInspection`.
 3. The public token becomes invalid immediately after.
 
@@ -198,8 +207,7 @@ Public endpoint: `POST /public/pre-inspections/{token}/submit`
 ### Post-submission phase
 
 - The public link is no longer valid.
-- The admin can edit `verdict`, `notes`, `form_data` (validated against the pinned template), and `inspector_id`.
-- Form data is displayed read-only via `DynamicFormDisplay`; an edit toggle switches to `DynamicFormFields` inline.
+- The admin can edit `verdict`, `notes`, `form_data` (validated against the pinned template version), and `inspector_id`.
 - Edits go through `PUT /pre-inspections/{id}` — the `form_data` key is only accepted post-submission.
 
 ---
@@ -212,14 +220,14 @@ All endpoints live under the internal API and are controller-routed through `For
 
 | Method | Path | Description |
 |---|---|---|
-| `GET` | `/form-templates` | List all types, latest version of each |
-| `GET` | `/form-templates/{type}/versions` | All versions of a type, newest first |
-| `GET` | `/form-templates/{id}` | A specific template by ID |
-| `POST` | `/form-templates` | Create a new template (auto-increments version for the type) |
-| `PUT` | `/form-templates/{id}` | Update a template (may create new version) |
-| `POST` | `/form-templates/{id}/validate` | Validate a `data` payload against the template's JSON Schema |
+| `GET` | `/form-templates` | List all templates, latest version of each |
+| `GET` | `/form-templates/{formTemplate}/versions` | All versions of a template, newest first |
+| `GET` | `/form-templates/{formTemplate}` | A specific template by ID |
+| `POST` | `/form-templates` | Create a new template with version 1 |
+| `PUT` | `/form-templates/{formTemplate}` | Update a template (may create new version) |
+| `POST` | `/form-templates/{formTemplate}/validate` | Validate a `data` payload against the latest version's schema |
 
-Validation (`/validate`) returns `200` with `valid: true` or `422` with a flat `errors` map (`field => string[]`).
+All `{formTemplate}` parameters are the stable `form_templates.id` UUID. Validation (`/validate`) returns `200` with `valid: true` or `422` with a flat `errors` map (`field => string[]`).
 
 ### Pre-inspection submission endpoints
 
@@ -247,8 +255,8 @@ Deleted existing fields remain in the list (shown crossed out) so they can be re
 
 `schema.ts` owns the two conversion functions:
 
-- `parseJsonSchema(schema, uiSchema) → EditorField[]` — run on load
-- `buildJsonSchema(fields, title) → { schema, uiSchema }` — run on save
+- `parseJsonSchema(schema, uiSchema) → EditorField[]` — run on load. Handles both the current format (headings only in uiSchema) and the legacy format (headings as `type: null` in properties).
+- `buildJsonSchema(fields, title) → { schema, uiSchema }` — run on save. Heading fields are omitted from `schema.properties` and only written to `ui_schema`.
 
 `useFieldBuilder` manages all editor state, including drag-and-drop (`@dnd-kit/core`), dirty tracking, and auto-generated field keys (`text_1`, `select_2`, …).
 
@@ -260,7 +268,7 @@ Key behaviours:
 - Respects `ui:order` — renders fields in the declared order, then any unlisted fields at the end.
 - Resolves display labels from `uiSchema[key]['ui:title']` (falls back to `schema.properties[key].title`, then the key itself).
 - Resolves enum option labels from `uiSchema[key]['ui:options'].labels`.
-- Handles heading fields (`type: null` or `ui:widget: heading`) as `<h3>` — no Controller, no validation.
+- Handles heading fields (`ui:widget: heading` in uiSchema, absent from `properties`) as `<h3>` — no Controller, no validation.
 - Per-field validation rules are built from the JSON Schema (`required`, `minLength`, `maxLength`, `minimum`, `maximum`, email pattern).
 - Use `namePrefix` (default `"form_data"`) so nested field names are `form_data.{key}` and don't collide with other form fields.
 
@@ -307,26 +315,29 @@ To add a new field type: create a file under `field-types/`, implement the `Fiel
 Admin edits fields in FormBuilderEditor
   ↓ useFieldBuilder tracks state + drag-and-drop
   ↓ buildJsonSchema() serializes EditorField[] → { schema, uiSchema }
-  ↓ PUT /form-templates/{id}
+    (heading fields written to uiSchema only, not schema.properties)
+  ↓ PUT /form-templates/{formTemplate}
   ↓ FormTemplateService.updateTemplate()
-      ↓ SchemaChangeAnalyzer decides: in-place or new version
-      ↓ FormTemplate::create() or $template->update()
+      ↓ SchemaChangeAnalyzer compares schemas: breaking or non-breaking?
+      ↓ If breaking: check whether current version has any submissions
+          → No submissions: update in place (no historical data can be invalidated)
+          → Has submissions: create new version
   ↓ Response: { data, new_version_created }
-  ↓ Frontend navigates to new ID (if new version) or resets form state
+  ↓ Frontend resets form state (or navigates to new ID if new version)
 
 Inspector submits via public link
   ↓ POST /public/pre-inspections/{token}/submit
       { verdict, notes, form_data }
-  ↓ FormTemplateService validates form_data against latest template
+  ↓ FormTemplateService validates form_data against latest template version
   ↓ DB transaction:
-      FormSubmission::create({ form_template_id, data })
+      FormSubmission::create({ form_template_version_id, data })
       PreInspection: verdict, notes, submitted_at = now()
   ↓ Token becomes invalid; admin sees post-submission view
 
 Admin edits post-submission
   ↓ PUT /pre-inspections/{id}
       { verdict, notes, form_data, inspector_id }
-  ↓ form_data validated against pinned FormSubmission.formTemplate
+  ↓ form_data validated against pinned FormSubmission.formTemplateVersion
   ↓ FormSubmission.data updated; verdict/notes saved on PreInspection
 ```
 
@@ -337,5 +348,5 @@ Admin edits post-submission
 - **No conditional logic** — fields cannot be conditionally shown or hidden based on other field values. All fields are always present in the schema.
 - **`additionalProperties: false`** is always emitted by the builder, meaning every property key must be explicitly declared. This prevents stale keys from slipping through after fields are renamed.
 - **Version history is kept forever** — there is no cleanup or archival mechanism for old versions. Old versions can be viewed via the versions endpoint but cannot be edited.
-- **Race condition on submission** — if a template is updated between the inspector opening the public link and submitting, they submit against the new template. Acceptable edge case; may be addressed in future by sending the template ID with the submission.
-- **Renaming a field key always triggers a new version** — even if only the display label changes, because `SchemaChangeAnalyzer` compares property keys. 
+- **Race condition on submission** — if a template is updated between the inspector opening the public link and submitting, they submit against the new template. Acceptable edge case; may be addressed in future by sending the template version ID with the submission.
+- **Renaming a field key always triggers a new version** (if submissions exist) — even if only the display label changes, because `SchemaChangeAnalyzer` compares property keys.
