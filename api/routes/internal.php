@@ -102,7 +102,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // Pre-Inspections
     Route::apiResource('pre-inspections', PreInspectionController::class);
-    Route::post('/pre-inspections/{preInspection}/submit', [PreInspectionController::class, 'submit']);
+    Route::put('/pre-inspections/{preInspection}/inspector', [PreInspectionController::class, 'updateInspector']);
 });
 
 // Public pre-inspection submission routes (token-protected, no auth required)

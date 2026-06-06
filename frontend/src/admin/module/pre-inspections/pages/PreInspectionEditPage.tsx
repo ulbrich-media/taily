@@ -7,7 +7,7 @@ import { ClipboardCheck, Copy, Check } from 'lucide-react'
 import { preInspectionQueryKeys } from '@/admin/module/pre-inspections/api/queries'
 import {
   updatePreInspection,
-  submitPreInspection,
+  updatePreInspectionInspector,
 } from '@/admin/module/pre-inspections/api/requests'
 import type { PreInspectionResource } from '@/api/types/pre-inspections'
 import type { PersonListResource } from '@/api/types/people'
@@ -136,7 +136,9 @@ export function PreInspectionEditPage({
 
   const updateInspectorMutation = useMutation({
     mutationFn: (data: InspectorFormData) =>
-      updatePreInspection(inspection.id, { inspector_id: data.inspector_id }),
+      updatePreInspectionInspector(inspection.id, {
+        inspector_id: data.inspector_id,
+      }),
     onSuccess: (res) => {
       queryClient.invalidateQueries({
         queryKey: preInspectionQueryKeys.detail(inspection.id),
@@ -165,22 +167,12 @@ export function PreInspectionEditPage({
   })
 
   const mainMutation = useMutation({
-    mutationFn: (data: MainFormData) => {
-      const hasTemplate = Boolean(template)
-      if (isSubmitted) {
-        return updatePreInspection(inspection.id, {
-          verdict: data.verdict!,
-          notes: data.notes,
-          form_data: hasTemplate ? data.form_data : undefined,
-        })
-      } else {
-        return submitPreInspection(inspection.id, {
-          verdict: data.verdict!,
-          notes: data.notes || null,
-          form_data: hasTemplate ? data.form_data : undefined,
-        })
-      }
-    },
+    mutationFn: (data: MainFormData) =>
+      updatePreInspection(inspection.id, {
+        verdict: data.verdict!,
+        notes: data.notes,
+        form_data: template ? data.form_data : undefined,
+      }),
     onSuccess: (res) => {
       toast.success(res.message)
       setConfirmOpen(false)
@@ -260,6 +252,11 @@ export function PreInspectionEditPage({
                     control={inspectorForm.control}
                     label="Kontrolleur"
                     persons={inspectors}
+                    renderSubline={(person) =>
+                      person.inspector_animal_types
+                        ? `Kontrollen für ${person.inspector_animal_types.map((animalType) => animalType.title).join(', ')}`
+                        : ''
+                    }
                     canRemove
                   />
                   <div className="flex justify-end">
