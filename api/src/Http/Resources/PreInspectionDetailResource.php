@@ -39,6 +39,7 @@ class PreInspectionDetailResource extends PreInspectionBaseResource
                     'form_template_version_id' => $submission->form_template_version_id,
                     'data' => $submission->data,
                     'template' => $version ? [
+                        'id' => $version->form_template_id,
                         'schema' => $version->schema,
                         'ui_schema' => $version->ui_schema,
                     ] : null,
