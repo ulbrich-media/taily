@@ -15,6 +15,8 @@ import { FieldBuilderSection } from './FieldBuilderSection'
 import { useFieldBuilder } from './useFieldBuilder'
 import { useMemo } from 'react'
 import { buildJsonSchema } from './schema'
+import { PageHeader } from '@/components/layout/PageHeader.tsx'
+import { FormGrid } from '@/components/form/FormGrid.tsx'
 
 const createTemplateSchema = z.object({
   name: z.string().min(1, 'Name ist erforderlich').max(255),
@@ -75,16 +77,11 @@ export function FormBuilderCreate({
       onDragCancel={fb.handleDragCancel}
     >
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center gap-3">
-          <ClipboardList className="size-5 text-primary shrink-0" />
-          <h1 className="text-lg font-semibold">Neue Formularvorlage</h1>
-        </div>
+        <PageHeader icon={ClipboardList} title={'Neue Formularvorlage'} />
 
-        {/* Meta card */}
-        <div className="rounded-lg border bg-card p-4">
+        <FormGrid>
           <TextInput name="name" control={form.control} label="Name" required />
-        </div>
+        </FormGrid>
 
         {/* Field builder */}
         <FieldBuilderSection

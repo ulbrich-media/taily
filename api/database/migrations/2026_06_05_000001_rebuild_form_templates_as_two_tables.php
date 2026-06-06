@@ -9,20 +9,11 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Drop any existing FK on animal_types pointing at the old form_templates table
-        $foreignKeys = DB::select("
-            SELECT CONSTRAINT_NAME FROM information_schema.TABLE_CONSTRAINTS
-            WHERE TABLE_SCHEMA = DATABASE()
-              AND TABLE_NAME = 'animal_types'
-              AND CONSTRAINT_TYPE = 'FOREIGN KEY'
-              AND CONSTRAINT_NAME LIKE '%form_template%'
-        ");
-        foreach ($foreignKeys as $fk) {
-            Schema::table('animal_types', function (Blueprint $table) use ($fk) {
-                $table->dropForeign($fk->CONSTRAINT_NAME);
-            });
-        }
+        Schema::table('animal_types', function (Blueprint $table) {
+            $table->dropForeign(['form_template_id']);
+        });
 
+        // Destructive drop of all existing data is considered ok during open development phase
         Schema::dropIfExists('form_template_versions');
         Schema::dropIfExists('form_templates');
 

@@ -53,6 +53,11 @@ class JsonSchemaValidator
             return false;
         }
 
+        // properties must be an object (string-keyed map), not a list
+        if (! empty($schema['properties']) && array_is_list($schema['properties'])) {
+            return false;
+        }
+
         $validTypes = ['string', 'number', 'integer', 'boolean', 'array', 'object', 'null'];
 
         foreach ($schema['properties'] as $prop) {

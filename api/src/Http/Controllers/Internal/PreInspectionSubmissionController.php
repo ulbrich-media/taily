@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Taily\Http\Controllers\Controller;
+use Taily\Models\FormTemplateVersion;
 use Taily\Models\PreInspection;
 use Taily\Support\FormTemplateService;
 
@@ -63,6 +64,7 @@ class PreInspectionSubmissionController extends Controller
             ],
             'pre_inspection_form_template' => $latestVersion ? [
                 'id' => $formTemplate->id,
+                'version_id' => $latestVersion->id,
                 'schema' => $latestVersion->schema,
                 'ui_schema' => $latestVersion->ui_schema,
             ] : null,
@@ -78,6 +80,7 @@ class PreInspectionSubmissionController extends Controller
             'verdict' => 'required|in:approved,rejected',
             'notes' => 'nullable|string',
             'form_data' => 'nullable|array',
+            'form_template_version_id' => 'nullable|uuid|exists:form_template_versions,id',
         ]);
 
         $submitted = DB::transaction(function () use ($token, $validated) {
@@ -90,13 +93,20 @@ class PreInspectionSubmissionController extends Controller
                 return false;
             }
 
-            $inspection->load('animalType.preInspectionFormTemplate.latestVersion');
-            $latestVersion = $inspection->animalType?->preInspectionFormTemplate?->latestVersion;
+            // Use the pinned version the inspector received, falling back to latest.
+            $version = isset($validated['form_template_version_id'])
+                ? FormTemplateVersion::find($validated['form_template_version_id'])
+                : null;
 
-            if ($latestVersion && ! empty($validated['form_data'])) {
+            if (! $version) {
+                $inspection->load('animalType.preInspectionFormTemplate.latestVersion');
+                $version = $inspection->animalType?->preInspectionFormTemplate?->latestVersion;
+            }
+
+            if ($version && array_key_exists('form_data', $validated)) {
                 $result = $this->formTemplateService->validateSubmissionData(
-                    $latestVersion,
-                    $validated['form_data']
+                    $version,
+                    $validated['form_data'] ?? []
                 );
 
                 if (! $result['valid']) {
@@ -108,9 +118,9 @@ class PreInspectionSubmissionController extends Controller
                 }
             }
 
-            if ($latestVersion) {
+            if ($version) {
                 $inspection->formSubmission()->create([
-                    'form_template_version_id' => $latestVersion->id,
+                    'form_template_version_id' => $version->id,
                     'data' => $validated['form_data'] ?? [],
                 ]);
             }

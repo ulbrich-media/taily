@@ -59,6 +59,8 @@ export function PreInspectionSubmitPage({
         form_data: inspection.pre_inspection_form_template
           ? data.form_data
           : undefined,
+        form_template_version_id:
+          inspection.pre_inspection_form_template?.version_id ?? null,
       }),
     onError: () => setConfirmOpen(false),
   })

@@ -116,10 +116,15 @@ function buildRules(
 
 function resolveFieldOrder(
   properties: Record<string, JsonSchemaProperty>,
-  uiOrder: string[] | undefined
+  uiOrder: string[] | undefined,
+  uiSchema: UiSchema = {}
 ): string[] {
   if (uiOrder && uiOrder.length > 0) {
-    const inOrder = uiOrder.filter((k) => k in properties)
+    const inOrder = uiOrder.filter(
+      (k) =>
+        k in properties ||
+        (uiSchema[k] as UiSchemaFieldOptions)?.['ui:widget'] === 'heading'
+    )
     const rest = Object.keys(properties).filter((k) => !uiOrder.includes(k))
     return [...inOrder, ...rest]
   }
@@ -141,12 +146,12 @@ export function DynamicFormFields({
 
   const required = schema.required ?? []
   const uiOrder = uiSchema['ui:order'] as string[] | undefined
-  const orderedKeys = resolveFieldOrder(schema.properties, uiOrder)
+  const orderedKeys = resolveFieldOrder(schema.properties, uiOrder, uiSchema)
 
   return (
     <div className="space-y-4">
       {orderedKeys.map((key) => {
-        const prop = schema.properties![key]
+        const prop = schema.properties?.[key] ?? {}
         const fieldName = `${namePrefix}.${key}`
         const uiOptions = (uiSchema[key] ?? {}) as UiSchemaFieldOptions
         const title = uiOptions['ui:title'] ?? prop.title ?? key

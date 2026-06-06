@@ -8,7 +8,7 @@ import type { PersonBaseResource } from './people'
 export type PreInspectionVerdict = 'pending' | 'approved' | 'rejected'
 
 export interface FormTemplateShape {
-  id?: string
+  id: string
   name?: string
   schema: Record<string, unknown>
   ui_schema: Record<string, unknown> | null

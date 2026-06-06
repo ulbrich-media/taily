@@ -10,7 +10,9 @@ return new class extends Migration
     {
         Schema::create('form_submissions', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->uuidMorphs('submittable');
+            $table->string('submittable_type');
+            $table->uuid('submittable_id');
+            $table->unique(['submittable_type', 'submittable_id']);
             $table->foreignUuid('form_template_version_id')
                 ->constrained('form_template_versions')
                 ->restrictOnDelete();

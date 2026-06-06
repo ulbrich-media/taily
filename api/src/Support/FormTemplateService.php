@@ -16,7 +16,7 @@ class FormTemplateService
     /**
      * Create a new form template with its initial version.
      *
-     * @param array{name: string, schema: array<string, mixed>, ui_schema?: array<string, mixed>|null} $data
+     * @param  array{name: string, schema: array<string, mixed>, ui_schema?: array<string, mixed>|null}  $data
      */
     public function createTemplate(array $data): FormTemplate
     {
@@ -35,9 +35,10 @@ class FormTemplateService
 
     /**
      * Update a form template. Non-breaking changes update the current version in place.
-     * Breaking schema changes create a new version.
+     * Breaking schema changes create a new version. A version without submissions can be
+     * updated with breaking changes as well.
      *
-     * @param array{name: string, schema: array<string, mixed>, ui_schema?: array<string, mixed>|null} $data
+     * @param  array{name: string, schema: array<string, mixed>, ui_schema?: array<string, mixed>|null}  $data
      * @return array{template: FormTemplate, new_version_created: bool}
      */
     public function updateTemplate(FormTemplate $template, FormTemplateVersion $currentVersion, array $data): array
@@ -47,21 +48,21 @@ class FormTemplateService
             $data['schema']
         );
 
-        $template->update(['name' => $data['name']]);
-
         // If the change is non-breaking, or breaking but the version has no submissions yet
         // (no existing data can be invalidated), update the current version in place.
         if (! $newVersionRequired || ! $currentVersion->formSubmissions()->exists()) {
+            $template->update(['name' => $data['name']]);
             $currentVersion->update([
                 'schema' => $data['schema'],
-                'ui_schema' => $data['ui_schema'] ?? $currentVersion->ui_schema,
+                'ui_schema' => array_key_exists('ui_schema', $data) ? $data['ui_schema'] : $currentVersion->ui_schema,
             ]);
 
             return ['template' => $template->load('latestVersion'), 'new_version_created' => false];
         }
 
         DB::transaction(function () use ($template, $data) {
-            $nextVersion = FormTemplateVersion::latestVersionNumberFor($template->id) + 1;
+            $template->update(['name' => $data['name']]);
+            $nextVersion = FormTemplateVersion::latestVersionNumberFor((string) $template->id) + 1;
 
             $template->versions()->create([
                 'schema' => $data['schema'],

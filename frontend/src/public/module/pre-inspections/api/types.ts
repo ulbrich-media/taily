@@ -10,6 +10,7 @@ export interface PublicInspectionPerson {
 
 export interface PublicInspectionFormTemplate {
   id: string
+  version_id: string
   schema: Record<string, unknown>
   ui_schema: Record<string, unknown> | null
 }
@@ -28,4 +29,5 @@ export interface SubmitInspectionRequest {
   verdict: 'approved' | 'rejected'
   notes?: string | null
   form_data?: Record<string, unknown>
+  form_template_version_id?: string | null
 }

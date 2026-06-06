@@ -18,6 +18,9 @@ import { useFieldBuilder } from './useFieldBuilder'
 import { parseJsonSchema, buildJsonSchema } from './schema'
 import { FormBlocker } from '@/components/form/FormBlocker.tsx'
 import { useMemo } from 'react'
+import { PageHeader } from '@/components/layout/PageHeader.tsx'
+import { FormGrid } from '@/components/form/FormGrid.tsx'
+import { InfoRow } from '@/shadcn/components/common/info-row.tsx'
 
 const templateNameSchema = z.object({
   name: z.string().min(1, 'Name ist erforderlich').max(255),
@@ -98,33 +101,20 @@ export function FormBuilderEditor({
         <FormBlocker isDirty={fb.isDirty} />
 
         <div className="space-y-6">
-          {/* Header */}
-          <div className="flex items-center gap-3">
-            <ClipboardList className="size-5 text-primary shrink-0" />
-            <h1 className="text-lg font-semibold">Formular bearbeiten</h1>
-          </div>
+          <PageHeader icon={ClipboardList} title="Formularvorlage bearbeiten" />
 
-          {/* Meta card */}
-          <div className="rounded-lg border bg-card p-4 flex flex-col sm:flex-row sm:items-start gap-4">
-            <div className="flex-1 max-w-sm">
-              <TextInput
-                name="name"
-                control={nameForm.control}
-                label="Name"
-                required
-              />
-            </div>
-            <div className="flex items-center gap-6 sm:pt-6 shrink-0">
-              <div className="flex flex-col gap-1">
-                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Version
-                </span>
-                <Badge variant="secondary" className="w-fit">
-                  v{template.version}
-                </Badge>
-              </div>
-            </div>
-          </div>
+          <FormGrid>
+            <TextInput
+              name="name"
+              control={nameForm.control}
+              label="Name"
+              required
+            />
+
+            <InfoRow label="Version">
+              <Badge variant="secondary">v{template.version}</Badge>
+            </InfoRow>
+          </FormGrid>
 
           {/* Field builder */}
           <FieldBuilderSection

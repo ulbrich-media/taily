@@ -10,6 +10,7 @@ use Illuminate\Validation\ValidationException;
 use Taily\Http\Controllers\Controller;
 use Taily\Http\Resources\PreInspectionDetailResource;
 use Taily\Http\Resources\PreInspectionListResource;
+use Taily\Models\FormTemplateVersion;
 use Taily\Models\Person;
 use Taily\Models\PreInspection;
 use Taily\Support\FormTemplateService;
@@ -96,7 +97,7 @@ class PreInspectionController extends Controller
 
         return response()->json([
             'message' => 'Kontrolleur erfolgreich aktualisiert.',
-            'data'    => new PreInspectionDetailResource($preInspection),
+            'data' => new PreInspectionDetailResource($preInspection),
         ]);
     }
 
@@ -109,8 +110,8 @@ class PreInspectionController extends Controller
     public function update(Request $request, PreInspection $preInspection): JsonResponse
     {
         $validated = $request->validate([
-            'verdict'   => 'sometimes|in:approved,rejected',
-            'notes'     => 'sometimes|nullable|string',
+            'verdict' => 'sometimes|in:approved,rejected',
+            'notes' => 'sometimes|nullable|string',
             'form_data' => 'sometimes|nullable|array',
         ]);
 
@@ -140,12 +141,12 @@ class PreInspectionController extends Controller
                 if ($latestVersion) {
                     $preInspection->formSubmission()->create([
                         'form_template_version_id' => $latestVersion->id,
-                        'data'                     => $validated['form_data'] ?? [],
+                        'data' => $validated['form_data'] ?? [],
                     ]);
                 }
 
-                $preInspection->verdict      = $validated['verdict'];
-                $preInspection->notes        = $validated['notes'] ?? '';
+                $preInspection->verdict = $validated['verdict'];
+                $preInspection->notes = $validated['notes'] ?? '';
                 $preInspection->submitted_at = now();
                 $preInspection->save();
             });
@@ -154,7 +155,7 @@ class PreInspectionController extends Controller
 
             return response()->json([
                 'message' => 'Vorkontrolle erfolgreich eingereicht.',
-                'data'    => new PreInspectionDetailResource($preInspection),
+                'data' => new PreInspectionDetailResource($preInspection),
             ]);
         }
 
@@ -162,7 +163,7 @@ class PreInspectionController extends Controller
         if (array_key_exists('form_data', $validated)) {
             $preInspection->load('formSubmission.formTemplateVersion');
             $submission = $preInspection->formSubmission;
-            $version    = $submission?->formTemplateVersion;
+            $version = $submission?->formTemplateVersion;
 
             if ($version && $validated['form_data'] !== null) {
                 $this->validateFormData($version, $validated['form_data']);
@@ -182,7 +183,7 @@ class PreInspectionController extends Controller
 
         return response()->json([
             'message' => 'Vorkontrolle erfolgreich aktualisiert.',
-            'data'    => new PreInspectionDetailResource($preInspection),
+            'data' => new PreInspectionDetailResource($preInspection),
         ]);
     }
 
@@ -193,7 +194,7 @@ class PreInspectionController extends Controller
         return response()->json(['message' => 'Vorkontrolle erfolgreich gelöscht.']);
     }
 
-    private function validateFormData(\Taily\Models\FormTemplateVersion $version, array $data): void
+    private function validateFormData(FormTemplateVersion $version, array $data): void
     {
         $result = $this->formTemplateService->validateSubmissionData($version, $data);
 
