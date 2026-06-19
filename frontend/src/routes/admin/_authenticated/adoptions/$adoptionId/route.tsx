@@ -22,7 +22,9 @@ export const Route = createFileRoute(
   '/admin/_authenticated/adoptions/$adoptionId'
 )({
   loader: async ({ params }) => {
-    const adoption = await queryClient.ensureQueryData(getAdoptionQuery(params.adoptionId))
+    const adoption = await queryClient.ensureQueryData(
+      getAdoptionQuery(params.adoptionId)
+    )
     return { breadcrumb: `Vermittlung von ${adoption.animal.name}` }
   },
   component: RouteComponent,

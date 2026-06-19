@@ -23,7 +23,7 @@ export function BreadcrumbNav({ items }: BreadcrumbNavProps) {
         {items.map((crumb, index) => {
           const isLast = index === items.length - 1
           return (
-            <Fragment key={crumb.pathname}>
+            <Fragment key={`${crumb.pathname}-${index}`}>
               <BcItem>
                 {isLast ? (
                   <BreadcrumbPage>{crumb.label}</BreadcrumbPage>

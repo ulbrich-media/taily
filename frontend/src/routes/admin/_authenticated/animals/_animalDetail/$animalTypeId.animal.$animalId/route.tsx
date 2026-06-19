@@ -25,7 +25,9 @@ export const Route = createFileRoute(
   '/admin/_authenticated/animals/_animalDetail/$animalTypeId/animal/$animalId'
 )({
   loader: async ({ params }) => {
-    const animal = await queryClient.ensureQueryData(getAnimalQuery(params.animalId))
+    const animal = await queryClient.ensureQueryData(
+      getAnimalQuery(params.animalId)
+    )
     return { breadcrumb: animal.name }
   },
   component: RouteComponent,

@@ -21,7 +21,9 @@ export const Route = createFileRoute(
   '/admin/_authenticated/settings/organizations/$id'
 )({
   loader: async ({ params }) => {
-    const organization = await queryClient.ensureQueryData(organizationDetailQuery(params.id))
+    const organization = await queryClient.ensureQueryData(
+      organizationDetailQuery(params.id)
+    )
     return { breadcrumb: organization.name }
   },
   component: RouteComponent,

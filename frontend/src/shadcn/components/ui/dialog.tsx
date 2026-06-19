@@ -120,6 +120,8 @@ function DialogBreadcrumb({
   className,
   ...props
 }: React.ComponentProps<'div'>) {
+  if (!props.children) return null
+
   return (
     <div
       data-slot="dialog-breadcrumb"
