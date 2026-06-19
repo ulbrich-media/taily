@@ -69,7 +69,7 @@ export function Header({
       {/* Sticky Floating Header */}
       <div className="sticky top-0 z-50 w-full pt-2">
         <div className="container mx-auto px-4">
-          <header className="bg-card/90 backdrop-blur-sm border border-border rounded-xl shadow-sm">
+          <header className="bg-card/80 backdrop-blur-xl backdrop-saturate-200 border border-border rounded-xl shadow-sm">
             <div className="flex h-16 items-center justify-between px-6">
               {/* Left: Logo/Brand */}
               <div className="flex items-center gap-6">

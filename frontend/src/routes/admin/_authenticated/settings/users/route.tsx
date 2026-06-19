@@ -39,7 +39,7 @@ function RouteComponent() {
               <Edit /> Bearbeiten
             </EditRoute.Link>
           </Button>
-          <Button size="sm" variant="destructive" asChild>
+          <Button size="sm" variant="destructive_outline" asChild>
             <DeleteRoute.Link params={{ id: user.id }}>
               <Trash2 /> Löschen
             </DeleteRoute.Link>

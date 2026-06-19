@@ -6,6 +6,7 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
+  AlertDialogMedia,
   AlertDialogTitle,
 } from '@/shadcn/components/ui/alert-dialog'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
@@ -14,6 +15,7 @@ import { transportQueryKeys } from '@/admin/module/transports/api/queries'
 import { toast } from 'sonner'
 import type { TransportListResource } from '@/api/types/transports'
 import { adoptionQueryKeys } from '@/admin/module/adoptions/api/queries.ts'
+import { Trash2 } from 'lucide-react'
 
 interface TransportDeletePageProps {
   transport: TransportListResource
@@ -43,6 +45,9 @@ export function TransportDeletePage({
     <AlertDialog open onOpenChange={(open) => !open && onClose()}>
       <AlertDialogContent>
         <AlertDialogHeader>
+          <AlertDialogMedia className="text-destructive-solo">
+            <Trash2 />
+          </AlertDialogMedia>
           <AlertDialogTitle>Transport löschen</AlertDialogTitle>
           <AlertDialogDescription>
             {transport.adoptions.length > 0

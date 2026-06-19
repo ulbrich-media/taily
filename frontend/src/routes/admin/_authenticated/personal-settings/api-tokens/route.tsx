@@ -32,7 +32,7 @@ function RouteComponent() {
   )
 
   const renderRowActions = (token: ApiTokenResource) => (
-    <Button size="sm" variant="destructive" asChild>
+    <Button size="sm" variant="destructive_outline" asChild>
       <DeleteRoute.Link params={{ id: `${token.id}` }}>
         <Trash2 /> Löschen
       </DeleteRoute.Link>

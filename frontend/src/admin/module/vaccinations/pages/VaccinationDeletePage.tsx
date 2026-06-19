@@ -43,7 +43,7 @@ export function VaccinationDeletePage({
     <AlertDialog open onOpenChange={onClose}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogMedia className="text-destructive">
+          <AlertDialogMedia className="text-destructive-solo">
             <Trash2Icon />
           </AlertDialogMedia>
           <AlertDialogTitle>Impfung löschen</AlertDialogTitle>
