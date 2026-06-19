@@ -3,12 +3,15 @@ import { animalTypeQueryKeys } from '@/admin/module/animal-types/api/queries'
 import { deleteAnimalType } from '@/admin/module/animal-types/api/requests'
 import type { AnimalTypeResource } from '@/api/types/animal-types'
 import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/shadcn/components/ui/dialog'
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+} from '@/shadcn/components/ui/alert-dialog'
 import { Button } from '@/shadcn/components/ui/button'
 import { Trash2Icon } from 'lucide-react'
 import { toast } from 'sonner'
@@ -37,32 +40,26 @@ export function AnimalTypeDeletePage({
   })
 
   return (
-    <Dialog open onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Tierart löschen</DialogTitle>
-        </DialogHeader>
-
-        <div>
-          <div className="leading-7 mb-2">
+    <AlertDialog open onOpenChange={onClose}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogMedia className="text-destructive">
+            <Trash2Icon />
+          </AlertDialogMedia>
+          <AlertDialogTitle>Tierart löschen</AlertDialogTitle>
+          <AlertDialogDescription>
             Möchtest du die Tierart{' '}
-            <span className="font-medium">{animalType.title}</span> wirklich
-            löschen?
-          </div>
-          <div className="leading-7 mb-2">
-            Dieser Vorgang kann nicht rückgängig gemacht werden.
-          </div>
-        </div>
-
-        <DialogFooter>
-          <Button
-            type="button"
-            variant="outline"
+            <span className="font-bold">{animalType.title}</span> wirklich
+            löschen? Dieser Vorgang kann nicht rückgängig gemacht werden.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel
             onClick={onClose}
             disabled={deleteMutation.isPending}
           >
             Abbrechen
-          </Button>
+          </AlertDialogCancel>
           <Button
             variant="destructive"
             disabled={deleteMutation.isPending}
@@ -70,8 +67,8 @@ export function AnimalTypeDeletePage({
           >
             {deleteMutation.isPending ? 'Wird gelöscht...' : 'Ja, löschen'}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   )
 }
