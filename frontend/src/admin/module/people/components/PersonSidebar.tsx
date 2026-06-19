@@ -32,6 +32,7 @@ export function PersonSidebar({ person }: PersonSidebarProps) {
                 src={person.pictures[0].url}
                 alt={person.full_name}
                 className="w-full h-full object-cover"
+                loading="lazy"
               />
             ) : (
               <User className="h-20 w-20 text-muted-foreground" />

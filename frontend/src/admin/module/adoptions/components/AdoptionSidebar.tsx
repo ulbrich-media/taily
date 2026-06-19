@@ -53,6 +53,7 @@ export function AdoptionSidebar({
                       src={adoption.animal.pictures[0].url}
                       alt={adoption.animal.name}
                       className="w-full h-full object-cover"
+                      loading="lazy"
                     />
                   ) : (
                     <PawPrint className="size-12 text-muted-foreground" />
@@ -79,6 +80,7 @@ export function AdoptionSidebar({
                       src={adoption.applicant.pictures[0].url}
                       alt={adoption.applicant.full_name}
                       className="w-full h-full object-cover"
+                      loading="lazy"
                     />
                   ) : (
                     <User className="size-12 text-muted-foreground" />
