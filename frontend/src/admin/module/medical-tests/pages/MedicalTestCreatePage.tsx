@@ -13,6 +13,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogBreadcrumb,
 } from '@/shadcn/components/ui/dialog.tsx'
 import { Button } from '@/shadcn/components/ui/button.tsx'
 import { FieldGroup } from '@/shadcn/components/ui/field.tsx'
@@ -90,8 +91,8 @@ export function MedicalTestCreatePage({
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
-        {breadcrumb}
         <DialogHeader>
+          <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
           <DialogTitle>Neuen Test erstellen</DialogTitle>
           <DialogDescription>
             Erstelle einen neuen Test für eine Tierart.

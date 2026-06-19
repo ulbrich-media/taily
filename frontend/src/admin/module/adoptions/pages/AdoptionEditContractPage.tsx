@@ -6,6 +6,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogBreadcrumb,
 } from '@/shadcn/components/ui/dialog.tsx'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm, useWatch } from 'react-hook-form'
@@ -126,8 +127,8 @@ export function AdoptionEditContractPage({
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
-        {breadcrumb}
         <DialogHeader>
+          <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
           <DialogTitle>Schutzvertrag bearbeiten</DialogTitle>
           <DialogDescription>
             Unterzeichnungsstatus und Schutzvertragsdatei verwalten.

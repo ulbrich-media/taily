@@ -12,6 +12,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogBreadcrumb,
 } from '@/shadcn/components/ui/dialog'
 import { Button } from '@/shadcn/components/ui/button'
 import { FieldGroup } from '@/shadcn/components/ui/field'
@@ -93,8 +94,8 @@ export function UserCreatePage({ onClose, breadcrumb }: UserCreatePageProps) {
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
-        {breadcrumb}
         <DialogHeader>
+          <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
           <DialogTitle>Neuen Benutzer erstellen</DialogTitle>
           <DialogDescription>
             Erstelle einen neuen Benutzer. Eine E-Mail zur Einladung wird

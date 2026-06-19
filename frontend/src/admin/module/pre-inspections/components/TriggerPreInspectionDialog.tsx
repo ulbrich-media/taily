@@ -9,6 +9,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogBreadcrumb,
 } from '@/shadcn/components/ui/dialog'
 import { Button } from '@/shadcn/components/ui/button'
 import { FieldGroup } from '@/shadcn/components/ui/field'
@@ -85,8 +86,8 @@ export function TriggerPreInspectionDialog({
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent>
-        {breadcrumb}
         <DialogHeader>
+          <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
           <DialogTitle>Neue Kontrolle starten</DialogTitle>
           <DialogDescription>
             Starte eine neue Vorkontrolle. Du kannst optional einen Kontrolleur

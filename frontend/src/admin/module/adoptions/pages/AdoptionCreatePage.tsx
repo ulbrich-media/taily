@@ -6,6 +6,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogBreadcrumb,
 } from '@/shadcn/components/ui/dialog.tsx'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
@@ -86,8 +87,8 @@ export function AdoptionCreatePage({
       }}
     >
       <DialogContent>
-        {breadcrumb}
         <DialogHeader>
+          <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
           <DialogTitle>Neue Vermittlung</DialogTitle>
           <DialogDescription>
             Erstelle einen neuen Vermittlungsvorgang für ein Tier.

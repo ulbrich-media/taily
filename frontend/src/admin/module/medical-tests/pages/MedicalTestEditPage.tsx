@@ -14,6 +14,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogBreadcrumb,
 } from '@/shadcn/components/ui/dialog.tsx'
 import { Button } from '@/shadcn/components/ui/button.tsx'
 import { FieldGroup } from '@/shadcn/components/ui/field.tsx'
@@ -72,8 +73,8 @@ export function MedicalTestEditPage({
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
-        {breadcrumb}
         <DialogHeader>
+          <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
           <DialogTitle>Test bearbeiten</DialogTitle>
           <DialogDescription>Bearbeite den Test.</DialogDescription>
         </DialogHeader>

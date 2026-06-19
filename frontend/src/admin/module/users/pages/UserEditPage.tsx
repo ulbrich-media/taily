@@ -13,6 +13,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogBreadcrumb,
 } from '@/shadcn/components/ui/dialog'
 import { Button } from '@/shadcn/components/ui/button'
 import { FieldGroup } from '@/shadcn/components/ui/field'
@@ -81,8 +82,8 @@ export function UserEditPage({ user, onClose, breadcrumb }: UserEditPageProps) {
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
-        {breadcrumb}
         <DialogHeader>
+          <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
           <DialogTitle>Benutzer bearbeiten</DialogTitle>
           <DialogDescription>
             Bearbeite die Benutzerdaten und Berechtigungen.

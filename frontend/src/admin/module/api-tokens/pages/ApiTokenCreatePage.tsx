@@ -13,6 +13,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogBreadcrumb,
 } from '@/shadcn/components/ui/dialog.tsx'
 import { Button } from '@/shadcn/components/ui/button.tsx'
 import { CopyIcon } from 'lucide-react'
@@ -122,8 +123,8 @@ export function ApiTokenCreatePage({
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
-        {breadcrumb}
         <DialogHeader>
+          <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
           <DialogTitle>Neues API Token erstellen</DialogTitle>
           <DialogDescription>
             Erstelle ein neues API Token für den externen Zugriff auf die API.
