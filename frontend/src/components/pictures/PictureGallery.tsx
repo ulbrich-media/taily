@@ -139,6 +139,7 @@ function SortablePicture({
             src={picture.url}
             alt=""
             className="w-full h-full object-cover select-none rounded-lg"
+            loading="lazy"
             draggable={false}
           />
         )}
