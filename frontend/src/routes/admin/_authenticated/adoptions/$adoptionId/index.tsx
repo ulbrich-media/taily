@@ -13,7 +13,7 @@ function RouteComponent() {
 
   useEffect(() => {
     navigateToAdoptionTab({ replace: true })
-  })
+  }, [navigateToAdoptionTab])
 
   return null
 }
