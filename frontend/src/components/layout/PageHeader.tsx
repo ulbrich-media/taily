@@ -6,8 +6,8 @@ export const tabLinkClass =
 interface PageHeaderProps {
   title: string
   description?: string
-  actions?: ReactNode
-  links?: ReactNode
+  actions?: ReactNode // one or two buttons to do something
+  links?: ReactNode // a navigation element with a list of links
 }
 
 export function PageHeader({
