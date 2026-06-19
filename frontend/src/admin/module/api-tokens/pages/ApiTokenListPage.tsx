@@ -29,7 +29,6 @@ export function ApiTokenListPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        icon={Key}
         title="API Tokens"
         description="Verwalte API-Tokens für den externen Zugriff"
         actions={createAction}

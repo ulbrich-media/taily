@@ -63,7 +63,6 @@ export function VaccinationListPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        icon={Syringe}
         title="Impfungen"
         description="Verwalte die verfügbaren Impfungen der Tiere"
         actions={createAction}

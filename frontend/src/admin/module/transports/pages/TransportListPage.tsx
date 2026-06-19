@@ -35,7 +35,6 @@ export function TransportListPage({
   return (
     <div className="space-y-8">
       <PageHeader
-        icon={Truck}
         title="Transporte"
         description="Plane die nächsten Tiertransporte"
         actions={createAction}

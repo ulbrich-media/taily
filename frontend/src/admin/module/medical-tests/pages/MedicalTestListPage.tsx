@@ -63,7 +63,6 @@ export function MedicalTestListPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        icon={FlaskConical}
         title="Tests"
         description="Verwalte die verfügbaren medizinischen Tests der Tiere"
         actions={createAction}

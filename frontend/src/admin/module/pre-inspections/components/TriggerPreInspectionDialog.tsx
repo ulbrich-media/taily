@@ -84,10 +84,7 @@ export function TriggerPreInspectionDialog({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <ClipboardCheck className="h-5 w-5 text-primary" />
-            Neue Kontrolle starten
-          </DialogTitle>
+          <DialogTitle>Neue Kontrolle starten</DialogTitle>
           <DialogDescription>
             Starte eine neue Vorkontrolle. Du kannst optional einen Kontrolleur
             zuweisen.

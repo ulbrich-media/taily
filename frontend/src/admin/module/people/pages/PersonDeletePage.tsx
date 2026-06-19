@@ -50,10 +50,7 @@ export function PersonDeletePage({
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Trash2 className="h-5 w-5 text-destructive" />
-            Person löschen
-          </DialogTitle>
+          <DialogTitle>Person löschen</DialogTitle>
           <DialogDescription>
             Bist du sicher, dass du die Person <strong>{fullName}</strong>{' '}
             löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden.

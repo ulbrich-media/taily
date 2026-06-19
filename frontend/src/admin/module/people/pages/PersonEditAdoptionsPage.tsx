@@ -36,10 +36,8 @@ export function PersonEditAdoptionsPage({
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>
-            <CardTitleIcon icon={Heart} />
-            Vermittlungen
-          </CardTitle>
+          <CardTitle>Vermittlungen</CardTitle>
+          <CardTitleIcon icon={Heart} />
           <CardDescription>
             Übersicht der Vermittlungen dieser Person
           </CardDescription>
@@ -65,10 +63,8 @@ export function PersonEditAdoptionsPage({
 
       <Card>
         <CardHeader>
-          <CardTitle>
-            <CardTitleIcon icon={ClipboardCheck} />
-            Vorkontrollen
-          </CardTitle>
+          <CardTitle>Vorkontrollen</CardTitle>
+          <CardTitleIcon icon={ClipboardCheck} />
           <CardDescription>
             Aus Vermittlungen entstandene Vorkontrollen für diese Person
           </CardDescription>

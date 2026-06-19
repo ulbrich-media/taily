@@ -12,7 +12,7 @@ function RouteComponent() {
   const navigateToAdoptionTab = AdoptionTabRoute.useNavigate()
 
   useEffect(() => {
-    navigateToAdoptionTab({})
+    navigateToAdoptionTab({ replace: true })
   })
 
   return null

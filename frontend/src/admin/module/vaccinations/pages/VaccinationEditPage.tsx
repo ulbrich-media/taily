@@ -71,10 +71,7 @@ export function VaccinationEditPage({
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Syringe className="h-5 w-5 text-primary" />
-            Impfung bearbeiten
-          </DialogTitle>
+          <DialogTitle>Impfung bearbeiten</DialogTitle>
           <DialogDescription>Bearbeite die Impfung.</DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>

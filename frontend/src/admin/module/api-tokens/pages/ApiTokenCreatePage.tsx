@@ -87,10 +87,7 @@ export function ApiTokenCreatePage({
       <Dialog open onOpenChange={onClose}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <KeyIcon className="h-5 w-5 text-primary" />
-              API Token erfolgreich erstellt
-            </DialogTitle>
+            <DialogTitle>API Token erfolgreich erstellt</DialogTitle>
             <DialogDescription>
               Bitte kopiere den Token jetzt. <br />
               <span className="text-destructive">
@@ -124,10 +121,7 @@ export function ApiTokenCreatePage({
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <KeyIcon className="h-5 w-5 text-primary" />
-            Neues API Token erstellen
-          </DialogTitle>
+          <DialogTitle>Neues API Token erstellen</DialogTitle>
           <DialogDescription>
             Erstelle ein neues API Token für den externen Zugriff auf die API.
           </DialogDescription>

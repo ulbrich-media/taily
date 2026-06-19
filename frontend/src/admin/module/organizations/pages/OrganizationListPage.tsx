@@ -26,7 +26,6 @@ export function OrganizationListPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        icon={Building2}
         title="Organisationen"
         description="Verwalte alle Organisationen im System"
         actions={createAction}

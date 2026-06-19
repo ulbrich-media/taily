@@ -28,7 +28,6 @@ export function FormTemplateListPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        icon={ClipboardList}
         title="Formularvorlagen"
         description="Verwalte dynamische Formularvorlagen für Inspektionen, Bewerbungen und mehr"
         actions={createAction}

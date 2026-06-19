@@ -90,10 +90,7 @@ export function MedicalTestCreatePage({
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <FlaskConical className="h-5 w-5 text-primary" />
-            Neuen Test erstellen
-          </DialogTitle>
+          <DialogTitle>Neuen Test erstellen</DialogTitle>
           <DialogDescription>
             Erstelle einen neuen Test für eine Tierart.
           </DialogDescription>

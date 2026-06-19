@@ -47,7 +47,6 @@ export function AnimalListPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        icon={PawPrint}
         title="Tiere"
         description="Verwalte alle Tiere im System"
         actions={createAction}

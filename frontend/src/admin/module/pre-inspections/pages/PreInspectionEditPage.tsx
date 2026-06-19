@@ -156,7 +156,6 @@ export function PreInspectionEditPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        icon={ClipboardCheck}
         title="Vorkontrolle bearbeiten"
         description="Details und Ergebnis der Vorkontrolle"
         actions={deleteAction}

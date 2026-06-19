@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react'
-import { Users } from 'lucide-react'
 import type { UserResource } from '@/api/types/users'
 import {
   Table,
@@ -77,7 +76,6 @@ export function UserListPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        icon={Users}
         title="Benutzerverwaltung"
         description="Verwalte Benutzer und deren Berechtigungen"
         actions={createAction}

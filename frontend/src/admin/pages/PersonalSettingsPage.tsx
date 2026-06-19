@@ -13,7 +13,6 @@ export function PersonalSettingsPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        icon={Settings}
         title="Persönliche Einstellungen"
         description="Passe deine persönlichen Präferenzen an"
       />

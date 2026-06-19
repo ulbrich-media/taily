@@ -87,10 +87,7 @@ export function AnimalTypeEditPage({
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <PawPrint className="h-5 w-5 text-primary" />
-            Tierart bearbeiten
-          </DialogTitle>
+          <DialogTitle>Tierart bearbeiten</DialogTitle>
           <DialogDescription>
             Bearbeite die Tierart und ihre Formularvorlage.
           </DialogDescription>

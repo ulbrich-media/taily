@@ -19,7 +19,6 @@ export function AdoptionListPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        icon={Heart}
         title="Vermittlungen"
         description="Verwalte alle Vermittlungsvorgänge"
         actions={createAction}

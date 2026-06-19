@@ -14,7 +14,6 @@ import {
   DialogTitle,
 } from '@/shadcn/components/ui/dialog'
 import { Button } from '@/shadcn/components/ui/button'
-import { Edit } from 'lucide-react'
 import { FieldGroup } from '@/shadcn/components/ui/field'
 import { toast } from 'sonner'
 import { UserRole } from '@/api/types/users'
@@ -81,10 +80,7 @@ export function UserEditPage({ user, onClose }: UserEditPageProps) {
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Edit className="h-5 w-5 text-primary" />
-            Benutzer bearbeiten
-          </DialogTitle>
+          <DialogTitle>Benutzer bearbeiten</DialogTitle>
           <DialogDescription>
             Bearbeite die Benutzerdaten und Berechtigungen.
           </DialogDescription>

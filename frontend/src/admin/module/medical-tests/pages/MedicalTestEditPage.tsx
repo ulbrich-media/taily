@@ -71,10 +71,7 @@ export function MedicalTestEditPage({
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <FlaskConical className="h-5 w-5 text-primary" />
-            Test bearbeiten
-          </DialogTitle>
+          <DialogTitle>Test bearbeiten</DialogTitle>
           <DialogDescription>Bearbeite den Test.</DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>

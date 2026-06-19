@@ -37,10 +37,7 @@ export function ApiTokenDeletePage({
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Trash2Icon className="h-5 w-5 text-destructive" />
-            Token löschen
-          </DialogTitle>
+          <DialogTitle>Token löschen</DialogTitle>
         </DialogHeader>
 
         <div>
