@@ -15,7 +15,7 @@ import {
   DialogTitle,
 } from '@/shadcn/components/ui/dialog.tsx'
 import { Button } from '@/shadcn/components/ui/button.tsx'
-import { CopyIcon, KeyIcon } from 'lucide-react'
+import { CopyIcon } from 'lucide-react'
 import {
   Field,
   FieldContent,

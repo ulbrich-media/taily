@@ -45,8 +45,7 @@ function RouteComponent() {
           title={person.full_name}
           description={
             person.organization
-              ? `${person.organization.name}
-          ${person.organization_role && ` · ${person.organization_role}`}`
+              ? `${person.organization.name}${person.organization_role ? ` · ${person.organization_role}` : ''}`
               : undefined
           }
           links={

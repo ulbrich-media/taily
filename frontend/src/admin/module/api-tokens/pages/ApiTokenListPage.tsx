@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react'
-import { Key } from 'lucide-react'
 import type { ApiTokenResource } from '@/api/types/api-tokens'
 import {
   Table,

@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react'
-import { Heart } from 'lucide-react'
 import type { AdoptionListResource } from '@/api/types/adoptions'
 import { TableListView } from '@/components/list/TableListView'
 import { PageHeader } from '@/components/layout/PageHeader'

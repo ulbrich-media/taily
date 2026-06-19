@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react'
 import {
-  Settings,
   Syringe,
   FlaskConical,
   Users,

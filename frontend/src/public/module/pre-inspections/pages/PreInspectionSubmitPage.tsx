@@ -15,15 +15,13 @@ import {
 import { Button } from '@/shadcn/components/ui/button'
 import { RadioGroup, RadioGroupItem } from '@/shadcn/components/ui/radio-group'
 import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogMedia,
-  AlertDialogTitle,
-} from '@/shadcn/components/ui/alert-dialog'
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/shadcn/components/ui/dialog'
 import { CheckCircle, ClipboardCheck } from 'lucide-react'
 import { getPublicInspectionQuery } from '@/public/module/pre-inspections/api/queries'
 import { submitPublicInspection } from '@/public/module/pre-inspections/api/requests'
@@ -178,26 +176,24 @@ export function PreInspectionSubmitPage({
         </div>
       </form>
 
-      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogMedia>
-              <ClipboardCheck />
-            </AlertDialogMedia>
-            <AlertDialogTitle>Einreichung bestätigen</AlertDialogTitle>
-            <AlertDialogDescription>
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Einreichung bestätigen</DialogTitle>
+            <DialogDescription>
               Möchtest du die Vorkontrolle wirklich einreichen? Diese Aktion
               kann nicht rückgängig gemacht werden. Der Link wird danach
               ungültig.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
               onClick={() => setConfirmOpen(false)}
               disabled={submitMutation.isPending}
             >
               Abbrechen
-            </AlertDialogCancel>
+            </Button>
             <Button
               onClick={() => submitMutation.mutate(form.getValues())}
               disabled={submitMutation.isPending}
@@ -206,9 +202,9 @@ export function PreInspectionSubmitPage({
                 ? 'Wird eingereicht...'
                 : 'Ja, einreichen'}
             </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

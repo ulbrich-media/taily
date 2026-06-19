@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Settings, Key } from 'lucide-react'
+import { Key } from 'lucide-react'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { NavigationCards } from '@/components/navigation/NavigationCards'
 

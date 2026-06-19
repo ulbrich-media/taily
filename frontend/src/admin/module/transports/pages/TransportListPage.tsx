@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { SlashSquare, Truck } from 'lucide-react'
+import { SlashSquare } from 'lucide-react'
 import type { TransportListResource } from '@/api/types/transports'
 import { PageHeader } from '@/components/layout/PageHeader'
 import {

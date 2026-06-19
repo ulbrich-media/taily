@@ -16,7 +16,6 @@ import {
   DialogTitle,
 } from '@/shadcn/components/ui/dialog'
 import { Button } from '@/shadcn/components/ui/button'
-import { PawPrint } from 'lucide-react'
 import { FieldGroup } from '@/shadcn/components/ui/field'
 import { toast } from 'sonner'
 import { FormBlocker } from '@/components/form/FormBlocker'

@@ -27,6 +27,10 @@ import {
 } from '@/shadcn/components/ui/sheet'
 import { Menu, LogOut, Sun, Moon, Monitor, PawPrint } from 'lucide-react'
 import { Badge } from '@/shadcn/components/ui/badge.tsx'
+import {
+  NavigationMenu,
+  NavigationMenuList,
+} from '@/shadcn/components/ui/navigation-menu.tsx'
 
 interface HeaderProps {
   navLinks: ReactNode
@@ -78,8 +82,10 @@ export function Header({
                 </a>
 
                 {/* Desktop Navigation */}
-                <nav className="hidden md:flex items-center gap-1">
-                  {navLinks}
+                <nav className="hidden md:block">
+                  <NavigationMenu>
+                    <NavigationMenuList>{navLinks}</NavigationMenuList>
+                  </NavigationMenu>
                 </nav>
               </div>
 
@@ -189,8 +195,15 @@ export function Header({
                       <p className="px-3 text-xs font-semibold text-muted-foreground mb-2">
                         Navigation
                       </p>
-                      <div onClick={() => setMobileMenuOpen(false)}>
-                        {navLinks}
+                      <div
+                        className="px-1"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <NavigationMenu>
+                          <NavigationMenuList className="flex-col items-start">
+                            {navLinks}
+                          </NavigationMenuList>
+                        </NavigationMenu>
                       </div>
                     </div>
 
@@ -201,8 +214,15 @@ export function Header({
                       <p className="px-3 text-xs font-semibold text-muted-foreground mb-2">
                         Konto
                       </p>
-                      <div onClick={() => setMobileMenuOpen(false)}>
-                        {mobileUserLinks}
+                      <div
+                        className="px-1"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <NavigationMenu>
+                          <NavigationMenuList className="flex-col items-start">
+                            {mobileUserLinks}
+                          </NavigationMenuList>
+                        </NavigationMenu>
                       </div>
                     </div>
 

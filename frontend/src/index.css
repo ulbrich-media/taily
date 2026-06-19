@@ -1,7 +1,7 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
-@import "@fontsource-variable/public-sans";
-@import "@fontsource-variable/fraunces";
+@import '@fontsource-variable/public-sans';
+@import '@fontsource-variable/fraunces';
 
 :root {
   color-scheme: light dark;
@@ -33,8 +33,12 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive); /* destructive color primarily for filled elements (backgrounds) */
-  --color-destructive-solo: var(--destructive-solo); /* destructive color for thiner, lighter elements (text, icons, border) */
+  --color-destructive: var(
+    --destructive
+  ); /* destructive color primarily for filled elements (backgrounds) */
+  --color-destructive-solo: var(
+    --destructive-solo
+  ); /* destructive color for thiner, lighter elements (text, icons, border) */
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -60,16 +64,16 @@
   --card-foreground: oklch(0.153 0.006 107.1);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.153 0.006 107.1);
-  --primary: #FABF37;
-  --primary-foreground: #2B2A22;
+  --primary: #fabf37;
+  --primary-foreground: #2b2a22;
   --secondary: oklch(0.967 0.001 286.375);
   --secondary-foreground: oklch(0.21 0.006 285.885);
   --muted: oklch(0.966 0.005 106.5);
   --muted-foreground: oklch(0.58 0.031 107.3);
   --accent: oklch(0.966 0.005 106.5);
   --accent-foreground: oklch(0.228 0.013 107.4);
-  --destructive: #D6402B;
-  --destructive-solo: #D6402B;
+  --destructive: #d6402b;
+  --destructive-solo: #d6402b;
   --border: oklch(0.93 0.007 106.5);
   --input: oklch(0.976 0.003 106.448);
   --ring: oklch(0.737 0.021 106.9);
@@ -96,15 +100,15 @@
   --card-foreground: oklch(0.988 0.003 106.5);
   --popover: oklch(0.228 0.013 107.4);
   --popover-foreground: oklch(0.988 0.003 106.5);
-  --primary: #EFB839;
-  --primary-foreground: #2B2A22;
+  --primary: #efb839;
+  --primary-foreground: #2b2a22;
   --secondary: oklch(0.274 0.006 286.033);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.286 0.016 107.4);
   --muted-foreground: oklch(0.737 0.021 106.9);
   --accent: oklch(0.286 0.016 107.4);
   --accent-foreground: oklch(0.988 0.003 106.5);
-  --destructive: #D6402B;
+  --destructive: #d6402b;
   --destructive-solo: #fa604c;
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);

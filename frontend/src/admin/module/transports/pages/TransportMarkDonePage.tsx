@@ -1,13 +1,11 @@
 import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogMedia,
-  AlertDialogTitle,
-} from '@/shadcn/components/ui/alert-dialog'
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/shadcn/components/ui/dialog'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -26,7 +24,6 @@ import {
   zFieldDateNoFuture,
 } from '@/components/field/DateInput.utils.ts'
 import { format } from 'date-fns'
-import { CheckCircle } from 'lucide-react'
 
 const schema = z.object({
   done_at: zFieldDateNoFuture,
@@ -67,18 +64,15 @@ export function TransportMarkDonePage({
   })
 
   return (
-    <AlertDialog open onOpenChange={onClose}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogMedia>
-            <CheckCircle />
-          </AlertDialogMedia>
-          <AlertDialogTitle>Transport abschließen</AlertDialogTitle>
-          <AlertDialogDescription>
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Transport abschließen</DialogTitle>
+          <DialogDescription>
             Der Transport wird als abgeschlossen markiert. Diese Aktion kann
             nicht rückgängig gemacht werden.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
+          </DialogDescription>
+        </DialogHeader>
         <form
           onSubmit={form.handleSubmit((data) => mutation.mutate(data))}
           className="space-y-4"
@@ -91,20 +85,21 @@ export function TransportMarkDonePage({
               disableFutureDates
             />
           </FieldGroup>
-          <AlertDialogFooter>
-            <AlertDialogCancel
+          <DialogFooter>
+            <Button
               type="button"
+              variant="outline"
               onClick={onClose}
               disabled={mutation.isPending}
             >
               Abbrechen
-            </AlertDialogCancel>
+            </Button>
             <Button type="submit" disabled={mutation.isPending}>
               {mutation.isPending ? 'Wird gespeichert...' : 'Ja, abschließen'}
             </Button>
-          </AlertDialogFooter>
+          </DialogFooter>
         </form>
-      </AlertDialogContent>
-    </AlertDialog>
+      </DialogContent>
+    </Dialog>
   )
 }

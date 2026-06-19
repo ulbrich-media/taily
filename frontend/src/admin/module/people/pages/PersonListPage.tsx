@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Users, User } from 'lucide-react'
+import { User } from 'lucide-react'
 import type { PersonListResource } from '@/api/types/people'
 import {
   Table,
