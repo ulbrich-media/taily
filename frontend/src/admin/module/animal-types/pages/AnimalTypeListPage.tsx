@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { PawPrint, SlashSquareIcon } from 'lucide-react'
+import { SlashSquareIcon } from 'lucide-react'
 import type { AnimalTypeResource } from '@/api/types/animal-types'
 import {
   Table,

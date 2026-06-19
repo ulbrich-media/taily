@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react'
-import { Building2 } from 'lucide-react'
 import type { OrganizationResource } from '@/api/types/organizations'
 import {
   Table,

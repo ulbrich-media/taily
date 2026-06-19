@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react'
-import { ClipboardList } from 'lucide-react'
 import type { FormTemplateResource } from '@/api/types/form-templates'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { TableListView } from '@/components/list/TableListView'

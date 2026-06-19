@@ -1,5 +1,5 @@
 import { useMemo, type ReactNode } from 'react'
-import { Syringe, SlashSquareIcon } from 'lucide-react'
+import { SlashSquareIcon } from 'lucide-react'
 import {
   Table,
   TableBody,
