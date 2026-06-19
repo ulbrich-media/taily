@@ -25,6 +25,7 @@ interface SettingsPageProps {
   medicalTestsAction: ReactNode
   organizationsAction: ReactNode
   formTemplatesAction: ReactNode
+  breadcrumb?: ReactNode
 }
 
 export function SettingsPage({
@@ -34,6 +35,7 @@ export function SettingsPage({
   medicalTestsAction,
   organizationsAction,
   formTemplatesAction,
+  breadcrumb,
 }: SettingsPageProps) {
   const { isAdmin } = useAuth()
 
@@ -42,6 +44,7 @@ export function SettingsPage({
       <PageHeader
         title="Einstellungen"
         description="Verwalte deine Systemeinstellungen"
+        breadcrumb={breadcrumb}
       />
 
       {!isAdmin && (

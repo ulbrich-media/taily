@@ -18,12 +18,14 @@ interface FormTemplateResourceListPageProps {
   templates: FormTemplateResource[]
   createAction?: ReactNode
   renderRowActions: (template: FormTemplateResource) => ReactNode
+  breadcrumb?: ReactNode
 }
 
 export function FormTemplateListPage({
   templates,
   createAction,
   renderRowActions,
+  breadcrumb,
 }: FormTemplateResourceListPageProps) {
   return (
     <div className="space-y-6">
@@ -31,6 +33,7 @@ export function FormTemplateListPage({
         title="Formularvorlagen"
         description="Verwalte dynamische Formularvorlagen für Inspektionen, Bewerbungen und mehr"
         actions={createAction}
+        breadcrumb={breadcrumb}
       />
 
       <TableListView

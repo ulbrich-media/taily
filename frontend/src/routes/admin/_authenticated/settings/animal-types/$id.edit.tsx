@@ -1,4 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { useBreadcrumbs } from '@/router/useBreadcrumbs'
+import { BreadcrumbNav } from '@/router/BreadcrumbNav'
 import { queryClient } from '@/lib/queryClient'
 import { listAnimalTypesQuery } from '@/admin/module/animal-types/api/queries'
 import { listFormTemplatesQuery } from '@/admin/module/form-templates/api/queries'
@@ -25,11 +27,16 @@ export const Route = createFileRoute(
     if (!animalType) {
       throw new Response('Animal type not found', { status: 404 })
     }
+
+    return {
+      breadcrumb: `${animalType.title} bearbeiten`,
+    }
   },
   component: RouteComponent,
 })
 
 function RouteComponent() {
+  const breadcrumbs = useBreadcrumbs()
   const { id } = Route.useParams()
   const navigate = AnimalTypesRoute.useNavigate()
   const { data: animalTypesData } = useSuspenseQuery(listAnimalTypesQuery)
@@ -45,6 +52,7 @@ function RouteComponent() {
       animalType={animalType}
       formTemplates={formTemplatesData.data}
       onClose={handleClose}
+      breadcrumb={<BreadcrumbNav items={breadcrumbs} />}
     />
   )
 }

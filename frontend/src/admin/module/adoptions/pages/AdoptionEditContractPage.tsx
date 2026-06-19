@@ -1,4 +1,4 @@
-import { type ChangeEvent, useEffect, useState } from 'react'
+import { type ChangeEvent, useEffect, useState, type ReactNode } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -39,11 +39,13 @@ type FormData = z.infer<typeof schema>
 interface AdoptionEditContractPageProps {
   adoption: AdoptionDetailResource
   onClose: () => void
+  breadcrumb?: ReactNode
 }
 
 export function AdoptionEditContractPage({
   adoption,
   onClose,
+  breadcrumb,
 }: AdoptionEditContractPageProps) {
   const queryClient = useQueryClient()
 
@@ -124,6 +126,7 @@ export function AdoptionEditContractPage({
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
+        {breadcrumb}
         <DialogHeader>
           <DialogTitle>Schutzvertrag bearbeiten</DialogTitle>
           <DialogDescription>

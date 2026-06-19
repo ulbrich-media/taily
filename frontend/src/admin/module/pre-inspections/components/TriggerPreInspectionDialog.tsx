@@ -18,6 +18,7 @@ import { PersonSelect } from '@/components/field/PersonSelect'
 import { preInspectionQueryKeys } from '@/admin/module/pre-inspections/api/queries'
 import { createPreInspection } from '@/admin/module/pre-inspections/api/requests'
 import type { PeopleResponse } from '@/admin/module/people/api/types.ts'
+import type { ReactNode } from 'react'
 
 const triggerSchema = z.object({
   inspector_id: z.string().optional().nullable(),
@@ -32,6 +33,7 @@ interface TriggerPreInspectionDialogProps {
   animalTypeId: string
   inspectors: PeopleResponse
   onCreated: (id: string) => void
+  breadcrumb?: ReactNode
 }
 
 export function TriggerPreInspectionDialog({
@@ -41,6 +43,7 @@ export function TriggerPreInspectionDialog({
   animalTypeId,
   inspectors,
   onCreated,
+  breadcrumb,
 }: TriggerPreInspectionDialogProps) {
   const queryClient = useQueryClient()
 
@@ -83,6 +86,7 @@ export function TriggerPreInspectionDialog({
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent>
+        {breadcrumb}
         <DialogHeader>
           <DialogTitle>Neue Kontrolle starten</DialogTitle>
           <DialogDescription>

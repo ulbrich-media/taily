@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -34,11 +34,13 @@ type CreateMedicalTestFormData = z.infer<typeof createMedicalTestSchema>
 interface MedicalTestCreatePageProps {
   animalTypes: AnimalTypeResource[]
   onClose: () => void
+  breadcrumb?: ReactNode
 }
 
 export function MedicalTestCreatePage({
   animalTypes,
   onClose,
+  breadcrumb,
 }: MedicalTestCreatePageProps) {
   const queryClient = useQueryClient()
   const [keepOpen, setKeepOpen] = useState(false)
@@ -89,6 +91,7 @@ export function MedicalTestCreatePage({
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
+        {breadcrumb}
         <DialogHeader>
           <DialogTitle>Neuen Test erstellen</DialogTitle>
           <DialogDescription>

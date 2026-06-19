@@ -1,3 +1,4 @@
+import { type ReactNode } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -32,11 +33,13 @@ type CreateAnimalTypeFormData = z.infer<typeof createAnimalTypeSchema>
 interface AnimalTypeCreatePageProps {
   formTemplates: FormTemplateResource[]
   onClose: () => void
+  breadcrumb?: ReactNode
 }
 
 export function AnimalTypeCreatePage({
   formTemplates,
   onClose,
+  breadcrumb,
 }: AnimalTypeCreatePageProps) {
   const queryClient = useQueryClient()
 
@@ -79,6 +82,7 @@ export function AnimalTypeCreatePage({
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
+        {breadcrumb}
         <DialogHeader>
           <DialogTitle>Neue Tierart erstellen</DialogTitle>
           <DialogDescription>

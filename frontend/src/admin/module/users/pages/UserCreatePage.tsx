@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -39,9 +39,10 @@ type CreateUserFormData = z.infer<typeof createUserSchema>
 
 interface UserCreatePageProps {
   onClose: () => void
+  breadcrumb?: ReactNode
 }
 
-export function UserCreatePage({ onClose }: UserCreatePageProps) {
+export function UserCreatePage({ onClose, breadcrumb }: UserCreatePageProps) {
   const queryClient = useQueryClient()
 
   const [keepOpen, setKeepOpen] = useState(false)
@@ -93,6 +94,7 @@ export function UserCreatePage({ onClose }: UserCreatePageProps) {
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
+        {breadcrumb}
         <DialogHeader>
           <DialogTitle>Neuen Benutzer erstellen</DialogTitle>
           <DialogDescription>

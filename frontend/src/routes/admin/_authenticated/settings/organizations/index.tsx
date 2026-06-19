@@ -1,5 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { OrganizationListPage } from '@/admin/module/organizations/pages/OrganizationListPage'
+import { useBreadcrumbs } from '@/router/useBreadcrumbs'
+import { BreadcrumbNav } from '@/router/BreadcrumbNav'
 import { queryClient } from '@/lib/queryClient'
 import { listOrganizationsQuery } from '@/admin/module/organizations/api/queries'
 import { useSuspenseQuery } from '@tanstack/react-query'
@@ -19,6 +21,7 @@ export const Route = createFileRoute(
 })
 
 function RouteComponent() {
+  const breadcrumbs = useBreadcrumbs()
   const { data: organizations } = useSuspenseQuery(listOrganizationsQuery)
 
   const createAction = (
@@ -43,6 +46,7 @@ function RouteComponent() {
       organizations={organizations}
       createAction={createAction}
       renderRowActions={renderRowActions}
+      breadcrumb={<BreadcrumbNav items={breadcrumbs} />}
     />
   )
 }

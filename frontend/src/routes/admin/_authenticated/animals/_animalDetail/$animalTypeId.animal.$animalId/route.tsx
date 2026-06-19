@@ -10,6 +10,8 @@ import { Route as StatusRoute } from './status'
 import { Route as HistoryRoute } from './history'
 import { Route as PicturesRoute } from './pictures'
 import { PageHeader, tabLinkClass } from '@/components/layout/PageHeader.tsx'
+import { useBreadcrumbs } from '@/router/useBreadcrumbs'
+import { BreadcrumbNav } from '@/router/BreadcrumbNav'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,12 +25,14 @@ export const Route = createFileRoute(
   '/admin/_authenticated/animals/_animalDetail/$animalTypeId/animal/$animalId'
 )({
   loader: async ({ params }) => {
-    await queryClient.ensureQueryData(getAnimalQuery(params.animalId))
+    const animal = await queryClient.ensureQueryData(getAnimalQuery(params.animalId))
+    return { breadcrumb: animal.name }
   },
   component: RouteComponent,
 })
 
 function RouteComponent() {
+  const breadcrumbs = useBreadcrumbs()
   const { animalId, animalTypeId } = Route.useParams()
   const { data: animal } = useSuspenseQuery(getAnimalQuery(animalId))
 
@@ -36,6 +40,7 @@ function RouteComponent() {
     <>
       <div className="mb-6">
         <PageHeader
+          breadcrumb={<BreadcrumbNav items={breadcrumbs} />}
           title={animal.name}
           description={
             animal.old_name ? `früher: ${animal.old_name}` : undefined

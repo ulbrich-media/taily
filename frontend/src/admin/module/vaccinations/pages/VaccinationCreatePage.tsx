@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -34,11 +34,13 @@ type CreateVaccinationFormData = z.infer<typeof createVaccinationSchema>
 interface VaccinationCreatePageProps {
   animalTypes: AnimalTypeResource[]
   onClose: () => void
+  breadcrumb?: ReactNode
 }
 
 export function VaccinationCreatePage({
   animalTypes,
   onClose,
+  breadcrumb,
 }: VaccinationCreatePageProps) {
   const queryClient = useQueryClient()
   const [keepOpen, setKeepOpen] = useState(false)
@@ -89,6 +91,7 @@ export function VaccinationCreatePage({
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
+        {breadcrumb}
         <DialogHeader>
           <DialogTitle>Neue Impfung erstellen</DialogTitle>
           <DialogDescription>

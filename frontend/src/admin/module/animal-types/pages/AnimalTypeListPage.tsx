@@ -23,12 +23,14 @@ interface AnimalTypeListPageProps {
   animalTypes: AnimalTypeResource[]
   createAction?: ReactNode
   renderRowActions?: (animalType: AnimalTypeResource) => ReactNode
+  breadcrumb?: ReactNode
 }
 
 export function AnimalTypeListPage({
   animalTypes,
   createAction,
   renderRowActions,
+  breadcrumb,
 }: AnimalTypeListPageProps) {
   return (
     <div className="space-y-6">
@@ -36,6 +38,7 @@ export function AnimalTypeListPage({
         title="Tierarten"
         description="Verwalte die verfügbaren Tierarten und weise Formularvorlagen zu"
         actions={createAction}
+        breadcrumb={breadcrumb}
       />
 
       {animalTypes.length > 0 ? (

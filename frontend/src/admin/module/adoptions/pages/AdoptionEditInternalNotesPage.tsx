@@ -1,3 +1,4 @@
+import { type ReactNode } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -36,11 +37,13 @@ type FormData = z.infer<typeof schema>
 interface AdoptionEditInternalNotesPageProps {
   adoption: AdoptionDetailResource
   onClose: () => void
+  breadcrumb?: ReactNode
 }
 
 export function AdoptionEditInternalNotesPage({
   adoption,
   onClose,
+  breadcrumb,
 }: AdoptionEditInternalNotesPageProps) {
   const queryClient = useQueryClient()
   const isCanceled = adoption.status === 'canceled'
@@ -75,6 +78,7 @@ export function AdoptionEditInternalNotesPage({
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
+        {breadcrumb}
         <DialogHeader>
           <DialogTitle>Notizen</DialogTitle>
           <DialogDescription>

@@ -20,6 +20,7 @@ interface TransportListPageProps {
   createActionForEmpty: ReactNode
   renderActions: (t: TransportListResource) => ReactNode
   renderAdoptionDetailLink?: (adoption: AdoptionListResource) => ReactNode
+  breadcrumb?: ReactNode
 }
 
 export function TransportListPage({
@@ -29,6 +30,7 @@ export function TransportListPage({
   createActionForEmpty,
   renderActions,
   renderAdoptionDetailLink,
+  breadcrumb,
 }: TransportListPageProps) {
   const hasData = plannedTransports.length > 0 || doneTransports.length > 0
 
@@ -38,6 +40,7 @@ export function TransportListPage({
         title="Transporte"
         description="Plane die nächsten Tiertransporte"
         actions={createAction}
+        breadcrumb={breadcrumb}
       />
 
       {!hasData && (

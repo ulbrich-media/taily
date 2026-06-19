@@ -1,4 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { useBreadcrumbs } from '@/router/useBreadcrumbs'
+import { BreadcrumbNav } from '@/router/BreadcrumbNav'
 import { queryClient } from '@/lib/queryClient'
 import { listUsersQuery } from '@/admin/module/users/api/queries'
 import { UserEditPage } from '@/admin/module/users/pages/UserEditPage'
@@ -23,11 +25,16 @@ export const Route = createFileRoute(
     if (!user) {
       throw new Response('User not found', { status: 404 })
     }
+
+    return {
+      breadcrumb: `${user.name} bearbeiten`,
+    }
   },
   component: RouteComponent,
 })
 
 function RouteComponent() {
+  const breadcrumbs = useBreadcrumbs()
   const { id } = Route.useParams()
   const navigate = UsersRoute.useNavigate()
   const { data: users } = useSuspenseQuery(listUsersQuery)
@@ -37,5 +44,11 @@ function RouteComponent() {
     navigate({})
   }
 
-  return <UserEditPage user={user} onClose={handleClose} />
+  return (
+    <UserEditPage
+      user={user}
+      onClose={handleClose}
+      breadcrumb={<BreadcrumbNav items={breadcrumbs} />}
+    />
+  )
 }

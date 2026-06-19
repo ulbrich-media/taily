@@ -1,5 +1,7 @@
 import { createFileRoute, Outlet } from '@tanstack/react-router'
 import { AdoptionListPage } from '@/admin/module/adoptions/pages/AdoptionListPage'
+import { useBreadcrumbs } from '@/router/useBreadcrumbs'
+import { BreadcrumbNav } from '@/router/BreadcrumbNav'
 import { queryClient } from '@/lib/queryClient'
 import { listAdoptionsQuery } from '@/admin/module/adoptions/api/queries'
 import { useSuspenseQuery } from '@tanstack/react-query'
@@ -17,6 +19,7 @@ export const Route = createFileRoute('/admin/_authenticated/adoptions/_list')({
 })
 
 function RouteComponent() {
+  const breadcrumbs = useBreadcrumbs()
   const { data: adoptions } = useSuspenseQuery(listAdoptionsQuery())
 
   const createAction = (
@@ -41,6 +44,7 @@ function RouteComponent() {
         adoptions={adoptions}
         createAction={createAction}
         renderDetailLink={renderDetailLink}
+        breadcrumb={<BreadcrumbNav items={breadcrumbs} />}
       />
       <Outlet />
     </>

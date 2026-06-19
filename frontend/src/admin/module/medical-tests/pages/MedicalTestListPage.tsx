@@ -28,12 +28,14 @@ interface MedicalTestListPageProps {
   medicalTests: MedicalTestResource[]
   createAction?: ReactNode
   renderRowActions?: (medicalTest: MedicalTestResource) => ReactNode
+  breadcrumb?: ReactNode
 }
 
 export function MedicalTestListPage({
   medicalTests,
   createAction,
   renderRowActions,
+  breadcrumb,
 }: MedicalTestListPageProps) {
   const groupedTests = useMemo(() => {
     const groups = new Map<
@@ -66,6 +68,7 @@ export function MedicalTestListPage({
         title="Tests"
         description="Verwalte die verfügbaren medizinischen Tests der Tiere"
         actions={createAction}
+        breadcrumb={breadcrumb}
       />
 
       {hasTests ? (

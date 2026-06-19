@@ -1,3 +1,4 @@
+import { type ReactNode } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -33,6 +34,7 @@ interface AdoptionCreatePageProps {
   mediators: PersonListResource[]
   onCreated: (id: string) => void
   onClose: () => void
+  breadcrumb?: ReactNode
 }
 
 export function AdoptionCreatePage({
@@ -41,6 +43,7 @@ export function AdoptionCreatePage({
   mediators,
   onCreated,
   onClose,
+  breadcrumb,
 }: AdoptionCreatePageProps) {
   const queryClient = useQueryClient()
 
@@ -83,6 +86,7 @@ export function AdoptionCreatePage({
       }}
     >
       <DialogContent>
+        {breadcrumb}
         <DialogHeader>
           <DialogTitle>Neue Vermittlung</DialogTitle>
           <DialogDescription>

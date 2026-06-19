@@ -8,6 +8,8 @@ import { Route as HistoryRoute } from './history'
 import { Route as MediatorEditRoute } from './adoption/mediator.tsx'
 import { Edit, MoreVertical } from 'lucide-react'
 import { PageHeader, tabLinkClass } from '@/components/layout/PageHeader.tsx'
+import { useBreadcrumbs } from '@/router/useBreadcrumbs'
+import { BreadcrumbNav } from '@/router/BreadcrumbNav'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,12 +22,14 @@ export const Route = createFileRoute(
   '/admin/_authenticated/adoptions/$adoptionId'
 )({
   loader: async ({ params }) => {
-    await queryClient.ensureQueryData(getAdoptionQuery(params.adoptionId))
+    const adoption = await queryClient.ensureQueryData(getAdoptionQuery(params.adoptionId))
+    return { breadcrumb: `Vermittlung von ${adoption.animal.name}` }
   },
   component: RouteComponent,
 })
 
 function RouteComponent() {
+  const breadcrumbs = useBreadcrumbs()
   const { adoptionId } = Route.useParams()
   const { data: adoption } = useSuspenseQuery(getAdoptionQuery(adoptionId))
 
@@ -39,6 +43,7 @@ function RouteComponent() {
     <>
       <div className="mb-6">
         <PageHeader
+          breadcrumb={<BreadcrumbNav items={breadcrumbs} />}
           title={`Vermittlung von ${adoption.animal.name}`}
           links={
             <>

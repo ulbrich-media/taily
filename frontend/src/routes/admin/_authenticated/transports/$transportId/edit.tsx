@@ -1,4 +1,6 @@
 import { createFileRoute, notFound } from '@tanstack/react-router'
+import { useBreadcrumbs } from '@/router/useBreadcrumbs'
+import { BreadcrumbNav } from '@/router/BreadcrumbNav'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { queryClient } from '@/lib/queryClient'
 import { transportQueryKeys } from '@/admin/module/transports/api/queries'
@@ -29,13 +31,17 @@ export const Route = createFileRoute(
     )
     if (!transport) throw notFound()
 
-    return transport
+    return { transport }
   },
   component: RouteComponent,
+  staticData: {
+    breadcrumb: 'Transport bearbeiten',
+  },
 })
 
 function RouteComponent() {
-  const transport = Route.useLoaderData()
+  const breadcrumbs = useBreadcrumbs()
+  const { transport } = Route.useLoaderData()
   const navigate = TransportsRoute.useNavigate()
   const { data: persons } = useSuspenseQuery(listPersonsQuery)
 
@@ -46,6 +52,7 @@ function RouteComponent() {
       transport={transport}
       mediators={mediators}
       onClose={() => navigate({})}
+      breadcrumb={<BreadcrumbNav items={breadcrumbs} />}
     />
   )
 }

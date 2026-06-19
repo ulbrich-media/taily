@@ -1,3 +1,4 @@
+import { type ReactNode } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -28,12 +29,14 @@ interface AdoptionEditMediatorPageProps {
   adoption: AdoptionDetailResource
   mediators: PersonListResource[]
   onClose: () => void
+  breadcrumb?: ReactNode
 }
 
 export function AdoptionEditMediatorPage({
   adoption,
   mediators,
   onClose,
+  breadcrumb,
 }: AdoptionEditMediatorPageProps) {
   const queryClient = useQueryClient()
 
@@ -76,6 +79,7 @@ export function AdoptionEditMediatorPage({
       }}
     >
       <DialogContent>
+        {breadcrumb}
         <DialogHeader>
           <DialogTitle>Vermittler ändern</DialogTitle>
           <DialogDescription>

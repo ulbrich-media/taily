@@ -1,3 +1,4 @@
+import { type ReactNode } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -35,12 +36,14 @@ interface VaccinationEditPageProps {
   vaccination: VaccinationResource
   animalTypes: AnimalTypeResource[]
   onClose: () => void
+  breadcrumb?: ReactNode
 }
 
 export function VaccinationEditPage({
   vaccination,
   animalTypes,
   onClose,
+  breadcrumb,
 }: VaccinationEditPageProps) {
   const queryClient = useQueryClient()
 
@@ -70,6 +73,7 @@ export function VaccinationEditPage({
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
+        {breadcrumb}
         <DialogHeader>
           <DialogTitle>Impfung bearbeiten</DialogTitle>
           <DialogDescription>Bearbeite die Impfung.</DialogDescription>

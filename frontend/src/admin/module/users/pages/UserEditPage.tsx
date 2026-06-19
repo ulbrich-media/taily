@@ -1,3 +1,4 @@
+import { type ReactNode } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -42,9 +43,10 @@ type UpdateUserFormData = z.infer<typeof updateUserSchema>
 interface UserEditPageProps {
   user: UserResource
   onClose: () => void
+  breadcrumb?: ReactNode
 }
 
-export function UserEditPage({ user, onClose }: UserEditPageProps) {
+export function UserEditPage({ user, onClose, breadcrumb }: UserEditPageProps) {
   const queryClient = useQueryClient()
 
   const form = useForm<UpdateUserFormData>({
@@ -79,6 +81,7 @@ export function UserEditPage({ user, onClose }: UserEditPageProps) {
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
+        {breadcrumb}
         <DialogHeader>
           <DialogTitle>Benutzer bearbeiten</DialogTitle>
           <DialogDescription>

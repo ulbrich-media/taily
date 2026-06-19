@@ -1,3 +1,4 @@
+import { type ReactNode } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -45,12 +46,14 @@ interface TransportEditPageProps {
   transport: TransportListResource
   mediators: PersonListResource[]
   onClose: () => void
+  breadcrumb?: ReactNode
 }
 
 export function TransportEditPage({
   transport,
   mediators,
   onClose,
+  breadcrumb,
 }: TransportEditPageProps) {
   const queryClient = useQueryClient()
 
@@ -89,6 +92,7 @@ export function TransportEditPage({
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
+        {breadcrumb}
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>

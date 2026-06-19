@@ -1,5 +1,7 @@
 import { createFileRoute, Outlet } from '@tanstack/react-router'
 import { VaccinationListPage } from '@/admin/module/vaccinations/pages/VaccinationListPage'
+import { useBreadcrumbs } from '@/router/useBreadcrumbs'
+import { BreadcrumbNav } from '@/router/BreadcrumbNav'
 import { queryClient } from '@/lib/queryClient.ts'
 import { listVaccinationsQuery } from '@/admin/module/vaccinations/api/queries'
 import { useSuspenseQuery } from '@tanstack/react-query'
@@ -14,6 +16,7 @@ import { Route as DeleteRoute } from '@/routes/admin/_authenticated/settings/vac
 export const Route = createFileRoute(
   '/admin/_authenticated/settings/vaccinations'
 )({
+  staticData: { breadcrumb: 'Impfungen' },
   loader: async () => {
     await queryClient.ensureQueryData(listVaccinationsQuery)
   },
@@ -21,6 +24,7 @@ export const Route = createFileRoute(
 })
 
 function RouteComponent() {
+  const breadcrumbs = useBreadcrumbs()
   const { isAdmin } = useAuth()
   const { data: vaccinations } = useSuspenseQuery(listVaccinationsQuery)
 
@@ -56,6 +60,7 @@ function RouteComponent() {
         vaccinations={vaccinations}
         createAction={createAction}
         renderRowActions={renderRowActions}
+        breadcrumb={<BreadcrumbNav items={breadcrumbs} />}
       />
       <Outlet />
     </>

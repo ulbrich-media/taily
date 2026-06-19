@@ -1,5 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { ApiTokenCreatePage } from '@/admin/module/api-tokens/pages/ApiTokenCreatePage.tsx'
+import { useBreadcrumbs } from '@/router/useBreadcrumbs'
+import { BreadcrumbNav } from '@/router/BreadcrumbNav'
 import { queryClient } from '@/lib/queryClient.ts'
 import { listApiTokenAbilitiesQuery } from '@/admin/module/api-tokens/api/queries.ts'
 import { useSuspenseQuery } from '@tanstack/react-query'
@@ -12,9 +14,13 @@ export const Route = createFileRoute(
     await queryClient.ensureQueryData(listApiTokenAbilitiesQuery)
   },
   component: RouteComponent,
+  staticData: {
+    breadcrumb: 'Neu',
+  },
 })
 
 function RouteComponent() {
+  const breadcrumbs = useBreadcrumbs()
   const navigate = ApiTokensRoute.useNavigate()
   const { data: abilitiesData } = useSuspenseQuery(listApiTokenAbilitiesQuery)
 
@@ -23,6 +29,10 @@ function RouteComponent() {
   }
 
   return (
-    <ApiTokenCreatePage abilities={abilitiesData.data} onClose={handleClose} />
+    <ApiTokenCreatePage
+      abilities={abilitiesData.data}
+      onClose={handleClose}
+      breadcrumb={<BreadcrumbNav items={breadcrumbs} />}
+    />
   )
 }

@@ -1,3 +1,4 @@
+import { type ReactNode } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -31,11 +32,13 @@ type FormData = z.infer<typeof schema>
 interface AdoptionCancelPageProps {
   adoption: AdoptionDetailResource
   onClose: () => void
+  breadcrumb?: ReactNode
 }
 
 export function AdoptionCancelPage({
   adoption,
   onClose,
+  breadcrumb,
 }: AdoptionCancelPageProps) {
   const queryClient = useQueryClient()
 
@@ -66,6 +69,7 @@ export function AdoptionCancelPage({
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
+        {breadcrumb}
         <DialogHeader>
           <DialogTitle>Vermittlung abbrechen</DialogTitle>
           <DialogDescription>

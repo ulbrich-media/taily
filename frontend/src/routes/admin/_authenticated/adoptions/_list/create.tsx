@@ -1,5 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { AdoptionCreatePage } from '@/admin/module/adoptions/pages/AdoptionCreatePage.tsx'
+import { useBreadcrumbs } from '@/router/useBreadcrumbs'
+import { BreadcrumbNav } from '@/router/BreadcrumbNav'
 import { queryClient } from '@/lib/queryClient.ts'
 import { listAnimalsQuery } from '@/admin/module/animals/api/queries.ts'
 import { listPeopleFilteredQuery } from '@/admin/module/people/api/queries.ts'
@@ -26,6 +28,7 @@ export const Route = createFileRoute(
 })
 
 function RouteComponent() {
+  const breadcrumbs = useBreadcrumbs()
   const navigateToAdoptionDetail = AdoptionDetailRoute.useNavigate()
   const navigateToAdoptionsList = AdoptionsListRoute.useNavigate()
   const { data: animals } = useSuspenseQuery(listAnimalsQuery())
@@ -49,6 +52,7 @@ function RouteComponent() {
       mediators={mediators}
       onCreated={handleCreated}
       onClose={handleClose}
+      breadcrumb={<BreadcrumbNav items={breadcrumbs} />}
     />
   )
 }

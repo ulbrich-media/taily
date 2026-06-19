@@ -1,3 +1,4 @@
+import { type ReactNode } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -33,11 +34,13 @@ type FormData = z.infer<typeof schema>
 interface AdoptionEditPreInspectionPageProps {
   adoption: AdoptionDetailResource
   onClose: () => void
+  breadcrumb?: ReactNode
 }
 
 export function AdoptionEditPreInspectionPage({
   adoption,
   onClose,
+  breadcrumb,
 }: AdoptionEditPreInspectionPageProps) {
   const queryClient = useQueryClient()
 
@@ -69,6 +72,7 @@ export function AdoptionEditPreInspectionPage({
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
+        {breadcrumb}
         <DialogHeader>
           <DialogTitle>Vorkontrolle – Notizen</DialogTitle>
           <DialogDescription>

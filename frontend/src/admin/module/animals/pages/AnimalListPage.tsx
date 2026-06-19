@@ -31,6 +31,7 @@ interface AnimalListPageProps {
   onAnimalTypeChange: (animalTypeId: string | undefined) => void
   createAction: ReactNode
   renderRowActions: (animal: AnimalListResource) => ReactNode
+  breadcrumb?: ReactNode
 }
 
 export function AnimalListPage({
@@ -40,6 +41,7 @@ export function AnimalListPage({
   onAnimalTypeChange,
   createAction,
   renderRowActions,
+  breadcrumb,
 }: AnimalListPageProps) {
   const handleAnimalTypeChange = (value: string) => {
     onAnimalTypeChange(value === 'all' ? undefined : value)
@@ -51,6 +53,7 @@ export function AnimalListPage({
         title="Tiere"
         description="Verwalte alle Tiere im System"
         actions={createAction}
+        breadcrumb={breadcrumb}
       />
 
       {/* Filter Controls */}

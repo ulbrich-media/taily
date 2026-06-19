@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Controller, useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -45,11 +45,13 @@ type CreateTokenFormData = z.infer<typeof createTokenSchema>
 interface ApiTokenCreatePageProps {
   abilities: ApiAbility
   onClose: () => void
+  breadcrumb?: ReactNode
 }
 
 export function ApiTokenCreatePage({
   abilities,
   onClose,
+  breadcrumb,
 }: ApiTokenCreatePageProps) {
   const queryClient = useQueryClient()
 
@@ -120,6 +122,7 @@ export function ApiTokenCreatePage({
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
+        {breadcrumb}
         <DialogHeader>
           <DialogTitle>Neues API Token erstellen</DialogTitle>
           <DialogDescription>
