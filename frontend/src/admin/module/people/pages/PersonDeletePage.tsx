@@ -1,18 +1,15 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Trash2 } from 'lucide-react'
 import { personQueryKeys } from '@/admin/module/people/api/queries'
 import { deletePerson } from '@/admin/module/people/api/requests'
 import type { PersonDetailResource } from '@/api/types/people'
 import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogMedia,
-  AlertDialogTitle,
-} from '@/shadcn/components/ui/alert-dialog'
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/shadcn/components/ui/dialog'
 import { Button } from '@/shadcn/components/ui/button'
 import { toast } from 'sonner'
 
@@ -46,26 +43,26 @@ export function PersonDeletePage({
   })
 
   return (
-    <AlertDialog open onOpenChange={onClose}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogMedia className="text-destructive">
-            <Trash2 />
-          </AlertDialogMedia>
-          <AlertDialogTitle>Person löschen</AlertDialogTitle>
-          <AlertDialogDescription>
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Person löschen</DialogTitle>
+          <DialogDescription>
             Bist du sicher, dass du die Person{' '}
-            <span className="font-bold">{person.full_name}</span> löschen
-            möchtest? Diese Aktion kann nicht rückgängig gemacht werden.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel
+            <strong>{person.full_name}</strong> löschen möchtest? Diese Aktion
+            kann nicht rückgängig gemacht werden.
+          </DialogDescription>
+        </DialogHeader>
+
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
             onClick={onClose}
             disabled={deleteMutation.isPending}
           >
             Abbrechen
-          </AlertDialogCancel>
+          </Button>
           <Button
             type="button"
             variant="destructive"
@@ -74,8 +71,8 @@ export function PersonDeletePage({
           >
             {deleteMutation.isPending ? 'Lösche...' : 'Löschen'}
           </Button>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }

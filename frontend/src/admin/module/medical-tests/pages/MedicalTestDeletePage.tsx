@@ -3,17 +3,13 @@ import { medicalTestQueryKeys } from '@/admin/module/medical-tests/api/queries'
 import { deleteMedicalTest } from '@/admin/module/medical-tests/api/requests'
 import type { MedicalTestResource } from '@/api/types/medical-tests'
 import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogMedia,
-  AlertDialogTitle,
-} from '@/shadcn/components/ui/alert-dialog.tsx'
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/shadcn/components/ui/dialog.tsx'
 import { Button } from '@/shadcn/components/ui/button.tsx'
-import { Trash2Icon } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface MedicalTestDeletePageProps {
@@ -40,29 +36,36 @@ export function MedicalTestDeletePage({
   })
 
   return (
-    <AlertDialog open onOpenChange={onClose}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogMedia className="text-destructive">
-            <Trash2Icon />
-          </AlertDialogMedia>
-          <AlertDialogTitle>Test löschen</AlertDialogTitle>
-          <AlertDialogDescription>
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            Test löschen
+          </DialogTitle>
+        </DialogHeader>
+
+        <div>
+          <div className="leading-7 mb-2">
             Möchtest du den Test{' '}
-            <span className="font-bold">{medicalTest.title}</span> für{' '}
-            <span className="font-bold">{medicalTest.animal_type.title}</span>{' '}
-            wirklich löschen? Dieser Vorgang kann nicht rückgängig gemacht
-            werden. Alle Testergebnisse der Tiere für diesen Test werden
-            ebenfalls gelöscht.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel
+            <span className="font-medium">{medicalTest.title}</span> für{' '}
+            <span className="font-medium">{medicalTest.animal_type.title}</span>{' '}
+            wirklich löschen?
+          </div>
+          <div className="leading-7 mb-2">
+            Dieser Vorgang kann nicht rückgängig gemacht werden. Alle
+            Testergebnisse der Tiere für diesen Test werden ebenfalls gelöscht.
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
             onClick={onClose}
             disabled={deleteMutation.isPending}
           >
             Abbrechen
-          </AlertDialogCancel>
+          </Button>
           <Button
             variant="destructive"
             disabled={deleteMutation.isPending}
@@ -70,8 +73,8 @@ export function MedicalTestDeletePage({
           >
             {deleteMutation.isPending ? 'Wird gelöscht...' : 'Ja, löschen'}
           </Button>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
