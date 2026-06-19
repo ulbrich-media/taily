@@ -43,7 +43,7 @@ export function MedicalTestDeletePage({
     <AlertDialog open onOpenChange={onClose}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogMedia className="text-destructive-solo">
+          <AlertDialogMedia className="text-destructive-text">
             <Trash2Icon />
           </AlertDialogMedia>
           <AlertDialogTitle>Test löschen</AlertDialogTitle>
