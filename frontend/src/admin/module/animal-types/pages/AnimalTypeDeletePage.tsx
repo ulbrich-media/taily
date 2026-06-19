@@ -54,10 +54,7 @@ export function AnimalTypeDeletePage({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel
-            onClick={onClose}
-            disabled={deleteMutation.isPending}
-          >
+          <AlertDialogCancel disabled={deleteMutation.isPending}>
             Abbrechen
           </AlertDialogCancel>
           <Button

@@ -22,7 +22,7 @@ The general rule is: **if a dialog would scroll, use a page instead.**
 
 ## Example Implementations
 
-- **AlertDialog** (no extra fields): `src/admin/module/api-tokens/pages/ApiTokenDeletePage.tsx`
-- **AlertDialog** (one extra field): `src/admin/module/adoptions/pages/AdoptionCancelPage.tsx`
-- **Dialog** (short form): `src/admin/module/medical-tests/pages/MedicalTestCreatePage.tsx`
-- **Page** (long form): `src/admin/module/adoptions/pages/AdoptionCreatePage.tsx`
+- **AlertDialog** (no extra fields): `frontend/src/admin/module/api-tokens/pages/ApiTokenDeletePage.tsx`
+- **AlertDialog** (one extra field): `frontend/src/admin/module/adoptions/pages/AdoptionCancelPage.tsx`
+- **Dialog** (short form): `frontend/src/admin/module/medical-tests/pages/MedicalTestCreatePage.tsx`
+- **Page** (long form): `frontend/src/admin/module/adoptions/pages/AdoptionCreatePage.tsx`

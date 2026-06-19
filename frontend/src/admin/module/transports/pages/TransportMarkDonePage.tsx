@@ -92,11 +92,7 @@ export function TransportMarkDonePage({
             />
           </FieldGroup>
           <AlertDialogFooter>
-            <AlertDialogCancel
-              type="button"
-              onClick={onClose}
-              disabled={mutation.isPending}
-            >
+            <AlertDialogCancel type="button" disabled={mutation.isPending}>
               Abbrechen
             </AlertDialogCancel>
             <Button type="submit" disabled={mutation.isPending}>
