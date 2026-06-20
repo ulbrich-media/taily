@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import type { ReactNode } from 'react'
 import { medicalTestQueryKeys } from '@/admin/module/medical-tests/api/queries'
 import { updateMedicalTest } from '@/admin/module/medical-tests/api/requests'
 import type { MedicalTestResource } from '@/api/types/medical-tests'
@@ -13,6 +14,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogBreadcrumb,
 } from '@/shadcn/components/ui/dialog.tsx'
 import { Button } from '@/shadcn/components/ui/button.tsx'
 import { FieldGroup } from '@/shadcn/components/ui/field.tsx'
@@ -34,12 +36,14 @@ interface MedicalTestEditPageProps {
   medicalTest: MedicalTestResource
   animalTypes: AnimalTypeResource[]
   onClose: () => void
+  breadcrumb?: ReactNode
 }
 
 export function MedicalTestEditPage({
   medicalTest,
   animalTypes,
   onClose,
+  breadcrumb,
 }: MedicalTestEditPageProps) {
   const queryClient = useQueryClient()
 
@@ -118,6 +122,7 @@ export function MedicalTestEditPage({
                 {updateMutation.isPending ? 'Aktualisiere...' : 'Speichern'}
               </Button>
             </DialogFooter>
+            <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
           </form>
         </FormProvider>
       </DialogContent>

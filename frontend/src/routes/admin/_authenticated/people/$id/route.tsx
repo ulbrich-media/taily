@@ -10,6 +10,8 @@ import { Route as AdoptionsRoute } from './adoptions'
 import { Route as HistoryRoute } from './history'
 import { Route as PicturesRoute } from './pictures'
 import { PageHeader, tabLinkClass } from '@/components/layout/PageHeader.tsx'
+import { useBreadcrumbs } from '@/router/useBreadcrumbs'
+import { BreadcrumbNav } from '@/router/BreadcrumbNav'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,15 +23,17 @@ import { MoreVertical } from 'lucide-react'
 
 export const Route = createFileRoute('/admin/_authenticated/people/$id')({
   loader: async ({ params }) => {
-    await Promise.all([
+    const [person] = await Promise.all([
       queryClient.ensureQueryData(getPersonQuery(params.id)),
       queryClient.ensureQueryData(listOrganizationsQuery),
     ])
+    return { breadcrumb: person.full_name }
   },
   component: RouteComponent,
 })
 
 function RouteComponent() {
+  const breadcrumbs = useBreadcrumbs()
   const { id } = Route.useParams()
   const { data: person } = useSuspenseQuery(getPersonQuery(id))
 
@@ -37,6 +41,7 @@ function RouteComponent() {
     <>
       <div className="mb-6">
         <PageHeader
+          breadcrumb={<BreadcrumbNav items={breadcrumbs} />}
           title={person.full_name}
           description={
             person.organization

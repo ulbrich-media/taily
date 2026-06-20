@@ -1,6 +1,8 @@
 import { createFileRoute, Outlet } from '@tanstack/react-router'
 import { z } from 'zod'
 import { AnimalListPage } from '@/admin/module/animals/pages/AnimalListPage.tsx'
+import { useBreadcrumbs } from '@/router/useBreadcrumbs'
+import { BreadcrumbNav } from '@/router/BreadcrumbNav'
 import { queryClient } from '@/lib/queryClient.ts'
 import { listAnimalTypesQuery } from '@/admin/module/animal-types/api/queries.ts'
 import { listAnimalsQuery } from '@/admin/module/animals/api/queries.ts'
@@ -31,6 +33,7 @@ export const Route = createFileRoute(
 })
 
 function RouteComponent() {
+  const breadcrumbs = useBreadcrumbs()
   const search = Route.useSearch()
   const navigate = Route.useNavigate()
   const { data: animals } = useSuspenseQuery(
@@ -78,6 +81,7 @@ function RouteComponent() {
         onAnimalTypeChange={handleAnimalTypeChange}
         createAction={createAction}
         renderRowActions={renderRowActions}
+        breadcrumb={<BreadcrumbNav items={breadcrumbs} />}
       />
       <Outlet />
     </>

@@ -1,3 +1,4 @@
+import { type ReactNode } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -12,6 +13,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogBreadcrumb,
 } from '@/shadcn/components/ui/dialog'
 import { Button } from '@/shadcn/components/ui/button'
 import { FieldGroup } from '@/shadcn/components/ui/field'
@@ -31,11 +33,13 @@ type CreateAnimalTypeFormData = z.infer<typeof createAnimalTypeSchema>
 interface AnimalTypeCreatePageProps {
   formTemplates: FormTemplateResource[]
   onClose: () => void
+  breadcrumb?: ReactNode
 }
 
 export function AnimalTypeCreatePage({
   formTemplates,
   onClose,
+  breadcrumb,
 }: AnimalTypeCreatePageProps) {
   const queryClient = useQueryClient()
 
@@ -119,6 +123,7 @@ export function AnimalTypeCreatePage({
                 {createMutation.isPending ? 'Erstelle...' : 'Speichern'}
               </Button>
             </DialogFooter>
+            <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
           </form>
         </FormProvider>
       </DialogContent>

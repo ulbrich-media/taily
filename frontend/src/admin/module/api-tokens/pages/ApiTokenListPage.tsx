@@ -17,6 +17,7 @@ interface ApiTokenResourceListPageProps {
   createAction: ReactNode
   renderRowActions: (token: ApiTokenResource) => ReactNode
   formatDateTime: (value: string | null, fallback?: string) => string
+  breadcrumb?: ReactNode
 }
 
 export function ApiTokenListPage({
@@ -24,6 +25,7 @@ export function ApiTokenListPage({
   createAction,
   renderRowActions,
   formatDateTime,
+  breadcrumb,
 }: ApiTokenResourceListPageProps) {
   return (
     <div className="space-y-6">
@@ -31,6 +33,7 @@ export function ApiTokenListPage({
         title="API Tokens"
         description="Verwalte API-Tokens für den externen Zugriff"
         actions={createAction}
+        breadcrumb={breadcrumb}
       />
 
       <TableListView

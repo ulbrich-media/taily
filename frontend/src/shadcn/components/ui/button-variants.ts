@@ -6,10 +6,12 @@ export const buttonVariants = cva(
     variants: {
       variant: {
         default: 'bg-primary text-primary-foreground hover:bg-primary/90',
+        default_outline:
+          'border border-primary bg-background shadow-xs hover:bg-primary hover:text-primary-foreground dark:bg-input/30',
         destructive:
           'bg-destructive text-white hover:bg-destructive/80 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40',
         destructive_outline:
-          'border border-destructive-text/20 text-destructive-text bg-background shadow-xs hover:bg-destructive-text/5 dark:bg-input/30 dark:text-destructive-text dark:border-destructive-text/40 dark:hover:bg-input/50',
+          'border border-destructive-solo/20 text-destructive-solo bg-background shadow-xs hover:bg-destructive-solo/5 dark:bg-input/30 dark:text-destructive-solo dark:border-destructive-solo/40 dark:hover:bg-input/50',
         outline:
           'border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50',
         secondary:

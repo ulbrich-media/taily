@@ -1,5 +1,7 @@
 import { createFileRoute, Outlet } from '@tanstack/react-router'
 import { AnimalTypeListPage } from '@/admin/module/animal-types/pages/AnimalTypeListPage'
+import { useBreadcrumbs } from '@/router/useBreadcrumbs'
+import { BreadcrumbNav } from '@/router/BreadcrumbNav'
 import { queryClient } from '@/lib/queryClient'
 import { listAnimalTypesQuery } from '@/admin/module/animal-types/api/queries'
 import { useSuspenseQuery } from '@tanstack/react-query'
@@ -14,6 +16,7 @@ import { Route as DeleteRoute } from '@/routes/admin/_authenticated/settings/ani
 export const Route = createFileRoute(
   '/admin/_authenticated/settings/animal-types'
 )({
+  staticData: { breadcrumb: 'Tierarten' },
   loader: async () => {
     await queryClient.ensureQueryData(listAnimalTypesQuery)
   },
@@ -21,6 +24,7 @@ export const Route = createFileRoute(
 })
 
 function RouteComponent() {
+  const breadcrumbs = useBreadcrumbs()
   const { isAdmin } = useAuth()
   const { data: animalTypesData } = useSuspenseQuery(listAnimalTypesQuery)
 
@@ -56,6 +60,7 @@ function RouteComponent() {
         animalTypes={animalTypesData.data}
         createAction={createAction}
         renderRowActions={renderRowActions}
+        breadcrumb={<BreadcrumbNav items={breadcrumbs} />}
       />
       <Outlet />
     </>

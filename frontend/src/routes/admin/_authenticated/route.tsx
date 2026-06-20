@@ -29,6 +29,10 @@ export const Route = createFileRoute('/admin/_authenticated')({
       isAdmin,
     }
   },
+  staticData: {
+    breadcrumb: 'Taily Admin-Bereich',
+    breadcrumbRoot: true,
+  },
 })
 
 function RouteComponent() {
@@ -88,13 +92,13 @@ function RouteComponent() {
     <>
       <DropdownMenuItem asChild>
         <ProfileRoute.Link className="cursor-pointer">
-          <User className="mr-2 h-4 w-4" />
+          <User className="size-4" />
           Profil
         </ProfileRoute.Link>
       </DropdownMenuItem>
       <DropdownMenuItem asChild>
         <PersonalSettingsRoute.Link className="cursor-pointer">
-          <Settings className="mr-2 h-4 w-4" />
+          <Settings className="size-4" />
           Persönliche Einstellungen
         </PersonalSettingsRoute.Link>
       </DropdownMenuItem>

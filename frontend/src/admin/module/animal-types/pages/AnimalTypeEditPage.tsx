@@ -1,3 +1,4 @@
+import { type ReactNode } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -13,6 +14,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogBreadcrumb,
 } from '@/shadcn/components/ui/dialog'
 import { Button } from '@/shadcn/components/ui/button'
 import { FieldGroup } from '@/shadcn/components/ui/field'
@@ -33,12 +35,14 @@ interface AnimalTypeEditPageProps {
   animalType: AnimalTypeResource
   formTemplates: FormTemplateResource[]
   onClose: () => void
+  breadcrumb?: ReactNode
 }
 
 export function AnimalTypeEditPage({
   animalType,
   formTemplates,
   onClose,
+  breadcrumb,
 }: AnimalTypeEditPageProps) {
   const queryClient = useQueryClient()
 
@@ -125,6 +129,7 @@ export function AnimalTypeEditPage({
                 {updateMutation.isPending ? 'Aktualisiere...' : 'Speichern'}
               </Button>
             </DialogFooter>
+            <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
           </form>
         </FormProvider>
       </DialogContent>

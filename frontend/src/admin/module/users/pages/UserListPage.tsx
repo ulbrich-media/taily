@@ -16,12 +16,14 @@ interface UserResourceListPageProps {
   users: UserResource[]
   createAction?: ReactNode
   renderRowActions?: (user: UserResource) => ReactNode
+  breadcrumb?: ReactNode
 }
 
 export function UserListPage({
   users,
   createAction,
   renderRowActions,
+  breadcrumb,
 }: UserResourceListPageProps) {
   const getLastLogin = (user: UserResource) => {
     if (user.last_login_at) {
@@ -79,6 +81,7 @@ export function UserListPage({
         title="Benutzerverwaltung"
         description="Verwalte Benutzer und deren Berechtigungen"
         actions={createAction}
+        breadcrumb={breadcrumb}
       />
 
       <TableListView

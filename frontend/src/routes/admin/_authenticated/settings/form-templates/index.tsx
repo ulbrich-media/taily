@@ -1,5 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { FormTemplateListPage } from '@/admin/module/form-templates/pages/FormTemplateListPage'
+import { useBreadcrumbs } from '@/router/useBreadcrumbs'
+import { BreadcrumbNav } from '@/router/BreadcrumbNav'
 import { queryClient } from '@/lib/queryClient'
 import { listFormTemplatesQuery } from '@/admin/module/form-templates/api/queries'
 import { useSuspenseQuery } from '@tanstack/react-query'
@@ -14,6 +16,7 @@ import { Route as FormTemplateEditRoute } from '@/routes/admin/_authenticated/se
 export const Route = createFileRoute(
   '/admin/_authenticated/settings/form-templates/'
 )({
+  staticData: { breadcrumb: 'Formulare' },
   loader: async () => {
     await queryClient.ensureQueryData(listFormTemplatesQuery)
   },
@@ -21,6 +24,7 @@ export const Route = createFileRoute(
 })
 
 function RouteComponent() {
+  const breadcrumbs = useBreadcrumbs()
   const { isAdmin } = useAuth()
   const { data } = useSuspenseQuery(listFormTemplatesQuery)
 
@@ -55,6 +59,7 @@ function RouteComponent() {
       templates={data.data}
       createAction={createAction}
       renderRowActions={renderRowActions}
+      breadcrumb={<BreadcrumbNav items={breadcrumbs} />}
     />
   )
 }

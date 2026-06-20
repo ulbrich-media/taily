@@ -1,5 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { PersonListPage } from '@/admin/module/people/pages/PersonListPage'
+import { useBreadcrumbs } from '@/router/useBreadcrumbs'
+import { BreadcrumbNav } from '@/router/BreadcrumbNav'
 import { queryClient } from '@/lib/queryClient'
 import { listPeopleQuery } from '@/admin/module/people/api/queries'
 import { useSuspenseQuery } from '@tanstack/react-query'
@@ -17,6 +19,7 @@ export const Route = createFileRoute('/admin/_authenticated/people/')({
 })
 
 function RouteComponent() {
+  const breadcrumbs = useBreadcrumbs()
   const { data: people } = useSuspenseQuery(listPeopleQuery)
 
   const createAction = (
@@ -41,6 +44,7 @@ function RouteComponent() {
       people={people}
       createAction={createAction}
       renderRowActions={renderRowActions}
+      breadcrumb={<BreadcrumbNav items={breadcrumbs} />}
     />
   )
 }

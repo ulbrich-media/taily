@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -13,6 +13,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogBreadcrumb,
 } from '@/shadcn/components/ui/dialog.tsx'
 import { Button } from '@/shadcn/components/ui/button.tsx'
 import { FieldGroup } from '@/shadcn/components/ui/field.tsx'
@@ -33,11 +34,13 @@ type CreateMedicalTestFormData = z.infer<typeof createMedicalTestSchema>
 interface MedicalTestCreatePageProps {
   animalTypes: AnimalTypeResource[]
   onClose: () => void
+  breadcrumb?: ReactNode
 }
 
 export function MedicalTestCreatePage({
   animalTypes,
   onClose,
+  breadcrumb,
 }: MedicalTestCreatePageProps) {
   const queryClient = useQueryClient()
   const [keepOpen, setKeepOpen] = useState(false)
@@ -150,6 +153,7 @@ export function MedicalTestCreatePage({
                   : 'Speichern'}
               </Button>
             </DialogFooter>
+            <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
           </form>
         </FormProvider>
       </DialogContent>
