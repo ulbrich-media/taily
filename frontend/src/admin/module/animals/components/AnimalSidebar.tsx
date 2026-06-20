@@ -21,6 +21,7 @@ export function AnimalSidebar({ animal }: AnimalSidebarProps) {
                 src={profilePicture.url}
                 alt={animal.name}
                 className="w-full h-full object-cover"
+                loading="lazy"
               />
             ) : (
               <PawPrint className="h-20 w-20 text-muted-foreground" />
