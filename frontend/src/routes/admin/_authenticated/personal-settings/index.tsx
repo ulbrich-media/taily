@@ -17,8 +17,10 @@ function RouteComponent() {
     <PersonalSettingsPage
       breadcrumb={<BreadcrumbNav items={breadcrumbs} />}
       apiTokensAction={
-        <Button asChild>
-          <ApiTokensRoute.Link>Öffnen</ApiTokensRoute.Link>
+        <Button variant="default_outline" asChild>
+          <ApiTokensRoute.Link aria-label="API Tokens öffnen">
+            Öffnen
+          </ApiTokensRoute.Link>
         </Button>
       }
     />
