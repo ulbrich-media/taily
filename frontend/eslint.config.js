@@ -114,4 +114,11 @@ export default defineConfig([
       'react-refresh/only-export-components': 'off',
     },
   },
+  {
+    files: ['src/router/**/*.{ts,tsx}'],
+    rules: {
+      'router-rules/no-generic-router-hooks': 'off',
+      'router-rules/no-route-imports-outside-routes': 'off',
+    },
+  },
 ])

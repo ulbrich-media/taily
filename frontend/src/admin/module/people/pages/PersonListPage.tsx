@@ -22,12 +22,14 @@ interface PersonListResourceListPageProps {
   people: PersonListResource[]
   createAction: ReactNode
   renderRowActions: (person: PersonListResource) => ReactNode
+  breadcrumb?: ReactNode
 }
 
 export function PersonListPage({
   people,
   createAction,
   renderRowActions,
+  breadcrumb,
 }: PersonListResourceListPageProps) {
   return (
     <div className="space-y-6">
@@ -35,6 +37,7 @@ export function PersonListPage({
         title="Personen"
         description="Verwalte alle Personen und Kontakte"
         actions={createAction}
+        breadcrumb={breadcrumb}
       />
 
       <TableListView

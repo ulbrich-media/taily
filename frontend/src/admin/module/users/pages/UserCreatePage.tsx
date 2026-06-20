@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -12,6 +12,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogBreadcrumb,
 } from '@/shadcn/components/ui/dialog'
 import { Button } from '@/shadcn/components/ui/button'
 import { FieldGroup } from '@/shadcn/components/ui/field'
@@ -38,9 +39,10 @@ type CreateUserFormData = z.infer<typeof createUserSchema>
 
 interface UserCreatePageProps {
   onClose: () => void
+  breadcrumb?: ReactNode
 }
 
-export function UserCreatePage({ onClose }: UserCreatePageProps) {
+export function UserCreatePage({ onClose, breadcrumb }: UserCreatePageProps) {
   const queryClient = useQueryClient()
 
   const [keepOpen, setKeepOpen] = useState(false)
@@ -156,6 +158,7 @@ export function UserCreatePage({ onClose }: UserCreatePageProps) {
                   : 'Speichern'}
               </Button>
             </DialogFooter>
+            <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
           </form>
         </FormProvider>
       </DialogContent>

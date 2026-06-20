@@ -5,6 +5,8 @@ import { listAnimalTypesQuery } from '@/admin/module/animal-types/api/queries'
 import { MedicalTestEditPage } from '@/admin/module/medical-tests/pages/MedicalTestEditPage'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { Route as MedicalTestsRoute } from '@/routes/admin/_authenticated/settings/medical-tests/route'
+import { useBreadcrumbs } from '@/router/useBreadcrumbs'
+import { BreadcrumbNav } from '@/router/BreadcrumbNav'
 
 export const Route = createFileRoute(
   '/admin/_authenticated/settings/medical-tests/$id/edit'
@@ -28,11 +30,14 @@ export const Route = createFileRoute(
     }
 
     await queryClient.ensureQueryData(listAnimalTypesQuery)
+
+    return { breadcrumb: medicalTest.title }
   },
   component: RouteComponent,
 })
 
 function RouteComponent() {
+  const breadcrumbs = useBreadcrumbs()
   const { id } = Route.useParams()
   const navigate = MedicalTestsRoute.useNavigate()
   const { data: medicalTests } = useSuspenseQuery(listMedicalTestsQuery)
@@ -48,6 +53,7 @@ function RouteComponent() {
       medicalTest={medicalTest}
       animalTypes={animalTypesData.data}
       onClose={handleClose}
+      breadcrumb={<BreadcrumbNav items={breadcrumbs} size="sm" />}
     />
   )
 }

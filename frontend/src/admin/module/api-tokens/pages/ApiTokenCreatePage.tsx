@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Controller, useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -13,6 +13,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogBreadcrumb,
 } from '@/shadcn/components/ui/dialog.tsx'
 import { Button } from '@/shadcn/components/ui/button.tsx'
 import { CopyIcon } from 'lucide-react'
@@ -45,11 +46,13 @@ type CreateTokenFormData = z.infer<typeof createTokenSchema>
 interface ApiTokenCreatePageProps {
   abilities: ApiAbility
   onClose: () => void
+  breadcrumb?: ReactNode
 }
 
 export function ApiTokenCreatePage({
   abilities,
   onClose,
+  breadcrumb,
 }: ApiTokenCreatePageProps) {
   const queryClient = useQueryClient()
 
@@ -204,6 +207,7 @@ export function ApiTokenCreatePage({
                 {createMutation.isPending ? 'Erstelle...' : 'Token erstellen'}
               </Button>
             </DialogFooter>
+            <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
           </form>
         </FormProvider>
       </DialogContent>

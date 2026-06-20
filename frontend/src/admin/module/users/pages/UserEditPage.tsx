@@ -1,3 +1,4 @@
+import { type ReactNode } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -12,6 +13,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogBreadcrumb,
 } from '@/shadcn/components/ui/dialog'
 import { Button } from '@/shadcn/components/ui/button'
 import { FieldGroup } from '@/shadcn/components/ui/field'
@@ -42,9 +44,10 @@ type UpdateUserFormData = z.infer<typeof updateUserSchema>
 interface UserEditPageProps {
   user: UserResource
   onClose: () => void
+  breadcrumb?: ReactNode
 }
 
-export function UserEditPage({ user, onClose }: UserEditPageProps) {
+export function UserEditPage({ user, onClose, breadcrumb }: UserEditPageProps) {
   const queryClient = useQueryClient()
 
   const form = useForm<UpdateUserFormData>({
@@ -129,6 +132,7 @@ export function UserEditPage({ user, onClose }: UserEditPageProps) {
                 {updateMutation.isPending ? 'Aktualisiere...' : 'Speichern'}
               </Button>
             </DialogFooter>
+            <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
           </form>
         </FormProvider>
       </DialogContent>

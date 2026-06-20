@@ -1,5 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { MedicalTestCreatePage } from '@/admin/module/medical-tests/pages/MedicalTestCreatePage'
+import { useBreadcrumbs } from '@/router/useBreadcrumbs'
+import { BreadcrumbNav } from '@/router/BreadcrumbNav'
 import { queryClient } from '@/lib/queryClient.ts'
 import { listAnimalTypesQuery } from '@/admin/module/animal-types/api/queries'
 import { useSuspenseQuery } from '@tanstack/react-query'
@@ -17,9 +19,13 @@ export const Route = createFileRoute(
     await queryClient.ensureQueryData(listAnimalTypesQuery)
   },
   component: RouteComponent,
+  staticData: {
+    breadcrumb: 'Neu',
+  },
 })
 
 function RouteComponent() {
+  const breadcrumbs = useBreadcrumbs()
   const navigate = MedicalTestsRoute.useNavigate()
   const { data: animalTypesData } = useSuspenseQuery(listAnimalTypesQuery)
 
@@ -31,6 +37,7 @@ function RouteComponent() {
     <MedicalTestCreatePage
       animalTypes={animalTypesData.data}
       onClose={handleClose}
+      breadcrumb={<BreadcrumbNav items={breadcrumbs} size="sm" />}
     />
   )
 }

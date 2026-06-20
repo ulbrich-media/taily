@@ -1,9 +1,11 @@
+import { type ReactNode } from 'react'
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogBreadcrumb,
 } from '@/shadcn/components/ui/dialog'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
@@ -45,12 +47,14 @@ interface TransportEditPageProps {
   transport: TransportListResource
   mediators: PersonListResource[]
   onClose: () => void
+  breadcrumb?: ReactNode
 }
 
 export function TransportEditPage({
   transport,
   mediators,
   onClose,
+  breadcrumb,
 }: TransportEditPageProps) {
   const queryClient = useQueryClient()
 
@@ -149,6 +153,7 @@ export function TransportEditPage({
               {mutation.isPending ? 'Speichern...' : 'Speichern'}
             </Button>
           </DialogFooter>
+          <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
         </form>
       </DialogContent>
     </Dialog>

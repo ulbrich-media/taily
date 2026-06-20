@@ -8,12 +8,14 @@ interface AdoptionListPageProps {
   adoptions: AdoptionListResource[]
   createAction: ReactNode
   renderDetailLink?: (adoption: AdoptionListResource) => ReactNode
+  breadcrumb?: ReactNode
 }
 
 export function AdoptionListPage({
   adoptions,
   createAction,
   renderDetailLink,
+  breadcrumb,
 }: AdoptionListPageProps) {
   return (
     <div className="space-y-6">
@@ -21,6 +23,7 @@ export function AdoptionListPage({
         title="Vermittlungen"
         description="Verwalte alle Vermittlungsvorgänge"
         actions={createAction}
+        breadcrumb={breadcrumb}
       />
 
       <TableListView

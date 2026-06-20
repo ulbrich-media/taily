@@ -116,6 +116,24 @@ function DialogFooter({
   )
 }
 
+function DialogBreadcrumb({
+  className,
+  ...props
+}: React.ComponentProps<'div'>) {
+  if (!props.children) return null
+
+  return (
+    <div
+      data-slot="dialog-breadcrumb"
+      className={cn(
+        '-mx-6 -mb-6 mt-4 rounded-b-lg border-t bg-muted/50 px-6 py-3',
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
 function DialogTitle({
   className,
   ...props
@@ -123,7 +141,7 @@ function DialogTitle({
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
-      className={cn('text-2xl leading-none font-heading', className)}
+      className={cn('text-2xl leading-none font-heading pr-4', className)}
       {...props}
     />
   )
@@ -144,6 +162,7 @@ function DialogDescription({
 
 export {
   Dialog,
+  DialogBreadcrumb,
   DialogClose,
   DialogContent,
   DialogDescription,

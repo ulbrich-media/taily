@@ -15,12 +15,14 @@ interface OrganizationListPageProps {
   organizations: OrganizationResource[]
   createAction: ReactNode
   renderRowActions: (organization: OrganizationResource) => ReactNode
+  breadcrumb?: ReactNode
 }
 
 export function OrganizationListPage({
   organizations,
   createAction,
   renderRowActions,
+  breadcrumb,
 }: OrganizationListPageProps) {
   return (
     <div className="space-y-6">
@@ -28,6 +30,7 @@ export function OrganizationListPage({
         title="Organisationen"
         description="Verwalte alle Organisationen im System"
         actions={createAction}
+        breadcrumb={breadcrumb}
       />
 
       <TableListView

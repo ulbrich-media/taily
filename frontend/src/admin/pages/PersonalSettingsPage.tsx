@@ -5,16 +5,19 @@ import { NavigationCards } from '@/components/navigation/NavigationCards'
 
 interface PersonalSettingsPageProps {
   apiTokensAction: ReactNode
+  breadcrumb?: ReactNode
 }
 
 export function PersonalSettingsPage({
   apiTokensAction,
+  breadcrumb,
 }: PersonalSettingsPageProps) {
   return (
     <div className="space-y-6">
       <PageHeader
         title="Persönliche Einstellungen"
         description="Passe deine persönlichen Präferenzen an"
+        breadcrumb={breadcrumb}
       />
 
       <NavigationCards

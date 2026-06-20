@@ -9,6 +9,13 @@ export interface RouterContext {
   isAdmin: boolean
 }
 
+declare module '@tanstack/react-router' {
+  interface StaticDataRouteOption {
+    breadcrumb?: string
+    breadcrumbRoot?: boolean
+  }
+}
+
 const RootLayout = () => {
   const navigateToDashboard = DashboardRoute.useNavigate()
   const navigateToLogin = LoginRoute.useNavigate()

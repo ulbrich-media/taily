@@ -1,5 +1,7 @@
 import { createFileRoute, Outlet } from '@tanstack/react-router'
 import { UserListPage } from '@/admin/module/users/pages/UserListPage'
+import { useBreadcrumbs } from '@/router/useBreadcrumbs'
+import { BreadcrumbNav } from '@/router/BreadcrumbNav'
 import { queryClient } from '@/lib/queryClient'
 import { listUsersQuery } from '@/admin/module/users/api/queries'
 import { useSuspenseQuery } from '@tanstack/react-query'
@@ -12,6 +14,7 @@ import { Route as EditRoute } from '@/routes/admin/_authenticated/settings/users
 import { Route as DeleteRoute } from '@/routes/admin/_authenticated/settings/users/$id.delete'
 
 export const Route = createFileRoute('/admin/_authenticated/settings/users')({
+  staticData: { breadcrumb: 'Benutzer' },
   loader: async () => {
     await queryClient.ensureQueryData(listUsersQuery)
   },
@@ -19,6 +22,7 @@ export const Route = createFileRoute('/admin/_authenticated/settings/users')({
 })
 
 function RouteComponent() {
+  const breadcrumbs = useBreadcrumbs()
   const { isAdmin } = useAuth()
   const { data: users } = useSuspenseQuery(listUsersQuery)
 
@@ -54,6 +58,7 @@ function RouteComponent() {
         users={users}
         createAction={createAction}
         renderRowActions={renderRowActions}
+        breadcrumb={<BreadcrumbNav items={breadcrumbs} />}
       />
       <Outlet />
     </>

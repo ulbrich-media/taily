@@ -1,3 +1,4 @@
+import { type ReactNode } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -5,6 +6,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogBreadcrumb,
 } from '@/shadcn/components/ui/dialog.tsx'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
@@ -28,12 +30,14 @@ interface AdoptionEditMediatorPageProps {
   adoption: AdoptionDetailResource
   mediators: PersonListResource[]
   onClose: () => void
+  breadcrumb?: ReactNode
 }
 
 export function AdoptionEditMediatorPage({
   adoption,
   mediators,
   onClose,
+  breadcrumb,
 }: AdoptionEditMediatorPageProps) {
   const queryClient = useQueryClient()
 
@@ -100,6 +104,7 @@ export function AdoptionEditMediatorPage({
               Speichern
             </Button>
           </DialogFooter>
+          <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
         </form>
       </DialogContent>
     </Dialog>
