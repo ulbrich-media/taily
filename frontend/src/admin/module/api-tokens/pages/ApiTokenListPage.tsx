@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react'
-import { Key } from 'lucide-react'
 import type { ApiTokenResource } from '@/api/types/api-tokens'
 import {
   Table,
@@ -29,7 +28,6 @@ export function ApiTokenListPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        icon={Key}
         title="API Tokens"
         description="Verwalte API-Tokens für den externen Zugriff"
         actions={createAction}

@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react'
-import { Heart } from 'lucide-react'
 import type { AdoptionListResource } from '@/api/types/adoptions'
 import { TableListView } from '@/components/list/TableListView'
 import { PageHeader } from '@/components/layout/PageHeader'
@@ -19,7 +18,6 @@ export function AdoptionListPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        icon={Heart}
         title="Vermittlungen"
         description="Verwalte alle Vermittlungsvorgänge"
         actions={createAction}

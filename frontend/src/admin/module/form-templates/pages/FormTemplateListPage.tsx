@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react'
-import { ClipboardList } from 'lucide-react'
 import type { FormTemplateResource } from '@/api/types/form-templates'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { TableListView } from '@/components/list/TableListView'
@@ -28,7 +27,6 @@ export function FormTemplateListPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        icon={ClipboardList}
         title="Formularvorlagen"
         description="Verwalte dynamische Formularvorlagen für Inspektionen, Bewerbungen und mehr"
         actions={createAction}

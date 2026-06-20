@@ -15,7 +15,6 @@ import {
   DialogTitle,
 } from '@/shadcn/components/ui/dialog.tsx'
 import { Button } from '@/shadcn/components/ui/button.tsx'
-import { FlaskConical } from 'lucide-react'
 import { FieldGroup } from '@/shadcn/components/ui/field.tsx'
 import { toast } from 'sonner'
 import { FormBlocker } from '@/components/form/FormBlocker'
@@ -90,10 +89,7 @@ export function MedicalTestCreatePage({
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <FlaskConical className="h-5 w-5 text-primary" />
-            Neuen Test erstellen
-          </DialogTitle>
+          <DialogTitle>Neuen Test erstellen</DialogTitle>
           <DialogDescription>
             Erstelle einen neuen Test für eine Tierart.
           </DialogDescription>

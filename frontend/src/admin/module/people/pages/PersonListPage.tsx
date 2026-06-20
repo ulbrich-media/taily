@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Users, User } from 'lucide-react'
+import { User } from 'lucide-react'
 import type { PersonListResource } from '@/api/types/people'
 import {
   Table,
@@ -32,7 +32,6 @@ export function PersonListPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        icon={Users}
         title="Personen"
         description="Verwalte alle Personen und Kontakte"
         actions={createAction}

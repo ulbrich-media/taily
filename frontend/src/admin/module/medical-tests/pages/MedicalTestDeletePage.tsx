@@ -10,7 +10,6 @@ import {
   DialogTitle,
 } from '@/shadcn/components/ui/dialog.tsx'
 import { Button } from '@/shadcn/components/ui/button.tsx'
-import { Trash2Icon } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface MedicalTestDeletePageProps {
@@ -41,7 +40,6 @@ export function MedicalTestDeletePage({
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Trash2Icon className="h-5 w-5 text-destructive" />
             Test löschen
           </DialogTitle>
         </DialogHeader>

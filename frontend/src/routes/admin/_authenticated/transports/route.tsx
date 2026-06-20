@@ -51,7 +51,12 @@ function RouteComponent() {
 
   const renderActions = (transport: TransportListResource) => (
     <>
-      <Button size="icon-sm" variant="destructive" asChild aria-label="Löschen">
+      <Button
+        size="icon-sm"
+        variant="destructive_outline"
+        asChild
+        aria-label="Löschen"
+      >
         <DeleteRoute.Link params={{ transportId: transport.id }}>
           <Trash2 className="size-4" />
         </DeleteRoute.Link>

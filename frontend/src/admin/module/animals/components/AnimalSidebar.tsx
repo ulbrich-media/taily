@@ -11,15 +11,7 @@ export function AnimalSidebar({ animal }: AnimalSidebarProps) {
   const profilePicture = animal.pictures?.find((p) => p.type === 'image')
 
   return (
-    <aside className="">
-      <div className="lg:min-h-15 pb-3">
-        <h1 className="text-2xl font-bold text-foreground">{animal.name}</h1>
-        {animal.old_name && (
-          <p className="text-sm text-muted-foreground">
-            früher: {animal.old_name}
-          </p>
-        )}
-      </div>
+    <aside>
       <Card>
         <CardContent>
           {/* Profile Picture */}

@@ -2,16 +2,19 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { userQueryKeys } from '@/admin/module/users/api/queries'
 import { deleteUser } from '@/admin/module/users/api/requests'
 import type { UserResource } from '@/api/types/users'
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/shadcn/components/ui/dialog'
 import { Button } from '@/shadcn/components/ui/button'
 import { Trash2Icon } from 'lucide-react'
 import { toast } from 'sonner'
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+} from '@/shadcn/components/ui/alert-dialog.tsx'
 
 interface UserDeletePageProps {
   user: UserResource
@@ -38,35 +41,27 @@ export function UserDeletePage({ user, onClose }: UserDeletePageProps) {
   })
 
   return (
-    <Dialog open onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Trash2Icon className="h-5 w-5 text-destructive" />
-            Benutzer löschen
-          </DialogTitle>
-        </DialogHeader>
-
-        <div>
-          <div className="leading-7 mb-2">
+    <AlertDialog open onOpenChange={onClose}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogMedia className="text-destructive-solo">
+            <Trash2Icon />
+          </AlertDialogMedia>
+          <AlertDialogTitle>Benutzer löschen</AlertDialogTitle>
+          <AlertDialogDescription>
             Möchtest du den Benutzer{' '}
-            <span className="font-medium">{user.name}</span> (
-            <span className="font-medium">{user.email}</span>) wirklich löschen?
-          </div>
-          <div className="leading-7 mb-2">
-            Dieser Vorgang kann nicht rückgängig gemacht werden.
-          </div>
-        </div>
-
-        <DialogFooter>
-          <Button
-            type="button"
-            variant="outline"
+            <span className="font-bold">{user.name}</span> (
+            <span className="font-bold">{user.email}</span>) wirklich löschen?
+            Dieser Vorgang kann nicht rückgängig gemacht werden!
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel
             onClick={onClose}
             disabled={deleteMutation.isPending}
           >
             Abbrechen
-          </Button>
+          </AlertDialogCancel>
           <Button
             variant="destructive"
             disabled={deleteMutation.isPending}
@@ -74,8 +69,8 @@ export function UserDeletePage({ user, onClose }: UserDeletePageProps) {
           >
             {deleteMutation.isPending ? 'Wird gelöscht...' : 'Ja, löschen'}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   )
 }

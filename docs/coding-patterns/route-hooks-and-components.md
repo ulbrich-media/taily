@@ -13,10 +13,10 @@ Avoid generic `<Link to="/example" />` or `useNavigate({ to: '/example' })`. Use
 ## Examples
 
 **Route.useParams()** — typed params without string casts:
-[`frontend/src/routes/admin/_authenticated/adoptions/$adoptionId/route.tsx:18`](../../frontend/src/routes/admin/_authenticated/adoptions/$adoptionId/route.tsx)
+[`frontend/src/routes/admin/_authenticated/adoptions/$adoptionId/route.tsx`](../../frontend/src/routes/admin/_authenticated/adoptions/$adoptionId/route.tsx)
 
 **Route.Link** — link to a named route with required params:
-[`frontend/src/admin/module/pre-inspections/components/PreInspectionList.tsx:115`](../../frontend/src/admin/module/pre-inspections/components/PreInspectionList.tsx)
+[`frontend/src/routes/admin/_authenticated/adoptions/$adoptionId/route.tsx`](../../frontend/src/routes/admin/_authenticated/adoptions/$adoptionId/route.tsx)
 
 **Imported Route.Link** — linking to a sibling/child route:
-[`frontend/src/admin/module/organizations/components/OrganizationTabs.tsx:60`](../../frontend/src/admin/module/organizations/components/OrganizationTabs.tsx)
+[`frontend/src/routes/admin/_authenticated/adoptions/$adoptionId/route.tsx`](../../frontend/src/routes/admin/_authenticated/adoptions/$adoptionId/route.tsx)

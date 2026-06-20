@@ -15,7 +15,6 @@ import {
   DialogTitle,
 } from '@/shadcn/components/ui/dialog.tsx'
 import { Button } from '@/shadcn/components/ui/button.tsx'
-import { FlaskConical } from 'lucide-react'
 import { FieldGroup } from '@/shadcn/components/ui/field.tsx'
 import { toast } from 'sonner'
 import { FormBlocker } from '@/components/form/FormBlocker'
@@ -71,10 +70,7 @@ export function MedicalTestEditPage({
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <FlaskConical className="h-5 w-5 text-primary" />
-            Test bearbeiten
-          </DialogTitle>
+          <DialogTitle>Test bearbeiten</DialogTitle>
           <DialogDescription>Bearbeite den Test.</DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>

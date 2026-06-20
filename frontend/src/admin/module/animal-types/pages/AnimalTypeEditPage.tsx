@@ -15,7 +15,6 @@ import {
   DialogTitle,
 } from '@/shadcn/components/ui/dialog'
 import { Button } from '@/shadcn/components/ui/button'
-import { PawPrint } from 'lucide-react'
 import { FieldGroup } from '@/shadcn/components/ui/field'
 import { toast } from 'sonner'
 import { FormBlocker } from '@/components/form/FormBlocker'
@@ -87,10 +86,7 @@ export function AnimalTypeEditPage({
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <PawPrint className="h-5 w-5 text-primary" />
-            Tierart bearbeiten
-          </DialogTitle>
+          <DialogTitle>Tierart bearbeiten</DialogTitle>
           <DialogDescription>
             Bearbeite die Tierart und ihre Formularvorlage.
           </DialogDescription>

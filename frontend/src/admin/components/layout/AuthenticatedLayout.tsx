@@ -37,7 +37,7 @@ export function AuthenticatedLayout({
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-muted">
       <Header
         navLinks={navLinks}
         dropdownUserItems={dropdownUserItems}

@@ -22,6 +22,7 @@ import {
   AvatarFallback,
   AvatarImage,
 } from '@/shadcn/components/ui/avatar.tsx'
+import { Card, CardContent } from '@/shadcn/components/ui/card.tsx'
 
 interface AnimalListPageProps {
   animals: AnimalListResource[]
@@ -47,31 +48,34 @@ export function AnimalListPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        icon={PawPrint}
         title="Tiere"
         description="Verwalte alle Tiere im System"
         actions={createAction}
       />
 
       {/* Filter Controls */}
-      <div className="flex items-center gap-4">
-        <Field>
-          <FieldLabel>Tierarten</FieldLabel>
-          <ToggleGroup
-            type="single"
-            variant="outline"
-            value={animalTypeId ?? 'all'}
-            onValueChange={handleAnimalTypeChange}
-          >
-            <ToggleGroupItem value="all">Alle</ToggleGroupItem>
-            {animalTypes.map((type) => (
-              <ToggleGroupItem key={type.id} value={type.id}>
-                {type.title}
-              </ToggleGroupItem>
-            ))}
-          </ToggleGroup>
-        </Field>
-      </div>
+      <Card>
+        <CardContent>
+          <div className="flex items-center gap-4">
+            <Field>
+              <FieldLabel>Tierarten</FieldLabel>
+              <ToggleGroup
+                type="single"
+                variant="outline"
+                value={animalTypeId ?? 'all'}
+                onValueChange={handleAnimalTypeChange}
+              >
+                <ToggleGroupItem value="all">Alle</ToggleGroupItem>
+                {animalTypes.map((type) => (
+                  <ToggleGroupItem key={type.id} value={type.id}>
+                    {type.title}
+                  </ToggleGroupItem>
+                ))}
+              </ToggleGroup>
+            </Field>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Animal List Table */}
       <TableListView

@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react'
 import {
-  Settings,
   Syringe,
   FlaskConical,
   Users,
@@ -40,7 +39,6 @@ export function SettingsPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        icon={Settings}
         title="Einstellungen"
         description="Verwalte deine Systemeinstellungen"
       />

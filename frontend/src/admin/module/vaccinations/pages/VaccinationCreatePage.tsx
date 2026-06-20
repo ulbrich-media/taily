@@ -15,7 +15,6 @@ import {
   DialogTitle,
 } from '@/shadcn/components/ui/dialog.tsx'
 import { Button } from '@/shadcn/components/ui/button.tsx'
-import { Syringe } from 'lucide-react'
 import { FieldGroup } from '@/shadcn/components/ui/field.tsx'
 import { toast } from 'sonner'
 import { FormBlocker } from '@/components/form/FormBlocker'
@@ -90,10 +89,7 @@ export function VaccinationCreatePage({
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Syringe className="h-5 w-5 text-primary" />
-            Neue Impfung erstellen
-          </DialogTitle>
+          <DialogTitle>Neue Impfung erstellen</DialogTitle>
           <DialogDescription>
             Erstelle eine neue Impfung für eine Tierart.
           </DialogDescription>

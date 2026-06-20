@@ -10,7 +10,6 @@ import {
   DialogTitle,
 } from '@/shadcn/components/ui/dialog'
 import { Button } from '@/shadcn/components/ui/button'
-import { Trash2Icon } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface AnimalTypeDeletePageProps {
@@ -40,10 +39,7 @@ export function AnimalTypeDeletePage({
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Trash2Icon className="h-5 w-5 text-destructive" />
-            Tierart löschen
-          </DialogTitle>
+          <DialogTitle>Tierart löschen</DialogTitle>
         </DialogHeader>
 
         <div>
