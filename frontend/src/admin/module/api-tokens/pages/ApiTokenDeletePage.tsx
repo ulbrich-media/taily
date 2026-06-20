@@ -3,14 +3,18 @@ import { apiTokenQueryKeys } from '@/admin/module/api-tokens/api/queries.ts'
 import { deleteApiToken } from '@/admin/module/api-tokens/api/requests.ts'
 import type { ApiTokenResource } from '@/api/types/api-tokens'
 import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/shadcn/components/ui/dialog.tsx'
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+} from '@/shadcn/components/ui/alert-dialog.tsx'
 import { Button } from '@/shadcn/components/ui/button.tsx'
 import { toast } from 'sonner'
+import { Trash2Icon } from 'lucide-react'
 
 interface ApiTokenResourceDeletePageProps {
   token: ApiTokenResource
@@ -33,32 +37,24 @@ export function ApiTokenDeletePage({
   })
 
   return (
-    <Dialog open onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Token löschen</DialogTitle>
-        </DialogHeader>
-
-        <div>
-          <div className="leading-7 mb-2">
+    <AlertDialog open onOpenChange={onClose}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogMedia className="text-destructive-text">
+            <Trash2Icon />
+          </AlertDialogMedia>
+          <AlertDialogTitle>Token löschen</AlertDialogTitle>
+          <AlertDialogDescription>
             Möchtest du das Token{' '}
-            <span className="font-medium">{token.name}</span> wirklich löschen?
-          </div>
-          <div className="leading-7 mb-2">
+            <span className="font-bold">{token.name}</span> wirklich löschen?
             Dieser Vorgang kann nicht rückgängig gemacht werden. Das Token
             verliert dabei sofort seine Gültigkeit.
-          </div>
-        </div>
-
-        <DialogFooter>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onClose}
-            disabled={deleteMutation.isPending}
-          >
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={deleteMutation.isPending}>
             Abbrechen
-          </Button>
+          </AlertDialogCancel>
           <Button
             variant="destructive"
             disabled={deleteMutation.isPending}
@@ -66,8 +62,8 @@ export function ApiTokenDeletePage({
           >
             {deleteMutation.isPending ? 'Wird gelöscht...' : 'Ja, löschen'}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   )
 }

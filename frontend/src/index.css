@@ -36,8 +36,8 @@
   --color-destructive: var(
     --destructive
   ); /* destructive color primarily for filled elements (backgrounds) */
-  --color-destructive-solo: var(
-    --destructive-solo
+  --color-destructive-text: var(
+    --destructive-text
   ); /* destructive color for thiner, lighter elements (text, icons, border) */
   --color-border: var(--border);
   --color-input: var(--input);
@@ -73,7 +73,7 @@
   --accent: oklch(0.966 0.005 106.5);
   --accent-foreground: oklch(0.228 0.013 107.4);
   --destructive: #d6402b;
-  --destructive-solo: #d6402b;
+  --destructive-text: #d6402b;
   --border: oklch(0.93 0.007 106.5);
   --input: oklch(0.976 0.003 106.448);
   --ring: oklch(0.737 0.021 106.9);
@@ -109,7 +109,7 @@
   --accent: oklch(0.286 0.016 107.4);
   --accent-foreground: oklch(0.988 0.003 106.5);
   --destructive: #d6402b;
-  --destructive-solo: #fa604c;
+  --destructive-text: #fa604c;
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.58 0.031 107.3);

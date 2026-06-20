@@ -45,7 +45,7 @@ export function TransportDeletePage({
     <AlertDialog open onOpenChange={(open) => !open && onClose()}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogMedia className="text-destructive-solo">
+          <AlertDialogMedia className="text-destructive-text">
             <Trash2 />
           </AlertDialogMedia>
           <AlertDialogTitle>Transport löschen</AlertDialogTitle>
