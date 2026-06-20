@@ -2,6 +2,21 @@
 
 All notable changes to Taily are documented here.
 
+# [0.5.0](https://github.com/ulbrich-media/taily/compare/v0.4.0...v0.5.0) (2026-06-20)
+
+
+### Bug Fixes
+
+* lazy loading enabled for images ([#63](https://github.com/ulbrich-media/taily/issues/63)) ([c17fecf](https://github.com/ulbrich-media/taily/commit/c17fecf86f9a1835bbfeeba66e2e82d1d9893614))
+
+
+### Features
+
+* transport management for animal adoptions implemented ([#54](https://github.com/ulbrich-media/taily/issues/54)) ([4ffa1fc](https://github.com/ulbrich-media/taily/commit/4ffa1fc742c0fdc8830058685cf59f0a93ee2ca7))
+* **ui:** alert dialog enforced ([#62](https://github.com/ulbrich-media/taily/issues/62)) ([ca1e6d7](https://github.com/ulbrich-media/taily/commit/ca1e6d780d8b688a3628e54534f71b316d30bef7))
+* **ui:** breadcrumbs implemented ([#61](https://github.com/ulbrich-media/taily/issues/61)) ([a812edc](https://github.com/ulbrich-media/taily/commit/a812edc7b26cc1b189a0a800aa0d7ff226d2cee9))
+* **ui:** redesign implemented ([#60](https://github.com/ulbrich-media/taily/issues/60)) ([e30712d](https://github.com/ulbrich-media/taily/commit/e30712dee4945ef9835757fffe255fe7fba90469))
+
 # [0.4.0](https://github.com/ulbrich-media/taily/compare/v0.3.0...v0.4.0) (2026-05-28)
 
 
