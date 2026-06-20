@@ -13,10 +13,11 @@ import { FieldCardDragPreview, PaletteDragPreview } from './FieldCard'
 import { EditFieldDialog } from './EditFieldDialog'
 import { FieldBuilderSection } from './FieldBuilderSection'
 import { useFieldBuilder } from './useFieldBuilder'
-import { useMemo } from 'react'
+import { type ReactNode, useMemo } from 'react'
 import { buildJsonSchema } from './schema'
 import { PageHeader } from '@/components/layout/PageHeader.tsx'
 import { FormGrid } from '@/components/form/FormGrid.tsx'
+import { Card, CardContent } from '@/shadcn/components/ui/card.tsx'
 
 const createTemplateSchema = z.object({
   name: z.string().min(1, 'Name ist erforderlich').max(255),
@@ -27,11 +28,13 @@ type CreateTemplateFormData = z.infer<typeof createTemplateSchema>
 interface FormBuilderCreateProps {
   onCreated: () => void
   onCancel: () => void
+  breadcrumb: ReactNode
 }
 
 export function FormBuilderCreate({
   onCreated,
   onCancel,
+  breadcrumb,
 }: FormBuilderCreateProps) {
   const queryClient = useQueryClient()
 
@@ -77,11 +80,20 @@ export function FormBuilderCreate({
       onDragCancel={fb.handleDragCancel}
     >
       <div className="space-y-6">
-        <PageHeader title={'Neue Formularvorlage'} />
+        <PageHeader title={'Neue Formularvorlage'} breadcrumb={breadcrumb} />
 
-        <FormGrid>
-          <TextInput name="name" control={form.control} label="Name" required />
-        </FormGrid>
+        <Card>
+          <CardContent>
+            <FormGrid>
+              <TextInput
+                name="name"
+                control={form.control}
+                label="Name"
+                required
+              />
+            </FormGrid>
+          </CardContent>
+        </Card>
 
         {/* Field builder */}
         <FieldBuilderSection

@@ -17,10 +17,11 @@ import { FieldBuilderSection } from './FieldBuilderSection'
 import { useFieldBuilder } from './useFieldBuilder'
 import { parseJsonSchema, buildJsonSchema } from './schema'
 import { FormBlocker } from '@/components/form/FormBlocker.tsx'
-import { useMemo } from 'react'
+import { type ReactNode, useMemo } from 'react'
 import { PageHeader } from '@/components/layout/PageHeader.tsx'
 import { FormGrid } from '@/components/form/FormGrid.tsx'
 import { InfoRow } from '@/shadcn/components/common/info-row.tsx'
+import { Card, CardContent } from '@/shadcn/components/ui/card.tsx'
 
 const templateNameSchema = z.object({
   name: z.string().min(1, 'Name ist erforderlich').max(255),
@@ -32,12 +33,14 @@ interface FormBuilderEditorProps {
   template: FormTemplateResource
   onCancel: () => void
   onNewVersion: (id: string) => void
+  breadcrumb: ReactNode
 }
 
 export function FormBuilderEditor({
   template,
   onCancel,
   onNewVersion,
+  breadcrumb,
 }: FormBuilderEditorProps) {
   const queryClient = useQueryClient()
 
@@ -101,20 +104,27 @@ export function FormBuilderEditor({
         <FormBlocker isDirty={fb.isDirty} />
 
         <div className="space-y-6">
-          <PageHeader title="Formularvorlage bearbeiten" />
+          <PageHeader
+            title="Formularvorlage bearbeiten"
+            breadcrumb={breadcrumb}
+          />
 
-          <FormGrid>
-            <TextInput
-              name="name"
-              control={nameForm.control}
-              label="Name"
-              required
-            />
+          <Card>
+            <CardContent>
+              <FormGrid>
+                <TextInput
+                  name="name"
+                  control={nameForm.control}
+                  label="Name"
+                  required
+                />
 
-            <InfoRow label="Version">
-              <Badge variant="secondary">v{template.version}</Badge>
-            </InfoRow>
-          </FormGrid>
+                <InfoRow label="Version">
+                  <Badge variant="secondary">v{template.version}</Badge>
+                </InfoRow>
+              </FormGrid>
+            </CardContent>
+          </Card>
 
           {/* Field builder */}
           <FieldBuilderSection

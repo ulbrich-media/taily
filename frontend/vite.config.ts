@@ -23,6 +23,9 @@ export default defineConfig({
     }),
     tailwindcss(),
   ],
+  optimizeDeps: {
+    include: ['@dnd-kit/core', '@dnd-kit/sortable', '@dnd-kit/utilities'],
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

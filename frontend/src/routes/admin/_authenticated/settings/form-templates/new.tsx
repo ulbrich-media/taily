@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { FormBuilderCreate } from '@/admin/module/form-templates/components/FormBuilderCreate'
 import { Route as ListRoute } from './index'
+import { useBreadcrumbs } from '@/router/useBreadcrumbs.ts'
 
 export const Route = createFileRoute(
   '/admin/_authenticated/settings/form-templates/new'
@@ -10,15 +11,20 @@ export const Route = createFileRoute(
       throw new Error('403: Forbidden - Admin access required')
     }
   },
+  staticData: {
+    breadcrumb: 'Formularvorlage anlegen',
+  },
   component: RouteComponent,
 })
 
 function RouteComponent() {
+  const breadcrumbs = useBreadcrumbs()
   const navigate = ListRoute.useNavigate()
   return (
     <FormBuilderCreate
       onCreated={() => navigate({})}
       onCancel={() => navigate({})}
+      breadcrumb={<BreadcrumbNav items={breadcrumbs} />}
     />
   )
 }
