@@ -32,7 +32,7 @@ export function PageHeader({
         </div>
         {links && (
           <div className="self-end flex justify-end">
-            <nav className="inline-flex gap-1 bg-background p-1 rounded-xl border shadow-sm">
+            <nav className="inline-flex gap-1 bg-card p-1 rounded-xl border shadow-sm">
               {links}
             </nav>
           </div>
