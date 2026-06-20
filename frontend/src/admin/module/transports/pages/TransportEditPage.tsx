@@ -32,6 +32,7 @@ import {
 import { PersonSelect } from '@/components/field/PersonSelect'
 import type { PersonListResource } from '@/api/types/people'
 import { getTransportTitle } from '@/admin/module/transports/utils.ts'
+import { Mark } from '@/components/typo/mark.tsx'
 
 const schema = z.object({
   name: zFieldString({ maxLength: 255 }),
@@ -88,13 +89,13 @@ export function TransportEditPage({
     },
   })
 
-  const title = `${getTransportTitle(transport)} bearbeiten`
-
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
+          <DialogTitle>
+            <Mark>{getTransportTitle(transport)}</Mark> bearbeiten
+          </DialogTitle>
         </DialogHeader>
         <form
           onSubmit={form.handleSubmit((data) => mutation.mutate(data))}

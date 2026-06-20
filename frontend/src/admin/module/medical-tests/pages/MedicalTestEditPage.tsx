@@ -23,6 +23,7 @@ import { FormBlocker } from '@/components/form/FormBlocker'
 import { TextInput } from '@/components/field/TextInput'
 import { SelectInput } from '@/components/field/SelectInput'
 import { zFieldString } from '@/components/field/TextInput.utils.ts'
+import { Mark } from '@/components/typo/mark.tsx'
 
 const updateMedicalTestSchema = z.object({
   title: zFieldString({ required: true }),
@@ -74,7 +75,9 @@ export function MedicalTestEditPage({
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Test bearbeiten</DialogTitle>
+          <DialogTitle>
+            <Mark>{medicalTest.title}</Mark> bearbeiten
+          </DialogTitle>
           <DialogDescription>Bearbeite den Test.</DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>

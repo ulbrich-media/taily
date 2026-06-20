@@ -23,6 +23,7 @@ import { FormBlocker } from '@/components/form/FormBlocker'
 import { TextInput } from '@/components/field/TextInput'
 import { SelectInput } from '@/components/field/SelectInput'
 import { zFieldString } from '@/components/field/TextInput.utils.ts'
+import { Mark } from '@/components/typo/mark.tsx'
 
 const updateAnimalTypeSchema = z.object({
   title: zFieldString({ required: true }),
@@ -90,7 +91,9 @@ export function AnimalTypeEditPage({
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Tierart bearbeiten</DialogTitle>
+          <DialogTitle>
+            <Mark>{animalType.title}</Mark> bearbeiten
+          </DialogTitle>
           <DialogDescription>
             Bearbeite die Tierart und ihre Formularvorlage.
           </DialogDescription>
