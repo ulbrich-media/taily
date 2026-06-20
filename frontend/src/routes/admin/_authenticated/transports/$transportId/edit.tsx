@@ -8,6 +8,7 @@ import type { TransportListResource } from '@/api/types/transports'
 import { TransportEditPage } from '@/admin/module/transports/pages/TransportEditPage'
 import { Route as TransportsRoute } from '@/routes/admin/_authenticated/transports/route'
 import { listPersonsQuery } from '@/lib/api/persons'
+import { getTransportTitle } from '@/admin/module/transports/utils.ts'
 
 export const Route = createFileRoute(
   '/admin/_authenticated/transports/$transportId/edit'
@@ -31,12 +32,12 @@ export const Route = createFileRoute(
     )
     if (!transport) throw notFound()
 
-    return { transport }
+    return {
+      transport,
+      breadcrumb: `${getTransportTitle(transport)} bearbeiten`,
+    }
   },
   component: RouteComponent,
-  staticData: {
-    breadcrumb: 'Transport bearbeiten',
-  },
 })
 
 function RouteComponent() {

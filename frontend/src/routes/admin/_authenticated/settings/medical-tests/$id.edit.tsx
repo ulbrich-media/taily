@@ -31,7 +31,7 @@ export const Route = createFileRoute(
 
     await queryClient.ensureQueryData(listAnimalTypesQuery)
 
-    return { breadcrumb: medicalTest.title }
+    return { breadcrumb: `${medicalTest.title} bearbeiten` }
   },
   component: RouteComponent,
 })

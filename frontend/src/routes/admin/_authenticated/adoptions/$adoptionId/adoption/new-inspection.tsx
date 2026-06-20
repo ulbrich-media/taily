@@ -24,7 +24,7 @@ export const Route = createFileRoute(
     )
   },
   staticData: {
-    breadcrumb: 'Neue Kontrolle',
+    breadcrumb: 'Neue Kontrolle starten',
   },
   component: RouteComponent,
 })
