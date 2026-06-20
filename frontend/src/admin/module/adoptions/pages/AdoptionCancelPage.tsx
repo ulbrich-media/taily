@@ -1,3 +1,4 @@
+import { type ReactNode } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -5,6 +6,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogBreadcrumb,
 } from '@/shadcn/components/ui/dialog.tsx'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
@@ -31,11 +33,13 @@ type FormData = z.infer<typeof schema>
 interface AdoptionCancelPageProps {
   adoption: AdoptionDetailResource
   onClose: () => void
+  breadcrumb?: ReactNode
 }
 
 export function AdoptionCancelPage({
   adoption,
   onClose,
+  breadcrumb,
 }: AdoptionCancelPageProps) {
   const queryClient = useQueryClient()
 
@@ -104,6 +108,7 @@ export function AdoptionCancelPage({
                 : 'Vermittlung abbrechen'}
             </Button>
           </DialogFooter>
+          <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
         </form>
       </DialogContent>
     </Dialog>

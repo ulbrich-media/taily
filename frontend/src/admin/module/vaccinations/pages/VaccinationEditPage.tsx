@@ -1,3 +1,4 @@
+import { type ReactNode } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -13,9 +14,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogBreadcrumb,
 } from '@/shadcn/components/ui/dialog.tsx'
 import { Button } from '@/shadcn/components/ui/button.tsx'
-import { Syringe } from 'lucide-react'
 import { FieldGroup } from '@/shadcn/components/ui/field.tsx'
 import { toast } from 'sonner'
 import { FormBlocker } from '@/components/form/FormBlocker'
@@ -35,12 +36,14 @@ interface VaccinationEditPageProps {
   vaccination: VaccinationResource
   animalTypes: AnimalTypeResource[]
   onClose: () => void
+  breadcrumb?: ReactNode
 }
 
 export function VaccinationEditPage({
   vaccination,
   animalTypes,
   onClose,
+  breadcrumb,
 }: VaccinationEditPageProps) {
   const queryClient = useQueryClient()
 
@@ -71,10 +74,7 @@ export function VaccinationEditPage({
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Syringe className="h-5 w-5 text-primary" />
-            Impfung bearbeiten
-          </DialogTitle>
+          <DialogTitle>Impfung bearbeiten</DialogTitle>
           <DialogDescription>Bearbeite die Impfung.</DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -122,6 +122,7 @@ export function VaccinationEditPage({
                 {updateMutation.isPending ? 'Aktualisiere...' : 'Speichern'}
               </Button>
             </DialogFooter>
+            <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
           </form>
         </FormProvider>
       </DialogContent>

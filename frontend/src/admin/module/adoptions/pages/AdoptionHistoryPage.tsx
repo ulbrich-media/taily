@@ -11,10 +11,8 @@ export function AdoptionHistoryPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>
-          <CardTitleIcon icon={History} />
-          Verlauf
-        </CardTitle>
+        <CardTitle>Verlauf</CardTitle>
+        <CardTitleIcon icon={History} />
       </CardHeader>
       <CardContent>
         <div className="text-center py-12 text-muted-foreground">

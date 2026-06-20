@@ -42,6 +42,7 @@ class DatabaseSeeder extends Seeder
             PersonSeeder::class,
             AnimalSeeder::class,
             AdoptionSeeder::class,
+            TransportSeeder::class,
             PreInspectionSeeder::class,
             FormTemplateSeeder::class,
         ]);

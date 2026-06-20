@@ -1,21 +1,23 @@
 import type { ReactNode } from 'react'
-import { Settings, Key } from 'lucide-react'
+import { Key } from 'lucide-react'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { NavigationCards } from '@/components/navigation/NavigationCards'
 
 interface PersonalSettingsPageProps {
   apiTokensAction: ReactNode
+  breadcrumb?: ReactNode
 }
 
 export function PersonalSettingsPage({
   apiTokensAction,
+  breadcrumb,
 }: PersonalSettingsPageProps) {
   return (
     <div className="space-y-6">
       <PageHeader
-        icon={Settings}
         title="Persönliche Einstellungen"
         description="Passe deine persönlichen Präferenzen an"
+        breadcrumb={breadcrumb}
       />
 
       <NavigationCards

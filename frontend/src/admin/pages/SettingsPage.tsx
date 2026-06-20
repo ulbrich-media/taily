@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react'
 import {
-  Settings,
   Syringe,
   FlaskConical,
   Users,
@@ -25,6 +24,7 @@ interface SettingsPageProps {
   medicalTestsAction: ReactNode
   organizationsAction: ReactNode
   formTemplatesAction: ReactNode
+  breadcrumb?: ReactNode
 }
 
 export function SettingsPage({
@@ -34,15 +34,16 @@ export function SettingsPage({
   medicalTestsAction,
   organizationsAction,
   formTemplatesAction,
+  breadcrumb,
 }: SettingsPageProps) {
   const { isAdmin } = useAuth()
 
   return (
     <div className="space-y-6">
       <PageHeader
-        icon={Settings}
         title="Einstellungen"
         description="Verwalte deine Systemeinstellungen"
+        breadcrumb={breadcrumb}
       />
 
       {!isAdmin && (

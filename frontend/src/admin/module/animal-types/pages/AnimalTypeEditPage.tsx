@@ -1,3 +1,4 @@
+import { type ReactNode } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -13,9 +14,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogBreadcrumb,
 } from '@/shadcn/components/ui/dialog'
 import { Button } from '@/shadcn/components/ui/button'
-import { PawPrint } from 'lucide-react'
 import { FieldGroup } from '@/shadcn/components/ui/field'
 import { toast } from 'sonner'
 import { FormBlocker } from '@/components/form/FormBlocker'
@@ -34,12 +35,14 @@ interface AnimalTypeEditPageProps {
   animalType: AnimalTypeResource
   formTemplates: FormTemplateResource[]
   onClose: () => void
+  breadcrumb?: ReactNode
 }
 
 export function AnimalTypeEditPage({
   animalType,
   formTemplates,
   onClose,
+  breadcrumb,
 }: AnimalTypeEditPageProps) {
   const queryClient = useQueryClient()
 
@@ -87,10 +90,7 @@ export function AnimalTypeEditPage({
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <PawPrint className="h-5 w-5 text-primary" />
-            Tierart bearbeiten
-          </DialogTitle>
+          <DialogTitle>Tierart bearbeiten</DialogTitle>
           <DialogDescription>
             Bearbeite die Tierart und ihre Formularvorlage.
           </DialogDescription>
@@ -129,6 +129,7 @@ export function AnimalTypeEditPage({
                 {updateMutation.isPending ? 'Aktualisiere...' : 'Speichern'}
               </Button>
             </DialogFooter>
+            <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
           </form>
         </FormProvider>
       </DialogContent>

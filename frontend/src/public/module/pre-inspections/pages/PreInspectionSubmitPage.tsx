@@ -15,13 +15,15 @@ import {
 import { Button } from '@/shadcn/components/ui/button'
 import { RadioGroup, RadioGroupItem } from '@/shadcn/components/ui/radio-group'
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/shadcn/components/ui/dialog'
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+} from '@/shadcn/components/ui/alert-dialog'
 import { CheckCircle, ClipboardCheck } from 'lucide-react'
 import { getPublicInspectionQuery } from '@/public/module/pre-inspections/api/queries'
 import { submitPublicInspection } from '@/public/module/pre-inspections/api/requests'
@@ -62,13 +64,11 @@ export function PreInspectionSubmitPage({
 
   if (submitMutation.isSuccess) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <div className="min-h-screen flex items-center justify-center bg-muted p-4">
         <Card className="w-full sm:max-w-md">
           <CardHeader>
-            <CardTitle variant="success">
-              <CardTitleIcon icon={CheckCircle} />
-              Vorkontrolle eingereicht
-            </CardTitle>
+            <CardTitle variant="success">Vorkontrolle eingereicht</CardTitle>
+            <CardTitleIcon icon={CheckCircle} />
             <CardDescription>
               Vielen Dank! Deine Einschätzung wurde erfolgreich übermittelt.
             </CardDescription>
@@ -82,15 +82,13 @@ export function PreInspectionSubmitPage({
     <>
       <form
         onSubmit={form.handleSubmit(() => setConfirmOpen(true))}
-        className="min-h-screen bg-background py-8 px-4"
+        className="min-h-screen bg-muted py-8 px-4"
       >
         <div className="mx-auto max-w-2xl space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>
-                <CardTitleIcon icon={ClipboardCheck} />
-                Vorkontrolle
-              </CardTitle>
+              <CardTitle>Vorkontrolle</CardTitle>
+              <CardTitleIcon icon={ClipboardCheck} />
               <CardDescription>
                 Bitte fülle das folgende Formular aus und reiche es ein.
               </CardDescription>
@@ -180,24 +178,26 @@ export function PreInspectionSubmitPage({
         </div>
       </form>
 
-      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Einreichung bestätigen</DialogTitle>
-            <DialogDescription>
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogMedia>
+              <ClipboardCheck />
+            </AlertDialogMedia>
+            <AlertDialogTitle>Einreichung bestätigen</AlertDialogTitle>
+            <AlertDialogDescription>
               Möchtest du die Vorkontrolle wirklich einreichen? Diese Aktion
               kann nicht rückgängig gemacht werden. Der Link wird danach
               ungültig.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
               onClick={() => setConfirmOpen(false)}
               disabled={submitMutation.isPending}
             >
               Abbrechen
-            </Button>
+            </AlertDialogCancel>
             <Button
               onClick={() => submitMutation.mutate(form.getValues())}
               disabled={submitMutation.isPending}
@@ -206,9 +206,9 @@ export function PreInspectionSubmitPage({
                 ? 'Wird eingereicht...'
                 : 'Ja, einreichen'}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }

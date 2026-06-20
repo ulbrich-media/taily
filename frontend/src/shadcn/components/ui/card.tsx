@@ -41,7 +41,7 @@ function CardTitle({
       data-slot="card-title"
       data-variant={variant}
       className={cn(
-        'leading-none font-semibold flex items-center gap-2',
+        'leading-none font-heading text-xl flex items-center gap-2',
         variant === 'destructive' && 'text-destructive',
         variant === 'success' && 'text-green-600',
         className
@@ -61,7 +61,7 @@ function CardTitleIcon({ icon: Icon, className }: CardTitleIconProps) {
     <Icon
       slot="card-title-icon"
       className={cn(
-        'size-5 text-primary',
+        'col-start-2 row-span-2 row-start-1 self-start justify-self-end size-5 text-primary',
         'in-data-[variant=destructive]:text-destructive',
         'in-data-[variant=success]:text-green-600',
         className

@@ -9,11 +9,15 @@ import {
 } from '@/shadcn/components/ui/card'
 import { PreInspectionList } from '@/admin/module/pre-inspections/components/PreInspectionList'
 import { BadgeBySet } from '@/shadcn/components/ui/badge-utils.tsx'
-import { InfoRow } from '@/shadcn/components/common/info-row.tsx'
+import {
+  InfoRow,
+  InfoRowEmptyValue,
+} from '@/shadcn/components/common/info-row.tsx'
 import { formatApiDate } from '@/lib/dates.utils.ts'
 import { Spinner } from '@/shadcn/components/ui/spinner.tsx'
 import { FilePenLineIcon } from 'lucide-react'
 import { Button } from '@/shadcn/components/ui/button.tsx'
+import { getTransportTitle } from '@/admin/module/transports/utils.ts'
 
 interface AdoptionDetailPageProps {
   adoption: AdoptionDetailResource
@@ -26,6 +30,8 @@ interface AdoptionDetailPageProps {
   newInspectionAction: ReactNode
   cancelAction: ReactNode
   reopenAction: ReactNode
+  assignTransportAction: ReactNode
+  removeTransportAction: ReactNode | null
   renderInspectionDetailLink?: (inspection: PreInspectionResource) => ReactNode
 }
 
@@ -40,6 +46,8 @@ export function AdoptionDetailPage({
   newInspectionAction,
   cancelAction,
   reopenAction,
+  assignTransportAction,
+  removeTransportAction,
   renderInspectionDetailLink,
 }: AdoptionDetailPageProps) {
   const isCanceled = adoption.status === 'canceled'
@@ -155,6 +163,69 @@ export function AdoptionDetailPage({
             )}
           </div>
           <div className="flex justify-end">{editContractAction}</div>
+        </div>
+      </StepCard>
+
+      <StepCard
+        title="Transport"
+        status={
+          <BadgeBySet
+            set={{
+              not_started: { label: 'Nicht begonnen', variant: 'outline' },
+              pending: { label: 'Transport geplant', variant: 'warning' },
+              in_progress: { label: 'Transport geplant', variant: 'warning' },
+              finished: { label: 'Abgeschlossen', variant: 'success' },
+            }}
+            value={adoption.transport_status}
+          />
+        }
+      >
+        <div className="space-y-4">
+          {adoption.transport ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="md:col-span-2">
+                <InfoRow label="Name">
+                  {getTransportTitle(adoption.transport)}
+                </InfoRow>
+              </div>
+              <InfoRow label="Geplantes Datum">
+                {adoption.transport.planned_at ? (
+                  formatApiDate(adoption.transport.planned_at)
+                ) : (
+                  <InfoRowEmptyValue />
+                )}
+              </InfoRow>
+              <InfoRow label="Abgeschlossen am">
+                {adoption.transport.done_at ? (
+                  formatApiDate(adoption.transport.done_at)
+                ) : (
+                  <InfoRowEmptyValue />
+                )}
+              </InfoRow>
+              <InfoRow label="Verantwortliche Person">
+                {adoption.transport.responsible ? (
+                  adoption.transport.responsible.full_name
+                ) : (
+                  <InfoRowEmptyValue />
+                )}
+              </InfoRow>
+              <InfoRow label="Transporteur">
+                {adoption.transport.transporter ? (
+                  adoption.transport.transporter
+                ) : (
+                  <InfoRowEmptyValue />
+                )}
+              </InfoRow>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Kein Transport zugewiesen.
+            </p>
+          )}
+          <div className="flex justify-end gap-2">
+            {removeTransportAction}
+            {!adoption.transport?.is_done ? assignTransportAction : null}
+          </div>
         </div>
       </StepCard>
 

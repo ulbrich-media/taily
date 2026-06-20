@@ -9,6 +9,11 @@ reviews:
   instructions: |
     Apply the following project-specific coding patterns during review:
 
+    **AlertDialog vs. Dialog vs. Page** (`docs/coding-patterns/alert-dialog-dialog-page.md`):
+    - Use `AlertDialog` for confirmations of destructive or irreversible actions, with at most one small additional field (e.g. a reason text field, a date picker). Flag any `AlertDialog` that contains a form with multiple fields or complex content.
+    - Use `Dialog` for short forms or compact content that fits on screen without scrolling. Flag any `Dialog` whose content is likely to require scrolling — it should be a page instead.
+    - Use a full page for interactions where the content is too long to fit in a dialog without scrolling. Flag any page-level form that is trivially short and would be better served by a `Dialog`.
+
     **Token patterns** (`docs/coding-patterns/tokens.md`):
     - Use the `HasAccessToken` trait when a token gates access to an existing record (e.g. a temporary link to a pre-existing model). Tokens are stored in the shared `access_tokens` table.
     - Use a self-contained model with its own `token` and `expires_at` columns when the token record IS the business object (e.g. an invitation). There is no pre-existing record being gated.

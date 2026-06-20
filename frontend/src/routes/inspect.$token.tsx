@@ -25,13 +25,13 @@ function RouteComponent() {
 
 function InspectionErrorPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div className="min-h-screen flex items-center justify-center bg-muted p-4">
       <Card className="w-full sm:max-w-md">
         <CardHeader>
           <CardTitle variant="destructive">
-            <CardTitleIcon icon={AlertCircle} />
             Vorkontrolle nicht gefunden
           </CardTitle>
+          <CardTitleIcon icon={AlertCircle} />
           <CardDescription>
             Dieser Link ist ungültig, abgelaufen oder die Vorkontrolle wurde
             bereits eingereicht.

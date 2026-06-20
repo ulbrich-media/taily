@@ -1,4 +1,4 @@
-import { type ChangeEvent, useEffect, useState } from 'react'
+import { type ChangeEvent, useEffect, useState, type ReactNode } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -6,12 +6,13 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogBreadcrumb,
 } from '@/shadcn/components/ui/dialog.tsx'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { format, isAfter, isValid, parse, startOfDay } from 'date-fns'
+import { format } from 'date-fns'
 import { X } from 'lucide-react'
 import { adoptionQueryKeys } from '@/admin/module/adoptions/api/queries.ts'
 import { updateContract } from '@/admin/module/adoptions/api/requests.ts'
@@ -24,20 +25,14 @@ import type { AdoptionDetailResource } from '@/api/types/adoptions'
 import {
   toApiDate,
   toDateFieldValue,
-  zFieldDate,
+  zFieldDateNoFuture,
 } from '@/components/field/DateInput.utils.ts'
 import { Input } from '@/shadcn/components/ui/input.tsx'
 import { ButtonGroup } from '@/shadcn/components/ui/button-group.tsx'
 
-const noFutureDate = zFieldDate.refine((val) => {
-  if (!val) return true
-  const parsed = parse(val, 'dd.MM.yyyy', new Date())
-  return isValid(parsed) && !isAfter(startOfDay(parsed), startOfDay(new Date()))
-}, 'Datum darf nicht in der Zukunft liegen')
-
 const schema = z.object({
   contract_signed: z.boolean(),
-  contract_signed_at: noFutureDate,
+  contract_signed_at: zFieldDateNoFuture,
 })
 
 type FormData = z.infer<typeof schema>
@@ -45,11 +40,13 @@ type FormData = z.infer<typeof schema>
 interface AdoptionEditContractPageProps {
   adoption: AdoptionDetailResource
   onClose: () => void
+  breadcrumb?: ReactNode
 }
 
 export function AdoptionEditContractPage({
   adoption,
   onClose,
+  breadcrumb,
 }: AdoptionEditContractPageProps) {
   const queryClient = useQueryClient()
 
@@ -199,6 +196,7 @@ export function AdoptionEditContractPage({
               {mutation.isPending ? 'Speichern...' : 'Speichern'}
             </Button>
           </DialogFooter>
+          <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
         </form>
       </DialogContent>
     </Dialog>

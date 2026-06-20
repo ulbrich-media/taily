@@ -20,7 +20,7 @@ export const Route = createFileRoute('/')({
 
 function LandingPage() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-muted">
       <div className="container mx-auto px-4 py-16">
         <div className="text-center mb-12">
           <h1 className="mb-4 flex justify-center items-center gap-3">
@@ -33,10 +33,8 @@ function LandingPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
           <Card>
             <CardHeader>
-              <CardTitle>
-                <CardTitleIcon icon={Shield} />
-                Administratoren
-              </CardTitle>
+              <CardTitle>Administratoren</CardTitle>
+              <CardTitleIcon icon={Shield} />
               <CardDescription>
                 Verwaltung und Systemkonfiguration
               </CardDescription>
@@ -56,10 +54,8 @@ function LandingPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>
-                <CardTitleIcon icon={Heart} />
-                Adoptanten
-              </CardTitle>
+              <CardTitle>Adoptanten</CardTitle>
+              <CardTitleIcon icon={Heart} />
               <CardDescription>
                 Für Tierliebhaber und Adoptionswillige
               </CardDescription>
@@ -78,10 +74,8 @@ function LandingPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>
-                <CardTitleIcon icon={Building} />
-                Organisationen
-              </CardTitle>
+              <CardTitle>Organisationen</CardTitle>
+              <CardTitleIcon icon={Building} />
               <CardDescription>
                 Für Tierheime und Rettungsorganisationen
               </CardDescription>

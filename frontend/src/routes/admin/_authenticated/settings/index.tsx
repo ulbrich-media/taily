@@ -1,5 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { SettingsPage } from '@/admin/pages/SettingsPage'
+import { useBreadcrumbs } from '@/router/useBreadcrumbs'
+import { BreadcrumbNav } from '@/router/BreadcrumbNav'
 import { Route as UsersRoute } from '@/routes/admin/_authenticated/settings/users/route'
 import { Route as AnimalTypesRoute } from '@/routes/admin/_authenticated/settings/animal-types/route'
 import { Route as VaccinationsRoute } from '@/routes/admin/_authenticated/settings/vaccinations/route'
@@ -13,36 +15,50 @@ export const Route = createFileRoute('/admin/_authenticated/settings/')({
 })
 
 function RouteComponent() {
+  const breadcrumbs = useBreadcrumbs()
   return (
     <SettingsPage
+      breadcrumb={<BreadcrumbNav items={breadcrumbs} />}
       usersAction={
-        <Button asChild>
-          <UsersRoute.Link>Öffnen</UsersRoute.Link>
+        <Button variant="default_outline" asChild>
+          <UsersRoute.Link aria-label="Benutzerverwaltung öffnen">
+            Öffnen
+          </UsersRoute.Link>
         </Button>
       }
       animalTypesAction={
-        <Button asChild>
-          <AnimalTypesRoute.Link>Öffnen</AnimalTypesRoute.Link>
+        <Button variant="default_outline" asChild>
+          <AnimalTypesRoute.Link aria-label="Tierarten öffnen">
+            Öffnen
+          </AnimalTypesRoute.Link>
         </Button>
       }
       vaccinationsAction={
-        <Button asChild>
-          <VaccinationsRoute.Link>Öffnen</VaccinationsRoute.Link>
+        <Button variant="default_outline" asChild>
+          <VaccinationsRoute.Link aria-label="Impfungen öffnen">
+            Öffnen
+          </VaccinationsRoute.Link>
         </Button>
       }
       medicalTestsAction={
-        <Button asChild>
-          <MedicalTestsRoute.Link>Öffnen</MedicalTestsRoute.Link>
+        <Button variant="default_outline" asChild>
+          <MedicalTestsRoute.Link aria-label="Medizinische Tests öffnen">
+            Öffnen
+          </MedicalTestsRoute.Link>
         </Button>
       }
       organizationsAction={
-        <Button asChild>
-          <OrganizationsRoute.Link>Öffnen</OrganizationsRoute.Link>
+        <Button variant="default_outline" asChild>
+          <OrganizationsRoute.Link aria-label="Organisationen öffnen">
+            Öffnen
+          </OrganizationsRoute.Link>
         </Button>
       }
       formTemplatesAction={
-        <Button asChild>
-          <FormTemplatesRoute.Link>Öffnen</FormTemplatesRoute.Link>
+        <Button variant="default_outline" asChild>
+          <FormTemplatesRoute.Link aria-label="Formularvorlagen öffnen">
+            Öffnen
+          </FormTemplatesRoute.Link>
         </Button>
       }
     />

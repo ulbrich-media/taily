@@ -11,12 +11,6 @@ export function OrganizationSidebar({
 }: OrganizationSidebarProps) {
   return (
     <aside>
-      <div className="lg:min-h-15 pb-3">
-        <h1 className="text-2xl font-bold text-foreground">
-          {organization.name}
-        </h1>
-      </div>
-
       <Card>
         <CardContent>
           {/* OrganizationResource Icon */}

@@ -18,6 +18,7 @@ use Taily\Http\Controllers\Internal\PersonPictureController;
 use Taily\Http\Controllers\Internal\PreInspectionController;
 use Taily\Http\Controllers\Internal\PreInspectionSubmissionController;
 use Taily\Http\Controllers\Internal\ProfileController;
+use Taily\Http\Controllers\Internal\TransportController;
 use Taily\Http\Controllers\Internal\UserController;
 use Taily\Http\Controllers\Internal\VaccinationController;
 
@@ -76,6 +77,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // Organizations
     Route::apiResource('organizations', OrganizationController::class);
+
+    // Transports
+    Route::apiResource('transports', TransportController::class)->except('show');
+    Route::post('/transports/{transport}/mark-done', [TransportController::class, 'markDone']);
 
     // Adoptions
     Route::get('/adoptions/options', [AdoptionController::class, 'options']);

@@ -19,10 +19,8 @@ const ErrorInfoComponent = ({ error }: ErrorProps) => {
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
-        <CardTitle variant="destructive">
-          <CardTitleIcon icon={AlertCircle} />
-          Something went wrong
-        </CardTitle>
+        <CardTitle variant="destructive">Something went wrong</CardTitle>
+        <CardTitleIcon icon={AlertCircle} />
         <CardDescription>
           We're sorry, but something unexpected happened. Please try again.
         </CardDescription>

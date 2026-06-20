@@ -14,6 +14,7 @@ class AdoptionDetailResource extends AdoptionBaseResource
             'animal' => $this->whenLoaded('animal', fn ($a) => new AnimalDetailResource($a)),
             'mediator' => $this->whenLoaded('mediator', fn ($m) => new PersonListResource($m)),
             'applicant' => $this->whenLoaded('applicant', fn ($m) => new PersonDetailResource($m)),
+            'transport' => $this->whenLoaded('transport', fn ($m) => new TransportListResource($m)),
             'contract_file' => $contractMedia ? [
                 'uuid' => $contractMedia->uuid,
                 'name' => $contractMedia->file_name,

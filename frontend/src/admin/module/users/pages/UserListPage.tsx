@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react'
-import { Users } from 'lucide-react'
 import type { UserResource } from '@/api/types/users'
 import {
   Table,
@@ -17,12 +16,14 @@ interface UserResourceListPageProps {
   users: UserResource[]
   createAction?: ReactNode
   renderRowActions?: (user: UserResource) => ReactNode
+  breadcrumb?: ReactNode
 }
 
 export function UserListPage({
   users,
   createAction,
   renderRowActions,
+  breadcrumb,
 }: UserResourceListPageProps) {
   const getLastLogin = (user: UserResource) => {
     if (user.last_login_at) {
@@ -77,10 +78,10 @@ export function UserListPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        icon={Users}
         title="Benutzerverwaltung"
         description="Verwalte Benutzer und deren Berechtigungen"
         actions={createAction}
+        breadcrumb={breadcrumb}
       />
 
       <TableListView

@@ -36,12 +36,6 @@ export function AdoptionSidebar({
 }: AdoptionSidebarProps) {
   return (
     <aside>
-      <div className="lg:min-h-15 pb-3">
-        <h1 className="text-2xl font-bold text-foreground">
-          Vermittlung von {adoption.animal.name}
-        </h1>
-      </div>
-
       <Card>
         <CardContent>
           <div className="space-y-4 flex flex-col gap-4">
@@ -53,6 +47,7 @@ export function AdoptionSidebar({
                       src={adoption.animal.pictures[0].url}
                       alt={adoption.animal.name}
                       className="w-full h-full object-cover"
+                      loading="lazy"
                     />
                   ) : (
                     <PawPrint className="size-12 text-muted-foreground" />
@@ -79,6 +74,7 @@ export function AdoptionSidebar({
                       src={adoption.applicant.pictures[0].url}
                       alt={adoption.applicant.full_name}
                       className="w-full h-full object-cover"
+                      loading="lazy"
                     />
                   ) : (
                     <User className="size-12 text-muted-foreground" />

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { PawPrint, SlashSquareIcon } from 'lucide-react'
+import { SlashSquareIcon } from 'lucide-react'
 import type { AnimalTypeResource } from '@/api/types/animal-types'
 import {
   Table,
@@ -16,39 +16,33 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/shadcn/components/ui/empty'
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/shadcn/components/ui/card'
+import { Card, CardContent } from '@/shadcn/components/ui/card'
 import { PageHeader } from '@/components/layout/PageHeader'
 
 interface AnimalTypeListPageProps {
   animalTypes: AnimalTypeResource[]
   createAction?: ReactNode
   renderRowActions?: (animalType: AnimalTypeResource) => ReactNode
+  breadcrumb?: ReactNode
 }
 
 export function AnimalTypeListPage({
   animalTypes,
   createAction,
   renderRowActions,
+  breadcrumb,
 }: AnimalTypeListPageProps) {
   return (
     <div className="space-y-6">
       <PageHeader
-        icon={PawPrint}
         title="Tierarten"
         description="Verwalte die verfügbaren Tierarten und weise Formularvorlagen zu"
         actions={createAction}
+        breadcrumb={breadcrumb}
       />
 
       {animalTypes.length > 0 ? (
         <Card>
-          <CardHeader>
-            <CardTitle>Alle Tierarten</CardTitle>
-          </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>

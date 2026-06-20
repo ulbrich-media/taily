@@ -13,6 +13,7 @@ class AdoptionSeeder extends Seeder
     public function run(): void
     {
         $faker = Faker::create('de_DE');
+        $faker->setDefaultTimezone('UTC');
 
         $animals = Animal::all();
         $mediators = Person::whereHas('mediatorAnimalTypes')->get();
