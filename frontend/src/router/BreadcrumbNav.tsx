@@ -32,11 +32,7 @@ export function BreadcrumbNav({ items, size }: BreadcrumbNavProps) {
                 ) : (
                   <BreadcrumbLink asChild>
                     <Link to={crumb.pathname} aria-label={crumb.label}>
-                      {crumb.isRoot ? (
-                        <PawPrintIcon />
-                      ) : (
-                        crumb.label
-                      )}
+                      {crumb.isRoot ? <PawPrintIcon /> : crumb.label}
                     </Link>
                   </BreadcrumbLink>
                 )}
