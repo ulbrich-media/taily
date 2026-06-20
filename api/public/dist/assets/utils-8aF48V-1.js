@@ -1,0 +1,1 @@
+import{t as e}from"./dates.utils-BVKqv0Cx.js";function t(t){return t.name?t.name:t.planned_at?`Transport am ${e(t.planned_at)}`:`Transport`}export{t};

@@ -1,1 +1,0 @@
-import{E as e,Sr as t,Ur as n,Vr as r}from"./index-SRHnb_rw.js";var i=t(),a=n(r());function o(){let t=(0,i.c)(2),n=e.useNavigate(),r;return t[0]===n?r=t[1]:(r=()=>{n({})},t[0]=n,t[1]=r),(0,a.useEffect)(r),null}export{o as component};
