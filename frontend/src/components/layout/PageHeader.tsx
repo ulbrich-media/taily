@@ -4,7 +4,7 @@ export const tabLinkClass =
   'px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground rounded-md hover:bg-accent transition-colors [&.active]:bg-accent [&.active]:text-foreground'
 
 interface PageHeaderProps {
-  title: string
+  title: string | ReactNode
   description?: string
   actions?: ReactNode // one or two buttons to do something
   links?: ReactNode // a navigation element with a list of links

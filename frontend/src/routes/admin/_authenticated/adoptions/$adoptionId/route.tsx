@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from '@/shadcn/components/ui/dropdown-menu.tsx'
 import { Button } from '@/shadcn/components/ui/button.tsx'
+import { Mark } from '@/components/typo/mark.tsx'
 
 export const Route = createFileRoute(
   '/admin/_authenticated/adoptions/$adoptionId'
@@ -46,7 +47,12 @@ function RouteComponent() {
       <div className="mb-6">
         <PageHeader
           breadcrumb={<BreadcrumbNav items={breadcrumbs} />}
-          title={`Vermittlung von ${adoption.animal.name}`}
+          title={
+            <>
+              Vermittlung von{' '}
+              <Mark variant="headline">{adoption.animal.name}</Mark>
+            </>
+          }
           links={
             <>
               <AdoptionDetailRoute.Link

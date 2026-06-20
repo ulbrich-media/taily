@@ -15,7 +15,7 @@ export const Route = createFileRoute(
   },
   component: RouteComponent,
   staticData: {
-    breadcrumb: 'Vorkontrolle Notizen',
+    breadcrumb: 'Notizen zur Vorkontrolle',
   },
 })
 
