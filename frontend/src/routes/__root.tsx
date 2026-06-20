@@ -12,6 +12,7 @@ export interface RouterContext {
 declare module '@tanstack/react-router' {
   interface StaticDataRouteOption {
     breadcrumb?: string
+    breadcrumbRoot?: boolean
   }
 }
 

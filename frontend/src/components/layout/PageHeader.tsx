@@ -20,7 +20,7 @@ export function PageHeader({
 }: PageHeaderProps) {
   return (
     <div className="flex flex-col gap-2">
-      {breadcrumb}
+      {breadcrumb && <div className="mb-2">{breadcrumb}</div>}
       <div className="flex flex-col gap-4 md:flex-row justify-between">
         <div>
           <h1 className="text-4xl font-heading text-foreground flex items-center gap-2">

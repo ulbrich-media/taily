@@ -29,6 +29,10 @@ export const Route = createFileRoute('/admin/_authenticated')({
       isAdmin,
     }
   },
+  staticData: {
+    breadcrumb: 'Taily Admin-Bereich',
+    breadcrumbRoot: true,
+  },
 })
 
 function RouteComponent() {
