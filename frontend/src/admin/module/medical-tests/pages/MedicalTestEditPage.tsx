@@ -74,7 +74,6 @@ export function MedicalTestEditPage({
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
           <DialogTitle>Test bearbeiten</DialogTitle>
           <DialogDescription>Bearbeite den Test.</DialogDescription>
         </DialogHeader>
@@ -123,6 +122,7 @@ export function MedicalTestEditPage({
                 {updateMutation.isPending ? 'Aktualisiere...' : 'Speichern'}
               </Button>
             </DialogFooter>
+            <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
           </form>
         </FormProvider>
       </DialogContent>

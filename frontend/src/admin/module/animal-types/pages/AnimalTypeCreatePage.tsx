@@ -83,7 +83,6 @@ export function AnimalTypeCreatePage({
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
           <DialogTitle>Neue Tierart erstellen</DialogTitle>
           <DialogDescription>
             Erstelle eine neue Tierart und weise optional eine Formularvorlage
@@ -124,6 +123,7 @@ export function AnimalTypeCreatePage({
                 {createMutation.isPending ? 'Erstelle...' : 'Speichern'}
               </Button>
             </DialogFooter>
+            <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
           </form>
         </FormProvider>
       </DialogContent>

@@ -61,7 +61,7 @@ function RouteComponent() {
       onCreated={(id) =>
         navigateToInspection({ params: { id }, replace: true })
       }
-      breadcrumb={<BreadcrumbNav items={breadcrumbs} />}
+      breadcrumb={<BreadcrumbNav items={breadcrumbs} size="sm" />}
     />
   )
 }

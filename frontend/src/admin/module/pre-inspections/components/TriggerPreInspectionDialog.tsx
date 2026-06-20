@@ -87,7 +87,6 @@ export function TriggerPreInspectionDialog({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
           <DialogTitle>Neue Kontrolle starten</DialogTitle>
           <DialogDescription>
             Starte eine neue Vorkontrolle. Du kannst optional einen Kontrolleur
@@ -126,6 +125,7 @@ export function TriggerPreInspectionDialog({
                 : 'Vorkontrolle starten'}
             </Button>
           </DialogFooter>
+          <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
         </form>
       </DialogContent>
     </Dialog>

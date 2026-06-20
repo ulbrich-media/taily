@@ -94,7 +94,6 @@ export function TransportEditPage({
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
         <form
@@ -154,6 +153,7 @@ export function TransportEditPage({
               {mutation.isPending ? 'Speichern...' : 'Speichern'}
             </Button>
           </DialogFooter>
+          <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
         </form>
       </DialogContent>
     </Dialog>

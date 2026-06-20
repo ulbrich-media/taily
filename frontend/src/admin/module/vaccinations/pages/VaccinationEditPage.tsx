@@ -74,7 +74,6 @@ export function VaccinationEditPage({
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
           <DialogTitle>Impfung bearbeiten</DialogTitle>
           <DialogDescription>Bearbeite die Impfung.</DialogDescription>
         </DialogHeader>
@@ -123,6 +122,7 @@ export function VaccinationEditPage({
                 {updateMutation.isPending ? 'Aktualisiere...' : 'Speichern'}
               </Button>
             </DialogFooter>
+            <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
           </form>
         </FormProvider>
       </DialogContent>

@@ -124,7 +124,6 @@ export function ApiTokenCreatePage({
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
           <DialogTitle>Neues API Token erstellen</DialogTitle>
           <DialogDescription>
             Erstelle ein neues API Token für den externen Zugriff auf die API.
@@ -208,6 +207,7 @@ export function ApiTokenCreatePage({
                 {createMutation.isPending ? 'Erstelle...' : 'Token erstellen'}
               </Button>
             </DialogFooter>
+            <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
           </form>
         </FormProvider>
       </DialogContent>

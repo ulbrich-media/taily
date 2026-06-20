@@ -128,7 +128,6 @@ export function AdoptionEditContractPage({
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
           <DialogTitle>Schutzvertrag bearbeiten</DialogTitle>
           <DialogDescription>
             Unterzeichnungsstatus und Schutzvertragsdatei verwalten.
@@ -197,6 +196,7 @@ export function AdoptionEditContractPage({
               {mutation.isPending ? 'Speichern...' : 'Speichern'}
             </Button>
           </DialogFooter>
+          <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
         </form>
       </DialogContent>
     </Dialog>

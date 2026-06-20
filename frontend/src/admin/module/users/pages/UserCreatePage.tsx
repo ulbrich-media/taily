@@ -95,7 +95,6 @@ export function UserCreatePage({ onClose, breadcrumb }: UserCreatePageProps) {
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
           <DialogTitle>Neuen Benutzer erstellen</DialogTitle>
           <DialogDescription>
             Erstelle einen neuen Benutzer. Eine E-Mail zur Einladung wird
@@ -159,6 +158,7 @@ export function UserCreatePage({ onClose, breadcrumb }: UserCreatePageProps) {
                   : 'Speichern'}
               </Button>
             </DialogFooter>
+            <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
           </form>
         </FormProvider>
       </DialogContent>

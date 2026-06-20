@@ -81,7 +81,6 @@ export function AdoptionEditMediatorPage({
     >
       <DialogContent>
         <DialogHeader>
-          <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
           <DialogTitle>Vermittler ändern</DialogTitle>
           <DialogDescription>
             Weise diese Vermittlung einem Vermittler zu.
@@ -105,6 +104,7 @@ export function AdoptionEditMediatorPage({
               Speichern
             </Button>
           </DialogFooter>
+          <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
         </form>
       </DialogContent>
     </Dialog>

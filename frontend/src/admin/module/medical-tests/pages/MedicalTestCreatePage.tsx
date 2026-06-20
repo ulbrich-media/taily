@@ -92,7 +92,6 @@ export function MedicalTestCreatePage({
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
           <DialogTitle>Neuen Test erstellen</DialogTitle>
           <DialogDescription>
             Erstelle einen neuen Test für eine Tierart.
@@ -154,6 +153,7 @@ export function MedicalTestCreatePage({
                   : 'Speichern'}
               </Button>
             </DialogFooter>
+            <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
           </form>
         </FormProvider>
       </DialogContent>

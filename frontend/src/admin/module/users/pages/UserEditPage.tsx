@@ -83,7 +83,6 @@ export function UserEditPage({ user, onClose, breadcrumb }: UserEditPageProps) {
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
           <DialogTitle>Benutzer bearbeiten</DialogTitle>
           <DialogDescription>
             Bearbeite die Benutzerdaten und Berechtigungen.
@@ -133,6 +132,7 @@ export function UserEditPage({ user, onClose, breadcrumb }: UserEditPageProps) {
                 {updateMutation.isPending ? 'Aktualisiere...' : 'Speichern'}
               </Button>
             </DialogFooter>
+            <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
           </form>
         </FormProvider>
       </DialogContent>

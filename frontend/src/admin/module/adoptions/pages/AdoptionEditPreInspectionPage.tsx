@@ -74,7 +74,6 @@ export function AdoptionEditPreInspectionPage({
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
           <DialogTitle>Vorkontrolle – Notizen</DialogTitle>
           <DialogDescription>
             Notizen zur Vorkontrolle festhalten.
@@ -105,6 +104,7 @@ export function AdoptionEditPreInspectionPage({
               {updateMutation.isPending ? 'Speichern...' : 'Speichern'}
             </Button>
           </DialogFooter>
+          <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
         </form>
       </DialogContent>
     </Dialog>

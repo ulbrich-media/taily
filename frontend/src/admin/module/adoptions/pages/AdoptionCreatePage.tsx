@@ -88,7 +88,6 @@ export function AdoptionCreatePage({
     >
       <DialogContent>
         <DialogHeader>
-          <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
           <DialogTitle>Neue Vermittlung</DialogTitle>
           <DialogDescription>
             Erstelle einen neuen Vermittlungsvorgang für ein Tier.
@@ -126,6 +125,7 @@ export function AdoptionCreatePage({
               Speichern
             </Button>
           </DialogFooter>
+          <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
         </form>
       </DialogContent>
     </Dialog>

@@ -92,7 +92,6 @@ export function VaccinationCreatePage({
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
           <DialogTitle>Neue Impfung erstellen</DialogTitle>
           <DialogDescription>
             Erstelle eine neue Impfung für eine Tierart.
@@ -154,6 +153,7 @@ export function VaccinationCreatePage({
                   : 'Speichern'}
               </Button>
             </DialogFooter>
+            <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
           </form>
         </FormProvider>
       </DialogContent>

@@ -80,7 +80,6 @@ export function AdoptionEditInternalNotesPage({
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
           <DialogTitle>Notizen</DialogTitle>
           <DialogDescription>
             Notizen zur Vermittlung festhalten.
@@ -121,6 +120,7 @@ export function AdoptionEditInternalNotesPage({
               {updateMutation.isPending ? 'Speichern...' : 'Speichern'}
             </Button>
           </DialogFooter>
+          <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
         </form>
       </DialogContent>
     </Dialog>

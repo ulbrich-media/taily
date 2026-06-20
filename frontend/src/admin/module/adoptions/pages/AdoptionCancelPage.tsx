@@ -71,7 +71,6 @@ export function AdoptionCancelPage({
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
           <DialogTitle>Vermittlung abbrechen</DialogTitle>
           <DialogDescription>
             Diese Vermittlung wird nicht weiter fortgesetzt. Bitte dokumentiere,
@@ -109,6 +108,7 @@ export function AdoptionCancelPage({
                 : 'Vermittlung abbrechen'}
             </Button>
           </DialogFooter>
+          <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
         </form>
       </DialogContent>
     </Dialog>

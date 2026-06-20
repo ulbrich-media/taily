@@ -90,7 +90,6 @@ export function AnimalTypeEditPage({
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
           <DialogTitle>Tierart bearbeiten</DialogTitle>
           <DialogDescription>
             Bearbeite die Tierart und ihre Formularvorlage.
@@ -130,6 +129,7 @@ export function AnimalTypeEditPage({
                 {updateMutation.isPending ? 'Aktualisiere...' : 'Speichern'}
               </Button>
             </DialogFooter>
+            <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
           </form>
         </FormProvider>
       </DialogContent>

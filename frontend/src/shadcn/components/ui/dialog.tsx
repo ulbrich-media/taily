@@ -125,7 +125,10 @@ function DialogBreadcrumb({
   return (
     <div
       data-slot="dialog-breadcrumb"
-      className={cn('pr-4 mb-2', className)}
+      className={cn(
+        '-mx-6 -mb-6 mt-4 rounded-b-lg border-t bg-muted/50 px-6 py-3',
+        className
+      )}
       {...props}
     />
   )

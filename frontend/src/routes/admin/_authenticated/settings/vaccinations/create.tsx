@@ -37,7 +37,7 @@ function RouteComponent() {
     <VaccinationCreatePage
       animalTypes={animalTypesData.data}
       onClose={handleClose}
-      breadcrumb={<BreadcrumbNav items={breadcrumbs} />}
+      breadcrumb={<BreadcrumbNav items={breadcrumbs} size="sm" />}
     />
   )
 }

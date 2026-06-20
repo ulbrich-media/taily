@@ -52,7 +52,7 @@ function RouteComponent() {
       mediators={mediators}
       onCreated={handleCreated}
       onClose={handleClose}
-      breadcrumb={<BreadcrumbNav items={breadcrumbs} />}
+      breadcrumb={<BreadcrumbNav items={breadcrumbs} size="sm" />}
     />
   )
 }

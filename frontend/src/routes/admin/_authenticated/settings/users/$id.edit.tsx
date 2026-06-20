@@ -48,7 +48,7 @@ function RouteComponent() {
     <UserEditPage
       user={user}
       onClose={handleClose}
-      breadcrumb={<BreadcrumbNav items={breadcrumbs} />}
+      breadcrumb={<BreadcrumbNav items={breadcrumbs} size="sm" />}
     />
   )
 }

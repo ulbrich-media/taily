@@ -8,12 +8,19 @@ function Breadcrumb({ ...props }: React.ComponentProps<'nav'>) {
   return <nav aria-label="breadcrumb" data-slot="breadcrumb" {...props} />
 }
 
-function BreadcrumbList({ className, ...props }: React.ComponentProps<'ol'>) {
+function BreadcrumbList({
+  className,
+  size = 'default',
+  ...props
+}: React.ComponentProps<'ol'> & { size?: 'sm' | 'default' }) {
   return (
     <ol
       data-slot="breadcrumb-list"
       className={cn(
-        'flex flex-wrap items-center gap-y-1 gap-x-1.5 text-sm break-words text-muted-foreground sm:gap-x-2.5',
+        'flex flex-wrap items-center gap-y-1 break-words text-muted-foreground',
+        size === 'sm'
+          ? 'gap-x-1 text-xs sm:gap-x-1.5 [&_[data-slot="breadcrumb-link"]_svg]:size-3'
+          : 'gap-x-1.5 text-sm sm:gap-x-2.5',
         className
       )}
       {...props}
@@ -43,7 +50,10 @@ function BreadcrumbLink({
   return (
     <Comp
       data-slot="breadcrumb-link"
-      className={cn('transition-colors hover:text-foreground', className)}
+      className={cn(
+        'transition-colors hover:text-foreground [&_svg]:size-4 [&_svg]:inline [&_svg]:vertical-top',
+        className
+      )}
       {...props}
     />
   )

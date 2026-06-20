@@ -32,7 +32,7 @@ function RouteComponent() {
     <ApiTokenCreatePage
       abilities={abilitiesData.data}
       onClose={handleClose}
-      breadcrumb={<BreadcrumbNav items={breadcrumbs} />}
+      breadcrumb={<BreadcrumbNav items={breadcrumbs} size="sm" />}
     />
   )
 }

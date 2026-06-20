@@ -13,14 +13,15 @@ import { PawPrintIcon } from 'lucide-react'
 
 interface BreadcrumbNavProps {
   items: BreadcrumbItem[]
+  size?: 'sm' | 'default'
 }
 
-export function BreadcrumbNav({ items }: BreadcrumbNavProps) {
+export function BreadcrumbNav({ items, size }: BreadcrumbNavProps) {
   if (items.length <= 1) return null
 
   return (
     <Breadcrumb>
-      <BreadcrumbList>
+      <BreadcrumbList size={size}>
         {items.map((crumb, index) => {
           const isLast = index === items.length - 1
           return (
@@ -32,7 +33,7 @@ export function BreadcrumbNav({ items }: BreadcrumbNavProps) {
                   <BreadcrumbLink asChild>
                     <Link to={crumb.pathname} aria-label={crumb.label}>
                       {crumb.isRoot ? (
-                        <PawPrintIcon className="size-4" />
+                        <PawPrintIcon />
                       ) : (
                         crumb.label
                       )}
