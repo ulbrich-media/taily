@@ -12,6 +12,7 @@ These patterns ensure maintainability through similar approaches and can keep co
 
 ## Patterns
 
+- [AlertDialog vs. Dialog vs. Page](alert-dialog-dialog-page.md) — When to confirm, when to use a dialog, when to use a page
 - [API Type Handling](api-type-handling.md) — Resources, type safety, frontend type locations
 - [Empty Strings](empty-strings.md) — Non-nullable string columns, empty-string defaults
 - [Decoupled Route and Page](decoupled-route-and-page.md) — Route/page separation

@@ -2,7 +2,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { ClipboardCheck } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -10,6 +9,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogBreadcrumb,
 } from '@/shadcn/components/ui/dialog'
 import { Button } from '@/shadcn/components/ui/button'
 import { FieldGroup } from '@/shadcn/components/ui/field'
@@ -18,6 +18,7 @@ import { PersonSelect } from '@/components/field/PersonSelect'
 import { preInspectionQueryKeys } from '@/admin/module/pre-inspections/api/queries'
 import { createPreInspection } from '@/admin/module/pre-inspections/api/requests'
 import type { PeopleResponse } from '@/admin/module/people/api/types.ts'
+import type { ReactNode } from 'react'
 
 const triggerSchema = z.object({
   inspector_id: z.string().optional().nullable(),
@@ -32,6 +33,7 @@ interface TriggerPreInspectionDialogProps {
   animalTypeId: string
   inspectors: PeopleResponse
   onCreated: (id: string) => void
+  breadcrumb?: ReactNode
 }
 
 export function TriggerPreInspectionDialog({
@@ -41,6 +43,7 @@ export function TriggerPreInspectionDialog({
   animalTypeId,
   inspectors,
   onCreated,
+  breadcrumb,
 }: TriggerPreInspectionDialogProps) {
   const queryClient = useQueryClient()
 
@@ -84,10 +87,7 @@ export function TriggerPreInspectionDialog({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <ClipboardCheck className="h-5 w-5 text-primary" />
-            Neue Kontrolle starten
-          </DialogTitle>
+          <DialogTitle>Neue Kontrolle starten</DialogTitle>
           <DialogDescription>
             Starte eine neue Vorkontrolle. Du kannst optional einen Kontrolleur
             zuweisen.
@@ -125,6 +125,7 @@ export function TriggerPreInspectionDialog({
                 : 'Vorkontrolle starten'}
             </Button>
           </DialogFooter>
+          <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
         </form>
       </DialogContent>
     </Dialog>

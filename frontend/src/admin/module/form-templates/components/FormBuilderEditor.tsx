@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { DndContext, DragOverlay } from '@dnd-kit/core'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { ClipboardList, Save } from 'lucide-react'
+import { Save } from 'lucide-react'
 import { Button } from '@/shadcn/components/ui/button'
 import { Badge } from '@/shadcn/components/ui/badge'
 import { TextInput } from '@/components/field/TextInput'
@@ -101,7 +101,7 @@ export function FormBuilderEditor({
         <FormBlocker isDirty={fb.isDirty} />
 
         <div className="space-y-6">
-          <PageHeader icon={ClipboardList} title="Formularvorlage bearbeiten" />
+          <PageHeader title="Formularvorlage bearbeiten" />
 
           <FormGrid>
             <TextInput

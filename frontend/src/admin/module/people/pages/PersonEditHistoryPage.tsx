@@ -12,10 +12,8 @@ export function PersonEditHistoryPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>
-          <CardTitleIcon icon={Clock} />
-          Verlauf
-        </CardTitle>
+        <CardTitle>Verlauf</CardTitle>
+        <CardTitleIcon icon={Clock} />
         <CardDescription>
           Chronologische Übersicht aller Aktivitäten
         </CardDescription>

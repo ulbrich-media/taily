@@ -6,6 +6,8 @@ import { listPeopleFilteredQuery } from '@/admin/module/people/api/queries'
 import { TriggerPreInspectionDialog } from '@/admin/module/pre-inspections/components/TriggerPreInspectionDialog'
 import { Route as AdoptionRoute } from '../index.tsx'
 import { Route as PreInspectionDetailRoute } from '@/routes/admin/_authenticated/pre-inspections/$id/index.tsx'
+import { BreadcrumbNav } from '@/router/BreadcrumbNav.tsx'
+import { useBreadcrumbs } from '@/router/useBreadcrumbs.ts'
 
 export const Route = createFileRoute(
   '/admin/_authenticated/adoptions/$adoptionId/adoption/new-inspection'
@@ -21,10 +23,14 @@ export const Route = createFileRoute(
       })
     )
   },
+  staticData: {
+    breadcrumb: 'Neue Kontrolle',
+  },
   component: RouteComponent,
 })
 
 function RouteComponent() {
+  const breadcrumbs = useBreadcrumbs()
   const { adoptionId } = Route.useParams()
   const { data: adoption } = useSuspenseQuery(getAdoptionQuery(adoptionId))
   const navigateToAdoption = AdoptionRoute.useNavigate()
@@ -55,6 +61,7 @@ function RouteComponent() {
       onCreated={(id) =>
         navigateToInspection({ params: { id }, replace: true })
       }
+      breadcrumb={<BreadcrumbNav items={breadcrumbs} size="sm" />}
     />
   )
 }

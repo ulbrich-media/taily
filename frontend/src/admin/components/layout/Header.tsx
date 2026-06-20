@@ -27,6 +27,10 @@ import {
 } from '@/shadcn/components/ui/sheet'
 import { Menu, LogOut, Sun, Moon, Monitor, PawPrint } from 'lucide-react'
 import { Badge } from '@/shadcn/components/ui/badge.tsx'
+import {
+  NavigationMenu,
+  NavigationMenuList,
+} from '@/shadcn/components/ui/navigation-menu.tsx'
 
 interface HeaderProps {
   navLinks: ReactNode
@@ -56,11 +60,11 @@ export function Header({
   const getThemeIcon = (themeMode: typeof mode) => {
     switch (themeMode) {
       case 'light':
-        return <Sun className="mr-2 h-4 w-4" />
+        return <Sun className="size-4" />
       case 'dark':
-        return <Moon className="mr-2 h-4 w-4" />
+        return <Moon className="size-4" />
       case 'system':
-        return <Monitor className="mr-2 h-4 w-4" />
+        return <Monitor className="size-4" />
     }
   }
 
@@ -69,7 +73,7 @@ export function Header({
       {/* Sticky Floating Header */}
       <div className="sticky top-0 z-50 w-full pt-2">
         <div className="container mx-auto px-4">
-          <header className="bg-card/90 backdrop-blur-sm border border-border rounded-xl shadow-sm">
+          <header className="bg-card/80 backdrop-blur-xl backdrop-saturate-200 border border-border rounded-xl shadow-sm">
             <div className="flex h-16 items-center justify-between px-6">
               {/* Left: Logo/Brand */}
               <div className="flex items-center gap-6">
@@ -78,8 +82,10 @@ export function Header({
                 </a>
 
                 {/* Desktop Navigation */}
-                <nav className="hidden md:flex items-center gap-1">
-                  {navLinks}
+                <nav className="hidden md:block">
+                  <NavigationMenu>
+                    <NavigationMenuList>{navLinks}</NavigationMenuList>
+                  </NavigationMenu>
                 </nav>
               </div>
 
@@ -128,15 +134,15 @@ export function Header({
                               }
                             >
                               <DropdownMenuRadioItem value="system">
-                                <Monitor className="mr-2 h-4 w-4" />
+                                <Monitor className="size-4" />
                                 System
                               </DropdownMenuRadioItem>
                               <DropdownMenuRadioItem value="light">
-                                <Sun className="mr-2 h-4 w-4" />
+                                <Sun className="size-4" />
                                 Hell
                               </DropdownMenuRadioItem>
                               <DropdownMenuRadioItem value="dark">
-                                <Moon className="mr-2 h-4 w-4" />
+                                <Moon className="size-4" />
                                 Dunkel
                               </DropdownMenuRadioItem>
                             </DropdownMenuRadioGroup>
@@ -145,7 +151,7 @@ export function Header({
                       </DropdownMenuSub>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem variant="destructive" onClick={logout}>
-                        <LogOut className="mr-2 h-4 w-4" />
+                        <LogOut className="size-4" />
                         Abmelden
                       </DropdownMenuItem>
                     </DropdownMenuGroup>
@@ -189,8 +195,15 @@ export function Header({
                       <p className="px-3 text-xs font-semibold text-muted-foreground mb-2">
                         Navigation
                       </p>
-                      <div onClick={() => setMobileMenuOpen(false)}>
-                        {navLinks}
+                      <div
+                        className="px-1"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <NavigationMenu>
+                          <NavigationMenuList className="flex-col items-start">
+                            {navLinks}
+                          </NavigationMenuList>
+                        </NavigationMenu>
                       </div>
                     </div>
 
@@ -201,8 +214,15 @@ export function Header({
                       <p className="px-3 text-xs font-semibold text-muted-foreground mb-2">
                         Konto
                       </p>
-                      <div onClick={() => setMobileMenuOpen(false)}>
-                        {mobileUserLinks}
+                      <div
+                        className="px-1"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <NavigationMenu>
+                          <NavigationMenuList className="flex-col items-start">
+                            {mobileUserLinks}
+                          </NavigationMenuList>
+                        </NavigationMenu>
                       </div>
                     </div>
 
@@ -219,7 +239,7 @@ export function Header({
                             : 'text-muted-foreground hover:text-foreground'
                         }`}
                       >
-                        <Monitor className="mr-2 h-4 w-4" />
+                        <Monitor className="size-4" />
                         System
                       </button>
                       <button
@@ -230,7 +250,7 @@ export function Header({
                             : 'text-muted-foreground hover:text-foreground'
                         }`}
                       >
-                        <Sun className="mr-2 h-4 w-4" />
+                        <Sun className="size-4" />
                         Hell
                       </button>
                       <button
@@ -241,7 +261,7 @@ export function Header({
                             : 'text-muted-foreground hover:text-foreground'
                         }`}
                       >
-                        <Moon className="mr-2 h-4 w-4" />
+                        <Moon className="size-4" />
                         Dunkel
                       </button>
                     </div>
@@ -256,7 +276,7 @@ export function Header({
                       }}
                       className="flex items-center w-full px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 rounded-md hover:bg-accent transition-colors"
                     >
-                      <LogOut className="mr-2 h-4 w-4" />
+                      <LogOut className="size-4" />
                       Abmelden
                     </button>
                   </SheetContent>

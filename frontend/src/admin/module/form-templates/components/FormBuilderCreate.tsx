@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { DndContext, DragOverlay } from '@dnd-kit/core'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { ClipboardList, Save } from 'lucide-react'
+import { Save } from 'lucide-react'
 import { Button } from '@/shadcn/components/ui/button'
 import { TextInput } from '@/components/field/TextInput'
 import { createFormTemplate } from '../api/requests'
@@ -77,7 +77,7 @@ export function FormBuilderCreate({
       onDragCancel={fb.handleDragCancel}
     >
       <div className="space-y-6">
-        <PageHeader icon={ClipboardList} title={'Neue Formularvorlage'} />
+        <PageHeader title={'Neue Formularvorlage'} />
 
         <FormGrid>
           <TextInput name="name" control={form.control} label="Name" required />

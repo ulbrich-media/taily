@@ -50,10 +50,8 @@ export function OrganizationDeletePage({
   return (
     <Card>
       <CardHeader>
-        <CardTitle variant="destructive">
-          <CardTitleIcon icon={AlertTriangle} />
-          Organisation löschen
-        </CardTitle>
+        <CardTitle variant="destructive">Organisation löschen</CardTitle>
+        <CardTitleIcon icon={AlertTriangle} />
         <CardDescription>
           {hasPeople
             ? 'Diese Organisation kann nicht gelöscht werden, da ihr noch Personen zugewiesen sind. Bitte entferne alle Zuweisungen wenn du diese Organisation löschen möchtest.'

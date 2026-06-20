@@ -1,5 +1,7 @@
 import { createFileRoute, Outlet } from '@tanstack/react-router'
 import { ApiTokenListPage } from '@/admin/module/api-tokens/pages/ApiTokenListPage.tsx'
+import { useBreadcrumbs } from '@/router/useBreadcrumbs'
+import { BreadcrumbNav } from '@/router/BreadcrumbNav'
 import { queryClient } from '@/lib/queryClient.ts'
 import { listApiTokensQuery } from '@/admin/module/api-tokens/api/queries.ts'
 import { useSuspenseQuery } from '@tanstack/react-query'
@@ -13,6 +15,7 @@ import { Route as DeleteRoute } from '@/routes/admin/_authenticated/personal-set
 export const Route = createFileRoute(
   '/admin/_authenticated/personal-settings/api-tokens'
 )({
+  staticData: { breadcrumb: 'API Tokens' },
   loader: async () => {
     await queryClient.ensureQueryData(listApiTokensQuery)
   },
@@ -20,6 +23,7 @@ export const Route = createFileRoute(
 })
 
 function RouteComponent() {
+  const breadcrumbs = useBreadcrumbs()
   const { data: tokens } = useSuspenseQuery(listApiTokensQuery)
 
   const createAction = (
@@ -32,7 +36,7 @@ function RouteComponent() {
   )
 
   const renderRowActions = (token: ApiTokenResource) => (
-    <Button size="sm" variant="destructive" asChild>
+    <Button size="sm" variant="destructive_outline" asChild>
       <DeleteRoute.Link params={{ id: `${token.id}` }}>
         <Trash2 /> Löschen
       </DeleteRoute.Link>
@@ -46,6 +50,7 @@ function RouteComponent() {
         createAction={createAction}
         renderRowActions={renderRowActions}
         formatDateTime={formatApiDateTime}
+        breadcrumb={<BreadcrumbNav items={breadcrumbs} />}
       />
       <Outlet />
     </>

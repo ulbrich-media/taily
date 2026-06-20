@@ -8,21 +8,8 @@ interface PersonSidebarProps {
 }
 
 export function PersonSidebar({ person }: PersonSidebarProps) {
-  const fullName =
-    person.full_name || `${person.first_name} ${person.last_name}`
-
   return (
     <aside>
-      <div className="lg:min-h-15 pb-3">
-        <h1 className="text-2xl font-bold text-foreground">{fullName}</h1>
-        {person.organization && (
-          <p className="text-sm text-muted-foreground">
-            {person.organization.name}
-            {person.organization_role && ` · ${person.organization_role}`}
-          </p>
-        )}
-      </div>
-
       <Card>
         <CardContent>
           {/* Profile Picture */}
@@ -32,6 +19,7 @@ export function PersonSidebar({ person }: PersonSidebarProps) {
                 src={person.pictures[0].url}
                 alt={person.full_name}
                 className="w-full h-full object-cover"
+                loading="lazy"
               />
             ) : (
               <User className="h-20 w-20 text-muted-foreground" />

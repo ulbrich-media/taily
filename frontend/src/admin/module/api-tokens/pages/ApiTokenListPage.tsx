@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react'
-import { Key } from 'lucide-react'
 import type { ApiTokenResource } from '@/api/types/api-tokens'
 import {
   Table,
@@ -18,6 +17,7 @@ interface ApiTokenResourceListPageProps {
   createAction: ReactNode
   renderRowActions: (token: ApiTokenResource) => ReactNode
   formatDateTime: (value: string | null, fallback?: string) => string
+  breadcrumb?: ReactNode
 }
 
 export function ApiTokenListPage({
@@ -25,14 +25,15 @@ export function ApiTokenListPage({
   createAction,
   renderRowActions,
   formatDateTime,
+  breadcrumb,
 }: ApiTokenResourceListPageProps) {
   return (
     <div className="space-y-6">
       <PageHeader
-        icon={Key}
         title="API Tokens"
         description="Verwalte API-Tokens für den externen Zugriff"
         actions={createAction}
+        breadcrumb={breadcrumb}
       />
 
       <TableListView

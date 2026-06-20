@@ -1,5 +1,7 @@
 import { createFileRoute, Outlet } from '@tanstack/react-router'
 import { useSuspenseQuery } from '@tanstack/react-query'
+import { useBreadcrumbs } from '@/router/useBreadcrumbs'
+import { BreadcrumbNav } from '@/router/BreadcrumbNav'
 import { queryClient } from '@/lib/queryClient'
 import { listTransportsQuery } from '@/admin/module/transports/api/queries'
 import { TransportListPage } from '@/admin/module/transports/pages/TransportListPage'
@@ -14,6 +16,7 @@ import { Button } from '@/shadcn/components/ui/button'
 import { CheckCircle2, Pencil, Plus, Trash2, ExternalLink } from 'lucide-react'
 
 export const Route = createFileRoute('/admin/_authenticated/transports')({
+  staticData: { breadcrumb: 'Transporte' },
   loader: async () => {
     await Promise.all([
       queryClient.ensureQueryData(listTransportsQuery({ is_done: false })),
@@ -24,6 +27,7 @@ export const Route = createFileRoute('/admin/_authenticated/transports')({
 })
 
 function RouteComponent() {
+  const breadcrumbs = useBreadcrumbs()
   const { data: plannedTransports } = useSuspenseQuery(
     listTransportsQuery({ is_done: false })
   )
@@ -51,7 +55,12 @@ function RouteComponent() {
 
   const renderActions = (transport: TransportListResource) => (
     <>
-      <Button size="icon-sm" variant="destructive" asChild aria-label="Löschen">
+      <Button
+        size="icon-sm"
+        variant="destructive_outline"
+        asChild
+        aria-label="Löschen"
+      >
         <DeleteRoute.Link params={{ transportId: transport.id }}>
           <Trash2 className="size-4" />
         </DeleteRoute.Link>
@@ -89,6 +98,7 @@ function RouteComponent() {
         createActionForEmpty={createActionForEmpty}
         renderActions={renderActions}
         renderAdoptionDetailLink={renderAdoptionDetailLink}
+        breadcrumb={<BreadcrumbNav items={breadcrumbs} />}
       />
       <Outlet />
     </>

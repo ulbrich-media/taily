@@ -118,7 +118,7 @@ function SortablePicture({
     <div
       ref={setNodeRef}
       style={style}
-      className="border border-border bg-background rounded-lg"
+      className="border border-border bg-muted rounded-lg"
     >
       {/* Media — click opens lightbox */}
       <div
@@ -139,6 +139,7 @@ function SortablePicture({
             src={picture.url}
             alt=""
             className="w-full h-full object-cover select-none rounded-lg"
+            loading="lazy"
             draggable={false}
           />
         )}

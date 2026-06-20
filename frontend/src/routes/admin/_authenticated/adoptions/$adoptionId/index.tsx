@@ -12,8 +12,8 @@ function RouteComponent() {
   const navigateToAdoptionTab = AdoptionTabRoute.useNavigate()
 
   useEffect(() => {
-    navigateToAdoptionTab({})
-  })
+    navigateToAdoptionTab({ replace: true })
+  }, [navigateToAdoptionTab])
 
   return null
 }
