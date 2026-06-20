@@ -126,7 +126,7 @@ function DialogBreadcrumb({
     <div
       data-slot="dialog-breadcrumb"
       className={cn(
-        '-mx-6 -mb-6 mt-4 rounded-b-lg border-t bg-muted/50 px-6 py-3',
+        '-mx-6 -mb-6 mt-4 rounded-b-lg border-t bg-muted/50 dark:bg-muted/30 px-6 py-3',
         className
       )}
       {...props}
