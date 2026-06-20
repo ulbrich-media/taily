@@ -13,7 +13,7 @@ export const Route = createFileRoute(
     }
   },
   staticData: {
-    breadcrumb: 'Neu',
+    breadcrumb: 'Neuen Benutzer erstellen',
   },
   component: RouteComponent,
 })

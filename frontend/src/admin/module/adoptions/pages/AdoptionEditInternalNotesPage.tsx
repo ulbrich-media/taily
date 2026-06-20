@@ -80,7 +80,7 @@ export function AdoptionEditInternalNotesPage({
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Notizen</DialogTitle>
+          <DialogTitle>Notizen bearbeiten</DialogTitle>
           <DialogDescription>
             Notizen zur Vermittlung festhalten.
           </DialogDescription>

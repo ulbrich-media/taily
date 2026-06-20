@@ -22,6 +22,7 @@ import { UserRole } from '@/api/types/users'
 import { FormBlocker } from '@/components/form/FormBlocker'
 import { TextInput } from '@/components/field/TextInput'
 import { SelectInput } from '@/components/field/SelectInput'
+import { Mark } from '@/components/typo/mark.tsx'
 
 const updateUserSchema = z.object({
   name: z
@@ -83,7 +84,9 @@ export function UserEditPage({ user, onClose, breadcrumb }: UserEditPageProps) {
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Benutzer bearbeiten</DialogTitle>
+          <DialogTitle>
+            <Mark>{user.name}</Mark> bearbeiten
+          </DialogTitle>
           <DialogDescription>
             Bearbeite die Benutzerdaten und Berechtigungen.
           </DialogDescription>
