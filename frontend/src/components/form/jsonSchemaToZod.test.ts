@@ -6,7 +6,11 @@ import type { JsonSchema, JsonSchemaProperty } from '@/api/types/form-schemas'
 // Helpers
 // ---------------------------------------------------------------------------
 
-function parseField(prop: JsonSchemaProperty, required: boolean, value: unknown) {
+function parseField(
+  prop: JsonSchemaProperty,
+  required: boolean,
+  value: unknown
+) {
   return jsonSchemaToZod({
     properties: { field: prop },
     required: required ? ['field'] : [],
@@ -15,10 +19,18 @@ function parseField(prop: JsonSchemaProperty, required: boolean, value: unknown)
 
 function ok(prop: JsonSchemaProperty, required: boolean, value: unknown) {
   const r = parseField(prop, required, value)
-  expect(r.success, `Expected success for ${JSON.stringify(value)}, got: ${r.error?.issues[0]?.message}`).toBe(true)
+  expect(
+    r.success,
+    `Expected success for ${JSON.stringify(value)}, got: ${r.error?.issues[0]?.message}`
+  ).toBe(true)
 }
 
-function fail(prop: JsonSchemaProperty, required: boolean, value: unknown, expectedMsg?: string) {
+function fail(
+  prop: JsonSchemaProperty,
+  required: boolean,
+  value: unknown,
+  expectedMsg?: string
+) {
   const r = parseField(prop, required, value)
   expect(r.success, `Expected failure for ${JSON.stringify(value)}`).toBe(false)
   if (expectedMsg) {
@@ -54,14 +66,21 @@ describe('buildFormDataDefaults', () => {
   })
 
   it('preserves existing data values', () => {
-    const result = buildFormDataDefaults(schema, { full_name: 'Max', agree: true, age: 30 })
+    const result = buildFormDataDefaults(schema, {
+      full_name: 'Max',
+      agree: true,
+      age: 30,
+    })
     expect(result.full_name).toBe('Max')
     expect(result.agree).toBe(true)
     expect(result.age).toBe(30)
   })
 
   it('carries known keys and drops extra keys not in the schema', () => {
-    const result = buildFormDataDefaults(schema, { full_name: 'Max', extra_field: 'ignored' })
+    const result = buildFormDataDefaults(schema, {
+      full_name: 'Max',
+      extra_field: 'ignored',
+    })
     expect(result.full_name).toBe('Max')
     expect('extra_field' in result).toBe(false)
   })
@@ -86,7 +105,11 @@ describe('buildFormDataDefaults', () => {
     // the defaultValues object has the same keys that DynamicFormFields Controllers
     // will register, so the deep-equal check stays true.
     const defaults = buildFormDataDefaults(schema, {})
-    const afterRegistration = { full_name: undefined, agree: undefined, age: undefined }
+    const afterRegistration = {
+      full_name: undefined,
+      agree: undefined,
+      age: undefined,
+    }
     expect(JSON.stringify(defaults)).toBe(JSON.stringify(afterRegistration))
   })
 })
@@ -114,7 +137,10 @@ const SHOWCASE_SCHEMA: JsonSchema = {
     rating: { type: 'number', minimum: 0, maximum: 10, multipleOf: 0.5 },
     age: { type: 'integer', minimum: 0, maximum: 120 },
     agree: { type: 'boolean' },
-    category: { type: 'string', enum: ['bronze', 'silver', 'gold', 'platinum'] },
+    category: {
+      type: 'string',
+      enum: ['bronze', 'silver', 'gold', 'platinum'],
+    },
     contact_method: { type: 'string', enum: ['email', 'phone', 'post'] },
     birth_date: { type: 'string', format: 'date' },
     email: { type: 'string', format: 'email' },
@@ -132,15 +158,21 @@ describe('jsonSchemaToZod', () => {
   // -------------------------------------------------------------------------
   describe('null / undefined / empty schema', () => {
     it('accepts any object when schema is null', () => {
-      expect(jsonSchemaToZod(null).safeParse({ anything: 'goes' }).success).toBe(true)
+      expect(
+        jsonSchemaToZod(null).safeParse({ anything: 'goes' }).success
+      ).toBe(true)
     })
 
     it('accepts any object when schema is undefined', () => {
-      expect(jsonSchemaToZod(undefined).safeParse({ foo: 42 }).success).toBe(true)
+      expect(jsonSchemaToZod(undefined).safeParse({ foo: 42 }).success).toBe(
+        true
+      )
     })
 
     it('accepts any object when properties is absent', () => {
-      expect(jsonSchemaToZod({ type: 'object' }).safeParse({ x: 1 }).success).toBe(true)
+      expect(
+        jsonSchemaToZod({ type: 'object' }).safeParse({ x: 1 }).success
+      ).toBe(true)
     })
   })
 
@@ -191,13 +223,21 @@ describe('jsonSchemaToZod', () => {
     })
 
     it('minLength + maxLength — rejects both extremes', () => {
-      const prop: JsonSchemaProperty = { type: 'string', minLength: 2, maxLength: 10 }
+      const prop: JsonSchemaProperty = {
+        type: 'string',
+        minLength: 2,
+        maxLength: 10,
+      }
       fail(prop, true, 'A')
       fail(prop, true, 'toolongvalue')
     })
 
     it('minLength + maxLength — accepts value in range', () => {
-      const prop: JsonSchemaProperty = { type: 'string', minLength: 2, maxLength: 10 }
+      const prop: JsonSchemaProperty = {
+        type: 'string',
+        minLength: 2,
+        maxLength: 10,
+      }
       ok(prop, true, 'hello')
     })
   })
@@ -217,11 +257,21 @@ describe('jsonSchemaToZod', () => {
     })
 
     it('required — rejects invalid email address', () => {
-      fail(emailProp, true, 'not-an-email', 'Bitte eine gültige E-Mail-Adresse eingeben')
+      fail(
+        emailProp,
+        true,
+        'not-an-email',
+        'Bitte eine gültige E-Mail-Adresse eingeben'
+      )
     })
 
     it('required — rejects address without domain', () => {
-      fail(emailProp, true, 'user@', 'Bitte eine gültige E-Mail-Adresse eingeben')
+      fail(
+        emailProp,
+        true,
+        'user@',
+        'Bitte eine gültige E-Mail-Adresse eingeben'
+      )
     })
 
     it('required — accepts valid email', () => {
@@ -233,7 +283,12 @@ describe('jsonSchemaToZod', () => {
     })
 
     it('optional — still rejects malformed address when a value is provided', () => {
-      fail(emailProp, false, 'not-an-email', 'Bitte eine gültige E-Mail-Adresse eingeben')
+      fail(
+        emailProp,
+        false,
+        'not-an-email',
+        'Bitte eine gültige E-Mail-Adresse eingeben'
+      )
     })
 
     it('optional — accepts valid email', () => {
@@ -386,7 +441,11 @@ describe('jsonSchemaToZod', () => {
     })
 
     it('minimum + maximum — accepts value in range', () => {
-      const prop: JsonSchemaProperty = { type: 'integer', minimum: 0, maximum: 120 }
+      const prop: JsonSchemaProperty = {
+        type: 'integer',
+        minimum: 0,
+        maximum: 120,
+      }
       ok(prop, false, 42)
     })
   })
@@ -425,10 +484,14 @@ describe('jsonSchemaToZod', () => {
       })
 
       it('coerced value is false, not undefined', () => {
-        const schema = jsonSchemaToZod({ properties: { field: bool }, required: [] })
+        const schema = jsonSchemaToZod({
+          properties: { field: bool },
+          required: [],
+        })
         const result = schema.safeParse({ field: undefined })
         expect(result.success).toBe(true)
-        if (result.success) expect((result.data as Record<string, unknown>).field).toBe(false)
+        if (result.success)
+          expect((result.data as Record<string, unknown>).field).toBe(false)
       })
     })
   })
@@ -509,11 +572,15 @@ describe('jsonSchemaToZod', () => {
     })
 
     it('rejects full_name longer than maxLength 100', () => {
-      expect(parse({ ...VALID_SUBMISSION, full_name: 'A'.repeat(101) }).success).toBe(false)
+      expect(
+        parse({ ...VALID_SUBMISSION, full_name: 'A'.repeat(101) }).success
+      ).toBe(false)
     })
 
     it('rejects invalid email address', () => {
-      expect(parse({ ...VALID_SUBMISSION, email: 'not-an-email' }).success).toBe(false)
+      expect(
+        parse({ ...VALID_SUBMISSION, email: 'not-an-email' }).success
+      ).toBe(false)
     })
 
     it('rejects rating outside allowed range', () => {
@@ -531,11 +598,15 @@ describe('jsonSchemaToZod', () => {
     })
 
     it('rejects unknown category value', () => {
-      expect(parse({ ...VALID_SUBMISSION, category: 'diamond' }).success).toBe(false)
+      expect(parse({ ...VALID_SUBMISSION, category: 'diamond' }).success).toBe(
+        false
+      )
     })
 
     it('rejects unknown contact_method value', () => {
-      expect(parse({ ...VALID_SUBMISSION, contact_method: 'fax' }).success).toBe(false)
+      expect(
+        parse({ ...VALID_SUBMISSION, contact_method: 'fax' }).success
+      ).toBe(false)
     })
 
     it('rejects agree = false — required switch must be enabled', () => {

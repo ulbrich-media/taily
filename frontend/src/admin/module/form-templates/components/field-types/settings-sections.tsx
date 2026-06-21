@@ -78,7 +78,10 @@ export function TextareaSettingsSection({ control }: SettingsSectionProps) {
 // --- Number ---
 
 export function NumberSettingsSection({ control }: SettingsSectionProps) {
-  const { field: isIntegerField } = useController({ control, name: 'isInteger' })
+  const { field: isIntegerField } = useController({
+    control,
+    name: 'isInteger',
+  })
 
   return (
     <>
@@ -101,7 +104,9 @@ export function NumberSettingsSection({ control }: SettingsSectionProps) {
         <Checkbox
           id="isInteger"
           checked={isIntegerField.value ?? false}
-          onCheckedChange={(checked) => isIntegerField.onChange(checked === true)}
+          onCheckedChange={(checked) =>
+            isIntegerField.onChange(checked === true)
+          }
         />
         <Label htmlFor="isInteger" className="font-normal cursor-pointer">
           Nur ganze Zahlen

@@ -104,7 +104,11 @@ export default defineConfig([
       'router-rules/no-route-imports-outside-routes': 'error',
       '@typescript-eslint/no-unused-vars': [
         'error',
-        { varsIgnorePattern: '^_', argsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
+        {
+          varsIgnorePattern: '^_',
+          argsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
       ],
     },
     languageOptions: {

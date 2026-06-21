@@ -85,7 +85,9 @@ function buildPropertySchema(
   // .min(1) for the empty-string case — both surface the same message.
   let s = z.string({ error: isRequired ? REQUIRED_MSG : undefined })
   if (prop.format === 'email')
-    s = s.check(z.email({ error: 'Bitte eine gültige E-Mail-Adresse eingeben' }))
+    s = s.check(
+      z.email({ error: 'Bitte eine gültige E-Mail-Adresse eingeben' })
+    )
   if (prop.minLength !== undefined && prop.minLength > 0) {
     s = s.min(prop.minLength, `Mindestens ${prop.minLength} Zeichen`)
   } else if (isRequired) {

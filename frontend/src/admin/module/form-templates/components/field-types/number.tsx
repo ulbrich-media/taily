@@ -39,7 +39,9 @@ export const numberFieldType: FieldTypeDefinition = {
   SettingsSection: NumberSettingsSection,
   toSchemaProps: (settings) => {
     const s = settings as NumberSettings
-    const prop: Record<string, unknown> = { type: s.isInteger ? 'integer' : 'number' }
+    const prop: Record<string, unknown> = {
+      type: s.isInteger ? 'integer' : 'number',
+    }
     if (s.min != null) prop.minimum = s.min
     if (s.max != null) prop.maximum = s.max
     if (s.step != null) prop.multipleOf = s.step
