@@ -9,9 +9,9 @@ class FormTemplateSeeder extends Seeder
 {
     public function run(): void
     {
-        $inspection = FormTemplate::create(['name' => 'Veterinär Inspektion']);
+        $inspectionForm = FormTemplate::create(['name' => 'Veterinär Inspektion']);
 
-        $inspection->versions()->create([
+        $inspectionForm->versions()->create([
             'version' => 1,
             'schema' => [
                 '$schema' => 'http://json-schema.org/draft-07/schema#',
@@ -63,7 +63,7 @@ class FormTemplateSeeder extends Seeder
         ]);
 
         // V2: removes `temperature`, adds `parasite_status`
-        $inspection->versions()->create([
+        $inspectionForm->versions()->create([
             'version' => 2,
             'schema' => [
                 '$schema' => 'http://json-schema.org/draft-07/schema#',
@@ -122,9 +122,9 @@ class FormTemplateSeeder extends Seeder
             ],
         ]);
 
-        $adoption = FormTemplate::create(['name' => 'Adoptionsbewerbung']);
+        $adoptionForm = FormTemplate::create(['name' => 'Vorkontrolle Hund']);
 
-        $adoption->versions()->create([
+        $adoptionForm->versions()->create([
             'version' => 1,
             'schema' => [
                 '$schema' => 'http://json-schema.org/draft-07/schema#',
