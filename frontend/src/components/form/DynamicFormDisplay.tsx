@@ -74,7 +74,7 @@ export function DynamicFormDisplay({
 
         if (prop.type === 'null' || widget === 'heading') {
           return (
-            <h3 key={key} className="text-sm font-semibold pt-2">
+            <h3 key={key} className="text-lg font-heading pt-2">
               {title}
             </h3>
           )
