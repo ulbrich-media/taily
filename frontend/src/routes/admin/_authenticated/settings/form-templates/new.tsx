@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { FormBuilderCreate } from '@/admin/module/form-templates/components/FormBuilderCreate'
 import { Route as ListRoute } from './index'
 import { useBreadcrumbs } from '@/router/useBreadcrumbs.ts'
+import { BreadcrumbNav } from '@/router/BreadcrumbNav.tsx'
 
 export const Route = createFileRoute(
   '/admin/_authenticated/settings/form-templates/new'
@@ -12,7 +13,7 @@ export const Route = createFileRoute(
     }
   },
   staticData: {
-    breadcrumb: 'Formularvorlage anlegen',
+    breadcrumb: 'Neue Formularvorlage',
   },
   component: RouteComponent,
 })

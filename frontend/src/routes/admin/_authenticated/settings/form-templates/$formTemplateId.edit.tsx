@@ -18,12 +18,11 @@ export const Route = createFileRoute(
     if (!response) {
       throw notFound()
     }
-
-    return {
-      breadcrumb: `${response.data.name} bearbeiten`,
-    }
   },
   component: RouteComponent,
+  staticData: {
+    breadcrumb: 'Bearbeiten',
+  },
 })
 
 function RouteComponent() {

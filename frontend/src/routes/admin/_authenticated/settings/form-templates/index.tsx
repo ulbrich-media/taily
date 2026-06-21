@@ -16,7 +16,6 @@ import { Route as FormTemplateEditRoute } from '@/routes/admin/_authenticated/se
 export const Route = createFileRoute(
   '/admin/_authenticated/settings/form-templates/'
 )({
-  staticData: { breadcrumb: 'Formulare' },
   loader: async () => {
     await queryClient.ensureQueryData(listFormTemplatesQuery)
   },

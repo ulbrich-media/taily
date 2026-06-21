@@ -22,6 +22,7 @@ import { PageHeader } from '@/components/layout/PageHeader.tsx'
 import { FormGrid } from '@/components/form/FormGrid.tsx'
 import { InfoRow } from '@/shadcn/components/common/info-row.tsx'
 import { Card, CardContent } from '@/shadcn/components/ui/card.tsx'
+import { Mark } from '@/components/typo/mark.tsx'
 
 const templateNameSchema = z.object({
   name: z.string().min(1, 'Name ist erforderlich').max(255),
@@ -105,7 +106,11 @@ export function FormBuilderEditor({
 
         <div className="space-y-6">
           <PageHeader
-            title="Formularvorlage bearbeiten"
+            title={
+              <>
+                <Mark variant="headline">{template.name}</Mark> bearbeiten
+              </>
+            }
             breadcrumb={breadcrumb}
           />
 
