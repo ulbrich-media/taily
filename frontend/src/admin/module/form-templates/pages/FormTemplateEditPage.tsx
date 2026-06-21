@@ -5,21 +5,21 @@ import type { ReactNode } from 'react'
 interface FormTemplateResourceEditPageProps {
   template: FormTemplateResource
   onCancel: () => void
-  onNewVersion: (id: string) => void
+  onSaved: (id: string) => void
   breadcrumb?: ReactNode
 }
 
 export function FormTemplateEditPage({
   template,
   onCancel,
-  onNewVersion,
+  onSaved,
   breadcrumb,
 }: FormTemplateResourceEditPageProps) {
   return (
     <FormBuilderEditor
       template={template}
       onCancel={onCancel}
-      onNewVersion={onNewVersion}
+      onSaved={onSaved}
       breadcrumb={breadcrumb}
     />
   )

@@ -4,6 +4,7 @@ import { formTemplateQuery } from '@/admin/module/form-templates/api/queries'
 import { FormTemplateEditPage } from '@/admin/module/form-templates/pages/FormTemplateEditPage'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { Route as ListRoute } from './index'
+import { Route as DetailRoute } from './$formTemplateId.index'
 import { BreadcrumbNav } from '@/router/BreadcrumbNav.tsx'
 import { useBreadcrumbs } from '@/router/useBreadcrumbs.ts'
 
@@ -30,13 +31,13 @@ function RouteComponent() {
   const { formTemplateId } = Route.useParams()
   const { data: template } = useSuspenseQuery(formTemplateQuery(formTemplateId))
   const navigateToList = ListRoute.useNavigate()
-  const navigateToEdit = Route.useNavigate()
+  const navigateToDetail = DetailRoute.useNavigate()
 
   return (
     <FormTemplateEditPage
       template={template.data}
       onCancel={() => navigateToList({})}
-      onNewVersion={(id) => navigateToEdit({ params: { formTemplateId: id } })}
+      onSaved={(id) => navigateToDetail({ params: { formTemplateId: id } })}
       breadcrumb={<BreadcrumbNav items={breadcrumbs} />}
     />
   )

@@ -33,14 +33,14 @@ type TemplateNameFormData = z.infer<typeof templateNameSchema>
 interface FormBuilderEditorProps {
   template: FormTemplateResource
   onCancel: () => void
-  onNewVersion: (id: string) => void
+  onSaved: (id: string) => void
   breadcrumb: ReactNode
 }
 
 export function FormBuilderEditor({
   template,
   onCancel,
-  onNewVersion,
+  onSaved,
   breadcrumb,
 }: FormBuilderEditorProps) {
   const queryClient = useQueryClient()
@@ -74,15 +74,11 @@ export function FormBuilderEditor({
       })
 
       if (data.new_version_created) {
-        // New version = new template ID — navigate to it so the URL and query update
         toast.success(`Neue Version v${data.data.version} wurde erstellt`)
-        onNewVersion(data.data.id)
       } else {
-        // Same template — reset forms to saved state so the blocker clears
-        nameForm.reset({ name: data.data.name })
-        fb.reset(parseJsonSchema(data.data.schema, data.data.ui_schema))
         toast.success(data.message)
       }
+      onSaved(data.data.id)
     },
     onError: () => {
       toast.error('Fehler beim Speichern der Formularvorlage')

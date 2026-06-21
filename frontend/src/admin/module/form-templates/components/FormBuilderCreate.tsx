@@ -26,7 +26,7 @@ const createTemplateSchema = z.object({
 type CreateTemplateFormData = z.infer<typeof createTemplateSchema>
 
 interface FormBuilderCreateProps {
-  onCreated: () => void
+  onCreated: (id: string) => void
   onCancel: () => void
   breadcrumb: ReactNode
 }
@@ -62,7 +62,7 @@ export function FormBuilderCreate({
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: formTemplateQueryKeys.all })
       toast.success(data.message)
-      onCreated()
+      onCreated(data.data.id)
     },
     onError: () => {
       toast.error('Fehler beim Erstellen der Formularvorlage')
