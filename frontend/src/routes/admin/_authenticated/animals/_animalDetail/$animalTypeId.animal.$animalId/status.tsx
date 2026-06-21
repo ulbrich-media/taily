@@ -11,6 +11,9 @@ export const Route = createFileRoute(
     await queryClient.ensureQueryData(getAnimalQuery(params.animalId))
   },
   component: RouteComponent,
+  staticData: {
+    breadcrumb: 'Status',
+  },
 })
 
 function RouteComponent() {

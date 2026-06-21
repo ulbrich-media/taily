@@ -22,6 +22,9 @@ export const Route = createFileRoute(
     ])
   },
   component: RouteComponent,
+  staticData: {
+    breadcrumb: 'Vermittlungen',
+  },
 })
 
 function RouteComponent() {
