@@ -50,7 +50,7 @@ class FormTemplateService
 
         // If the change is non-breaking, or breaking but the version has no submissions yet
         // (no existing data can be invalidated), update the current version in place.
-        if (! $newVersionRequired) {
+        if (! $newVersionRequired || ! $currentVersion->formSubmissions()->exists()) {
             $template->update(['name' => $data['name']]);
             $currentVersion->update([
                 'schema' => $data['schema'],
