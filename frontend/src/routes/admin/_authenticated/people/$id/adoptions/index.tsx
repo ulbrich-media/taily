@@ -5,14 +5,12 @@ import { listPreInspectionsByPersonQuery } from '@/admin/module/pre-inspections/
 import { listAdoptionsQuery } from '@/admin/module/adoptions/api/queries.ts'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { Route as AdoptionDetailRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/index'
-import { Route as InspectionDetailRoute } from '@/routes/admin/_authenticated/pre-inspections/$id/index.tsx'
+import { Route as InspectionDetailRoute } from '@/routes/admin/_authenticated/people/$id/adoptions/pre-inspections/$preInspectionId/index'
 import { ExternalLink, Eye, Edit } from 'lucide-react'
 import type { AdoptionListResource } from '@/api/types/adoptions'
 import type { PreInspectionResource } from '@/api/types/pre-inspections'
 
-export const Route = createFileRoute(
-  '/admin/_authenticated/people/$id/adoptions'
-)({
+export const Route = createFileRoute('/admin/_authenticated/people/$id/adoptions/')({
   loader: async ({ params }) => {
     await Promise.all([
       queryClient.ensureQueryData(listPreInspectionsByPersonQuery(params.id)),
@@ -41,7 +39,7 @@ function RouteComponent() {
   )
 
   const renderInspectionDetailLink = (inspection: PreInspectionResource) => (
-    <InspectionDetailRoute.Link params={{ id: inspection.id }}>
+    <InspectionDetailRoute.Link params={{ id, preInspectionId: inspection.id }}>
       {inspection.verdict !== 'pending' ? (
         <>
           <Eye className="size-4" />
