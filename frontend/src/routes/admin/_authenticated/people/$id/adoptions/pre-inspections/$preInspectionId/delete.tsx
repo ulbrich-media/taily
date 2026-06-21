@@ -3,16 +3,15 @@ import { queryClient } from '@/lib/queryClient'
 import { getPreInspectionQuery } from '@/admin/module/pre-inspections/api/queries'
 import { PreInspectionDeletePage } from '@/admin/module/pre-inspections/pages/PreInspectionDeletePage'
 import { useSuspenseQuery } from '@tanstack/react-query'
-import { Route as PersonAdoptionsRoute } from '@/routes/admin/_authenticated/people/$id/adoptions'
-import { Route as DashboardRoute } from '@/routes/admin/_authenticated/index'
-import { Route as PreInspectionDetailRoute } from '@/routes/admin/_authenticated/pre-inspections/$id/route'
+import { Route as PersonAdoptionsRoute } from '@/routes/admin/_authenticated/people/$id/adoptions/index'
+import { Route as PreInspectionDetailRoute } from '@/routes/admin/_authenticated/people/$id/adoptions/pre-inspections/$preInspectionId/route'
 
 export const Route = createFileRoute(
-  '/admin/_authenticated/pre-inspections/$id/delete'
+  '/admin/_authenticated/people/$id/adoptions/pre-inspections/$preInspectionId/delete'
 )({
   loader: async ({ params }) => {
     const inspection = await queryClient.ensureQueryData(
-      getPreInspectionQuery(params.id)
+      getPreInspectionQuery(params.preInspectionId)
     )
 
     if (!inspection) {
@@ -23,22 +22,19 @@ export const Route = createFileRoute(
 })
 
 function RouteComponent() {
-  const { id } = Route.useParams()
+  const { id, preInspectionId } = Route.useParams()
   const navigateToPersonAdoptions = PersonAdoptionsRoute.useNavigate()
-  const navigateToDashboard = DashboardRoute.useNavigate()
   const navigateToDetail = PreInspectionDetailRoute.useNavigate()
-  const { data: inspection } = useSuspenseQuery(getPreInspectionQuery(id))
+  const { data: inspection } = useSuspenseQuery(
+    getPreInspectionQuery(preInspectionId)
+  )
 
   const handleDeleted = () => {
-    if (inspection.person_id) {
-      navigateToPersonAdoptions({ params: { id: inspection.person_id } })
-    } else {
-      navigateToDashboard({})
-    }
+    navigateToPersonAdoptions({ params: { id } })
   }
 
   const handleClose = () => {
-    navigateToDetail({ params: { id: inspection.id } })
+    navigateToDetail({ params: { id, preInspectionId } })
   }
 
   return (

@@ -13,7 +13,7 @@ import { Route as CancelRoute } from '@/routes/admin/_authenticated/adoptions/$a
 import { Route as ReopenRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/reopen'
 import { Route as TransportAssignRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/transport-assign'
 import { Route as TransportRemoveRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/transport-remove'
-import { Route as InspectionDetailRoute } from '@/routes/admin/_authenticated/pre-inspections/$id/index.tsx'
+import { Route as InspectionDetailRoute } from '@/routes/admin/_authenticated/people/$id/adoptions/pre-inspections/$preInspectionId/index'
 import type { PreInspectionResource } from '@/api/types/pre-inspections'
 
 export const Route = createFileRoute(
@@ -92,7 +92,9 @@ function RouteComponent() {
   )
 
   const renderInspectionDetailLink = (inspection: PreInspectionResource) => (
-    <InspectionDetailRoute.Link params={{ id: inspection.id }}>
+    <InspectionDetailRoute.Link
+      params={{ id: applicantId, preInspectionId: inspection.id }}
+    >
       {inspection.verdict !== 'pending' ? (
         <>
           <Eye className="size-4" />

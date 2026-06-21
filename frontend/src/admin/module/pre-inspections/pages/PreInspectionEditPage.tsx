@@ -14,6 +14,7 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
+  CardAction,
 } from '@/shadcn/components/ui/card'
 import { Button } from '@/shadcn/components/ui/button'
 import { Badge } from '@/shadcn/components/ui/badge'
@@ -22,7 +23,6 @@ import { toast } from 'sonner'
 import { FormBlocker } from '@/components/form/FormBlocker'
 import { PersonSelect } from '@/components/field/PersonSelect'
 import { Textarea } from '@/components/field/Textarea'
-import { PageHeader } from '@/components/layout/PageHeader'
 import { SelectInput } from '@/components/field/SelectInput.tsx'
 import { formatApiDate } from '@/lib/dates.utils.ts'
 import { FormGrid } from '@/components/form/FormGrid.tsx'
@@ -155,38 +155,13 @@ export function PreInspectionEditPage({
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Vorkontrolle bearbeiten"
-        description="Details und Ergebnis der Vorkontrolle"
-        actions={deleteAction}
-      />
-
-      {!hasVerdict && inspection.submission_url && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Kontrolleur-Link</CardTitle>
-            <CardDescription>
-              Teile diesen Link mit dem Kontrolleur. Der Link bleibt gültig, bis
-              ein Ergebnis gesetzt wird.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-3">
-              <code className="flex-1 rounded-md bg-muted px-3 py-2 text-sm font-mono break-all">
-                {inspection.submission_url}
-              </code>
-              <CopyLinkButton url={inspection.submission_url} />
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       <Card>
         <CardHeader>
-          <CardTitle>Informationen</CardTitle>
+          <CardTitle>Vorkontrolle bearbeiten</CardTitle>
           <CardDescription>
-            Unveränderliche Angaben zur Vorkontrolle
+            Details und Ergebnis der Vorkontrolle
           </CardDescription>
+          <CardAction>{deleteAction}</CardAction>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -215,6 +190,26 @@ export function PreInspectionEditPage({
           </div>
         </CardContent>
       </Card>
+
+      {!hasVerdict && inspection.submission_url && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Kontrolleur-Link</CardTitle>
+            <CardDescription>
+              Teile diesen Link mit dem Kontrolleur. Der Link bleibt gültig, bis
+              ein Ergebnis gesetzt wird.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-3">
+              <code className="flex-1 rounded-md bg-muted px-3 py-2 text-sm font-mono break-all">
+                {inspection.submission_url}
+              </code>
+              <CopyLinkButton url={inspection.submission_url} />
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
