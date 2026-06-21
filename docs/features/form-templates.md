@@ -65,34 +65,33 @@ The builder supports ten field types. Each type knows how to serialize itself in
 |---|---|---|
 | `text` | `type: string` | — |
 | `textarea` | `type: string` | `ui:widget: textarea` |
-| `number` | `type: number` or `integer` | — |
+| `number` | `type: number` | — |
+| `integer` | `type: integer` | — |
 | `checkbox` | `type: boolean` | — |
 | `select` | `type: string` + `enum: [...]` | — |
 | `radio` | `type: string` + `enum: [...]` | `ui:widget: radio` |
-| `date` | `type: string`, `format: date` | — |
-| `email` | `type: string`, `format: email` | — |
-| `phone` | `type: string` | `ui:widget: phone` |
+| `date` | `type: string`, `format: date` | `ui:widget: date` |
+| `email` | `type: string`, `format: email` | `ui:widget: email` |
+| `phone` | `type: string`, `format: phone` | `ui:widget: phone` |
 | `heading` | — (not in `properties`) | `ui:widget: heading` |
 
+`number` and `integer` share the same UI but differ in validation: `integer` enforces whole numbers (rejects `30.5`). The builder exposes this as an "Nur ganze Zahlen" checkbox in the number field settings, which emits `type: integer` instead of `type: number`.
+
+**Supported numeric constraints:** `minimum`, `maximum`, `multipleOf` (step — e.g. `0.5` for half-star ratings).  
+**Supported string constraints:** `minLength`, `maxLength`.  
+**Format-specific validation:** `format: email` validates the address format; `format: date` and `format: phone` are type hints for widget selection only — no additional format validation is applied.
+
 **Heading** is a layout-only element — it carries no validation meaning and produces no key in `schema.properties` or in submitted data. Headings appear only in `ui_schema` (in `ui:order` and as a `ui:widget: heading` entry). Renderers discover headings by scanning `ui:order` for keys that have `ui:widget: heading` but no corresponding entry in `properties`.
-
-Each field type implements the `FieldTypeDefinition` interface (`field-types/types.ts`), which enforces a consistent contract:
-
-- `toSchemaProps` / `toUiSchemaProps` — serialization to the stored documents
-- `fromSchemaProp` — deserialization back to editor state
-- `defaultSettings` / `buildSettings` / `getFormDefaults` — round-trip through the settings form
-- `SettingsSection` — the React component rendered inside the edit dialog for type-specific options
-- `settingsChips` — short badge labels shown on the field card (e.g. "2–50 Zeichen")
 
 ---
 
 ## Versioning
 
-The backend automatically decides whether a save is an **in-place update** or a **new version**. The decision is made by `SchemaChangeAnalyzer` by comparing the old and new schemas, combined with a submission check.
+The backend automatically decides whether a change to a form is an **in-place update** or a **new version**. The decision is made by `SchemaChangeAnalyzer` by comparing the old and new schemas, combined with a submission check.
 
 ### Breaking changes → new version (if submissions exist)
 
-A new version is created when the schema change is breaking **and** the current version already has at least one submission. If no submissions exist, even breaking changes are applied in place — no historical data can be invalidated.
+A new version is created when the schema change is breaking **and** the current version already has at least one submission. If no submissions exist, even breaking changes are applied in place since no historical data would be invalidated.
 
 A schema change is considered breaking when:
 - An existing property is **removed**
@@ -110,8 +109,6 @@ A save always updates the existing record when:
 - An **enum value is added** (more permissive)
 - A constraint is **loosened** (lower minimum, higher maximum, removed limit)
 - `additionalProperties: false` is **removed**
-
-When the frontend receives `new_version_created: true` in the response it navigates to the new template ID so the URL and query cache stay correct.
 
 ---
 
@@ -161,104 +158,7 @@ The snapshot is taken **at first submission**, not at template assignment. This 
 
 ---
 
-## Attaching form templates to features
-
-Templates are assigned to features via dedicated named foreign-key columns (not a generic slot or pivot table). This makes the intent explicit and allows each feature to have multiple independent form types in the future.
-
-### Animal types
-
-`animal_types` currently has one named slot:
-
-| Column | Purpose |
-|---|---|
-| `pre_inspection_form_template_id` | Form shown to the inspector during a pre-inspection |
-
-The FK points to `form_templates.id` (the stable parent), never to a specific version. This means the feature always automatically uses the latest version without any FK updates when the schema evolves.
-
-When an animal type has no template assigned the feature falls back to verdict + notes only (acceptable default — the dynamic fields card is simply not shown).
-
-To add a new form type to animal types: add a named FK column via migration pointing to `form_templates.id`, update `AnimalType::$fillable`, add a `belongsTo` relation, and expose it through the resource.
-
----
-
-## Pre-inspection flow
-
-Pre-inspections are the first feature that uses form submissions. The flow covers two distinct phases separated by `submitted_at`.
-
-### Pre-submission phase
-
-- The public link is active (token only valid while `submitted_at IS NULL`).
-- The inspector opens the link and sees the latest form template (if any) plus the verdict/notes fields.
-- The admin can only change the assigned inspector. All other fields are locked in the admin UI.
-
-### Submission
-
-Both the inspector (public token endpoint) and the admin (authenticated endpoint) perform a **first submission** in the same way:
-
-1. Validate `verdict`, `notes`, and `form_data` (against the latest template version's schema).
-2. In a DB transaction:
-   - Create a `FormSubmission` pinned to the current version (`form_template_version_id`).
-   - Set `verdict`, `notes`, and `submitted_at` on the `PreInspection`.
-3. The public token becomes invalid immediately after.
-
-Admin endpoint: `POST /pre-inspections/{id}/submit`  
-Public endpoint: `POST /public/pre-inspections/{token}/submit`
-
-### Post-submission phase
-
-- The public link is no longer valid.
-- The admin can edit `verdict`, `notes`, `form_data` (validated against the pinned template version), and `inspector_id`.
-- Edits go through `PUT /pre-inspections/{id}` — the `form_data` key is only accepted post-submission.
-
----
-
-## Backend API
-
-### Form template endpoints
-
-All endpoints live under the internal API and are controller-routed through `FormTemplateController`.
-
-| Method | Path | Description |
-|---|---|---|
-| `GET` | `/form-templates` | List all templates, latest version of each |
-| `GET` | `/form-templates/{formTemplate}/versions` | All versions of a template, newest first |
-| `GET` | `/form-templates/{formTemplate}` | A specific template by ID |
-| `POST` | `/form-templates` | Create a new template with version 1 |
-| `PUT` | `/form-templates/{formTemplate}` | Update a template (may create new version) |
-| `POST` | `/form-templates/{formTemplate}/validate` | Validate a `data` payload against the latest version's schema |
-
-All `{formTemplate}` parameters are the stable `form_templates.id` UUID. Validation (`/validate`) returns `200` with `valid: true` or `422` with a flat `errors` map (`field => string[]`).
-
-### Pre-inspection submission endpoints
-
-| Method | Path | Auth | Description |
-|---|---|---|---|
-| `POST` | `/pre-inspections/{id}/submit` | internal | Admin first-submission |
-| `POST` | `/public/pre-inspections/{token}/submit` | token | Inspector first-submission |
-
----
-
 ## Frontend architecture
-
-### Form builder (admin)
-
-The editor works with an internal `EditorField[]` list richer than the stored JSON Schema: each entry holds a parsed, typed representation of one field plus two runtime flags:
-
-```ts
-interface EditorField extends FormField {
-  _deleted?: boolean   // soft-deleted (existing fields only)
-  _isNew?: boolean     // added in this editing session, not yet saved
-}
-```
-
-Deleted existing fields remain in the list (shown crossed out) so they can be restored before saving. Truly new fields that are deleted are removed immediately.
-
-`schema.ts` owns the two conversion functions:
-
-- `parseJsonSchema(schema, uiSchema) → EditorField[]` — run on load. Handles both the current format (headings only in uiSchema) and the legacy format (headings as `type: null` in properties).
-- `buildJsonSchema(fields, title) → { schema, uiSchema }` — run on save. Heading fields are omitted from `schema.properties` and only written to `ui_schema`.
-
-`useFieldBuilder` manages all editor state, including drag-and-drop (`@dnd-kit/core`), dirty tracking, and auto-generated field keys (`text_1`, `select_2`, …).
 
 ### DynamicFormFields (input rendering)
 
@@ -269,7 +169,7 @@ Key behaviours:
 - Resolves display labels from `uiSchema[key]['ui:title']` (falls back to `schema.properties[key].title`, then the key itself).
 - Resolves enum option labels from `uiSchema[key]['ui:options'].labels`.
 - Handles heading fields (`ui:widget: heading` in uiSchema, absent from `properties`) as `<h3>` — no Controller, no validation.
-- Per-field validation rules are built from the JSON Schema (`required`, `minLength`, `maxLength`, `minimum`, `maximum`, email pattern).
+- Switches (boolean fields) render their value as `!!field.value`, so `undefined` and `false` both show as "off".
 - Use `namePrefix` (default `"form_data"`) so nested field names are `form_data.{key}` and don't collide with other form fields.
 
 Usage:
@@ -277,11 +177,69 @@ Usage:
 <DynamicFormFields
   schema={template.schema}
   uiSchema={template.ui_schema}
-  control={form.control}
+  control={form.control as unknown as Control<FieldValues>}
   namePrefix="form_data"
   disabled={false}
 />
 ```
+
+> The `as unknown as Control<FieldValues>` cast is required because `DynamicFormFields` accepts a loosely-typed `Control<FieldValues>`, while the calling form is typed to its specific form data shape. This is a safe cast — the component only reads field values and errors, it never writes outside the prefix namespace.
+
+### Validation (resolver-side)
+
+When `DynamicFormFields` is used inside a form with a `zodResolver`, the JSON Schema must be converted to a matching Zod schema so the resolver can validate the dynamic fields. Two utilities handle this:
+
+**`jsonSchemaToZod(schema)`** (`src/components/form/jsonSchemaToZod.ts`)
+
+Converts a `JsonSchema` to a Zod schema that mirrors the validation rules in `DynamicFormFields`. Handles all supported field types with the following semantics:
+
+| Field type | Validation behaviour |
+|---|---|
+| `string` (required) | Rejects `undefined` and `""` with "Dieses Feld ist erforderlich" |
+| `string` (optional) | Accepts `undefined` and `""` |
+| `string` + `minLength` | Enforces character minimum |
+| `string` + `maxLength` | Enforces character maximum |
+| `string` + `format: email` | Validates email address format |
+| `number` / `integer` (required) | Rejects `undefined` with "Dieses Feld ist erforderlich" |
+| `integer` | Additionally rejects floats with "Bitte eine ganze Zahl eingeben" |
+| `minimum` / `maximum` | Enforces numeric range |
+| `multipleOf` | Enforces step (e.g. `0.5` → rejects `5.3`, accepts `5.5`) |
+| `enum` (required) | Rejects `undefined` and unknown values |
+| `enum` (optional) | Accepts `undefined`; still rejects unknown values |
+| `boolean` (optional) | Coerces `undefined` → `false` (untouched switch = off) |
+| `boolean` (required) | Must be `true` — an untouched or off switch fails validation |
+
+**`useDynamicFormSchema(staticSchema, jsonSchema)`** (`src/components/form/useDynamicFormSchema.ts`)
+
+Memoised hook that combines a static Zod object schema (for non-dynamic fields like `verdict`, `notes`) with the Zod schema produced by `jsonSchemaToZod`, merging them under a `form_data` key:
+
+```ts
+const mainStaticSchema = z.object({
+  verdict: z.enum(['approved', 'rejected'], { error: 'Bitte wähle ein Ergebnis aus' }),
+  notes: z.string(),
+})
+
+// Inside component:
+const schema = useDynamicFormSchema(mainStaticSchema, template?.schema)
+const form = useForm<FormData>({
+  resolver: zodResolver(schema) as never,
+  defaultValues: {
+    verdict: undefined,
+    notes: '',
+    form_data: buildFormDataDefaults(template?.schema, existingData),
+  },
+})
+```
+
+The `as never` cast on `zodResolver` is required because the dynamic `form_data` field is typed as `z.ZodTypeAny` (whose inferred type is `any`), causing a resolver type mismatch that TypeScript cannot narrow automatically.
+
+**`buildFormDataDefaults(schema, existingData?)`** (`src/components/form/jsonSchemaToZod.ts`)
+
+Builds the initial `form_data` object for `defaultValues`. Every property key defined in the schema is included in the returned object (with its value from `existingData` or `undefined`).
+
+This is critical for `FormBlocker` correctness: react-hook-form's `isDirty` check does a structural deep-equal between current values and `defaultValues`. If `defaultValues.form_data` starts as `{}` and `DynamicFormFields` registers Controllers for `form_data.agree`, `form_data.full_name`, etc., the tracked form values gain keys that were absent from the defaults — making the form appear dirty immediately, even with no user input.
+
+Always use `buildFormDataDefaults` when constructing `defaultValues` for a combined form, and also in any `form.reset()` calls after a successful save.
 
 ### DynamicFormDisplay (read-only rendering)
 
@@ -306,40 +264,6 @@ Usage:
 `field-types/index.ts` holds a `Map<FieldType, FieldTypeDefinition>`. All field type logic is encapsulated inside its definition object — the editor and dialog are type-agnostic and just call the appropriate interface methods.
 
 To add a new field type: create a file under `field-types/`, implement the `FieldTypeDefinition` interface, and register it in the map.
-
----
-
-## Data flow summary
-
-```
-Admin edits fields in FormBuilderEditor
-  ↓ useFieldBuilder tracks state + drag-and-drop
-  ↓ buildJsonSchema() serializes EditorField[] → { schema, uiSchema }
-    (heading fields written to uiSchema only, not schema.properties)
-  ↓ PUT /form-templates/{formTemplate}
-  ↓ FormTemplateService.updateTemplate()
-      ↓ SchemaChangeAnalyzer compares schemas: breaking or non-breaking?
-      ↓ If breaking: check whether current version has any submissions
-          → No submissions: update in place (no historical data can be invalidated)
-          → Has submissions: create new version
-  ↓ Response: { data, new_version_created }
-  ↓ Frontend resets form state (or navigates to new ID if new version)
-
-Inspector submits via public link
-  ↓ POST /public/pre-inspections/{token}/submit
-      { verdict, notes, form_data }
-  ↓ FormTemplateService validates form_data against latest template version
-  ↓ DB transaction:
-      FormSubmission::create({ form_template_version_id, data })
-      PreInspection: verdict, notes, submitted_at = now()
-  ↓ Token becomes invalid; admin sees post-submission view
-
-Admin edits post-submission
-  ↓ PUT /pre-inspections/{id}
-      { verdict, notes, form_data, inspector_id }
-  ↓ form_data validated against pinned FormSubmission.formTemplateVersion
-  ↓ FormSubmission.data updated; verdict/notes saved on PreInspection
-```
 
 ---
 
