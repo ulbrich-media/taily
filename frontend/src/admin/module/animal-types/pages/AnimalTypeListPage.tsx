@@ -5,6 +5,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableCellEmpty,
   TableHead,
   TableHeader,
   TableRow,
@@ -48,7 +49,7 @@ export function AnimalTypeListPage({
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
-                  <TableHead>Formularvorlage</TableHead>
+                  <TableHead>Formular Vorkontrolle</TableHead>
                   {renderRowActions && (
                     <TableHead aria-label="Aktionen"></TableHead>
                   )}
@@ -60,9 +61,13 @@ export function AnimalTypeListPage({
                     <TableCell className="font-medium">
                       {animalType.title}
                     </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {animalType.form_template?.name ?? '–'}
-                    </TableCell>
+                    {animalType.pre_inspection_form_template?.name ? (
+                      <TableCell>
+                        {animalType.pre_inspection_form_template.name}
+                      </TableCell>
+                    ) : (
+                      <TableCellEmpty />
+                    )}
                     {renderRowActions && (
                       <TableCell className="text-right">
                         {renderRowActions(animalType)}

@@ -9,15 +9,22 @@ class FormTemplateResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $version = $this->resource->latestVersion;
+
         return [
             'id' => $this->resource->id,
-            'type' => $this->resource->type,
             'name' => $this->resource->name,
-            'schema' => $this->resource->schema,
-            'ui_schema' => $this->resource->ui_schema,
-            'version' => $this->resource->version,
+            'version' => $version?->version,
+            'version_id' => $version?->id,
+            'schema' => $version?->schema,
+            'ui_schema' => $version?->ui_schema,
+            'submissions_count' => $this->resource->form_submissions_count ?? 0,
             'created_at' => $this->resource->created_at,
-            'updated_at' => $this->resource->updated_at,
+            'updated_at' => $version?->updated_at ?? $this->resource->updated_at,
+            'versions' => $this->whenLoaded(
+                'versions',
+                fn () => FormTemplateVersionResource::collection($this->resource->versions)
+            ),
         ];
     }
 }

@@ -9,6 +9,7 @@ const numberSettingsSchema = z.object({
   min: z.number().optional(),
   max: z.number().optional(),
   step: z.number().positive().optional(),
+  isInteger: z.boolean().optional(),
 })
 
 export const numberFieldType: FieldTypeDefinition = {
@@ -25,6 +26,7 @@ export const numberFieldType: FieldTypeDefinition = {
       min: s.min,
       max: s.max,
       step: s.step,
+      isInteger: s.isInteger ?? false,
     }
   },
   buildSettings: (data) => ({
@@ -32,11 +34,14 @@ export const numberFieldType: FieldTypeDefinition = {
     min: data.min as number | undefined,
     max: data.max as number | undefined,
     step: data.step as number | undefined,
+    isInteger: (data.isInteger as boolean) || undefined,
   }),
   SettingsSection: NumberSettingsSection,
   toSchemaProps: (settings) => {
     const s = settings as NumberSettings
-    const prop: Record<string, unknown> = { type: 'number' }
+    const prop: Record<string, unknown> = {
+      type: s.isInteger ? 'integer' : 'number',
+    }
     if (s.min != null) prop.minimum = s.min
     if (s.max != null) prop.maximum = s.max
     if (s.step != null) prop.multipleOf = s.step
@@ -53,10 +58,12 @@ export const numberFieldType: FieldTypeDefinition = {
     min: schemaProp.minimum as number | undefined,
     max: schemaProp.maximum as number | undefined,
     step: schemaProp.multipleOf as number | undefined,
+    isInteger: schemaProp.type === 'integer' || undefined,
   }),
   settingsChips: (settings) => {
     const s = settings as NumberSettings
     const chips: string[] = []
+    if (s.isInteger) chips.push('Ganzzahl')
     if (s.placeholder) chips.push(`Platzhalter: "${s.placeholder}"`)
     if (s.min != null && s.max != null) {
       chips.push(`${s.min}–${s.max}`)

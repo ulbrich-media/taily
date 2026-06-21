@@ -25,6 +25,9 @@ export const Route = createFileRoute(
     ])
   },
   component: RouteComponent,
+  staticData: {
+    breadcrumb: 'Medizinisch',
+  },
 })
 
 function RouteComponent() {

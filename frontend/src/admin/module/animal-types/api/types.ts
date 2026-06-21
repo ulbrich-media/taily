@@ -24,10 +24,10 @@ export interface DeleteAnimalTypeResponse {
 
 export interface CreateAnimalTypeRequest {
   title: string
-  form_template_id?: string | null
+  pre_inspection_form_template_id?: string | null
 }
 
 export interface UpdateAnimalTypeRequest {
   title: string
-  form_template_id?: string | null
+  pre_inspection_form_template_id?: string | null
 }

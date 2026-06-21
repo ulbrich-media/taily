@@ -1,9 +1,10 @@
-import { ClipboardList } from 'lucide-react'
 import { Badge } from '@/shadcn/components/ui/badge'
 import type { FormTemplateResource } from '@/api/types/form-templates'
 import type { EditorField } from './shared/EditorField'
 import { getFieldTypeDef } from './field-types'
 import { parseJsonSchema } from './schema'
+import { PageHeader } from '@/components/layout/PageHeader.tsx'
+import type { ReactNode } from 'react'
 
 function ReadOnlyFieldCard({ field }: { field: EditorField }) {
   const def = getFieldTypeDef(field.type)
@@ -52,18 +53,19 @@ function ReadOnlyFieldCard({ field }: { field: EditorField }) {
 
 interface FormTemplateViewerProps {
   template: FormTemplateResource
+  breadcrumb: ReactNode
 }
 
-export function FormTemplateViewer({ template }: FormTemplateViewerProps) {
+export function FormTemplateViewer({
+  template,
+  breadcrumb,
+}: FormTemplateViewerProps) {
   const fields = parseJsonSchema(template.schema, template.ui_schema)
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <ClipboardList className="size-5 text-primary shrink-0" />
-        <h1 className="text-lg font-semibold">Formularvorlage</h1>
-      </div>
+      <PageHeader title={template.name} breadcrumb={breadcrumb} />
 
       {/* Meta card */}
       <div className="rounded-lg border bg-card p-4 flex flex-col sm:flex-row sm:items-start gap-4">
@@ -74,14 +76,6 @@ export function FormTemplateViewer({ template }: FormTemplateViewerProps) {
           <p className="text-sm font-medium mt-1">{template.name}</p>
         </div>
         <div className="flex items-center gap-6 shrink-0">
-          <div className="flex flex-col gap-1">
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              Typ
-            </span>
-            <code className="bg-muted rounded px-2 py-1 text-sm font-mono">
-              {template.type}
-            </code>
-          </div>
           <div className="flex flex-col gap-1">
             <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Version

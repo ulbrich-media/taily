@@ -5,11 +5,18 @@ namespace Taily\Http\Controllers\Internal;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Taily\Http\Controllers\Controller;
+use Taily\Models\FormTemplateVersion;
 use Taily\Models\PreInspection;
+use Taily\Support\FormTemplateService;
 
 class PreInspectionSubmissionController extends Controller
 {
+    public function __construct(
+        private FormTemplateService $formTemplateService
+    ) {}
+
     /**
      * Display the pre-inspection data for public token access.
      */
@@ -23,7 +30,7 @@ class PreInspectionSubmissionController extends Controller
             ], 404);
         }
 
-        $inspection->load(['person', 'animalType']);
+        $inspection->load(['person', 'animalType.preInspectionFormTemplate.latestVersion']);
 
         if (! $inspection->person) {
             return response()->json(['message' => 'Interessent nicht gefunden.'], 422);
@@ -32,6 +39,9 @@ class PreInspectionSubmissionController extends Controller
         if (! $inspection->animalType) {
             return response()->json(['message' => 'Tierart nicht gefunden.'], 422);
         }
+
+        $formTemplate = $inspection->animalType->preInspectionFormTemplate;
+        $latestVersion = $formTemplate?->latestVersion;
 
         return response()->json([
             'id' => $inspection->id,
@@ -52,6 +62,12 @@ class PreInspectionSubmissionController extends Controller
                 'id' => $inspection->animalType->id,
                 'title' => $inspection->animalType->title,
             ],
+            'pre_inspection_form_template' => $latestVersion ? [
+                'id' => $formTemplate->id,
+                'version_id' => $latestVersion->id,
+                'schema' => $latestVersion->schema,
+                'ui_schema' => $latestVersion->ui_schema,
+            ] : null,
         ]);
     }
 
@@ -63,11 +79,13 @@ class PreInspectionSubmissionController extends Controller
         $validated = $request->validate([
             'verdict' => 'required|in:approved,rejected',
             'notes' => 'nullable|string',
+            'form_data' => 'nullable|array',
+            'form_template_version_id' => 'nullable|uuid|exists:form_template_versions,id',
         ]);
 
         $submitted = DB::transaction(function () use ($token, $validated) {
             $inspection = PreInspection::whereHasValidToken($token)
-                ->where('verdict', 'pending')
+                ->whereNull('submitted_at')
                 ->lockForUpdate()
                 ->first();
 
@@ -75,8 +93,40 @@ class PreInspectionSubmissionController extends Controller
                 return false;
             }
 
+            // Use the pinned version the inspector received, falling back to latest.
+            $version = isset($validated['form_template_version_id'])
+                ? FormTemplateVersion::find($validated['form_template_version_id'])
+                : null;
+
+            if (! $version) {
+                $inspection->load('animalType.preInspectionFormTemplate.latestVersion');
+                $version = $inspection->animalType?->preInspectionFormTemplate?->latestVersion;
+            }
+
+            if ($version && array_key_exists('form_data', $validated)) {
+                $result = $this->formTemplateService->validateSubmissionData(
+                    $version,
+                    $validated['form_data'] ?? []
+                );
+
+                if (! $result['valid']) {
+                    throw ValidationException::withMessages(
+                        collect($result['errors'])
+                            ->mapWithKeys(fn ($msgs, $key) => ["form_data.{$key}" => $msgs])
+                            ->toArray()
+                    );
+                }
+            }
+
+            if ($version) {
+                $inspection->formSubmission()->create([
+                    'form_template_version_id' => $version->id,
+                    'data' => $validated['form_data'] ?? [],
+                ]);
+            }
+
             $inspection->verdict = $validated['verdict'];
-            $inspection->notes = $validated['notes'] ?? null;
+            $inspection->notes = $validated['notes'] ?? '';
             $inspection->submitted_at = now();
             $inspection->save();
 
@@ -89,8 +139,6 @@ class PreInspectionSubmissionController extends Controller
             ], 404);
         }
 
-        return response()->json([
-            'message' => 'Vorkontrolle erfolgreich eingereicht.',
-        ]);
+        return response()->json(['message' => 'Vorkontrolle erfolgreich eingereicht.']);
     }
 }

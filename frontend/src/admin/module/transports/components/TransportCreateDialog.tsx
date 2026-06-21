@@ -1,5 +1,6 @@
 import {
   Dialog,
+  DialogBreadcrumb,
   DialogContent,
   DialogFooter,
   DialogHeader,
@@ -27,6 +28,7 @@ import {
 } from '@/components/field/DateInput.utils.ts'
 import { PersonSelect } from '@/components/field/PersonSelect'
 import type { PersonListResource } from '@/api/types/people'
+import type { ReactNode } from 'react'
 
 const schema = z.object({
   name: zFieldString({ maxLength: 255 }),
@@ -42,12 +44,14 @@ interface TransportCreateDialogProps {
   mediators: PersonListResource[]
   onCreated: (id: string) => void
   onClose: () => void
+  breadcrumb: ReactNode
 }
 
 export function TransportCreateDialog({
   mediators,
   onCreated,
   onClose,
+  breadcrumb,
 }: TransportCreateDialogProps) {
   const queryClient = useQueryClient()
 
@@ -145,6 +149,7 @@ export function TransportCreateDialog({
               {createMutation.isPending ? 'Speichern...' : 'Speichern'}
             </Button>
           </DialogFooter>
+          <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
         </form>
       </DialogContent>
     </Dialog>

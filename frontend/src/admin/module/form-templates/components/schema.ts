@@ -48,17 +48,23 @@ export function parseJsonSchema(
   const ui = uiSchema ?? {}
   const fieldOrder = (ui['ui:order'] ?? []) as string[]
 
-  // Use explicit order if available, fall back to Object.keys order
+  // Use explicit order if available, fall back to Object.keys order.
+  // Heading fields only exist in uiSchema (no schema property), so include
+  // keys from ui:order that have ui:widget=heading even if absent from properties.
   const keys =
     fieldOrder.length > 0
       ? [
-          ...fieldOrder.filter((k) => k in properties),
+          ...fieldOrder.filter(
+            (k) =>
+              k in properties ||
+              (ui[k] as JsonSchemaProp)?.['ui:widget'] === 'heading'
+          ),
           ...Object.keys(properties).filter((k) => !fieldOrder.includes(k)),
         ]
       : Object.keys(properties)
 
   return keys.map((key) => {
-    const schemaProp = properties[key]
+    const schemaProp = (properties[key] ?? {}) as JsonSchemaProp
     const uiProp = (ui[key] ?? {}) as JsonSchemaProp
     const fieldType = detectFieldType(schemaProp, uiProp)
     const def = getFieldTypeDef(fieldType)
@@ -96,22 +102,22 @@ export function buildJsonSchema(
 
     const def = getFieldTypeDef(field.type)
 
-    // Schema property (validation only)
-    const schemaProp: JsonSchemaProp = {
-      ...def.toSchemaProps(field.settings),
+    // Headings are layout-only — they carry no submitted value and belong
+    // only in uiSchema, not in schema.properties.
+    if (field.type !== 'heading') {
+      const schemaProp: JsonSchemaProp = {
+        ...def.toSchemaProps(field.settings),
+      }
+      if (field.description) schemaProp.description = field.description
+      schemaProperties[field.id] = schemaProp
+      if (field.required) required.push(field.id)
     }
-    if (field.description) schemaProp.description = field.description
-
-    schemaProperties[field.id] = schemaProp
 
     // UiSchema entry (presentation)
-    const uiProp: JsonSchemaProp = {
+    uiSchemaEntries[field.id] = {
       'ui:title': field.label,
       ...def.toUiSchemaProps(field.settings),
     }
-    uiSchemaEntries[field.id] = uiProp
-
-    if (field.required) required.push(field.id)
   }
 
   const fieldOrder = fields.filter((f) => !f._deleted).map((f) => f.id)

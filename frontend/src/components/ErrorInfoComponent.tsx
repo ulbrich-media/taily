@@ -43,7 +43,7 @@ const ErrorInfoComponent = ({ error }: ErrorProps) => {
                 <CardTitle className="text-lg">Stack Trace</CardTitle>
               </CardHeader>
               <CardContent>
-                <pre className="text-xs overflow-x-auto p-4 bg-muted rounded-md">
+                <pre className="text-xs overflow-x-auto p-4 rounded-md">
                   <code>{error.stack}</code>
                 </pre>
               </CardContent>

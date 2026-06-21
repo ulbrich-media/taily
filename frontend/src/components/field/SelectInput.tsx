@@ -48,11 +48,7 @@ export function SelectInput<
           onValueChange={field.onChange}
           disabled={disabled ?? field.disabled}
         >
-          <SelectTrigger
-            id={field.name}
-            aria-invalid={fieldState.invalid}
-            className={fieldState.invalid ? 'border-destructive' : ''}
-          >
+          <SelectTrigger id={field.name} aria-invalid={fieldState.invalid}>
             <SelectValue placeholder={placeholder} />
           </SelectTrigger>
           <SelectContent>

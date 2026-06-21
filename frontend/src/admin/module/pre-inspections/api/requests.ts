@@ -4,6 +4,7 @@ import type {
   PreInspection,
   CreatePreInspectionRequest,
   UpdatePreInspectionRequest,
+  UpdateInspectorRequest,
   PreInspectionResponse,
   DeletePreInspectionResponse,
 } from './types'
@@ -41,6 +42,16 @@ export async function updatePreInspection(
   data: UpdatePreInspectionRequest
 ): Promise<PreInspectionResponse> {
   return apiRequest<PreInspectionResponse>(`pre-inspections/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  })
+}
+
+export async function updatePreInspectionInspector(
+  id: string,
+  data: UpdateInspectorRequest
+): Promise<PreInspectionResponse> {
+  return apiRequest<PreInspectionResponse>(`pre-inspections/${id}/inspector`, {
     method: 'PUT',
     body: JSON.stringify(data),
   })

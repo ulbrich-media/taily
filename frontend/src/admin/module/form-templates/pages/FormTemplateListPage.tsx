@@ -46,7 +46,6 @@ export function FormTemplateListPage({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Typ</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Version</TableHead>
                 <TableHead>Zuletzt geändert</TableHead>
@@ -56,11 +55,6 @@ export function FormTemplateListPage({
             <TableBody>
               {templates.map((template) => (
                 <TableRow key={template.id}>
-                  <TableCell>
-                    <code className="bg-muted rounded px-1.5 py-0.5 text-sm font-mono">
-                      {template.type}
-                    </code>
-                  </TableCell>
                   <TableCell className="font-medium">{template.name}</TableCell>
                   <TableCell>
                     <Badge variant="secondary">v{template.version}</Badge>

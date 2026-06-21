@@ -29,7 +29,13 @@ export interface CreatePreInspectionRequest {
 }
 
 export interface UpdatePreInspectionRequest {
-  inspector_id?: string | null
   notes?: string | null
-  verdict?: PreInspectionVerdict
+  verdict?: 'approved' | 'rejected'
+  form_data?: Record<string, unknown>
 }
+
+export interface UpdateInspectorRequest {
+  inspector_id: string | null
+}
+
+export type { PreInspectionVerdict }

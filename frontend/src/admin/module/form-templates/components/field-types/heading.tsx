@@ -13,7 +13,7 @@ export const headingFieldType: FieldTypeDefinition = {
   getFormDefaults: () => ({}),
   buildSettings: () => ({}),
   SettingsSection: null,
-  toSchemaProps: () => ({ type: 'null' }),
+  toSchemaProps: () => ({}),
   toUiSchemaProps: () => ({ 'ui:widget': 'heading' }),
   fromSchemaProp: () => ({}),
   settingsChips: () => [],

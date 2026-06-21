@@ -10,7 +10,7 @@ class PreInspectionBaseResource extends JsonResource
 {
     protected function activeToken(): ?AccessToken
     {
-        if ($this->resource->verdict !== 'pending') {
+        if ($this->resource->isSubmitted()) {
             return null;
         }
 
@@ -21,7 +21,7 @@ class PreInspectionBaseResource extends JsonResource
 
     public function toArray(Request $request): array
     {
-        $token = $this->resource->activeToken();
+        $token = $this->activeToken();
 
         return [
             'id' => $this->resource->id,

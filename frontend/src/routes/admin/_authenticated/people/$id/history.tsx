@@ -5,4 +5,7 @@ export const Route = createFileRoute(
   '/admin/_authenticated/people/$id/history'
 )({
   component: PersonEditHistoryPage,
+  staticData: {
+    breadcrumb: 'Verlauf',
+  },
 })

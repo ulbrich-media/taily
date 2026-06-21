@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { DndContext, DragOverlay } from '@dnd-kit/core'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { ClipboardList, Save } from 'lucide-react'
+import { Save } from 'lucide-react'
 import { Button } from '@/shadcn/components/ui/button'
 import { TextInput } from '@/components/field/TextInput'
 import { createFormTemplate } from '../api/requests'
@@ -13,37 +13,34 @@ import { FieldCardDragPreview, PaletteDragPreview } from './FieldCard'
 import { EditFieldDialog } from './EditFieldDialog'
 import { FieldBuilderSection } from './FieldBuilderSection'
 import { useFieldBuilder } from './useFieldBuilder'
-import { useMemo } from 'react'
+import { type ReactNode, useMemo } from 'react'
 import { buildJsonSchema } from './schema'
+import { PageHeader } from '@/components/layout/PageHeader.tsx'
+import { FormGrid } from '@/components/form/FormGrid.tsx'
+import { Card, CardContent } from '@/shadcn/components/ui/card.tsx'
 
 const createTemplateSchema = z.object({
-  type: z
-    .string()
-    .min(1, 'Typ ist erforderlich')
-    .max(100)
-    .regex(
-      /^[a-z0-9_-]+$/,
-      'Nur Kleinbuchstaben, Ziffern, Unterstrich und Bindestrich erlaubt'
-    ),
   name: z.string().min(1, 'Name ist erforderlich').max(255),
 })
 
 type CreateTemplateFormData = z.infer<typeof createTemplateSchema>
 
 interface FormBuilderCreateProps {
-  onCreated: () => void
+  onCreated: (id: string) => void
   onCancel: () => void
+  breadcrumb: ReactNode
 }
 
 export function FormBuilderCreate({
   onCreated,
   onCancel,
+  breadcrumb,
 }: FormBuilderCreateProps) {
   const queryClient = useQueryClient()
 
   const form = useForm<CreateTemplateFormData>({
     resolver: zodResolver(createTemplateSchema),
-    defaultValues: { type: '', name: '' },
+    defaultValues: { name: '' },
     mode: 'onChange',
   })
 
@@ -57,7 +54,6 @@ export function FormBuilderCreate({
     mutationFn: (data: CreateTemplateFormData) => {
       const { schema, uiSchema } = buildJsonSchema(fb.fields, data.name)
       return createFormTemplate({
-        type: data.type,
         name: data.name,
         schema,
         ui_schema: uiSchema,
@@ -66,7 +62,7 @@ export function FormBuilderCreate({
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: formTemplateQueryKeys.all })
       toast.success(data.message)
-      onCreated()
+      onCreated(data.data.id)
     },
     onError: () => {
       toast.error('Fehler beim Erstellen der Formularvorlage')
@@ -84,23 +80,20 @@ export function FormBuilderCreate({
       onDragCancel={fb.handleDragCancel}
     >
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center gap-3">
-          <ClipboardList className="size-5 text-primary shrink-0" />
-          <h1 className="text-lg font-semibold">Neue Formularvorlage</h1>
-        </div>
+        <PageHeader title={'Neue Formularvorlage'} breadcrumb={breadcrumb} />
 
-        {/* Meta card */}
-        <div className="rounded-lg border bg-card p-4 grid sm:grid-cols-2 gap-4">
-          <TextInput
-            name="type"
-            control={form.control}
-            label="Typ"
-            required
-            description="Eindeutiger Bezeichner, z. B. inspection oder adoption_application"
-          />
-          <TextInput name="name" control={form.control} label="Name" required />
-        </div>
+        <Card>
+          <CardContent>
+            <FormGrid>
+              <TextInput
+                name="name"
+                control={form.control}
+                label="Name"
+                required
+              />
+            </FormGrid>
+          </CardContent>
+        </Card>
 
         {/* Field builder */}
         <FieldBuilderSection

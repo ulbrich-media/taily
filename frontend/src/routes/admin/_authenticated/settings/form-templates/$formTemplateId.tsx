@@ -13,6 +13,10 @@ export const Route = createFileRoute(
     if (!response) {
       throw notFound()
     }
+
+    return {
+      breadcrumb: response.data.name,
+    }
   },
   component: () => <Outlet />,
 })

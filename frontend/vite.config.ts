@@ -1,9 +1,10 @@
 import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import react, { reactCompilerPreset } from '@vitejs/plugin-react'
 import path from 'path'
 import tailwindcss from '@tailwindcss/vite'
 import * as fs from 'node:fs'
 import tanstackRouter from '@tanstack/router-plugin/vite'
+import babel from '@rolldown/plugin-babel'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -16,13 +17,15 @@ export default defineConfig({
       target: 'react',
       autoCodeSplitting: true,
     }),
-    react({
-      babel: {
-        plugins: [['babel-plugin-react-compiler']],
-      },
+    react({}),
+    babel({
+      presets: [reactCompilerPreset()],
     }),
     tailwindcss(),
   ],
+  optimizeDeps: {
+    include: ['@dnd-kit/core', '@dnd-kit/sortable', '@dnd-kit/utilities'],
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

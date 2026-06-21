@@ -34,7 +34,7 @@ const RootLayout = () => {
 export const Route = createRootRouteWithContext<RouterContext>()({
   component: RootLayout,
   errorComponent: (error) => (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-muted">
+    <div className="min-h-screen flex items-center justify-center p-4">
       <ErrorInfoComponent error={error.error} />
     </div>
   ),

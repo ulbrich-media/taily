@@ -8,6 +8,15 @@ export interface PublicInspectionPerson {
   country_code?: string
 }
 
+import type { JsonSchema, UiSchema } from '@/api/types/form-schemas'
+
+export interface PublicInspectionFormTemplate {
+  id: string
+  version_id: string
+  schema: JsonSchema
+  ui_schema: UiSchema | null
+}
+
 export interface PublicInspection {
   id: string
   person: PublicInspectionPerson
@@ -15,9 +24,12 @@ export interface PublicInspection {
     id: string
     title: string
   }
+  pre_inspection_form_template: PublicInspectionFormTemplate | null
 }
 
 export interface SubmitInspectionRequest {
   verdict: 'approved' | 'rejected'
   notes?: string | null
+  form_data?: Record<string, unknown>
+  form_template_version_id?: string | null
 }

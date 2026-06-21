@@ -9,7 +9,7 @@ class PreInspectionListResource extends PreInspectionBaseResource
 {
     public function toArray(Request $request): array
     {
-        $token = $this->resource->activeToken();
+        $token = $this->activeToken();
 
         return array_merge(parent::toArray($request), [
             'status' => $this->resource->status,

@@ -25,7 +25,6 @@ export interface CreateFormTemplateResponse {
 // ---------------------------------------------------------------------------
 
 export interface CreateFormTemplateRequest {
-  type: string
   name: string
   schema: Record<string, unknown>
   ui_schema: Record<string, unknown>
@@ -65,6 +64,7 @@ export interface NumberSettings {
   min?: number
   max?: number
   step?: number
+  isInteger?: boolean
 }
 
 export interface SelectOption {
