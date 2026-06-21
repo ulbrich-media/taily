@@ -25,7 +25,7 @@ function RouteComponent() {
 
 function InspectionErrorPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted p-4">
+    <div className="min-h-screen flex items-center justify-center p-4">
       <Card className="w-full sm:max-w-md">
         <CardHeader>
           <CardTitle variant="destructive">
