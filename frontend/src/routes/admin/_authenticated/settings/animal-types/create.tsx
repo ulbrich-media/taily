@@ -20,7 +20,7 @@ export const Route = createFileRoute(
   },
   component: RouteComponent,
   staticData: {
-    breadcrumb: 'Neu',
+    breadcrumb: 'Neue Tierart erstellen',
   },
 })
 

@@ -74,7 +74,7 @@ export function AdoptionEditPreInspectionPage({
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Vorkontrolle – Notizen</DialogTitle>
+          <DialogTitle>Notizen zur Vorkontrolle</DialogTitle>
           <DialogDescription>
             Notizen zur Vorkontrolle festhalten.
           </DialogDescription>

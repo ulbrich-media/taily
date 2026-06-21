@@ -23,6 +23,7 @@ import { FormBlocker } from '@/components/form/FormBlocker'
 import { TextInput } from '@/components/field/TextInput'
 import { SelectInput } from '@/components/field/SelectInput'
 import { zFieldString } from '@/components/field/TextInput.utils.ts'
+import { Mark } from '@/components/typo/mark.tsx'
 
 const updateVaccinationSchema = z.object({
   title: zFieldString({ required: true }),
@@ -74,7 +75,9 @@ export function VaccinationEditPage({
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Impfung bearbeiten</DialogTitle>
+          <DialogTitle>
+            <Mark>{vaccination.title}</Mark> bearbeiten
+          </DialogTitle>
           <DialogDescription>Bearbeite die Impfung.</DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>

@@ -105,7 +105,7 @@ function InvitationPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-muted">
+      <div className="min-h-screen flex items-center justify-center">
         <Card className="w-full sm:max-w-md">
           <CardContent className="pt-6">
             <p className="text-center text-muted-foreground">Lädt...</p>
@@ -117,7 +117,7 @@ function InvitationPage() {
 
   if (!invitation) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-muted">
+      <div className="min-h-screen flex items-center justify-center">
         <Card className="w-full sm:max-w-md">
           <CardHeader>
             <CardTitle>Einladung nicht gefunden</CardTitle>
@@ -134,7 +134,7 @@ function InvitationPage() {
     <form
       id="form-invitation-accept"
       onSubmit={form.handleSubmit(onSubmit)}
-      className="min-h-screen flex items-center justify-center bg-muted"
+      className="min-h-screen flex items-center justify-center"
     >
       <Card className="w-full sm:max-w-md">
         <CardHeader>

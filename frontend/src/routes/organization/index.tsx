@@ -16,7 +16,7 @@ export const Route = createFileRoute('/organization/')({
 
 function OrganizationArea() {
   return (
-    <div className="min-h-screen bg-muted flex items-center justify-center">
+    <div className="min-h-screen flex items-center justify-center">
       <div className="container mx-auto px-4 py-16">
         <Card className="max-w-2xl mx-auto">
           <CardHeader>

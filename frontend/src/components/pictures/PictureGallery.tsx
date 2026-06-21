@@ -118,7 +118,7 @@ function SortablePicture({
     <div
       ref={setNodeRef}
       style={style}
-      className="border border-border bg-muted rounded-lg"
+      className="border border-border rounded-lg"
     >
       {/* Media — click opens lightbox */}
       <div

@@ -18,6 +18,7 @@ import {
   CardTitle,
   CardDescription,
   CardFooter,
+  CardAction,
 } from '@/shadcn/components/ui/card'
 import { Button } from '@/shadcn/components/ui/button'
 import { Badge } from '@/shadcn/components/ui/badge'
@@ -26,7 +27,6 @@ import { toast } from 'sonner'
 import { FormBlocker } from '@/components/form/FormBlocker'
 import { PersonSelect } from '@/components/field/PersonSelect'
 import { Textarea } from '@/components/field/Textarea'
-import { PageHeader } from '@/components/layout/PageHeader'
 import { SelectInput } from '@/components/field/SelectInput.tsx'
 import { formatApiDate } from '@/lib/dates.utils.ts'
 import {
@@ -196,24 +196,15 @@ export function PreInspectionEditPage({
   })
 
   return (
-    <div>
-      <div className="mb-8">
-        <PageHeader
-
-          title="Vorkontrolle bearbeiten"
-          description="Details und Ergebnis der Vorkontrolle"
-          actions={deleteAction}
-        />
-      </div>
-
-      <div className="space-y-6 mx-auto max-w-4xl">
-        {/* Info card — static details + decoupled inspector form */}
+    <>
+      <div className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Informationen</CardTitle>
+            <CardTitle>Vorkontrolle bearbeiten</CardTitle>
             <CardDescription>
-              Das Wichtigste über diese Vorkontrolle auf einen Blick.
+              Details und Ergebnis der Vorkontrolle
             </CardDescription>
+            <CardAction>{deleteAction}</CardAction>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -404,6 +395,6 @@ export function PreInspectionEditPage({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   )
 }
