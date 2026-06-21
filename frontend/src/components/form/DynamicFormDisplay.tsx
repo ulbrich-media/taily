@@ -1,24 +1,9 @@
-interface JsonSchemaProperty {
-  type?: string
-  enum?: string[]
-  format?: string
-}
-
-interface JsonSchema {
-  properties?: Record<string, JsonSchemaProperty>
-  required?: string[]
-}
-
-interface UiSchemaFieldOptions {
-  'ui:title'?: string
-  'ui:widget'?: string
-  'ui:options'?: { labels?: Array<{ value: string; label: string }> }
-}
-
-interface UiSchema {
-  'ui:order'?: string[]
-  [key: string]: UiSchemaFieldOptions | string[] | undefined
-}
+import type {
+  JsonSchema,
+  JsonSchemaProperty,
+  UiSchema,
+  UiSchemaFieldOptions,
+} from '@/api/types/form-schemas'
 
 interface DynamicFormDisplayProps {
   schema: JsonSchema

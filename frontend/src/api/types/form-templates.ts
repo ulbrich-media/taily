@@ -1,11 +1,15 @@
+import type { JsonSchema, UiSchema } from './form-schemas'
+
+export type { JsonSchema, UiSchema } from './form-schemas'
+
 // Mirrors: FormTemplateVersionResource (embedded in the detail response)
 export interface FormTemplateVersionResource {
   id: string // version UUID
   form_template_id: string
   version: number
   submissions_count: number
-  schema: Record<string, unknown>
-  ui_schema: Record<string, unknown> | null
+  schema: JsonSchema
+  ui_schema: UiSchema | null
   created_at: string
   updated_at: string
 }
@@ -17,8 +21,8 @@ export interface FormTemplateResource {
   name: string
   version: number // latest version number
   version_id: string // latest version UUID — used for submission pinning
-  schema: Record<string, unknown>
-  ui_schema: Record<string, unknown> | null
+  schema: JsonSchema
+  ui_schema: UiSchema | null
   submissions_count: number
   created_at: string
   updated_at: string

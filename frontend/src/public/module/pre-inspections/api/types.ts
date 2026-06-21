@@ -8,11 +8,13 @@ export interface PublicInspectionPerson {
   country_code?: string
 }
 
+import type { JsonSchema, UiSchema } from '@/api/types/form-schemas'
+
 export interface PublicInspectionFormTemplate {
   id: string
   version_id: string
-  schema: Record<string, unknown>
-  ui_schema: Record<string, unknown> | null
+  schema: JsonSchema
+  ui_schema: UiSchema | null
 }
 
 export interface PublicInspection {

@@ -4,14 +4,15 @@
 
 import type { AnimalTypeResource } from './animal-types'
 import type { PersonBaseResource } from './people'
+import type { JsonSchema, UiSchema } from './form-schemas'
 
 export type PreInspectionVerdict = 'pending' | 'approved' | 'rejected'
 
 export interface FormTemplateShape {
   id: string
   name?: string
-  schema: Record<string, unknown>
-  ui_schema: Record<string, unknown> | null
+  schema: JsonSchema
+  ui_schema: UiSchema | null
 }
 
 export interface FormSubmissionShape {

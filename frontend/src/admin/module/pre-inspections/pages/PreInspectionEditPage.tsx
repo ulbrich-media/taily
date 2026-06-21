@@ -1,10 +1,14 @@
 import { type ReactNode, useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useForm, FormProvider } from 'react-hook-form'
+import {
+  useForm,
+  FormProvider,
+  type Control,
+  type FieldValues,
+} from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useDynamicFormSchema } from '@/components/form/useDynamicFormSchema'
-import type { JsonSchemaShape } from '@/components/form/jsonSchemaToZod'
 import { Copy, Check } from 'lucide-react'
 import { preInspectionQueryKeys } from '@/admin/module/pre-inspections/api/queries'
 import {
@@ -132,10 +136,7 @@ export function PreInspectionEditPage({
     ? inspection.form_submission?.template
     : inspection.pre_inspection_form_template
 
-  const mainSchema = useDynamicFormSchema(
-    mainStaticSchema,
-    template?.schema as JsonSchemaShape
-  )
+  const mainSchema = useDynamicFormSchema(mainStaticSchema, template?.schema)
 
   // ---------------------------------------------------------------------------
   // Inspector form — always available, decoupled
@@ -316,21 +317,9 @@ export function PreInspectionEditPage({
                 </CardHeader>
                 <CardContent>
                   <DynamicFormFields
-                    schema={
-                      template.schema as Parameters<
-                        typeof DynamicFormFields
-                      >[0]['schema']
-                    }
-                    uiSchema={
-                      template.ui_schema as Parameters<
-                        typeof DynamicFormFields
-                      >[0]['uiSchema']
-                    }
-                    control={
-                      mainForm.control as unknown as Parameters<
-                        typeof DynamicFormFields
-                      >[0]['control']
-                    }
+                    schema={template.schema}
+                    uiSchema={template.ui_schema}
+                    control={mainForm.control as unknown as Control<FieldValues>}
                     namePrefix="form_data"
                   />
                 </CardContent>

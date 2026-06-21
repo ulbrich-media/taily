@@ -18,42 +18,16 @@ import {
   FieldSet,
 } from '@/shadcn/components/ui/field'
 import { Switch } from '@/shadcn/components/ui/switch.tsx'
-
-interface JsonSchemaProperty {
-  type?: string
-  title?: string
-  description?: string
-  enum?: string[]
-  format?: string
-  minimum?: number
-  maximum?: number
-  minLength?: number
-  maxLength?: number
-}
-
-interface JsonSchema {
-  properties?: Record<string, JsonSchemaProperty>
-  required?: string[]
-}
-
-interface UiSchemaFieldOptions {
-  'ui:title'?: string
-  'ui:widget'?: string
-  'ui:placeholder'?: string
-  'ui:options'?: {
-    labels?: Array<{ value: string; label: string }>
-    rows?: number
-  }
-}
-
-interface UiSchema {
-  'ui:order'?: string[]
-  [key: string]: UiSchemaFieldOptions | string[] | undefined
-}
+import type {
+  JsonSchema,
+  JsonSchemaProperty,
+  UiSchema,
+  UiSchemaFieldOptions,
+} from '@/api/types/form-schemas'
 
 interface DynamicFormFieldsProps {
   schema: JsonSchema
-  uiSchema?: UiSchema
+  uiSchema?: UiSchema | null
   control: Control<FieldValues>
   disabled?: boolean
   namePrefix?: string
@@ -137,11 +111,13 @@ function RequiredBadge() {
 
 export function DynamicFormFields({
   schema,
-  uiSchema = {},
+  uiSchema: rawUiSchema,
   control,
   disabled = false,
   namePrefix = 'form_data',
 }: DynamicFormFieldsProps) {
+  const uiSchema = rawUiSchema ?? {}
+
   if (!schema.properties) return null
 
   const required = schema.required ?? []
@@ -163,7 +139,7 @@ export function DynamicFormFields({
         // Heading — layout-only, no input
         if (prop.type === 'null' || widget === 'heading') {
           return (
-            <h3 key={key} className="text-sm font-semibold pt-2">
+            <h3 key={key} className="text-lg font-heading pt-2">
               {title}
             </h3>
           )

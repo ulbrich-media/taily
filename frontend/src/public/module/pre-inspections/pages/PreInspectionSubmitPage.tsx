@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useSuspenseQuery, useMutation } from '@tanstack/react-query'
-import { useForm, FormProvider } from 'react-hook-form'
+import { useForm, FormProvider, type Control, type FieldValues } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import {
@@ -33,7 +33,6 @@ import { FormFieldWrapper } from '@/components/form/FormFieldWrapper'
 import { Textarea } from '@/components/field/Textarea.tsx'
 import { DynamicFormFields } from '@/components/form/DynamicFormFields'
 import { useDynamicFormSchema } from '@/components/form/useDynamicFormSchema'
-import type { JsonSchemaShape } from '@/components/form/jsonSchemaToZod'
 import { FormBlocker } from '@/components/form/FormBlocker.tsx'
 
 const staticSchema = z.object({
@@ -60,7 +59,7 @@ export function PreInspectionSubmitPage({
 
   const schema = useDynamicFormSchema(
     staticSchema,
-    inspection.pre_inspection_form_template?.schema as JsonSchemaShape
+    inspection.pre_inspection_form_template?.schema
   )
 
   const form = useForm<SubmitFormData>({
@@ -150,23 +149,9 @@ export function PreInspectionSubmitPage({
               </CardHeader>
               <CardContent>
                 <DynamicFormFields
-                  schema={
-                    inspection.pre_inspection_form_template
-                      .schema as Parameters<
-                      typeof DynamicFormFields
-                    >[0]['schema']
-                  }
-                  uiSchema={
-                    inspection.pre_inspection_form_template
-                      .ui_schema as Parameters<
-                      typeof DynamicFormFields
-                    >[0]['uiSchema']
-                  }
-                  control={
-                    form.control as unknown as Parameters<
-                      typeof DynamicFormFields
-                    >[0]['control']
-                  }
+                  schema={inspection.pre_inspection_form_template.schema}
+                  uiSchema={inspection.pre_inspection_form_template.ui_schema}
+                  control={form.control as unknown as Control<FieldValues>}
                   namePrefix="form_data"
                 />
               </CardContent>

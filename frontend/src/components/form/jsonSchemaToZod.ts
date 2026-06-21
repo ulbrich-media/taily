@@ -1,18 +1,5 @@
 import { z } from 'zod'
-
-interface JsonSchemaProperty {
-  type?: string
-  enum?: string[]
-  minimum?: number
-  maximum?: number
-  minLength?: number
-  maxLength?: number
-}
-
-export interface JsonSchemaShape {
-  properties?: Record<string, JsonSchemaProperty>
-  required?: string[]
-}
+import type { JsonSchema, JsonSchemaProperty } from '@/api/types/form-schemas'
 
 /**
  * Converts a JSON Schema (subset) into a Zod schema suitable for use as a
@@ -20,7 +7,7 @@ export interface JsonSchemaShape {
  * buildRules() in DynamicFormFields.tsx so both paths stay in sync.
  */
 export function jsonSchemaToZod(
-  schema: JsonSchemaShape | null | undefined
+  schema: JsonSchema | null | undefined
 ): z.ZodTypeAny {
   if (!schema?.properties) return z.record(z.string(), z.unknown())
 
@@ -41,18 +28,31 @@ function buildPropertySchema(
   isRequired: boolean
 ): z.ZodTypeAny {
   if (prop.type === 'boolean') {
-    const s = z.boolean()
-    return isRequired ? s : s.optional()
+    // Untouched Switch keeps value as undefined; default to false so it
+    // matches what the UI shows (off) and avoids a type-level Zod error.
+    const base = z.boolean().default(false)
+    if (isRequired) {
+      // A required switch must be explicitly enabled — covers consent and
+      // confirmation fields. false (or never-touched) fails with a clear message.
+      return base.refine((v) => v === true, REQUIRED_MSG)
+    }
+    return base
   }
 
   if (prop.type === 'number' || prop.type === 'integer') {
     // Use error on the constructor so undefined triggers the human-readable
     // message instead of Zod's generic "Invalid input" type error.
     let s = z.number({ error: isRequired ? REQUIRED_MSG : undefined })
+    if (prop.type === 'integer') s = s.int('Bitte eine ganze Zahl eingeben')
     if (prop.minimum !== undefined)
       s = s.min(prop.minimum, `Mindestwert: ${prop.minimum}`)
     if (prop.maximum !== undefined)
       s = s.max(prop.maximum, `Maximalwert: ${prop.maximum}`)
+    if (prop.multipleOf !== undefined)
+      s = s.multipleOf(
+        prop.multipleOf,
+        `Muss ein Vielfaches von ${prop.multipleOf} sein`
+      )
     return isRequired ? s : s.optional()
   }
 
@@ -67,6 +67,8 @@ function buildPropertySchema(
   // Set error on the constructor for the undefined/non-string case, then add
   // .min(1) for the empty-string case — both surface the same message.
   let s = z.string({ error: isRequired ? REQUIRED_MSG : undefined })
+  if (prop.format === 'email')
+    s = s.check(z.email({ error: 'Bitte eine gültige E-Mail-Adresse eingeben' }))
   if (prop.minLength !== undefined && prop.minLength > 0) {
     s = s.min(prop.minLength, `Mindestens ${prop.minLength} Zeichen`)
   } else if (isRequired) {
