@@ -1,1 +1,0 @@
-import{o as e,r as t,t as n}from"./compiler-runtime--XPNi5ZU.js";import{O as r}from"./index-CBmPuE6M.js";var i=n(),a=e(t());function o(){let e=(0,i.c)(3),t=r.useNavigate(),n,o;return e[0]===t?(n=e[1],o=e[2]):(n=()=>{t({replace:!0})},o=[t],e[0]=t,e[1]=n,e[2]=o),(0,a.useEffect)(n,o),null}export{o as component};

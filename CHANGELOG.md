@@ -2,6 +2,20 @@
 
 All notable changes to Taily are documented here.
 
+# [0.6.0](https://github.com/ulbrich-media/taily/compare/v0.5.0...v0.6.0) (2026-06-21)
+
+
+### Bug Fixes
+
+* pre inspection pages moved into person detail page ([#72](https://github.com/ulbrich-media/taily/issues/72)) ([ce8d656](https://github.com/ulbrich-media/taily/commit/ce8d6561e8958e46bcf48b2c113aaa1f79bdfdbb))
+* redesign issues resolved ([#70](https://github.com/ulbrich-media/taily/issues/70)) ([296f46e](https://github.com/ulbrich-media/taily/commit/296f46e67a11bfa946400e0f76d9547524f1c137))
+
+
+### Features
+
+* dynamic form handling for pre-inspections implemented ([#56](https://github.com/ulbrich-media/taily/issues/56)) ([dcbc956](https://github.com/ulbrich-media/taily/commit/dcbc95668bd2586adb9c9314be5ed6ccce1980c1))
+* headline markers added and headlines synced ([#69](https://github.com/ulbrich-media/taily/issues/69)) ([c0ef9f4](https://github.com/ulbrich-media/taily/commit/c0ef9f4b3e875e9fd43479e2dd7a3ca64f84dc85))
+
 # [0.5.0](https://github.com/ulbrich-media/taily/compare/v0.4.0...v0.5.0) (2026-06-20)
 
 
