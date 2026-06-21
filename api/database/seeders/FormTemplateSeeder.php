@@ -133,7 +133,7 @@ class FormTemplateSeeder extends Seeder
             'version' => 1,
             'schema' => [
                 '$schema' => 'http://json-schema.org/draft-07/schema#',
-                'title' => 'Adoptionsbewerbung',
+                'title' => 'Vorkontrolle Hund',
                 'type' => 'object',
                 'required' => ['living_situation', 'has_garden', 'previous_pets'],
                 'properties' => [

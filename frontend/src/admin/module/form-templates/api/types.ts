@@ -64,6 +64,7 @@ export interface NumberSettings {
   min?: number
   max?: number
   step?: number
+  isInteger?: boolean
 }
 
 export interface SelectOption {

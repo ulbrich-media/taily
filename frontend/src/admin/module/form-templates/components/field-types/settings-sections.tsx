@@ -1,12 +1,15 @@
 import {
   useFieldArray,
   Controller,
+  useController,
   type Control,
   type FieldValues,
 } from 'react-hook-form'
 import { Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/shadcn/components/ui/button'
+import { Checkbox } from '@/shadcn/components/ui/checkbox'
 import { Input } from '@/shadcn/components/ui/input'
+import { Label } from '@/shadcn/components/ui/label'
 import { Separator } from '@/shadcn/components/ui/separator'
 import { TextInput } from '@/components/field/TextInput'
 import { NumberField } from '../shared/NumberField'
@@ -75,6 +78,8 @@ export function TextareaSettingsSection({ control }: SettingsSectionProps) {
 // --- Number ---
 
 export function NumberSettingsSection({ control }: SettingsSectionProps) {
+  const { field: isIntegerField } = useController({ control, name: 'isInteger' })
+
   return (
     <>
       <Separator />
@@ -91,6 +96,16 @@ export function NumberSettingsSection({ control }: SettingsSectionProps) {
           label="Schrittweite"
           min={0}
         />
+      </div>
+      <div className="flex items-center gap-2">
+        <Checkbox
+          id="isInteger"
+          checked={isIntegerField.value ?? false}
+          onCheckedChange={(checked) => isIntegerField.onChange(checked === true)}
+        />
+        <Label htmlFor="isInteger" className="font-normal cursor-pointer">
+          Nur ganze Zahlen
+        </Label>
       </div>
     </>
   )
