@@ -10,7 +10,9 @@ import { ExternalLink, Eye, Edit } from 'lucide-react'
 import type { AdoptionListResource } from '@/api/types/adoptions'
 import type { PreInspectionResource } from '@/api/types/pre-inspections'
 
-export const Route = createFileRoute('/admin/_authenticated/people/$id/adoptions/')({
+export const Route = createFileRoute(
+  '/admin/_authenticated/people/$id/adoptions/'
+)({
   loader: async ({ params }) => {
     await Promise.all([
       queryClient.ensureQueryData(listPreInspectionsByPersonQuery(params.id)),
