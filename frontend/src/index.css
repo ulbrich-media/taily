@@ -132,13 +132,6 @@
   }
 }
 
-body {
-  @apply bg-muted;
-  &.dark {
-    @apply bg-background;
-  }
-}
-
 .lucide {
   stroke-width: 1.5px;
 }
@@ -168,6 +161,9 @@ body {
   }
   body {
     @apply bg-muted text-foreground;
+  }
+  body.dark {
+    @apply bg-background;
   }
 }
 
