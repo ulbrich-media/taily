@@ -107,7 +107,7 @@ class Adoption extends Model implements HasMedia
         $animalTypeId = $this->animal?->animal_type_id;
 
         if (! $animalTypeId) {
-            return 'pending';
+            return 'not_started';
         }
 
         if ($this->relationLoaded('preInspections')) {
@@ -119,7 +119,7 @@ class Adoption extends Model implements HasMedia
         }
 
         if ($inspections->isEmpty()) {
-            return 'pending';
+            return 'not_started';
         }
 
         if ($inspections->whereNull('submitted_at')->isNotEmpty()) {

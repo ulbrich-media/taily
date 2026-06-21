@@ -11,7 +11,7 @@ import {
 } from '@/shadcn/components/ui/field.tsx'
 import { Switch as SwitchComponent } from '@/shadcn/components/ui/switch.tsx'
 
-export interface SingleCheckboxProps<
+export interface SwitchProps<
   TFieldValues extends FieldValues = FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
   TTransformedValues = TFieldValues,
@@ -31,7 +31,7 @@ export function Switch<
   switchLabel,
   onChange,
   ...props
-}: SingleCheckboxProps<TFieldValues, TName, TTransformedValues>) {
+}: SwitchProps<TFieldValues, TName, TTransformedValues>) {
   return (
     <FormFieldWrapper
       {...props}

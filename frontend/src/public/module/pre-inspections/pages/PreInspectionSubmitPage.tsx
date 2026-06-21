@@ -1,6 +1,11 @@
 import { useState } from 'react'
 import { useSuspenseQuery, useMutation } from '@tanstack/react-query'
-import { useForm } from 'react-hook-form'
+import {
+  useForm,
+  FormProvider,
+  type Control,
+  type FieldValues,
+} from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import {
@@ -31,15 +36,20 @@ import { InfoRow, InfoRowValue } from '@/shadcn/components/common/info-row.tsx'
 import { Field, FieldGroup, FieldLabel } from '@/shadcn/components/ui/field.tsx'
 import { FormFieldWrapper } from '@/components/form/FormFieldWrapper'
 import { Textarea } from '@/components/field/Textarea.tsx'
+import { DynamicFormFields } from '@/components/form/DynamicFormFields'
+import { useDynamicFormSchema } from '@/components/form/useDynamicFormSchema'
+import { FormBlocker } from '@/components/form/FormBlocker.tsx'
 
-const submitSchema = z.object({
+const staticSchema = z.object({
   verdict: z.enum(['approved', 'rejected'], {
     error: 'Bitte wähle ein Ergebnis aus',
   }),
-  notes: z.string().optional().or(z.literal('')),
+  notes: z.string(),
 })
 
-type SubmitFormData = z.infer<typeof submitSchema>
+type SubmitFormData = z.infer<typeof staticSchema> & {
+  form_data: Record<string, unknown>
+}
 
 interface PreInspectionSubmitPageProps {
   token: string
@@ -52,13 +62,27 @@ export function PreInspectionSubmitPage({
 
   const [confirmOpen, setConfirmOpen] = useState(false)
 
+  const schema = useDynamicFormSchema(
+    staticSchema,
+    inspection.pre_inspection_form_template?.schema
+  )
+
   const form = useForm<SubmitFormData>({
-    resolver: zodResolver(submitSchema),
-    defaultValues: { verdict: undefined, notes: '' },
+    resolver: zodResolver(schema) as never,
+    defaultValues: { verdict: undefined, notes: '', form_data: {} },
   })
 
   const submitMutation = useMutation({
-    mutationFn: submitPublicInspection.bind(null, token),
+    mutationFn: (data: SubmitFormData) =>
+      submitPublicInspection(token, {
+        verdict: data.verdict!,
+        notes: data.notes || null,
+        form_data: inspection.pre_inspection_form_template
+          ? data.form_data
+          : undefined,
+        form_template_version_id:
+          inspection.pre_inspection_form_template?.version_id ?? null,
+      }),
     onError: () => setConfirmOpen(false),
   })
 
@@ -79,11 +103,13 @@ export function PreInspectionSubmitPage({
   }
 
   return (
-    <>
+    <FormProvider {...form}>
       <form
         onSubmit={form.handleSubmit(() => setConfirmOpen(true))}
         className="min-h-screen py-8 px-4"
       >
+        <FormBlocker />
+
         <div className="mx-auto max-w-2xl space-y-6">
           <Card>
             <CardHeader>
@@ -120,6 +146,22 @@ export function PreInspectionSubmitPage({
               </div>
             </CardContent>
           </Card>
+
+          {inspection.pre_inspection_form_template && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Kontrolldaten</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <DynamicFormFields
+                  schema={inspection.pre_inspection_form_template.schema}
+                  uiSchema={inspection.pre_inspection_form_template.ui_schema}
+                  control={form.control as unknown as Control<FieldValues>}
+                  namePrefix="form_data"
+                />
+              </CardContent>
+            </Card>
+          )}
 
           <Card>
             <CardHeader>
@@ -209,6 +251,6 @@ export function PreInspectionSubmitPage({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </FormProvider>
   )
 }

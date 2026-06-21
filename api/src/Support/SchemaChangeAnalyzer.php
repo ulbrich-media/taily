@@ -71,6 +71,11 @@ class SchemaChangeAnalyzer
             return true;
         }
 
+        // Format changed (e.g. string/email → string/date — same type, incompatible data)
+        if (($old['format'] ?? null) !== ($new['format'] ?? null)) {
+            return true;
+        }
+
         // Enum values removed
         if (isset($old['enum'])) {
             $removed = array_diff($old['enum'], $new['enum'] ?? []);

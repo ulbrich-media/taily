@@ -8,21 +8,12 @@ import type {
   CreateFormTemplateResponse,
 } from './types'
 
-/** Returns the latest version of each template type. */
+/** Returns all form templates with their latest version and total submission count. */
 export async function getFormTemplates(): Promise<FormTemplatesResponse> {
   return apiRequest<FormTemplatesResponse>('form-templates')
 }
 
-/** Returns all versions for a specific template type. */
-export async function getFormTemplateVersions(
-  type: string
-): Promise<FormTemplatesResponse> {
-  return apiRequest<FormTemplatesResponse>(
-    `form-templates/${encodeURIComponent(type)}/versions`
-  )
-}
-
-/** Returns a single template by UUID. */
+/** Returns a form template by its stable UUID. */
 export async function getFormTemplate(
   id: string
 ): Promise<FormTemplateResponse> {

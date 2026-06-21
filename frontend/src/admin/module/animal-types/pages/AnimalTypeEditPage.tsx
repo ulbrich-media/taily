@@ -21,13 +21,13 @@ import { FieldGroup } from '@/shadcn/components/ui/field'
 import { toast } from 'sonner'
 import { FormBlocker } from '@/components/form/FormBlocker'
 import { TextInput } from '@/components/field/TextInput'
-import { SelectInput } from '@/components/field/SelectInput'
 import { zFieldString } from '@/components/field/TextInput.utils.ts'
+import { FormTemplateSelect } from '@/components/field/FormTemplateSelect.tsx'
 import { Mark } from '@/components/typo/mark.tsx'
 
 const updateAnimalTypeSchema = z.object({
   title: zFieldString({ required: true }),
-  form_template_id: z.string().nullable(),
+  pre_inspection_form_template_id: z.string().nullable(),
 })
 
 type UpdateAnimalTypeFormData = z.infer<typeof updateAnimalTypeSchema>
@@ -51,7 +51,8 @@ export function AnimalTypeEditPage({
     resolver: zodResolver(updateAnimalTypeSchema),
     defaultValues: {
       title: animalType.title,
-      form_template_id: animalType.form_template_id ?? null,
+      pre_inspection_form_template_id:
+        animalType.pre_inspection_form_template_id ?? null,
     },
   })
 
@@ -59,7 +60,8 @@ export function AnimalTypeEditPage({
     mutationFn: (data: UpdateAnimalTypeFormData) =>
       updateAnimalType(animalType.id, {
         title: data.title,
-        form_template_id: data.form_template_id || null,
+        pre_inspection_form_template_id:
+          data.pre_inspection_form_template_id || null,
       }),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: animalTypeQueryKeys.list })
@@ -81,11 +83,6 @@ export function AnimalTypeEditPage({
   const onSubmit = async (data: UpdateAnimalTypeFormData) => {
     await updateMutation.mutateAsync(data)
   }
-
-  const formTemplateOptions = formTemplates.map((ft) => ({
-    value: ft.id,
-    label: ft.name,
-  }))
 
   return (
     <Dialog open onOpenChange={onClose}>
@@ -110,12 +107,12 @@ export function AnimalTypeEditPage({
                 required
               />
 
-              <SelectInput
-                name="form_template_id"
+              <FormTemplateSelect
+                name="pre_inspection_form_template_id"
                 control={form.control}
-                label="Formularvorlage"
-                options={formTemplateOptions}
-                placeholder="Keine Vorlage"
+                label="Formular für Vorkontrollen"
+                formTemplates={formTemplates}
+                canRemove
               />
             </FieldGroup>
 

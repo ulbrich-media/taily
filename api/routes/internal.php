@@ -96,13 +96,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Form Templates
     Route::get('/form-templates', [FormTemplateController::class, 'index']);
     Route::post('/form-templates', [FormTemplateController::class, 'store']);
-    Route::get('/form-templates/{type}/versions', [FormTemplateController::class, 'versions']);
     Route::get('/form-templates/{formTemplate}', [FormTemplateController::class, 'show']);
     Route::put('/form-templates/{formTemplate}', [FormTemplateController::class, 'update']);
     Route::post('/form-templates/{formTemplate}/validate', [FormTemplateController::class, 'validateData']);
 
     // Pre-Inspections
     Route::apiResource('pre-inspections', PreInspectionController::class);
+    Route::put('/pre-inspections/{preInspection}/inspector', [PreInspectionController::class, 'updateInspector']);
 });
 
 // Public pre-inspection submission routes (token-protected, no auth required)

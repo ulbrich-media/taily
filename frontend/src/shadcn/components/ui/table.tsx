@@ -89,6 +89,24 @@ function TableCell({ className, ...props }: React.ComponentProps<'td'>) {
   )
 }
 
+function TableCellEmpty({
+  className,
+  ...props
+}: Omit<React.ComponentProps<'td'>, 'children'>) {
+  return (
+    <td
+      data-slot="table-cell"
+      className={cn(
+        'p-2 align-middle whitespace-nowrap text-muted-foreground',
+        className
+      )}
+      {...props}
+    >
+      k.A.
+    </td>
+  )
+}
+
 function TableCaption({
   className,
   ...props
@@ -110,5 +128,6 @@ export {
   TableHead,
   TableRow,
   TableCell,
+  TableCellEmpty,
   TableCaption,
 }

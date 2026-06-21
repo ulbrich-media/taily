@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { DndContext, DragOverlay } from '@dnd-kit/core'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { ClipboardList, Save } from 'lucide-react'
+import { Save } from 'lucide-react'
 import { Button } from '@/shadcn/components/ui/button'
 import { Badge } from '@/shadcn/components/ui/badge'
 import { TextInput } from '@/components/field/TextInput'
@@ -17,7 +17,12 @@ import { FieldBuilderSection } from './FieldBuilderSection'
 import { useFieldBuilder } from './useFieldBuilder'
 import { parseJsonSchema, buildJsonSchema } from './schema'
 import { FormBlocker } from '@/components/form/FormBlocker.tsx'
-import { useMemo } from 'react'
+import { type ReactNode, useMemo } from 'react'
+import { PageHeader } from '@/components/layout/PageHeader.tsx'
+import { FormGrid } from '@/components/form/FormGrid.tsx'
+import { InfoRow } from '@/shadcn/components/common/info-row.tsx'
+import { Card, CardContent } from '@/shadcn/components/ui/card.tsx'
+import { Mark } from '@/components/typo/mark.tsx'
 
 const templateNameSchema = z.object({
   name: z.string().min(1, 'Name ist erforderlich').max(255),
@@ -28,13 +33,15 @@ type TemplateNameFormData = z.infer<typeof templateNameSchema>
 interface FormBuilderEditorProps {
   template: FormTemplateResource
   onCancel: () => void
-  onNewVersion: (id: string) => void
+  onSaved: (id: string) => void
+  breadcrumb: ReactNode
 }
 
 export function FormBuilderEditor({
   template,
   onCancel,
-  onNewVersion,
+  onSaved,
+  breadcrumb,
 }: FormBuilderEditorProps) {
   const queryClient = useQueryClient()
 
@@ -67,15 +74,11 @@ export function FormBuilderEditor({
       })
 
       if (data.new_version_created) {
-        // New version = new template ID — navigate to it so the URL and query update
         toast.success(`Neue Version v${data.data.version} wurde erstellt`)
-        onNewVersion(data.data.id)
       } else {
-        // Same template — reset forms to saved state so the blocker clears
-        nameForm.reset({ name: data.data.name })
-        fb.reset(parseJsonSchema(data.data.schema, data.data.ui_schema))
         toast.success(data.message)
       }
+      onSaved(data.data.id)
     },
     onError: () => {
       toast.error('Fehler beim Speichern der Formularvorlage')
@@ -98,41 +101,31 @@ export function FormBuilderEditor({
         <FormBlocker isDirty={fb.isDirty} />
 
         <div className="space-y-6">
-          {/* Header */}
-          <div className="flex items-center gap-3">
-            <ClipboardList className="size-5 text-primary shrink-0" />
-            <h1 className="text-lg font-semibold">Formular bearbeiten</h1>
-          </div>
+          <PageHeader
+            title={
+              <>
+                <Mark variant="headline">{template.name}</Mark> bearbeiten
+              </>
+            }
+            breadcrumb={breadcrumb}
+          />
 
-          {/* Meta card */}
-          <div className="rounded-lg border bg-card p-4 flex flex-col sm:flex-row sm:items-start gap-4">
-            <div className="flex-1 max-w-sm">
-              <TextInput
-                name="name"
-                control={nameForm.control}
-                label="Name"
-                required
-              />
-            </div>
-            <div className="flex items-center gap-6 sm:pt-6 shrink-0">
-              <div className="flex flex-col gap-1">
-                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Typ
-                </span>
-                <code className="bg-muted rounded px-2 py-1 text-sm font-mono">
-                  {template.type}
-                </code>
-              </div>
-              <div className="flex flex-col gap-1">
-                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Version
-                </span>
-                <Badge variant="secondary" className="w-fit">
-                  v{template.version}
-                </Badge>
-              </div>
-            </div>
-          </div>
+          <Card>
+            <CardContent>
+              <FormGrid>
+                <TextInput
+                  name="name"
+                  control={nameForm.control}
+                  label="Name"
+                  required
+                />
+
+                <InfoRow label="Version">
+                  <Badge variant="secondary">v{template.version}</Badge>
+                </InfoRow>
+              </FormGrid>
+            </CardContent>
+          </Card>
 
           {/* Field builder */}
           <FieldBuilderSection
