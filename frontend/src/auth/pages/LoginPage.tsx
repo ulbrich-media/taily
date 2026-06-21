@@ -64,7 +64,7 @@ export function LoginPage({ onAlreadyAuthenticated }: LoginPageProps) {
 
   return (
     <form id={'form-login'} onSubmit={form.handleSubmit(onSubmit)}>
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen flex items-center justify-center">
         <Card className="w-full sm:max-w-sm">
           <CardHeader>
             <CardTitle>Login</CardTitle>

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -13,9 +13,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogBreadcrumb,
 } from '@/shadcn/components/ui/dialog.tsx'
 import { Button } from '@/shadcn/components/ui/button.tsx'
-import { FlaskConical } from 'lucide-react'
 import { FieldGroup } from '@/shadcn/components/ui/field.tsx'
 import { toast } from 'sonner'
 import { FormBlocker } from '@/components/form/FormBlocker'
@@ -34,11 +34,13 @@ type CreateMedicalTestFormData = z.infer<typeof createMedicalTestSchema>
 interface MedicalTestCreatePageProps {
   animalTypes: AnimalTypeResource[]
   onClose: () => void
+  breadcrumb?: ReactNode
 }
 
 export function MedicalTestCreatePage({
   animalTypes,
   onClose,
+  breadcrumb,
 }: MedicalTestCreatePageProps) {
   const queryClient = useQueryClient()
   const [keepOpen, setKeepOpen] = useState(false)
@@ -90,10 +92,7 @@ export function MedicalTestCreatePage({
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <FlaskConical className="h-5 w-5 text-primary" />
-            Neuen Test erstellen
-          </DialogTitle>
+          <DialogTitle>Neuen Test erstellen</DialogTitle>
           <DialogDescription>
             Erstelle einen neuen Test für eine Tierart.
           </DialogDescription>
@@ -154,6 +153,7 @@ export function MedicalTestCreatePage({
                   : 'Speichern'}
               </Button>
             </DialogFooter>
+            <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
           </form>
         </FormProvider>
       </DialogContent>

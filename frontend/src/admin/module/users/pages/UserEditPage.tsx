@@ -1,3 +1,4 @@
+import { type ReactNode } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -12,15 +13,16 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogBreadcrumb,
 } from '@/shadcn/components/ui/dialog'
 import { Button } from '@/shadcn/components/ui/button'
-import { Edit } from 'lucide-react'
 import { FieldGroup } from '@/shadcn/components/ui/field'
 import { toast } from 'sonner'
 import { UserRole } from '@/api/types/users'
 import { FormBlocker } from '@/components/form/FormBlocker'
 import { TextInput } from '@/components/field/TextInput'
 import { SelectInput } from '@/components/field/SelectInput'
+import { Mark } from '@/components/typo/mark.tsx'
 
 const updateUserSchema = z.object({
   name: z
@@ -43,9 +45,10 @@ type UpdateUserFormData = z.infer<typeof updateUserSchema>
 interface UserEditPageProps {
   user: UserResource
   onClose: () => void
+  breadcrumb?: ReactNode
 }
 
-export function UserEditPage({ user, onClose }: UserEditPageProps) {
+export function UserEditPage({ user, onClose, breadcrumb }: UserEditPageProps) {
   const queryClient = useQueryClient()
 
   const form = useForm<UpdateUserFormData>({
@@ -81,9 +84,8 @@ export function UserEditPage({ user, onClose }: UserEditPageProps) {
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Edit className="h-5 w-5 text-primary" />
-            Benutzer bearbeiten
+          <DialogTitle>
+            <Mark>{user.name}</Mark> bearbeiten
           </DialogTitle>
           <DialogDescription>
             Bearbeite die Benutzerdaten und Berechtigungen.
@@ -133,6 +135,7 @@ export function UserEditPage({ user, onClose }: UserEditPageProps) {
                 {updateMutation.isPending ? 'Aktualisiere...' : 'Speichern'}
               </Button>
             </DialogFooter>
+            <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
           </form>
         </FormProvider>
       </DialogContent>

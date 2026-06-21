@@ -1,3 +1,4 @@
+import { type ReactNode } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -5,6 +6,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogBreadcrumb,
 } from '@/shadcn/components/ui/dialog.tsx'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
@@ -33,11 +35,13 @@ type FormData = z.infer<typeof schema>
 interface AdoptionEditPreInspectionPageProps {
   adoption: AdoptionDetailResource
   onClose: () => void
+  breadcrumb?: ReactNode
 }
 
 export function AdoptionEditPreInspectionPage({
   adoption,
   onClose,
+  breadcrumb,
 }: AdoptionEditPreInspectionPageProps) {
   const queryClient = useQueryClient()
 
@@ -70,7 +74,7 @@ export function AdoptionEditPreInspectionPage({
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Vorkontrolle – Notizen</DialogTitle>
+          <DialogTitle>Notizen zur Vorkontrolle</DialogTitle>
           <DialogDescription>
             Notizen zur Vorkontrolle festhalten.
           </DialogDescription>
@@ -100,6 +104,7 @@ export function AdoptionEditPreInspectionPage({
               {updateMutation.isPending ? 'Speichern...' : 'Speichern'}
             </Button>
           </DialogFooter>
+          <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
         </form>
       </DialogContent>
     </Dialog>

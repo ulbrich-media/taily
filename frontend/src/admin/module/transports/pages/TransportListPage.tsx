@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { SlashSquare, Truck } from 'lucide-react'
+import { SlashSquare } from 'lucide-react'
 import type { TransportListResource } from '@/api/types/transports'
 import { PageHeader } from '@/components/layout/PageHeader'
 import {
@@ -20,6 +20,7 @@ interface TransportListPageProps {
   createActionForEmpty: ReactNode
   renderActions: (t: TransportListResource) => ReactNode
   renderAdoptionDetailLink?: (adoption: AdoptionListResource) => ReactNode
+  breadcrumb?: ReactNode
 }
 
 export function TransportListPage({
@@ -29,16 +30,17 @@ export function TransportListPage({
   createActionForEmpty,
   renderActions,
   renderAdoptionDetailLink,
+  breadcrumb,
 }: TransportListPageProps) {
   const hasData = plannedTransports.length > 0 || doneTransports.length > 0
 
   return (
     <div className="space-y-8">
       <PageHeader
-        icon={Truck}
         title="Transporte"
         description="Plane die nächsten Tiertransporte"
         actions={createAction}
+        breadcrumb={breadcrumb}
       />
 
       {!hasData && (

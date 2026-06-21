@@ -1,5 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { VaccinationCreatePage } from '@/admin/module/vaccinations/pages/VaccinationCreatePage'
+import { useBreadcrumbs } from '@/router/useBreadcrumbs'
+import { BreadcrumbNav } from '@/router/BreadcrumbNav'
 import { queryClient } from '@/lib/queryClient.ts'
 import { listAnimalTypesQuery } from '@/admin/module/animal-types/api/queries'
 import { useSuspenseQuery } from '@tanstack/react-query'
@@ -17,9 +19,13 @@ export const Route = createFileRoute(
     await queryClient.ensureQueryData(listAnimalTypesQuery)
   },
   component: RouteComponent,
+  staticData: {
+    breadcrumb: 'Neue Impfung erstellen',
+  },
 })
 
 function RouteComponent() {
+  const breadcrumbs = useBreadcrumbs()
   const navigate = VaccinationsRoute.useNavigate()
   const { data: animalTypesData } = useSuspenseQuery(listAnimalTypesQuery)
 
@@ -31,6 +37,7 @@ function RouteComponent() {
     <VaccinationCreatePage
       animalTypes={animalTypesData.data}
       onClose={handleClose}
+      breadcrumb={<BreadcrumbNav items={breadcrumbs} size="sm" />}
     />
   )
 }

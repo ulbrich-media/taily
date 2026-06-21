@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react'
-import { Building2 } from 'lucide-react'
 import type { OrganizationResource } from '@/api/types/organizations'
 import {
   Table,
@@ -16,20 +15,22 @@ interface OrganizationListPageProps {
   organizations: OrganizationResource[]
   createAction: ReactNode
   renderRowActions: (organization: OrganizationResource) => ReactNode
+  breadcrumb?: ReactNode
 }
 
 export function OrganizationListPage({
   organizations,
   createAction,
   renderRowActions,
+  breadcrumb,
 }: OrganizationListPageProps) {
   return (
     <div className="space-y-6">
       <PageHeader
-        icon={Building2}
         title="Organisationen"
         description="Verwalte alle Organisationen im System"
         actions={createAction}
+        breadcrumb={breadcrumb}
       />
 
       <TableListView

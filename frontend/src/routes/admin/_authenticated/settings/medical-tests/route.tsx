@@ -1,5 +1,7 @@
 import { createFileRoute, Outlet } from '@tanstack/react-router'
 import { MedicalTestListPage } from '@/admin/module/medical-tests/pages/MedicalTestListPage'
+import { useBreadcrumbs } from '@/router/useBreadcrumbs'
+import { BreadcrumbNav } from '@/router/BreadcrumbNav'
 import { queryClient } from '@/lib/queryClient.ts'
 import { listMedicalTestsQuery } from '@/admin/module/medical-tests/api/queries'
 import { useSuspenseQuery } from '@tanstack/react-query'
@@ -14,6 +16,7 @@ import { Route as DeleteRoute } from '@/routes/admin/_authenticated/settings/med
 export const Route = createFileRoute(
   '/admin/_authenticated/settings/medical-tests'
 )({
+  staticData: { breadcrumb: 'Tests' },
   loader: async () => {
     await queryClient.ensureQueryData(listMedicalTestsQuery)
   },
@@ -21,6 +24,7 @@ export const Route = createFileRoute(
 })
 
 function RouteComponent() {
+  const breadcrumbs = useBreadcrumbs()
   const { isAdmin } = useAuth()
   const { data: medicalTests } = useSuspenseQuery(listMedicalTestsQuery)
 
@@ -41,7 +45,7 @@ function RouteComponent() {
               <Edit /> Bearbeiten
             </EditRoute.Link>
           </Button>
-          <Button size="sm" variant="destructive" asChild>
+          <Button size="sm" variant="destructive_outline" asChild>
             <DeleteRoute.Link params={{ id: medicalTest.id }}>
               <Trash2 /> Löschen
             </DeleteRoute.Link>
@@ -56,6 +60,7 @@ function RouteComponent() {
         medicalTests={medicalTests}
         createAction={createAction}
         renderRowActions={renderRowActions}
+        breadcrumb={<BreadcrumbNav items={breadcrumbs} />}
       />
       <Outlet />
     </>

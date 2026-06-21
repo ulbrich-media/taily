@@ -59,7 +59,7 @@ function DialogContent({
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          'dark:bg-background/80 bg-background/95 backdrop-blur-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200 outline-none sm:max-w-lg',
+          'dark:bg-popover/80 bg-popover/95 backdrop-blur-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200 outline-none sm:max-w-lg',
           className
         )}
         {...props}
@@ -116,6 +116,24 @@ function DialogFooter({
   )
 }
 
+function DialogBreadcrumb({
+  className,
+  ...props
+}: React.ComponentProps<'div'>) {
+  if (!props.children) return null
+
+  return (
+    <div
+      data-slot="dialog-breadcrumb"
+      className={cn(
+        '-mx-6 -mb-6 mt-4 rounded-b-lg border-t bg-muted/50 dark:bg-muted/30 px-6 py-3',
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
 function DialogTitle({
   className,
   ...props
@@ -123,7 +141,7 @@ function DialogTitle({
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
-      className={cn('text-lg leading-none font-semibold', className)}
+      className={cn('text-2xl leading-none font-heading pr-4', className)}
       {...props}
     />
   )
@@ -144,6 +162,7 @@ function DialogDescription({
 
 export {
   Dialog,
+  DialogBreadcrumb,
   DialogClose,
   DialogContent,
   DialogDescription,

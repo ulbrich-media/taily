@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { ClipboardCheck, Copy, Check } from 'lucide-react'
+import { Copy, Check } from 'lucide-react'
 import { preInspectionQueryKeys } from '@/admin/module/pre-inspections/api/queries'
 import { updatePreInspection } from '@/admin/module/pre-inspections/api/requests'
 import type { PreInspectionResource } from '@/api/types/pre-inspections'
@@ -156,7 +156,6 @@ export function PreInspectionEditPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        icon={ClipboardCheck}
         title="Vorkontrolle bearbeiten"
         description="Details und Ergebnis der Vorkontrolle"
         actions={deleteAction}

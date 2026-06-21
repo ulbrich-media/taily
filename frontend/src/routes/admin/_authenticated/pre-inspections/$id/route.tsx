@@ -36,7 +36,7 @@ function RouteComponent() {
   )
 
   const deleteAction = (
-    <Button variant="destructive" size="sm" asChild>
+    <Button variant="destructive_outline" size="sm" asChild>
       <DeleteRoute.Link params={{ id }}>
         <Trash2 className="h-4 w-4 mr-2" />
         Löschen

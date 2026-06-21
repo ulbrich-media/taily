@@ -54,7 +54,7 @@ export function AdoptionReopenPage({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={onClose}>Abbrechen</AlertDialogCancel>
+          <AlertDialogCancel>Abbrechen</AlertDialogCancel>
           <AlertDialogAction
             onClick={() => reopenMutation.mutate()}
             disabled={reopenMutation.isPending}

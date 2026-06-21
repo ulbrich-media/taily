@@ -1,4 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { useBreadcrumbs } from '@/router/useBreadcrumbs'
+import { BreadcrumbNav } from '@/router/BreadcrumbNav'
 import { queryClient } from '@/lib/queryClient.ts'
 import { listPersonsQuery } from '@/lib/api/persons'
 import { getAdoptionQuery } from '@/admin/module/adoptions/api/queries.ts'
@@ -14,9 +16,13 @@ export const Route = createFileRoute(
     await queryClient.ensureQueryData(getAdoptionQuery(params.adoptionId))
   },
   component: RouteComponent,
+  staticData: {
+    breadcrumb: 'Vermittler ändern',
+  },
 })
 
 function RouteComponent() {
+  const breadcrumbs = useBreadcrumbs()
   const { adoptionId } = Route.useParams()
   const navigate = AdoptionDetailRoute.useNavigate()
   const { data: adoption } = useSuspenseQuery(getAdoptionQuery(adoptionId))
@@ -33,6 +39,7 @@ function RouteComponent() {
       adoption={adoption}
       mediators={mediators}
       onClose={handleClose}
+      breadcrumb={<BreadcrumbNav items={breadcrumbs} size="sm" />}
     />
   )
 }

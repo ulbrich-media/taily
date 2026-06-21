@@ -1,4 +1,6 @@
 import { createFileRoute, notFound } from '@tanstack/react-router'
+import { useBreadcrumbs } from '@/router/useBreadcrumbs'
+import { BreadcrumbNav } from '@/router/BreadcrumbNav'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { queryClient } from '@/lib/queryClient'
 import { transportQueryKeys } from '@/admin/module/transports/api/queries'
@@ -6,6 +8,7 @@ import type { TransportListResource } from '@/api/types/transports'
 import { TransportEditPage } from '@/admin/module/transports/pages/TransportEditPage'
 import { Route as TransportsRoute } from '@/routes/admin/_authenticated/transports/route'
 import { listPersonsQuery } from '@/lib/api/persons'
+import { getTransportTitle } from '@/admin/module/transports/utils.ts'
 
 export const Route = createFileRoute(
   '/admin/_authenticated/transports/$transportId/edit'
@@ -29,13 +32,17 @@ export const Route = createFileRoute(
     )
     if (!transport) throw notFound()
 
-    return transport
+    return {
+      transport,
+      breadcrumb: `${getTransportTitle(transport)} bearbeiten`,
+    }
   },
   component: RouteComponent,
 })
 
 function RouteComponent() {
-  const transport = Route.useLoaderData()
+  const breadcrumbs = useBreadcrumbs()
+  const { transport } = Route.useLoaderData()
   const navigate = TransportsRoute.useNavigate()
   const { data: persons } = useSuspenseQuery(listPersonsQuery)
 
@@ -46,6 +53,7 @@ function RouteComponent() {
       transport={transport}
       mediators={mediators}
       onClose={() => navigate({})}
+      breadcrumb={<BreadcrumbNav items={breadcrumbs} size="sm" />}
     />
   )
 }

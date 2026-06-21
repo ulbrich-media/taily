@@ -21,6 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogBreadcrumb,
 } from '@/shadcn/components/ui/dialog'
 import { Button } from '@/shadcn/components/ui/button'
 import {
@@ -35,6 +36,8 @@ import { toast } from 'sonner'
 import { useState } from 'react'
 import { Route as AdoptionRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/route'
 import { getTransportTitle } from '@/admin/module/transports/utils.ts'
+import { useBreadcrumbs } from '@/router/useBreadcrumbs.ts'
+import { BreadcrumbNav } from '@/router/BreadcrumbNav.tsx'
 
 export const Route = createFileRoute(
   '/admin/_authenticated/adoptions/$adoptionId/adoption/transport-assign'
@@ -46,9 +49,13 @@ export const Route = createFileRoute(
     ])
   },
   component: RouteComponent,
+  staticData: {
+    breadcrumb: 'Transport zuweisen',
+  },
 })
 
 function RouteComponent() {
+  const breadcrumbs = useBreadcrumbs()
   const { adoptionId } = Route.useParams()
   const { data: adoption } = useSuspenseQuery(getAdoptionQuery(adoptionId))
   const { data: openTransports } = useSuspenseQuery(
@@ -137,6 +144,9 @@ function RouteComponent() {
             {assignMutation.isPending ? 'Speichern...' : 'Zuweisen'}
           </Button>
         </DialogFooter>
+        <DialogBreadcrumb>
+          <BreadcrumbNav items={breadcrumbs} size="sm" />{' '}
+        </DialogBreadcrumb>
       </DialogContent>
     </Dialog>
   )

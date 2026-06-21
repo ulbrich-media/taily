@@ -19,10 +19,8 @@ const ErrorInfoComponent = ({ error }: ErrorProps) => {
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
-        <CardTitle variant="destructive">
-          <CardTitleIcon icon={AlertCircle} />
-          Something went wrong
-        </CardTitle>
+        <CardTitle variant="destructive">Something went wrong</CardTitle>
+        <CardTitleIcon icon={AlertCircle} />
         <CardDescription>
           We're sorry, but something unexpected happened. Please try again.
         </CardDescription>
@@ -45,7 +43,7 @@ const ErrorInfoComponent = ({ error }: ErrorProps) => {
                 <CardTitle className="text-lg">Stack Trace</CardTitle>
               </CardHeader>
               <CardContent>
-                <pre className="text-xs overflow-x-auto p-4 bg-muted rounded-md">
+                <pre className="text-xs overflow-x-auto p-4 rounded-md">
                   <code>{error.stack}</code>
                 </pre>
               </CardContent>

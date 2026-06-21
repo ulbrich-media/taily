@@ -1,3 +1,4 @@
+import { type ReactNode } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -5,6 +6,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogBreadcrumb,
 } from '@/shadcn/components/ui/dialog.tsx'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
@@ -33,6 +35,7 @@ interface AdoptionCreatePageProps {
   mediators: PersonListResource[]
   onCreated: (id: string) => void
   onClose: () => void
+  breadcrumb?: ReactNode
 }
 
 export function AdoptionCreatePage({
@@ -41,6 +44,7 @@ export function AdoptionCreatePage({
   mediators,
   onCreated,
   onClose,
+  breadcrumb,
 }: AdoptionCreatePageProps) {
   const queryClient = useQueryClient()
 
@@ -121,6 +125,7 @@ export function AdoptionCreatePage({
               Speichern
             </Button>
           </DialogFooter>
+          <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
         </form>
       </DialogContent>
     </Dialog>

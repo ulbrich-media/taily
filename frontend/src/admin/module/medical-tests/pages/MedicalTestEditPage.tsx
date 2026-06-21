@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import type { ReactNode } from 'react'
 import { medicalTestQueryKeys } from '@/admin/module/medical-tests/api/queries'
 import { updateMedicalTest } from '@/admin/module/medical-tests/api/requests'
 import type { MedicalTestResource } from '@/api/types/medical-tests'
@@ -13,15 +14,16 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogBreadcrumb,
 } from '@/shadcn/components/ui/dialog.tsx'
 import { Button } from '@/shadcn/components/ui/button.tsx'
-import { FlaskConical } from 'lucide-react'
 import { FieldGroup } from '@/shadcn/components/ui/field.tsx'
 import { toast } from 'sonner'
 import { FormBlocker } from '@/components/form/FormBlocker'
 import { TextInput } from '@/components/field/TextInput'
 import { SelectInput } from '@/components/field/SelectInput'
 import { zFieldString } from '@/components/field/TextInput.utils.ts'
+import { Mark } from '@/components/typo/mark.tsx'
 
 const updateMedicalTestSchema = z.object({
   title: zFieldString({ required: true }),
@@ -35,12 +37,14 @@ interface MedicalTestEditPageProps {
   medicalTest: MedicalTestResource
   animalTypes: AnimalTypeResource[]
   onClose: () => void
+  breadcrumb?: ReactNode
 }
 
 export function MedicalTestEditPage({
   medicalTest,
   animalTypes,
   onClose,
+  breadcrumb,
 }: MedicalTestEditPageProps) {
   const queryClient = useQueryClient()
 
@@ -71,9 +75,8 @@ export function MedicalTestEditPage({
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <FlaskConical className="h-5 w-5 text-primary" />
-            Test bearbeiten
+          <DialogTitle>
+            <Mark>{medicalTest.title}</Mark> bearbeiten
           </DialogTitle>
           <DialogDescription>Bearbeite den Test.</DialogDescription>
         </DialogHeader>
@@ -122,6 +125,7 @@ export function MedicalTestEditPage({
                 {updateMutation.isPending ? 'Aktualisiere...' : 'Speichern'}
               </Button>
             </DialogFooter>
+            <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
           </form>
         </FormProvider>
       </DialogContent>

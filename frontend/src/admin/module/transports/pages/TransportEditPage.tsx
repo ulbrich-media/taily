@@ -1,9 +1,11 @@
+import { type ReactNode } from 'react'
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogBreadcrumb,
 } from '@/shadcn/components/ui/dialog'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
@@ -30,6 +32,7 @@ import {
 import { PersonSelect } from '@/components/field/PersonSelect'
 import type { PersonListResource } from '@/api/types/people'
 import { getTransportTitle } from '@/admin/module/transports/utils.ts'
+import { Mark } from '@/components/typo/mark.tsx'
 
 const schema = z.object({
   name: zFieldString({ maxLength: 255 }),
@@ -45,12 +48,14 @@ interface TransportEditPageProps {
   transport: TransportListResource
   mediators: PersonListResource[]
   onClose: () => void
+  breadcrumb?: ReactNode
 }
 
 export function TransportEditPage({
   transport,
   mediators,
   onClose,
+  breadcrumb,
 }: TransportEditPageProps) {
   const queryClient = useQueryClient()
 
@@ -84,13 +89,13 @@ export function TransportEditPage({
     },
   })
 
-  const title = `${getTransportTitle(transport)} bearbeiten`
-
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
+          <DialogTitle>
+            <Mark>{getTransportTitle(transport)}</Mark> bearbeiten
+          </DialogTitle>
         </DialogHeader>
         <form
           onSubmit={form.handleSubmit((data) => mutation.mutate(data))}
@@ -149,6 +154,7 @@ export function TransportEditPage({
               {mutation.isPending ? 'Speichern...' : 'Speichern'}
             </Button>
           </DialogFooter>
+          <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
         </form>
       </DialogContent>
     </Dialog>

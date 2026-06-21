@@ -3,12 +3,15 @@ import { vaccinationQueryKeys } from '@/admin/module/vaccinations/api/queries'
 import { deleteVaccination } from '@/admin/module/vaccinations/api/requests'
 import type { VaccinationResource } from '@/api/types/vaccinations'
 import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/shadcn/components/ui/dialog.tsx'
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+} from '@/shadcn/components/ui/alert-dialog.tsx'
 import { Button } from '@/shadcn/components/ui/button.tsx'
 import { Trash2Icon } from 'lucide-react'
 import { toast } from 'sonner'
@@ -37,37 +40,26 @@ export function VaccinationDeletePage({
   })
 
   return (
-    <Dialog open onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Trash2Icon className="h-5 w-5 text-destructive" />
-            Impfung löschen
-          </DialogTitle>
-        </DialogHeader>
-
-        <div>
-          <div className="leading-7 mb-2">
+    <AlertDialog open onOpenChange={onClose}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogMedia className="text-destructive-text">
+            <Trash2Icon />
+          </AlertDialogMedia>
+          <AlertDialogTitle>Impfung löschen</AlertDialogTitle>
+          <AlertDialogDescription>
             Möchtest du die Impfung{' '}
-            <span className="font-medium">{vaccination.title}</span> für{' '}
-            <span className="font-medium">{vaccination.animal_type.title}</span>{' '}
-            wirklich löschen?
-          </div>
-          <div className="leading-7 mb-2">
-            Dieser Vorgang kann nicht rückgängig gemacht werden. Alle
-            Impfeinträge der Tiere für diese Impfung werden ebenfalls gelöscht.
-          </div>
-        </div>
-
-        <DialogFooter>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onClose}
-            disabled={deleteMutation.isPending}
-          >
+            <span className="font-bold">{vaccination.title}</span> für{' '}
+            <span className="font-bold">{vaccination.animal_type.title}</span>{' '}
+            wirklich löschen? Dieser Vorgang kann nicht rückgängig gemacht
+            werden. Alle Impfeinträge der Tiere für diese Impfung werden
+            ebenfalls gelöscht.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={deleteMutation.isPending}>
             Abbrechen
-          </Button>
+          </AlertDialogCancel>
           <Button
             variant="destructive"
             disabled={deleteMutation.isPending}
@@ -75,8 +67,8 @@ export function VaccinationDeletePage({
           >
             {deleteMutation.isPending ? 'Wird gelöscht...' : 'Ja, löschen'}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   )
 }

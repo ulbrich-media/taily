@@ -28,10 +28,8 @@ export function NavigationCards({ cards }: NavigationCardsProps) {
       {cards.map((card) => (
         <Card key={card.title} className="flex flex-col">
           <CardHeader>
-            <CardTitle>
-              <CardTitleIcon icon={card.icon} />
-              {card.title}
-            </CardTitle>
+            <CardTitle>{card.title}</CardTitle>
+            <CardTitleIcon icon={card.icon} />
             <CardDescription>{card.subtitle}</CardDescription>
           </CardHeader>
           {card.description && (

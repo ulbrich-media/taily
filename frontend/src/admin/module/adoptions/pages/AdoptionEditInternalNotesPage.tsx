@@ -1,3 +1,4 @@
+import { type ReactNode } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -5,6 +6,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogBreadcrumb,
 } from '@/shadcn/components/ui/dialog.tsx'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
@@ -36,11 +38,13 @@ type FormData = z.infer<typeof schema>
 interface AdoptionEditInternalNotesPageProps {
   adoption: AdoptionDetailResource
   onClose: () => void
+  breadcrumb?: ReactNode
 }
 
 export function AdoptionEditInternalNotesPage({
   adoption,
   onClose,
+  breadcrumb,
 }: AdoptionEditInternalNotesPageProps) {
   const queryClient = useQueryClient()
   const isCanceled = adoption.status === 'canceled'
@@ -76,7 +80,7 @@ export function AdoptionEditInternalNotesPage({
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Notizen</DialogTitle>
+          <DialogTitle>Notizen bearbeiten</DialogTitle>
           <DialogDescription>
             Notizen zur Vermittlung festhalten.
           </DialogDescription>
@@ -116,6 +120,7 @@ export function AdoptionEditInternalNotesPage({
               {updateMutation.isPending ? 'Speichern...' : 'Speichern'}
             </Button>
           </DialogFooter>
+          <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
         </form>
       </DialogContent>
     </Dialog>

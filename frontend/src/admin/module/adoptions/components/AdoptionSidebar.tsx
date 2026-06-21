@@ -36,12 +36,6 @@ export function AdoptionSidebar({
 }: AdoptionSidebarProps) {
   return (
     <aside>
-      <div className="lg:min-h-15 pb-3">
-        <h1 className="text-2xl font-bold text-foreground">
-          Vermittlung von {adoption.animal.name}
-        </h1>
-      </div>
-
       <Card>
         <CardContent>
           <div className="space-y-4 flex flex-col gap-4">

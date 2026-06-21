@@ -1,5 +1,5 @@
 import { useMemo, type ReactNode } from 'react'
-import { Syringe, SlashSquareIcon } from 'lucide-react'
+import { SlashSquareIcon } from 'lucide-react'
 import {
   Table,
   TableBody,
@@ -28,12 +28,14 @@ interface VaccinationListPageProps {
   vaccinations: VaccinationResource[]
   createAction?: ReactNode
   renderRowActions?: (vaccination: VaccinationResource) => ReactNode
+  breadcrumb?: ReactNode
 }
 
 export function VaccinationListPage({
   vaccinations,
   createAction,
   renderRowActions,
+  breadcrumb,
 }: VaccinationListPageProps) {
   const groupedVaccinations = useMemo(() => {
     const groups = new Map<
@@ -63,10 +65,10 @@ export function VaccinationListPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        icon={Syringe}
         title="Impfungen"
         description="Verwalte die verfügbaren Impfungen der Tiere"
         actions={createAction}
+        breadcrumb={breadcrumb}
       />
 
       {hasVaccinations ? (
