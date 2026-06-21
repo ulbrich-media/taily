@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useSuspenseQuery, useMutation } from '@tanstack/react-query'
 import { useForm, FormProvider } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 import {
   Card,
   CardContent,
@@ -30,11 +32,18 @@ import { Field, FieldGroup, FieldLabel } from '@/shadcn/components/ui/field.tsx'
 import { FormFieldWrapper } from '@/components/form/FormFieldWrapper'
 import { Textarea } from '@/components/field/Textarea.tsx'
 import { DynamicFormFields } from '@/components/form/DynamicFormFields'
-import type { FieldValues } from 'react-hook-form'
+import { useDynamicFormSchema } from '@/components/form/useDynamicFormSchema'
+import type { JsonSchemaShape } from '@/components/form/jsonSchemaToZod'
+import { FormBlocker } from '@/components/form/FormBlocker.tsx'
 
-interface SubmitFormData extends FieldValues {
-  verdict: 'approved' | 'rejected' | undefined
-  notes: string
+const staticSchema = z.object({
+  verdict: z.enum(['approved', 'rejected'], {
+    error: 'Bitte wähle ein Ergebnis aus',
+  }),
+  notes: z.string(),
+})
+
+type SubmitFormData = z.infer<typeof staticSchema> & {
   form_data: Record<string, unknown>
 }
 
@@ -49,7 +58,13 @@ export function PreInspectionSubmitPage({
 
   const [confirmOpen, setConfirmOpen] = useState(false)
 
+  const schema = useDynamicFormSchema(
+    staticSchema,
+    inspection.pre_inspection_form_template?.schema as JsonSchemaShape
+  )
+
   const form = useForm<SubmitFormData>({
+    resolver: zodResolver(schema) as never,
     defaultValues: { verdict: undefined, notes: '', form_data: {} },
   })
 
@@ -89,6 +104,8 @@ export function PreInspectionSubmitPage({
         onSubmit={form.handleSubmit(() => setConfirmOpen(true))}
         className="min-h-screen py-8 px-4"
       >
+        <FormBlocker />
+
         <div className="mx-auto max-w-2xl space-y-6">
           <Card>
             <CardHeader>

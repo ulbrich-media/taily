@@ -3,6 +3,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { useDynamicFormSchema } from '@/components/form/useDynamicFormSchema'
+import type { JsonSchemaShape } from '@/components/form/jsonSchemaToZod'
 import { Copy, Check } from 'lucide-react'
 import { preInspectionQueryKeys } from '@/admin/module/pre-inspections/api/queries'
 import {
@@ -38,7 +40,6 @@ import {
   DialogTitle,
 } from '@/shadcn/components/ui/dialog'
 import { DynamicFormFields } from '@/components/form/DynamicFormFields'
-import type { FieldValues } from 'react-hook-form'
 import { InfoRow } from '@/shadcn/components/common/info-row.tsx'
 
 // ---------------------------------------------------------------------------
@@ -53,9 +54,14 @@ type InspectorFormData = z.infer<typeof inspectorSchema>
 // ---------------------------------------------------------------------------
 // Unified main form: form_data + verdict + notes
 // ---------------------------------------------------------------------------
-interface MainFormData extends FieldValues {
-  verdict: 'approved' | 'rejected' | undefined
-  notes: string
+const mainStaticSchema = z.object({
+  verdict: z.enum(['approved', 'rejected'], {
+    error: 'Bitte wähle ein Ergebnis aus',
+  }),
+  notes: z.string(),
+})
+
+type MainFormData = z.infer<typeof mainStaticSchema> & {
   form_data: Record<string, unknown>
 }
 
@@ -126,6 +132,11 @@ export function PreInspectionEditPage({
     ? inspection.form_submission?.template
     : inspection.pre_inspection_form_template
 
+  const mainSchema = useDynamicFormSchema(
+    mainStaticSchema,
+    template?.schema as JsonSchemaShape
+  )
+
   // ---------------------------------------------------------------------------
   // Inspector form — always available, decoupled
   // ---------------------------------------------------------------------------
@@ -155,6 +166,7 @@ export function PreInspectionEditPage({
   // Main form — form_data + verdict + notes, submitted as a whole
   // ---------------------------------------------------------------------------
   const mainForm = useForm<MainFormData>({
+    resolver: zodResolver(mainSchema) as never,
     defaultValues: {
       verdict: isSubmitted
         ? ((inspection.verdict === 'pending'
