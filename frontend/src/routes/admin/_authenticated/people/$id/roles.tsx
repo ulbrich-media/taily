@@ -13,6 +13,9 @@ export const Route = createFileRoute('/admin/_authenticated/people/$id/roles')({
     ])
   },
   component: RouteComponent,
+  staticData: {
+    breadcrumb: 'Rollen',
+  },
 })
 
 function RouteComponent() {
