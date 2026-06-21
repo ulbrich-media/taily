@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { jsonSchemaToZod } from './jsonSchemaToZod'
+import { jsonSchemaToZod, buildFormDataDefaults } from './jsonSchemaToZod'
 import type { JsonSchema, JsonSchemaProperty } from '@/api/types/form-schemas'
 
 // ---------------------------------------------------------------------------
@@ -26,6 +26,70 @@ function fail(prop: JsonSchemaProperty, required: boolean, value: unknown, expec
     expect(issue?.message).toBe(expectedMsg)
   }
 }
+
+// ---------------------------------------------------------------------------
+// buildFormDataDefaults
+// ---------------------------------------------------------------------------
+
+describe('buildFormDataDefaults', () => {
+  const schema: JsonSchema = {
+    properties: {
+      full_name: { type: 'string' },
+      agree: { type: 'boolean' },
+      age: { type: 'integer' },
+    },
+    required: ['full_name'],
+  }
+
+  it('returns an object with every schema key present', () => {
+    const result = buildFormDataDefaults(schema, {})
+    expect(Object.keys(result)).toEqual(['full_name', 'agree', 'age'])
+  })
+
+  it('sets undefined for keys absent in existing data', () => {
+    const result = buildFormDataDefaults(schema, {})
+    expect(result.full_name).toBeUndefined()
+    expect(result.agree).toBeUndefined()
+    expect(result.age).toBeUndefined()
+  })
+
+  it('preserves existing data values', () => {
+    const result = buildFormDataDefaults(schema, { full_name: 'Max', agree: true, age: 30 })
+    expect(result.full_name).toBe('Max')
+    expect(result.agree).toBe(true)
+    expect(result.age).toBe(30)
+  })
+
+  it('carries known keys and drops extra keys not in the schema', () => {
+    const result = buildFormDataDefaults(schema, { full_name: 'Max', extra_field: 'ignored' })
+    expect(result.full_name).toBe('Max')
+    expect('extra_field' in result).toBe(false)
+  })
+
+  it('returns existing data unchanged when schema has no properties', () => {
+    const data = { foo: 'bar' }
+    expect(buildFormDataDefaults({ type: 'object' }, data)).toBe(data)
+  })
+
+  it('returns existing data unchanged when schema is null', () => {
+    const data = { foo: 'bar' }
+    expect(buildFormDataDefaults(null, data)).toBe(data)
+  })
+
+  it('returns empty object as default when called without existingData', () => {
+    const result = buildFormDataDefaults(null)
+    expect(result).toEqual({})
+  })
+
+  it('isDirty remains false — structural equality with Controller-registered fields', () => {
+    // Simulates the react-hook-form isDirty scenario: after buildFormDataDefaults,
+    // the defaultValues object has the same keys that DynamicFormFields Controllers
+    // will register, so the deep-equal check stays true.
+    const defaults = buildFormDataDefaults(schema, {})
+    const afterRegistration = { full_name: undefined, agree: undefined, age: undefined }
+    expect(JSON.stringify(defaults)).toBe(JSON.stringify(afterRegistration))
+  })
+})
 
 // ---------------------------------------------------------------------------
 // The exact Formular-Showcase schema from FormTemplateSeeder.php

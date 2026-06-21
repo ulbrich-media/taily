@@ -44,6 +44,7 @@ import {
   DialogTitle,
 } from '@/shadcn/components/ui/dialog'
 import { DynamicFormFields } from '@/components/form/DynamicFormFields'
+import { buildFormDataDefaults } from '@/components/form/jsonSchemaToZod'
 import { InfoRow } from '@/shadcn/components/common/info-row.tsx'
 
 // ---------------------------------------------------------------------------
@@ -175,7 +176,10 @@ export function PreInspectionEditPage({
             : inspection.verdict) as 'approved' | 'rejected' | undefined)
         : undefined,
       notes: inspection.notes ?? '',
-      form_data: inspection.form_submission?.data ?? {},
+      form_data: buildFormDataDefaults(
+        template?.schema,
+        inspection.form_submission?.data ?? {}
+      ),
     },
   })
 
@@ -199,7 +203,10 @@ export function PreInspectionEditPage({
           ? undefined
           : res.data.verdict) as 'approved' | 'rejected' | undefined,
         notes: res.data.notes ?? '',
-        form_data: res.data.form_submission?.data ?? {},
+        form_data: buildFormDataDefaults(
+          template?.schema,
+          res.data.form_submission?.data ?? {}
+        ),
       })
     },
     onError: (err) => {
@@ -319,7 +326,9 @@ export function PreInspectionEditPage({
                   <DynamicFormFields
                     schema={template.schema}
                     uiSchema={template.ui_schema}
-                    control={mainForm.control as unknown as Control<FieldValues>}
+                    control={
+                      mainForm.control as unknown as Control<FieldValues>
+                    }
                     namePrefix="form_data"
                   />
                 </CardContent>

@@ -2,6 +2,23 @@ import { z } from 'zod'
 import type { JsonSchema, JsonSchemaProperty } from '@/api/types/form-schemas'
 
 /**
+ * Builds the initial form_data defaultValues object so that every key defined
+ * in the schema is present from the start. Without this, Controller components
+ * add keys to the form state as they mount, making the deep-equality check
+ * that drives isDirty see a structural difference vs. the original defaultValues
+ * — causing FormBlocker to trigger even when the user changed nothing.
+ */
+export function buildFormDataDefaults(
+  schema: JsonSchema | null | undefined,
+  existingData: Record<string, unknown> = {}
+): Record<string, unknown> {
+  if (!schema?.properties) return existingData
+  return Object.fromEntries(
+    Object.keys(schema.properties).map((key) => [key, existingData[key]])
+  )
+}
+
+/**
  * Converts a JSON Schema (subset) into a Zod schema suitable for use as a
  * resolver-side validator for DynamicFormFields. Mirrors the rules built by
  * buildRules() in DynamicFormFields.tsx so both paths stay in sync.
