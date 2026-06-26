@@ -10,8 +10,7 @@ import { Badge } from '@/shadcn/components/ui/badge'
 import { Route as EditRoute } from './$formTemplateId.edit'
 import { FormTemplateVersionDetail } from '@/admin/module/form-templates/components/FormTemplateVersionDetail'
 import { formatApiDate } from '@/lib/dates.utils'
-import { Card, CardBox, CardContent } from '@/shadcn/components/ui/card.tsx'
-import { InfoRow } from '@/shadcn/components/common/info-row.tsx'
+import { CardBox } from '@/shadcn/components/ui/card.tsx'
 import { NavMenu, NavMenuItem } from '@/shadcn/components/ui/nav-menu.tsx'
 
 export const Route = createFileRoute(
@@ -50,6 +49,7 @@ function RouteComponent() {
     <div className="space-y-6">
       <PageHeader
         title={template.name}
+        description={`Erstellt am ${formatApiDate(template.created_at)} und zuletzt am ${formatApiDate(version.updated_at)} aktualisiert. Das Formular wurde inzwischen ${version.submissions_count}x ausgefüllt.`}
         breadcrumb={<BreadcrumbNav items={breadcrumbs} />}
         actions={
           <Button asChild>
@@ -59,23 +59,6 @@ function RouteComponent() {
           </Button>
         }
       />
-
-      <Card>
-        <CardContent>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <InfoRow label="Versionen">{sortedVersions.length}</InfoRow>
-            <InfoRow label="Einreichungen">
-              {data.data.submissions_count}
-            </InfoRow>
-            <InfoRow label="Erstellt">
-              {formatApiDate(template.created_at)}
-            </InfoRow>
-            <InfoRow label="Aktualisiert">
-              {formatApiDate(template.updated_at)}
-            </InfoRow>
-          </div>
-        </CardContent>
-      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-6 items-start">
         <CardBox className="p-3">

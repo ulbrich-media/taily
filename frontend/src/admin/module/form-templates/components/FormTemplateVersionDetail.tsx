@@ -1,9 +1,43 @@
+import { useState, useMemo } from 'react'
+import {
+  useForm,
+  FormProvider,
+  type Control,
+  type FieldValues,
+} from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+import { RotateCcw, CheckCircle } from 'lucide-react'
 import { Badge } from '@/shadcn/components/ui/badge'
+import { Button } from '@/shadcn/components/ui/button'
+import { Switch } from '@/shadcn/components/ui/switch'
 import type { FormTemplateVersionResource } from '@/api/types/form-templates'
 import type { EditorField } from './shared/EditorField'
 import { getFieldTypeDef } from './field-types'
 import { parseJsonSchema } from './schema'
-import { formatApiDate } from '@/lib/dates.utils'
+import { DynamicFormFields } from '@/components/form/DynamicFormFields'
+import { jsonSchemaToZod } from '@/components/form/jsonSchemaToZod'
+import type { JsonSchema } from '@/api/types/form-schemas'
+
+// build empty defaults that allow resetting the form properly
+function buildEmptyDefaults(
+  schema: JsonSchema | null | undefined
+): Record<string, unknown> {
+  if (!schema?.properties) return {}
+  return Object.fromEntries(
+    Object.entries(schema.properties).map(([key, prop]) => [
+      key,
+      prop.type === 'boolean' ? false : '',
+    ])
+  )
+}
+import { CardBox } from '@/shadcn/components/ui/card.tsx'
+import {
+  Empty,
+  EmptyContent,
+  EmptyTitle,
+} from '@/shadcn/components/ui/empty.tsx'
+import { Field, FieldLabel } from '@/shadcn/components/ui/field.tsx'
 
 export function ReadOnlyFieldCard({ field }: { field: EditorField }) {
   const def = getFieldTypeDef(field.type)
@@ -49,6 +83,49 @@ export function ReadOnlyFieldCard({ field }: { field: EditorField }) {
   )
 }
 
+function FormPreview({ version }: { version: FormTemplateVersionResource }) {
+  const previewSchema = useMemo(
+    () => z.object({ form_data: jsonSchemaToZod(version.schema) }),
+    [version.schema]
+  )
+
+  const form = useForm({
+    resolver: zodResolver(previewSchema) as never,
+    defaultValues: { form_data: buildEmptyDefaults(version.schema) },
+  })
+
+  return (
+    <FormProvider {...form}>
+      <form onSubmit={form.handleSubmit(() => {})} className="space-y-4">
+        <DynamicFormFields
+          schema={version.schema}
+          uiSchema={version.ui_schema}
+          control={form.control as unknown as Control<FieldValues>}
+          namePrefix="form_data"
+        />
+        <div className="flex justify-end gap-2 pt-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() =>
+              form.reset({
+                form_data: buildEmptyDefaults(version.schema),
+              })
+            }
+          >
+            <RotateCcw />
+            Zurücksetzen
+          </Button>
+          <Button type="submit">
+            <CheckCircle />
+            Validieren
+          </Button>
+        </div>
+      </form>
+    </FormProvider>
+  )
+}
+
 interface FormTemplateVersionDetailProps {
   version: FormTemplateVersionResource
 }
@@ -57,43 +134,34 @@ export function FormTemplateVersionDetail({
   version,
 }: FormTemplateVersionDetailProps) {
   const fields = parseJsonSchema(version.schema, version.ui_schema)
+  const [previewMode, setPreviewMode] = useState(false)
 
   return (
     <div className="space-y-6">
-      <div className="rounded-lg border bg-card p-4 grid grid-cols-2 gap-4">
+      <div className="self-end flex justify-end">
         <div>
-          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-            Einreichungen
-          </span>
-          <p className="text-sm font-medium mt-1">
-            {version.submissions_count}
-          </p>
-        </div>
-        <div>
-          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-            Erstellt
-          </span>
-          <p className="text-sm font-medium mt-1">
-            {formatApiDate(version.created_at)}
-          </p>
+          <Field orientation="horizontal">
+            <Switch
+              id="field-preview-mode"
+              checked={previewMode}
+              onCheckedChange={() => setPreviewMode((prev) => !prev)}
+            />
+            <FieldLabel htmlFor="field-preview-mode">Vorschau</FieldLabel>
+          </Field>
         </div>
       </div>
 
       <div className="flex flex-col gap-3">
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-          Formularfelder
-          {fields.length > 0 && (
-            <span className="ml-1.5 font-normal normal-case">
-              ({fields.length})
-            </span>
-          )}
-        </p>
         {fields.length === 0 ? (
-          <div className="flex items-center justify-center border-2 border-dashed rounded-md p-8">
-            <p className="text-sm text-muted-foreground">
-              Diese Version hat keine Felder.
-            </p>
-          </div>
+          <Empty>
+            <EmptyContent>
+              <EmptyTitle>Diese Version hat keine Felder.</EmptyTitle>
+            </EmptyContent>
+          </Empty>
+        ) : previewMode ? (
+          <CardBox className="p-4">
+            <FormPreview key={version.id} version={version} />
+          </CardBox>
         ) : (
           <div className="flex flex-col gap-2">
             {fields.map((field) => (
