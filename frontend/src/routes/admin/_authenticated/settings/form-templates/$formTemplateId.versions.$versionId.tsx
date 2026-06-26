@@ -43,8 +43,6 @@ function RouteComponent() {
   )
   const version = sortedVersions.find((v) => v.id === versionId)
 
-  if (!version) return null
-
   return (
     <div className="space-y-6">
       <PageHeader
@@ -77,7 +75,7 @@ function RouteComponent() {
                       {formatApiDate(v.updated_at)}
                     </span>
                   </div>
-                  {sortedVersions.length === v.version && (
+                  {sortedVersions[0].version === v.version && (
                     <div>
                       <Badge variant="default" className="text-xs">
                         Aktiv
@@ -90,7 +88,7 @@ function RouteComponent() {
           </NavMenu>
         </CardBox>
 
-        <FormTemplateVersionDetailPage version={version} />
+        {version && <FormTemplateVersionDetailPage version={version} />}
       </div>
     </div>
   )

@@ -126,7 +126,11 @@ function buildEmptyDefaults(
   return Object.fromEntries(
     Object.entries(schema.properties).map(([key, prop]) => [
       key,
-      prop.type === 'boolean' ? false : '',
+      prop.type === 'boolean'
+        ? false
+        : prop.type === 'number' || prop.type === 'integer'
+          ? undefined
+          : '',
     ])
   )
 }
