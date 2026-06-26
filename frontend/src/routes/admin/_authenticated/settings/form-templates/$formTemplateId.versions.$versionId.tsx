@@ -8,7 +8,7 @@ import { useBreadcrumbs } from '@/router/useBreadcrumbs'
 import { Button } from '@/shadcn/components/ui/button'
 import { Badge } from '@/shadcn/components/ui/badge'
 import { Route as EditRoute } from './$formTemplateId.edit'
-import { FormTemplateVersionDetail } from '@/admin/module/form-templates/components/FormTemplateVersionDetail'
+import { FormTemplateVersionDetailPage } from '@/admin/module/form-templates/pages/FormTemplateVersionDetailPage.tsx'
 import { formatApiDate } from '@/lib/dates.utils'
 import { CardBox } from '@/shadcn/components/ui/card.tsx'
 import { NavMenu, NavMenuItem } from '@/shadcn/components/ui/nav-menu.tsx'
@@ -74,7 +74,6 @@ function RouteComponent() {
                     Version {v.version}
                     <br />
                     <span className="text-muted-foreground text-sm">
-                      {/*{v.submissions_count} Einreichungen*/}
                       {formatApiDate(v.updated_at)}
                     </span>
                   </div>
@@ -91,7 +90,7 @@ function RouteComponent() {
           </NavMenu>
         </CardBox>
 
-        <FormTemplateVersionDetail version={version} />
+        <FormTemplateVersionDetailPage version={version} />
       </div>
     </div>
   )
