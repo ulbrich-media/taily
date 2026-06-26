@@ -49,7 +49,7 @@ function RouteComponent() {
     <div className="space-y-6">
       <PageHeader
         title={template.name}
-        description={`Erstellt am ${formatApiDate(template.created_at)} und zuletzt am ${formatApiDate(version.updated_at)} aktualisiert. Das Formular wurde inzwischen ${version.submissions_count}x ausgefüllt.`}
+        description={`Erstellt am ${formatApiDate(template.created_at)} und zuletzt am ${formatApiDate(template.updated_at)} aktualisiert. Das Formular wurde inzwischen ${template.submissions_count}x ausgefüllt.`}
         breadcrumb={<BreadcrumbNav items={breadcrumbs} />}
         actions={
           <Button asChild>
