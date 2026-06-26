@@ -6,7 +6,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Save } from 'lucide-react'
 import { Button } from '@/shadcn/components/ui/button'
-import { Badge } from '@/shadcn/components/ui/badge'
 import { TextInput } from '@/components/field/TextInput'
 import { updateFormTemplate } from '../api/requests'
 import { formTemplateQueryKeys } from '../api/queries'
@@ -20,7 +19,6 @@ import { FormBlocker } from '@/components/form/FormBlocker.tsx'
 import { type ReactNode, useMemo } from 'react'
 import { PageHeader } from '@/components/layout/PageHeader.tsx'
 import { FormGrid } from '@/components/form/FormGrid.tsx'
-import { InfoRow } from '@/shadcn/components/common/info-row.tsx'
 import { Card, CardContent } from '@/shadcn/components/ui/card.tsx'
 import { Mark } from '@/components/typo/mark.tsx'
 
@@ -120,9 +118,7 @@ export function FormBuilderEditor({
                   required
                 />
 
-                <InfoRow label="Version">
-                  <Badge variant="secondary">v{template.version}</Badge>
-                </InfoRow>
+                <div></div>
               </FormGrid>
             </CardContent>
           </Card>

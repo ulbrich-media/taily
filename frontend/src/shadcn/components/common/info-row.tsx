@@ -6,7 +6,9 @@ interface InfoRowProps {
 }
 
 export function InfoRow({ label, children }: InfoRowProps) {
-  const isValidString = typeof children === 'string' && !!children.trim()
+  const isValidString =
+    (typeof children === 'string' && !!children.trim()) ||
+    typeof children === 'number'
   const isValidReactNode = !!children && typeof children === 'object'
 
   return (
