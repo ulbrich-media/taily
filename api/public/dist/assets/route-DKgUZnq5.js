@@ -1,1 +1,0 @@
-import{Jr as e}from"./index-CLnbgDMr.js";var t=e;export{t as component};
