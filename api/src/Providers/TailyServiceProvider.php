@@ -10,6 +10,7 @@ use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
 use Taily\Http\Middleware\EnsureUserIsAdmin;
 use Taily\Http\Middleware\PublicApiCors;
 use Taily\Models\User;
+use Taily\Support\MediaUrlGenerator;
 
 class TailyServiceProvider extends ServiceProvider
 {
@@ -30,6 +31,7 @@ class TailyServiceProvider extends ServiceProvider
         $this->loadViewsFrom(__DIR__.'/../../resources/views', 'taily');
 
         $this->registerFilesystemDisks();
+        $this->configureMediaLibrary();
 
         JsonResource::withoutWrapping();
         config(['auth.providers.users.model' => User::class]);
@@ -72,6 +74,14 @@ class TailyServiceProvider extends ServiceProvider
         $this->callAfterResolving(Router::class, function (Router $router) {
             $router->aliasMiddleware('admin', EnsureUserIsAdmin::class);
         });
+    }
+
+    protected function configureMediaLibrary(): void
+    {
+        config([
+            'media-library.url_generator' => MediaUrlGenerator::class,
+            'media-library.queue_conversions_by_default' => false,
+        ]);
     }
 
     protected function registerFilesystemDisks(): void
