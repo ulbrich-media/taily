@@ -29,6 +29,8 @@ class TailyServiceProvider extends ServiceProvider
         $this->loadMigrationsFrom(__DIR__.'/../../database/migrations');
         $this->loadViewsFrom(__DIR__.'/../../resources/views', 'taily');
 
+        $this->registerFilesystemDisks();
+
         JsonResource::withoutWrapping();
         config(['auth.providers.users.model' => User::class]);
 
@@ -70,5 +72,21 @@ class TailyServiceProvider extends ServiceProvider
         $this->callAfterResolving(Router::class, function (Router $router) {
             $router->aliasMiddleware('admin', EnsureUserIsAdmin::class);
         });
+    }
+
+    protected function registerFilesystemDisks(): void
+    {
+        $disks = ['animal-pictures', 'person-pictures', 'adoption-contract'];
+
+        foreach ($disks as $disk) {
+            if (! config("filesystems.disks.{$disk}")) {
+                config(["filesystems.disks.{$disk}" => [
+                    'driver' => 'local',
+                    'root' => storage_path("app/{$disk}"),
+                    'throw' => false,
+                    'report' => false,
+                ]]);
+            }
+        }
     }
 }
