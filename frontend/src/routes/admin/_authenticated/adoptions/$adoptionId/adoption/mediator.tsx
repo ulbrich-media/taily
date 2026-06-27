@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useBreadcrumbs } from '@/router/useBreadcrumbs'
 import { BreadcrumbNav } from '@/router/BreadcrumbNav'
 import { queryClient } from '@/lib/queryClient.ts'
-import { listPersonsQuery } from '@/lib/api/persons'
+import { listPeopleQuery } from '@/admin/module/people/api/queries.ts'
 import { getAdoptionQuery } from '@/admin/module/adoptions/api/queries.ts'
 import { AdoptionEditMediatorPage } from '@/admin/module/adoptions/pages/AdoptionEditMediatorPage.tsx'
 import { useSuspenseQuery } from '@tanstack/react-query'
@@ -12,7 +12,7 @@ export const Route = createFileRoute(
   '/admin/_authenticated/adoptions/$adoptionId/adoption/mediator'
 )({
   loader: async ({ params }) => {
-    await queryClient.ensureQueryData(listPersonsQuery)
+    await queryClient.ensureQueryData(listPeopleQuery)
     await queryClient.ensureQueryData(getAdoptionQuery(params.adoptionId))
   },
   component: RouteComponent,
@@ -26,7 +26,7 @@ function RouteComponent() {
   const { adoptionId } = Route.useParams()
   const navigate = AdoptionDetailRoute.useNavigate()
   const { data: adoption } = useSuspenseQuery(getAdoptionQuery(adoptionId))
-  const { data: persons } = useSuspenseQuery(listPersonsQuery)
+  const { data: persons } = useSuspenseQuery(listPeopleQuery)
 
   const mediators = persons.filter((p) => p.mediator_animal_types?.length > 0)
 

@@ -93,3 +93,17 @@ The public API is documented via a static OpenAPI spec at `api/public/openapi.ya
 ## Restrictions
 
 - You are not allowed to add packages on your own. You can consider them but have to ask for consent before installation.
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in GitHub Issues (`ulbrich-media/taily`); external PRs are not a triage surface. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default label strings: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Multi-context repo — `CONTEXT-MAP.md` at the root points to per-context `CONTEXT.md` files (one for `api/`, one for `frontend/`); system-wide decisions live in `docs/ADRs/`. See `docs/agents/domain.md`.

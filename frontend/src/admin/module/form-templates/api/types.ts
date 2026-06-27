@@ -3,6 +3,7 @@
 // ---------------------------------------------------------------------------
 
 import type { FormTemplateResource } from '@/api/types/form-templates'
+import type { FieldType } from '@/lib/form-schema/field-type.ts'
 
 export interface FormTemplatesResponse {
   data: FormTemplateResource[]
@@ -39,18 +40,6 @@ export interface UpdateFormTemplateRequest {
 // ---------------------------------------------------------------------------
 // Form schema types (used by the form builder — not API resource shapes)
 // ---------------------------------------------------------------------------
-
-export type FieldType =
-  | 'text'
-  | 'textarea'
-  | 'number'
-  | 'checkbox'
-  | 'select'
-  | 'date'
-  | 'email'
-  | 'phone'
-  | 'radio'
-  | 'heading'
 
 export interface TextSettings {
   placeholder?: string
