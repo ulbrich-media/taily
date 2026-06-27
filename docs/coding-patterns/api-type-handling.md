@@ -39,7 +39,8 @@ One file per domain entity:
 frontend/src/api/types/
   animal-types.ts       ← AnimalTypeResource
   people.ts             ← PersonBaseResource, PersonListResource, PersonDetailResource
-  health-conditions.ts  ← HealthConditionVaccinationResource, HealthConditionTestResource
+  vaccinations.ts       ← VaccinationResource
+  medical-tests.ts      ← MedicalTestResource
   adoptions.ts          ← AdoptionBaseResource, ...
   animals.ts            ← AnimalListResource, AnimalDetailResource, AnimalPicture
   ...
