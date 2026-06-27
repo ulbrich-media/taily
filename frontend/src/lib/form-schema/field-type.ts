@@ -1,0 +1,11 @@
+export type FieldType =
+  | 'text'
+  | 'textarea'
+  | 'number'
+  | 'checkbox'
+  | 'select'
+  | 'date'
+  | 'email'
+  | 'phone'
+  | 'radio'
+  | 'heading'

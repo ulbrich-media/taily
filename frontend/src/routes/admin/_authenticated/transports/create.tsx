@@ -3,14 +3,14 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 import { queryClient } from '@/lib/queryClient'
 import { TransportCreateDialog } from '@/admin/module/transports/components/TransportCreateDialog'
 import { Route as TransportsRoute } from '@/routes/admin/_authenticated/transports/route'
-import { listPersonsQuery } from '@/lib/api/persons'
+import { listPeopleQuery } from '@/admin/module/people/api/queries.ts'
 import { useBreadcrumbs } from '@/router/useBreadcrumbs.ts'
 import { BreadcrumbNav } from '@/router/BreadcrumbNav.tsx'
 
 export const Route = createFileRoute('/admin/_authenticated/transports/create')(
   {
     loader: async () => {
-      await queryClient.ensureQueryData(listPersonsQuery)
+      await queryClient.ensureQueryData(listPeopleQuery)
     },
     component: RouteComponent,
     staticData: {
@@ -22,7 +22,7 @@ export const Route = createFileRoute('/admin/_authenticated/transports/create')(
 function RouteComponent() {
   const breadcrumbs = useBreadcrumbs()
   const navigate = TransportsRoute.useNavigate()
-  const { data: persons } = useSuspenseQuery(listPersonsQuery)
+  const { data: persons } = useSuspenseQuery(listPeopleQuery)
 
   const mediators = persons.filter((p) => p.mediator_animal_types?.length > 0)
 

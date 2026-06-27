@@ -36,63 +36,55 @@ class JsonSchemaValidator
     /**
      * Check whether the given array represents a valid form schema.
      *
-     * Validates the subset of JSON Schema Draft-07 that the form builder produces:
-     * - Top level must be type:object with a properties map
-     * - Each property type, if set, must be a recognised JSON Schema type
-     * - enum values must be non-empty arrays
-     * - Numeric constraints must be numeric
-     * - required entries must be strings referencing existing properties
+     * Structural rules (type:object, recognised property types, non-empty enums,
+     * numeric constraints, required as string array) are enforced by form-meta-schema.json
+     * via the Opis validator. The one rule JSON Schema cannot express — that every
+     * required entry names an existing property — is checked here.
      */
     public function isValidSchema(array $schema): bool
     {
-        if (($schema['type'] ?? null) !== 'object') {
+        $metaSchema = json_decode(file_get_contents(__DIR__.'/form-meta-schema.json'));
+        $validator = new Validator;
+        $result = $validator->validate($this->schemaToObject($schema), $metaSchema);
+
+        if (! $result->isValid()) {
             return false;
         }
 
-        if (! isset($schema['properties']) || ! is_array($schema['properties'])) {
-            return false;
-        }
-
-        // properties must be an object (string-keyed map), not a list
-        if (! empty($schema['properties']) && array_is_list($schema['properties'])) {
-            return false;
-        }
-
-        $validTypes = ['string', 'number', 'integer', 'boolean', 'array', 'object', 'null'];
-
-        foreach ($schema['properties'] as $prop) {
-            if (! is_array($prop)) {
+        // Cross-reference: every required entry must name an existing property.
+        foreach ($schema['required'] ?? [] as $field) {
+            if (! array_key_exists($field, (array) ($schema['properties'] ?? []))) {
                 return false;
-            }
-
-            if (isset($prop['type']) && ! in_array($prop['type'], $validTypes, true)) {
-                return false;
-            }
-
-            if (isset($prop['enum']) && (! is_array($prop['enum']) || empty($prop['enum']))) {
-                return false;
-            }
-
-            foreach (['minimum', 'maximum', 'minLength', 'maxLength'] as $constraint) {
-                if (isset($prop[$constraint]) && ! is_numeric($prop[$constraint])) {
-                    return false;
-                }
-            }
-        }
-
-        if (isset($schema['required'])) {
-            if (! is_array($schema['required'])) {
-                return false;
-            }
-
-            foreach ($schema['required'] as $field) {
-                if (! is_string($field) || ! array_key_exists($field, $schema['properties'])) {
-                    return false;
-                }
             }
         }
 
         return true;
+    }
+
+    /**
+     * Recursively convert a PHP schema array to stdClass for Opis.
+     * PHP encodes empty arrays as [] (JSON array) rather than {} (JSON object),
+     * so empty property maps and property definitions need explicit stdClass conversion.
+     * Lists (required, enum) are left as PHP arrays and encode correctly as JSON arrays.
+     */
+    private function schemaToObject(array $schema): \stdClass
+    {
+        $obj = new \stdClass;
+        foreach ($schema as $key => $value) {
+            if ($key === 'properties' && is_array($value)) {
+                $props = new \stdClass;
+                foreach ($value as $propKey => $propDef) {
+                    $props->$propKey = is_array($propDef) ? $this->schemaToObject($propDef) : $propDef;
+                }
+                $obj->$key = $props;
+            } elseif (is_array($value) && ! array_is_list($value)) {
+                $obj->$key = $this->schemaToObject($value);
+            } else {
+                $obj->$key = $value;
+            }
+        }
+
+        return $obj;
     }
 
     /**
