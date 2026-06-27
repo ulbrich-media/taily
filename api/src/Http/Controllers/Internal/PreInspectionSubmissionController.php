@@ -5,16 +5,15 @@ namespace Taily\Http\Controllers\Internal;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 use Taily\Http\Controllers\Controller;
 use Taily\Models\FormTemplateVersion;
 use Taily\Models\PreInspection;
-use Taily\Support\FormTemplateService;
+use Taily\Support\PreInspectionService;
 
 class PreInspectionSubmissionController extends Controller
 {
     public function __construct(
-        private FormTemplateService $formTemplateService
+        private PreInspectionService $preInspectionService,
     ) {}
 
     /**
@@ -104,31 +103,16 @@ class PreInspectionSubmissionController extends Controller
             }
 
             if ($version && array_key_exists('form_data', $validated)) {
-                $result = $this->formTemplateService->validateSubmissionData(
-                    $version,
-                    $validated['form_data'] ?? []
-                );
-
-                if (! $result['valid']) {
-                    throw ValidationException::withMessages(
-                        collect($result['errors'])
-                            ->mapWithKeys(fn ($msgs, $key) => ["form_data.{$key}" => $msgs])
-                            ->toArray()
-                    );
-                }
+                $this->preInspectionService->validateFormDataOrFail($version, $validated['form_data'] ?? []);
             }
 
-            if ($version) {
-                $inspection->formSubmission()->create([
-                    'form_template_version_id' => $version->id,
-                    'data' => $validated['form_data'] ?? [],
-                ]);
-            }
-
-            $inspection->verdict = $validated['verdict'];
-            $inspection->notes = $validated['notes'] ?? '';
-            $inspection->submitted_at = now();
-            $inspection->save();
+            $this->preInspectionService->submitFirstTime(
+                $inspection,
+                $validated['verdict'],
+                $validated['notes'] ?? '',
+                $validated['form_data'] ?? null,
+                $version,
+            );
 
             return true;
         });

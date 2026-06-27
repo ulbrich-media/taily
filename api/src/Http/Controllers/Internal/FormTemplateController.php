@@ -5,8 +5,7 @@ namespace Taily\Http\Controllers\Internal;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Taily\Http\Controllers\Controller;
-use Taily\Http\Requests\StoreFormTemplateRequest;
-use Taily\Http\Requests\UpdateFormTemplateRequest;
+use Taily\Http\Requests\FormTemplateRequest;
 use Taily\Http\Resources\FormTemplateResource;
 use Taily\Models\FormTemplate;
 use Taily\Support\FormTemplateService;
@@ -30,7 +29,7 @@ class FormTemplateController extends Controller
     /**
      * Create a new form template with an initial version.
      */
-    public function store(StoreFormTemplateRequest $request): JsonResponse
+    public function store(FormTemplateRequest $request): JsonResponse
     {
         $template = $this->service->createTemplate($request->validated());
 
@@ -58,7 +57,7 @@ class FormTemplateController extends Controller
      * Update a form template. Non-breaking changes update the current version in place;
      * breaking schema changes create a new version automatically.
      */
-    public function update(UpdateFormTemplateRequest $request, FormTemplate $formTemplate): JsonResponse
+    public function update(FormTemplateRequest $request, FormTemplate $formTemplate): JsonResponse
     {
         $formTemplate->load('latestVersion');
         $latestVersion = $formTemplate->latestVersion;

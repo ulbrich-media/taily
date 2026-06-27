@@ -5,7 +5,7 @@ namespace Taily\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Taily\Support\JsonSchemaValidator;
 
-class UpdateFormTemplateRequest extends FormRequest
+class FormTemplateRequest extends FormRequest
 {
     public function authorize(): bool
     {

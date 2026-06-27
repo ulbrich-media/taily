@@ -5,20 +5,18 @@ namespace Taily\Http\Controllers\Internal;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Taily\Http\Controllers\Controller;
 use Taily\Http\Resources\PreInspectionDetailResource;
 use Taily\Http\Resources\PreInspectionListResource;
-use Taily\Models\FormTemplateVersion;
 use Taily\Models\Person;
 use Taily\Models\PreInspection;
-use Taily\Support\FormTemplateService;
+use Taily\Support\PreInspectionService;
 
 class PreInspectionController extends Controller
 {
     public function __construct(
-        private FormTemplateService $formTemplateService
+        private PreInspectionService $preInspectionService,
     ) {}
 
     public function index(Request $request): AnonymousResourceCollection
@@ -116,7 +114,6 @@ class PreInspectionController extends Controller
         ]);
 
         if (! $preInspection->isSubmitted()) {
-            // First submission: verdict is required
             if (! array_key_exists('verdict', $validated)) {
                 throw ValidationException::withMessages([
                     'verdict' => ['Das Urteil ist erforderlich.'],
@@ -126,7 +123,6 @@ class PreInspectionController extends Controller
             $preInspection->load('animalType.preInspectionFormTemplate.latestVersion');
             $latestVersion = $preInspection->animalType?->preInspectionFormTemplate?->latestVersion;
 
-            // form_data is required when the animal type has a form template
             if ($latestVersion && ! array_key_exists('form_data', $validated)) {
                 throw ValidationException::withMessages([
                     'form_data' => ['Formulardaten sind für diesen Tiertyp erforderlich.'],
@@ -134,22 +130,16 @@ class PreInspectionController extends Controller
             }
 
             if ($latestVersion) {
-                $this->validateFormData($latestVersion, $validated['form_data'] ?? []);
+                $this->preInspectionService->validateFormDataOrFail($latestVersion, $validated['form_data'] ?? []);
             }
 
-            DB::transaction(function () use ($preInspection, $validated, $latestVersion) {
-                if ($latestVersion) {
-                    $preInspection->formSubmission()->create([
-                        'form_template_version_id' => $latestVersion->id,
-                        'data' => $validated['form_data'] ?? [],
-                    ]);
-                }
-
-                $preInspection->verdict = $validated['verdict'];
-                $preInspection->notes = $validated['notes'] ?? '';
-                $preInspection->submitted_at = now();
-                $preInspection->save();
-            });
+            $this->preInspectionService->submitFirstTime(
+                $preInspection,
+                $validated['verdict'],
+                $validated['notes'] ?? '',
+                $validated['form_data'] ?? null,
+                $latestVersion,
+            );
 
             $preInspection->load($this->detailRelations());
 
@@ -159,25 +149,7 @@ class PreInspectionController extends Controller
             ]);
         }
 
-        // Post-submission: free editing
-        if (array_key_exists('form_data', $validated)) {
-            $preInspection->load('formSubmission.formTemplateVersion');
-            $submission = $preInspection->formSubmission;
-            $version = $submission?->formTemplateVersion;
-
-            if ($version && $validated['form_data'] !== null) {
-                $this->validateFormData($version, $validated['form_data']);
-                $submission->update(['data' => $validated['form_data']]);
-            }
-        }
-
-        if (array_key_exists('verdict', $validated)) {
-            $preInspection->verdict = $validated['verdict'];
-        }
-        if (array_key_exists('notes', $validated)) {
-            $preInspection->notes = $validated['notes'];
-        }
-        $preInspection->save();
+        $this->preInspectionService->updateAfterSubmission($preInspection, $validated);
 
         $preInspection->load($this->detailRelations());
 
@@ -192,19 +164,6 @@ class PreInspectionController extends Controller
         $preInspection->delete();
 
         return response()->json(['message' => 'Vorkontrolle erfolgreich gelöscht.']);
-    }
-
-    private function validateFormData(FormTemplateVersion $version, array $data): void
-    {
-        $result = $this->formTemplateService->validateSubmissionData($version, $data);
-
-        if (! $result['valid']) {
-            throw ValidationException::withMessages(
-                collect($result['errors'])
-                    ->mapWithKeys(fn ($msgs, $key) => ["form_data.{$key}" => $msgs])
-                    ->toArray()
-            );
-        }
     }
 
     private function detailRelations(): array
