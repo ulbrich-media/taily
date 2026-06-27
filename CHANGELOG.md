@@ -2,6 +2,13 @@
 
 All notable changes to Taily are documented here.
 
+## [0.7.1](https://github.com/ulbrich-media/taily/compare/v0.7.0...v0.7.1) (2026-06-27)
+
+
+### Bug Fixes
+
+* missing media library registration added ([057c16c](https://github.com/ulbrich-media/taily/commit/057c16c2bdfa5fbf1394c7b9f12f2f9f882c4271))
+
 # [0.7.0](https://github.com/ulbrich-media/taily/compare/v0.6.0...v0.7.0) (2026-06-27)
 
 
