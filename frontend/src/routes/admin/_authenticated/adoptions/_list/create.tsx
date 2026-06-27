@@ -4,7 +4,10 @@ import { useBreadcrumbs } from '@/router/useBreadcrumbs'
 import { BreadcrumbNav } from '@/router/BreadcrumbNav'
 import { queryClient } from '@/lib/queryClient.ts'
 import { listAnimalsQuery } from '@/admin/module/animals/api/queries.ts'
-import { listPeopleQuery, listPeopleFilteredQuery } from '@/admin/module/people/api/queries.ts'
+import {
+  listPeopleQuery,
+  listPeopleFilteredQuery,
+} from '@/admin/module/people/api/queries.ts'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { Route as AdoptionDetailRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/route'
 import { Route as AdoptionsListRoute } from '@/routes/admin/_authenticated/adoptions/_list/route'

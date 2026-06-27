@@ -1,4 +1,7 @@
-import type { JsonSchemaProperty, UiSchemaFieldOptions } from '@/api/types/form-schemas'
+import type {
+  JsonSchemaProperty,
+  UiSchemaFieldOptions,
+} from '@/api/types/form-schemas'
 import type { FieldType } from './field-type'
 
 export function detectFieldType(

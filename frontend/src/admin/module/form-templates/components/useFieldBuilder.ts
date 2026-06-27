@@ -10,10 +10,10 @@ import {
   type UniqueIdentifier,
 } from '@dnd-kit/core'
 import { arrayMove } from '@dnd-kit/sortable'
-import type { FieldType } from '../api/types'
 import type { EditorField } from './shared/EditorField'
 import { getFieldTypeDef } from './field-types'
 import { DROPPABLE_ID } from './schema'
+import type { FieldType } from '@/lib/form-schema/field-type.ts'
 
 const PLACEHOLDER_ID = '__placeholder__'
 

@@ -1,7 +1,10 @@
 import type { EditorField } from './shared/EditorField'
 import { getFieldTypeDef } from './field-types'
 import { detectFieldType } from '@/lib/form-schema/detect-field-type'
-import type { JsonSchemaProperty, UiSchemaFieldOptions } from '@/api/types/form-schemas'
+import type {
+  JsonSchemaProperty,
+  UiSchemaFieldOptions,
+} from '@/api/types/form-schemas'
 
 export const DROPPABLE_ID = 'field-list'
 
@@ -12,7 +15,10 @@ export function parseJsonSchema(
   schema: Record<string, unknown>,
   uiSchema: Record<string, unknown> | null
 ): EditorField[] {
-  const properties = (schema.properties ?? {}) as Record<string, JsonSchemaProperty>
+  const properties = (schema.properties ?? {}) as Record<
+    string,
+    JsonSchemaProperty
+  >
   const required = (schema.required ?? []) as string[]
   const ui = uiSchema ?? {}
   const fieldOrder = (ui['ui:order'] ?? []) as string[]

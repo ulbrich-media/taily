@@ -1,4 +1,8 @@
-import type { JsonSchemaProperty, UiSchema, UiSchemaFieldOptions } from '@/api/types/form-schemas'
+import type {
+  JsonSchemaProperty,
+  UiSchema,
+  UiSchemaFieldOptions,
+} from '@/api/types/form-schemas'
 
 export function resolveFieldOrder(
   properties: Record<string, JsonSchemaProperty>,

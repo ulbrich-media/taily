@@ -1,4 +1,4 @@
-import type { FieldType } from '../../api/types'
+import type { FieldType } from '@/lib/form-schema/field-type.ts'
 import type { FieldTypeDefinition } from './types'
 import { textFieldType, textareaFieldType } from './text'
 import { numberFieldType } from './number'
