@@ -5,6 +5,7 @@ namespace Taily\Http\Controllers\Internal;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Taily\Http\Controllers\Controller;
 use Taily\Models\FormTemplateVersion;
 use Taily\Models\PreInspection;
@@ -102,7 +103,12 @@ class PreInspectionSubmissionController extends Controller
                 $version = $inspection->animalType?->preInspectionFormTemplate?->latestVersion;
             }
 
-            if ($version && array_key_exists('form_data', $validated)) {
+            if ($version) {
+                if (! array_key_exists('form_data', $validated)) {
+                    throw ValidationException::withMessages([
+                        'form_data' => ['Formulardaten sind für diesen Tiertyp erforderlich.'],
+                    ]);
+                }
                 $this->preInspectionService->validateFormDataOrFail($version, $validated['form_data'] ?? []);
             }
 

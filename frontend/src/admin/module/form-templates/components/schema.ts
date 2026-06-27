@@ -1,8 +1,10 @@
 import type { EditorField } from './shared/EditorField'
 import { getFieldTypeDef } from './field-types'
 import { detectFieldType } from '@/lib/form-schema/detect-field-type'
+import { resolveFieldOrder } from '@/lib/form-schema/resolve-field-order'
 import type {
   JsonSchemaProperty,
+  UiSchema,
   UiSchemaFieldOptions,
 } from '@/api/types/form-schemas'
 
@@ -23,20 +25,7 @@ export function parseJsonSchema(
   const ui = uiSchema ?? {}
   const fieldOrder = (ui['ui:order'] ?? []) as string[]
 
-  // Use explicit order if available, fall back to Object.keys order.
-  // Heading fields only exist in uiSchema (no schema property), so include
-  // keys from ui:order that have ui:widget=heading even if absent from properties.
-  const keys =
-    fieldOrder.length > 0
-      ? [
-          ...fieldOrder.filter(
-            (k) =>
-              k in properties ||
-              (ui[k] as UiSchemaFieldOptions)?.['ui:widget'] === 'heading'
-          ),
-          ...Object.keys(properties).filter((k) => !fieldOrder.includes(k)),
-        ]
-      : Object.keys(properties)
+  const keys = resolveFieldOrder(properties, fieldOrder, ui as UiSchema)
 
   return keys.map((key) => {
     const schemaProp = (properties[key] ?? {}) as JsonSchemaProperty

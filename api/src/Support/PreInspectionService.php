@@ -63,11 +63,16 @@ class PreInspectionService
     public function updateAfterSubmission(PreInspection $inspection, array $changes): void
     {
         if (array_key_exists('form_data', $changes)) {
+            if ($changes['form_data'] === null) {
+                throw ValidationException::withMessages([
+                    'form_data' => ['Formulardaten dürfen nicht leer sein.'],
+                ]);
+            }
             $inspection->load('formSubmission.formTemplateVersion');
             $submission = $inspection->formSubmission;
             $version = $submission?->formTemplateVersion;
 
-            if ($version && $changes['form_data'] !== null) {
+            if ($version) {
                 $this->validateFormDataOrFail($version, $changes['form_data']);
                 $submission->update(['data' => $changes['form_data']]);
             }

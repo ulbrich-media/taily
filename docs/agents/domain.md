@@ -14,14 +14,14 @@ If any of these files don't exist, **proceed silently**. Don't flag their absenc
 
 This is a multi-context repo — `CONTEXT-MAP.md` at the root points to per-context domain files:
 
-```
+```text
 /
-├── CONTEXT-MAP.md                     ← root index (to be created)
+├── CONTEXT-MAP.md                     ← root index
 ├── docs/ADRs/                         ← system-wide architectural decisions
 ├── api/
-│   └── CONTEXT.md                     ← backend domain language (to be created)
+│   └── CONTEXT.md                     ← backend domain language
 └── frontend/
-    └── CONTEXT.md                     ← frontend domain language (to be created)
+    └── CONTEXT.md                     ← frontend domain language
 ```
 
 ## Use the glossary's vocabulary

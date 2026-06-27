@@ -21,8 +21,8 @@
           },
           "minimum": { "type": "number" },
           "maximum": { "type": "number" },
-          "minLength": { "type": "number" },
-          "maxLength": { "type": "number" }
+          "minLength": { "type": "integer", "minimum": 0 },
+          "maxLength": { "type": "integer", "minimum": 0 }
         },
         "additionalProperties": true
       }
