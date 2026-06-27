@@ -2,6 +2,19 @@
 
 All notable changes to Taily are documented here.
 
+# [0.7.0](https://github.com/ulbrich-media/taily/compare/v0.6.0...v0.7.0) (2026-06-27)
+
+
+### Bug Fixes
+
+* missing filesystem registration added ([9b7014f](https://github.com/ulbrich-media/taily/commit/9b7014fdffdf2beef720634fefd65fa0ef19be4a))
+
+
+### Features
+
+* dynamic page titles added ([#79](https://github.com/ulbrich-media/taily/issues/79)) ([7b99cbe](https://github.com/ulbrich-media/taily/commit/7b99cbe4e9964a64dc76c357d321cc2a9faa95e6))
+* form detail page rebuild ([#74](https://github.com/ulbrich-media/taily/issues/74)) ([060fc41](https://github.com/ulbrich-media/taily/commit/060fc41fb094660b6f727734593b5c7b32a0d576))
+
 # [0.6.0](https://github.com/ulbrich-media/taily/compare/v0.5.0...v0.6.0) (2026-06-21)
 
 
