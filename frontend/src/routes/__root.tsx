@@ -4,6 +4,7 @@ import { AuthProvider } from '@/lib/auth'
 import { ErrorInfoComponent } from '@/components/ErrorInfoComponent.tsx'
 import { Route as DashboardRoute } from '@/routes/admin/_authenticated/index'
 import { Route as LoginRoute } from '@/routes/admin/login'
+import { useDocumentTitle } from '@/router/useDocumentTitle'
 
 export interface RouterContext {
   isAdmin: boolean
@@ -19,6 +20,8 @@ declare module '@tanstack/react-router' {
 const RootLayout = () => {
   const navigateToDashboard = DashboardRoute.useNavigate()
   const navigateToLogin = LoginRoute.useNavigate()
+
+  useDocumentTitle()
 
   return (
     <AuthProvider
