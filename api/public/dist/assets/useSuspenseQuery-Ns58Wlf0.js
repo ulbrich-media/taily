@@ -1,0 +1,1 @@
+import{Gr as e,Jr as t,Kr as n}from"./index-C8ym6Oi7.js";function r(r,i){return e({...r,enabled:!0,suspense:!0,throwOnError:n,placeholderData:void 0},t,i)}export{r as t};
