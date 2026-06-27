@@ -4,8 +4,7 @@ import { useBreadcrumbs } from '@/router/useBreadcrumbs'
 import { BreadcrumbNav } from '@/router/BreadcrumbNav'
 import { queryClient } from '@/lib/queryClient.ts'
 import { listAnimalsQuery } from '@/admin/module/animals/api/queries.ts'
-import { listPeopleFilteredQuery } from '@/admin/module/people/api/queries.ts'
-import { listPersonsQuery } from '@/lib/api/persons'
+import { listPeopleQuery, listPeopleFilteredQuery } from '@/admin/module/people/api/queries.ts'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { Route as AdoptionDetailRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/route'
 import { Route as AdoptionsListRoute } from '@/routes/admin/_authenticated/adoptions/_list/route'
@@ -16,7 +15,7 @@ export const Route = createFileRoute(
   loader: async () => {
     await Promise.all([
       queryClient.ensureQueryData(listAnimalsQuery()),
-      queryClient.ensureQueryData(listPersonsQuery),
+      queryClient.ensureQueryData(listPeopleQuery),
       queryClient.ensureQueryData(
         listPeopleFilteredQuery({
           role: 'mediator',
@@ -35,7 +34,7 @@ function RouteComponent() {
   const navigateToAdoptionDetail = AdoptionDetailRoute.useNavigate()
   const navigateToAdoptionsList = AdoptionsListRoute.useNavigate()
   const { data: animals } = useSuspenseQuery(listAnimalsQuery())
-  const { data: persons } = useSuspenseQuery(listPersonsQuery)
+  const { data: persons } = useSuspenseQuery(listPeopleQuery)
   const { data: mediators } = useSuspenseQuery(
     listPeopleFilteredQuery({ role: 'mediator' })
   )
