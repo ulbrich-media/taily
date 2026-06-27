@@ -15,9 +15,13 @@ An animal that is or was open for adoption. With all his information that is rel
 
 Any animal has to be an animal type (like dog, cat). The animal type allows customizing both the animal and the adoption process to meet the requirements of that kind of animal. 
 
-#### Health Condition
+#### Vaccination
 
-A health condition represents either a kind of sickness an animal may have been tested for or a vaccination an animal may receive. Health conditions are created animal type specific and are available while editing these animals. 
+A vaccination type that can be recorded for an Animal. Vaccinations are defined per Animal Type and linked to individual Animals with the date they were administered (`vaccinated_at`).
+
+#### Medical Test
+
+A health or sickness test type that can be recorded for an Animal. Medical Tests are defined per Animal Type and linked to individual Animals with the test date (`tested_at`) and a result.
 
 ### Person 
 
