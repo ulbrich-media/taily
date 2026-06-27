@@ -4,28 +4,12 @@ import type {
   UiSchema,
   UiSchemaFieldOptions,
 } from '@/api/types/form-schemas'
+import { resolveFieldOrder } from '@/lib/form-schema/resolve-field-order'
 
 interface DynamicFormDisplayProps {
   schema: JsonSchema
   uiSchema?: UiSchema
   data: Record<string, unknown>
-}
-
-function resolveFieldOrder(
-  properties: Record<string, JsonSchemaProperty>,
-  uiOrder: string[] | undefined,
-  uiSchema: UiSchema = {}
-): string[] {
-  if (uiOrder && uiOrder.length > 0) {
-    const inOrder = uiOrder.filter(
-      (k) =>
-        k in properties ||
-        (uiSchema[k] as UiSchemaFieldOptions)?.['ui:widget'] === 'heading'
-    )
-    const rest = Object.keys(properties).filter((k) => !uiOrder.includes(k))
-    return [...inOrder, ...rest]
-  }
-  return Object.keys(properties)
 }
 
 function formatValue(
@@ -69,7 +53,7 @@ export function DynamicFormDisplay({
       {orderedKeys.map((key) => {
         const prop = schema.properties?.[key] ?? {}
         const uiOptions = (uiSchema[key] ?? {}) as UiSchemaFieldOptions
-        const title = uiOptions['ui:title'] ?? prop.type ?? key
+        const title = uiOptions['ui:title'] ?? prop.title ?? key
         const widget = uiOptions['ui:widget']
 
         if (prop.type === 'null' || widget === 'heading') {

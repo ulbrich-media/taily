@@ -1,6 +1,7 @@
 import type { Control, FieldValues } from 'react-hook-form'
 import type { z } from 'zod'
-import type { FieldType, FieldSettings } from '../../api/types'
+import type { FieldType } from '@/lib/form-schema/field-type'
+import type { FieldSettings } from '../../api/types'
 
 export interface FieldTypeDefinition {
   type: FieldType
