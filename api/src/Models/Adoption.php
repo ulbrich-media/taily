@@ -123,7 +123,7 @@ class Adoption extends Model implements HasMedia
         }
 
         if ($inspections->whereNull('submitted_at')->isNotEmpty()) {
-            return 'in_progress';
+            return 'pending';
         }
 
         return 'finished';

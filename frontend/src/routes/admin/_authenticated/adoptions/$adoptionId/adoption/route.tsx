@@ -4,7 +4,7 @@ import { getAdoptionQuery } from '@/admin/module/adoptions/api/queries'
 import { listPreInspectionsByPersonAndAnimalTypeQuery } from '@/admin/module/pre-inspections/api/queries'
 import { AdoptionDetailPage } from '@/admin/module/adoptions/pages/AdoptionDetailPage'
 import { Button } from '@/shadcn/components/ui/button'
-import { Edit, Eye, PlusCircle, Ban, RotateCcw, Truck, X } from 'lucide-react'
+import { Edit, PlusCircle, Ban, RotateCcw, Truck, X } from 'lucide-react'
 import { Route as InternalNotesRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/internal-notes'
 import { Route as PreInspectionRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/pre-inspection'
 import { Route as NewInspectionRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/new-inspection'
@@ -37,11 +37,19 @@ function RouteComponent() {
     listPreInspectionsByPersonAndAnimalTypeQuery(applicantId, animalTypeId)
   )
 
-  const editInternalNotesAction = (
+  const editInternalNotesAction = (hasNote: boolean) => (
     <Button size="sm" variant="outline" asChild>
       <InternalNotesRoute.Link params={{ adoptionId }}>
-        <Edit className="size-4" />
-        Notizen bearbeiten
+        {hasNote ? (
+          <>
+            <Edit />
+            Notizen bearbeiten
+          </>
+        ) : (
+          <>
+            <PlusCircle /> Notizen hinzufügen
+          </>
+        )}
       </InternalNotesRoute.Link>
     </Button>
   )
@@ -49,7 +57,7 @@ function RouteComponent() {
   const cancelAction = (
     <Button size="sm" variant="outline" asChild>
       <CancelRoute.Link params={{ adoptionId }}>
-        <Ban className="size-4" />
+        <Ban />
         Vermittlung abbrechen
       </CancelRoute.Link>
     </Button>
@@ -58,7 +66,7 @@ function RouteComponent() {
   const reopenAction = (
     <Button size="sm" variant="outline" asChild>
       <ReopenRoute.Link params={{ adoptionId }}>
-        <RotateCcw className="size-4" />
+        <RotateCcw />
         Vermittlung fortsetzen
       </ReopenRoute.Link>
     </Button>
@@ -67,17 +75,25 @@ function RouteComponent() {
   const editContractAction = (
     <Button size="sm" variant="outline" asChild>
       <ContractRoute.Link params={{ adoptionId }}>
-        <Edit className="size-4" />
+        <Edit />
         Schutzvertrag bearbeiten
       </ContractRoute.Link>
     </Button>
   )
 
-  const editPreInspectionAction = (
+  const editPreInspectionAction = (hasNote: boolean) => (
     <Button size="sm" variant="outline" asChild>
       <PreInspectionRoute.Link params={{ adoptionId }}>
-        <Edit className="size-4" />
-        Notizen bearbeiten
+        {hasNote ? (
+          <>
+            <Edit />
+            Notizen bearbeiten
+          </>
+        ) : (
+          <>
+            <PlusCircle /> Notizen hinzufügen
+          </>
+        )}
       </PreInspectionRoute.Link>
     </Button>
   )
@@ -85,7 +101,7 @@ function RouteComponent() {
   const newInspectionAction = (
     <Button size="sm" variant="outline" asChild>
       <NewInspectionRoute.Link params={{ adoptionId }}>
-        <PlusCircle className="size-4" />
+        <PlusCircle />
         Neue Kontrolle starten
       </NewInspectionRoute.Link>
     </Button>
@@ -97,12 +113,11 @@ function RouteComponent() {
     >
       {inspection.verdict !== 'pending' ? (
         <>
-          <Eye className="size-4" />
           <span>Öffnen</span>
         </>
       ) : (
         <>
-          <Edit className="size-4" />
+          <Edit />
           <span>Bearbeiten</span>
         </>
       )}
@@ -112,7 +127,7 @@ function RouteComponent() {
   const assignTransportAction = (
     <Button size="sm" variant="outline" asChild>
       <TransportAssignRoute.Link params={{ adoptionId }}>
-        <Truck className="size-4" />
+        <Truck />
         {adoption.transport_id ? 'Transport ändern' : 'Transport zuweisen'}
       </TransportAssignRoute.Link>
     </Button>
@@ -121,7 +136,7 @@ function RouteComponent() {
   const removeTransportAction = adoption.transport_id ? (
     <Button size="sm" variant="outline" asChild>
       <TransportRemoveRoute.Link params={{ adoptionId }}>
-        <X className="size-4" />
+        <X />
         Transport entfernen
       </TransportRemoveRoute.Link>
     </Button>
