@@ -60,6 +60,7 @@
     "extra": {
         "laravel": {
             "providers": [
+                "Taily\\Providers\\AppServiceProvider",
                 "Taily\\Providers\\TailyServiceProvider"
             ],
             "dont-discover": []
