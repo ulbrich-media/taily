@@ -16,7 +16,7 @@ class FrontendUriBuilder
 
     private static function callback(string $action, string $token): string
     {
-        $base = rtrim(config('app.frontend_url'), '/');
+        $base = rtrim(config('taily.frontend_url'), '/');
 
         return "{$base}/callback?action={$action}&token={$token}";
     }
