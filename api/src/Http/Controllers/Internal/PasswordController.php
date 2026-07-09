@@ -17,9 +17,12 @@ class PasswordController extends Controller
         $validated = $request->validated();
         $user = $request->user();
 
+        // auth:sanctum resolves stateful SPA requests via the underlying 'web' session
+        // guard, but logoutOtherDevices() only exists on that concrete SessionGuard —
+        // not on Sanctum's RequestGuard wrapper — so it must be called on 'web' directly.
         // Must run before the password attribute is swapped below: logoutOtherDevices()
         // re-checks the given plaintext against the user's *current* stored hash.
-        Auth::logoutOtherDevices($validated['current_password']);
+        Auth::guard('web')->logoutOtherDevices($validated['current_password']);
 
         $user->password = $validated['password'];
         $user->save();

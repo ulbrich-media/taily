@@ -1,6 +1,16 @@
 const API_URL_ROOT = import.meta.env.VITE_API_URL ?? window.location.origin
 const API_URL = `${API_URL_ROOT}/internal`
 
+export class ApiValidationError extends Error {
+  errors?: Record<string, string[]>
+
+  constructor(message: string, errors?: Record<string, string[]>) {
+    super(message)
+    this.name = 'ApiValidationError'
+    this.errors = errors
+  }
+}
+
 export async function csrfCookie(): Promise<void> {
   await fetch(`${API_URL_ROOT}/sanctum/csrf-cookie`, {
     credentials: 'include',
@@ -51,7 +61,10 @@ export async function apiRequest<T = unknown>(
     const error = await response.json().catch(() => ({
       message: response.statusText,
     }))
-    throw new Error(error.message || 'An error occurred')
+    throw new ApiValidationError(
+      error.message || 'An error occurred',
+      error.errors
+    )
   }
 
   return response.json()

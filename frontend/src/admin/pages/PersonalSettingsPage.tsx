@@ -1,15 +1,17 @@
 import type { ReactNode } from 'react'
-import { Key } from 'lucide-react'
+import { Key, KeyRound } from 'lucide-react'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { NavigationCards } from '@/components/navigation/NavigationCards'
 
 interface PersonalSettingsPageProps {
   apiTokensAction: ReactNode
+  changePasswordAction: ReactNode
   breadcrumb?: ReactNode
 }
 
 export function PersonalSettingsPage({
   apiTokensAction,
+  changePasswordAction,
   breadcrumb,
 }: PersonalSettingsPageProps) {
   return (
@@ -22,6 +24,13 @@ export function PersonalSettingsPage({
 
       <NavigationCards
         cards={[
+          {
+            icon: KeyRound,
+            title: 'Passwort ändern',
+            subtitle: 'Konto-Sicherheit',
+            description: 'Aktualisiere das Passwort für dein Konto',
+            actions: changePasswordAction,
+          },
           {
             icon: Key,
             title: 'API Tokens',
