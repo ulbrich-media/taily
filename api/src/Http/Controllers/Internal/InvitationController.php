@@ -3,9 +3,8 @@
 namespace Taily\Http\Controllers\Internal;
 
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Taily\Http\Controllers\Controller;
+use Taily\Http\Requests\AcceptInvitationRequest;
 use Taily\Models\UserInvitation;
 
 class InvitationController extends Controller
@@ -27,7 +26,7 @@ class InvitationController extends Controller
         ]);
     }
 
-    public function accept(Request $request, string $token): JsonResponse
+    public function accept(AcceptInvitationRequest $request, string $token): JsonResponse
     {
         $invitation = UserInvitation::findByToken($token);
 
@@ -37,14 +36,11 @@ class InvitationController extends Controller
             ], 404);
         }
 
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'password' => 'required|string|min:8|confirmed',
-        ]);
+        $validated = $request->validated();
 
         $user = $invitation->user;
         $user->name = $validated['name'];
-        $user->password = Hash::make($validated['password']);
+        $user->password = $validated['password'];
         $user->save();
 
         $invitation->markAsAccepted();

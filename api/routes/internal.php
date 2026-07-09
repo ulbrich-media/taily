@@ -13,6 +13,7 @@ use Taily\Http\Controllers\Internal\InvitationController;
 use Taily\Http\Controllers\Internal\MediaController;
 use Taily\Http\Controllers\Internal\MedicalTestController;
 use Taily\Http\Controllers\Internal\OrganizationController;
+use Taily\Http\Controllers\Internal\PasswordController;
 use Taily\Http\Controllers\Internal\PersonController;
 use Taily\Http\Controllers\Internal\PersonPictureController;
 use Taily\Http\Controllers\Internal\PreInspectionController;
@@ -43,7 +44,7 @@ Route::post('/login', [AuthenticatedSessionController::class, 'store']);
 Route::get('/invitations/{token}', [InvitationController::class, 'show']);
 Route::post('/invitations/{token}/accept', [InvitationController::class, 'accept']);
 
-Route::middleware(['auth:sanctum'])->group(function () {
+Route::middleware(['auth:sanctum', 'auth.session'])->group(function () {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy']);
     // Current user
     Route::get('/user', [UserController::class, 'current']);
@@ -51,6 +52,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Profile
     Route::get('/profile', [ProfileController::class, 'show']);
     Route::put('/profile', [ProfileController::class, 'update']);
+    Route::put('/profile/password', [PasswordController::class, 'update']);
 
     // Users administration
     Route::apiResource('users', UserController::class);
