@@ -47,7 +47,7 @@ describe('ForgotPasswordPage', () => {
 
     expect(
       await screen.findByText(
-        'Wir haben dir eine E-Mail mit einem Link zum Zurücksetzen deines Passworts gesendet.'
+        'Wenn ein Konto mit dieser E-Mail-Adresse existiert, haben wir dir eine E-Mail mit einem Link zum Zurücksetzen deines Passworts gesendet.'
       )
     ).toBeInTheDocument()
     expect(requestPasswordResetLinkMock).toHaveBeenCalledWith(
@@ -55,23 +55,21 @@ describe('ForgotPasswordPage', () => {
     )
   })
 
-  it('maps a backend error for an unknown email to a German message', async () => {
+  it('maps a backend email validation error to a German message', async () => {
     requestPasswordResetLinkMock.mockRejectedValue(
-      new ApiValidationError('passwords.user', {
-        email: ['passwords.user'],
+      new ApiValidationError('validation.email', {
+        email: ['validation.email'],
       })
     )
 
     const user = userEvent.setup()
     render(<ForgotPasswordPage onBackToLogin={vi.fn()} />)
 
-    await user.type(screen.getByLabelText('E-Mail'), 'nobody@example.com')
+    await user.type(screen.getByLabelText('E-Mail'), 'jane@example.com')
     await user.click(screen.getByRole('button', { name: 'Link senden' }))
 
     expect(
-      await screen.findByText(
-        'Zu dieser E-Mail-Adresse wurde kein Benutzer gefunden.'
-      )
+      await screen.findByText('Bitte gib eine gültige E-Mail Adresse ein.')
     ).toBeInTheDocument()
   })
 

@@ -75,7 +75,7 @@ export function ForgotPasswordPage({ onBackToLogin }: ForgotPasswordPageProps) {
             <CardTitle>Passwort vergessen</CardTitle>
             <CardDescription>
               {linkSent
-                ? 'Wir haben dir eine E-Mail mit einem Link zum Zurücksetzen deines Passworts gesendet.'
+                ? 'Wenn ein Konto mit dieser E-Mail-Adresse existiert, haben wir dir eine E-Mail mit einem Link zum Zurücksetzen deines Passworts gesendet.'
                 : 'Gib deine E-Mail Adresse ein und wir senden dir einen Link zum Zurücksetzen deines Passworts.'}
             </CardDescription>
           </CardHeader>

@@ -92,20 +92,28 @@ class PasswordResetTest extends TestCase
         );
     }
 
-    public function test_reset_link_request_fails_for_unknown_email(): void
+    public function test_reset_link_request_does_not_reveal_whether_the_email_exists(): void
     {
         Mail::fake();
 
-        $response = $this->postJson('/internal/forgot-password', [
+        $this->createUser();
+
+        // Known and unknown emails must be indistinguishable to the caller.
+        $knownResponse = $this->postJson('/internal/forgot-password', [
+            'email' => 'jane@example.com',
+        ]);
+        $unknownResponse = $this->postJson('/internal/forgot-password', [
             'email' => 'nobody@example.com',
         ]);
 
-        $response->assertUnprocessable();
-        $response->assertJsonValidationErrors('email');
-        Mail::assertNothingSent();
+        $knownResponse->assertOk();
+        $unknownResponse->assertOk();
+        $this->assertSame($knownResponse->json(), $unknownResponse->json());
+
+        Mail::assertSent(PasswordResetMail::class, 1);
     }
 
-    public function test_reset_link_requests_are_throttled(): void
+    public function test_reset_link_requests_are_throttled_without_revealing_it(): void
     {
         Mail::fake();
 
@@ -115,10 +123,14 @@ class PasswordResetTest extends TestCase
             'email' => 'jane@example.com',
         ])->assertOk();
 
-        // auth.passwords.users.throttle blocks a second link within 60 seconds.
+        // auth.passwords.users.throttle blocks a second mail within 60 seconds,
+        // but the response stays the generic one (a throttle error would reveal
+        // that the email belongs to an account).
         $this->postJson('/internal/forgot-password', [
             'email' => 'jane@example.com',
-        ])->assertUnprocessable();
+        ])->assertOk();
+
+        Mail::assertSent(PasswordResetMail::class, 1);
     }
 
     public function test_password_can_be_reset_with_valid_token(): void
@@ -158,6 +170,30 @@ class PasswordResetTest extends TestCase
         $response->assertUnprocessable();
         $response->assertJsonValidationErrors('email');
         $this->assertTrue(Hash::check('OldPassword1', $user->fresh()->password));
+    }
+
+    public function test_failed_reset_does_not_reveal_whether_the_email_exists(): void
+    {
+        $this->createUser();
+
+        // An unknown email must produce the same error as a bad token for a
+        // known email, so the endpoint cannot be used for email enumeration.
+        $knownResponse = $this->postJson('/internal/reset-password', [
+            'token' => 'invalid-token',
+            'email' => 'jane@example.com',
+            'password' => 'NewPassword2',
+            'password_confirmation' => 'NewPassword2',
+        ]);
+        $unknownResponse = $this->postJson('/internal/reset-password', [
+            'token' => 'invalid-token',
+            'email' => 'nobody@example.com',
+            'password' => 'NewPassword2',
+            'password_confirmation' => 'NewPassword2',
+        ]);
+
+        $knownResponse->assertUnprocessable();
+        $unknownResponse->assertUnprocessable();
+        $this->assertSame($knownResponse->json(), $unknownResponse->json());
     }
 
     public function test_password_reset_fails_with_weak_password(): void

@@ -5,11 +5,16 @@ namespace Taily\Providers;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Fortify\Contracts\FailedPasswordResetLinkRequestResponse as FailedPasswordResetLinkRequestResponseContract;
+use Laravel\Fortify\Contracts\FailedPasswordResetResponse as FailedPasswordResetResponseContract;
 use Laravel\Fortify\Contracts\PasswordUpdateResponse as PasswordUpdateResponseContract;
+use Laravel\Fortify\Contracts\SuccessfulPasswordResetLinkRequestResponse as SuccessfulPasswordResetLinkRequestResponseContract;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
 use Taily\Actions\Fortify\ResetUserPassword;
 use Taily\Actions\Fortify\UpdateUserPassword;
+use Taily\Http\Responses\FailedPasswordResetResponse;
+use Taily\Http\Responses\PasswordResetLinkRequestedResponse;
 use Taily\Http\Responses\PasswordUpdateResponse;
 use Taily\Listeners\UpdateLastLoginTimestamp;
 
@@ -26,6 +31,12 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::ignoreRoutes();
 
         $this->app->singleton(PasswordUpdateResponseContract::class, PasswordUpdateResponse::class);
+
+        // Anti-enumeration: reset link requests always answer generically and
+        // failed resets never reveal whether the email exists.
+        $this->app->singleton(SuccessfulPasswordResetLinkRequestResponseContract::class, PasswordResetLinkRequestedResponse::class);
+        $this->app->singleton(FailedPasswordResetLinkRequestResponseContract::class, PasswordResetLinkRequestedResponse::class);
+        $this->app->singleton(FailedPasswordResetResponseContract::class, FailedPasswordResetResponse::class);
     }
 
     /**

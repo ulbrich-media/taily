@@ -19,11 +19,11 @@ export function mapPasswordValidationMessage(rawMessage: string): string {
   return passwordValidationMessages[rawMessage] ?? rawMessage
 }
 
-// Error keys returned by the password reset endpoints (Laravel password broker).
+// Error keys returned by the password reset endpoints. The API deliberately
+// answers link requests generically and reports every failed reset as an
+// invalid token, so it never reveals whether an email has an account.
 const passwordResetMessages: Record<string, string> = {
-  'passwords.user': 'Zu dieser E-Mail-Adresse wurde kein Benutzer gefunden.',
-  'passwords.throttled':
-    'Bitte warte einen Moment, bevor du einen neuen Link anforderst.',
+  'validation.email': 'Bitte gib eine gültige E-Mail Adresse ein.',
   'passwords.token':
     'Der Link ist ungültig oder abgelaufen. Bitte fordere einen neuen Link an.',
 }
