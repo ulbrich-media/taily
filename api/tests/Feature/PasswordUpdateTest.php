@@ -24,8 +24,9 @@ class PasswordUpdateTest extends TestCase
 
         // A Referer matching config('sanctum.stateful') makes Sanctum treat the
         // request as coming from the SPA, which is what actually pulls the session/
-        // cookie middleware (including auth.session) into the pipeline in production.
-        $this->withHeader('referer', 'http://localhost');
+        // cookie middleware into the pipeline in production. SANCTUM_STATEFUL_DOMAINS
+        // is taily.ddev.site:5544 (see .env), so that's the only referer that triggers it.
+        $this->withHeader('referer', 'http://taily.ddev.site:5544');
     }
 
     private function createUser(string $password): User
@@ -106,5 +107,47 @@ class PasswordUpdateTest extends TestCase
         ]);
 
         $response->assertUnauthorized();
+    }
+
+    // actingAs() short-circuits the real login flow, so it never exercises the
+    // session-hash-invalidation middleware on a first request (the hash isn't
+    // cached in the session yet). Logging in for real and priming the session
+    // with a prior request is what reproduces the self-logout regression.
+    public function test_current_session_stays_authenticated_after_successful_password_change(): void
+    {
+        $this->createUser('OldPassword1');
+
+        $this->postJson('/internal/login', [
+            'email' => 'jane@example.com',
+            'password' => 'OldPassword1',
+        ])->assertOk();
+        $this->getJson('/internal/user')->assertOk();
+
+        $this->putJson('/internal/profile/password', [
+            'current_password' => 'OldPassword1',
+            'password' => 'NewPassword2',
+            'password_confirmation' => 'NewPassword2',
+        ])->assertOk();
+
+        $this->getJson('/internal/user')->assertOk();
+    }
+
+    public function test_current_session_stays_authenticated_after_failed_password_change(): void
+    {
+        $this->createUser('OldPassword1');
+
+        $this->postJson('/internal/login', [
+            'email' => 'jane@example.com',
+            'password' => 'OldPassword1',
+        ])->assertOk();
+        $this->getJson('/internal/user')->assertOk();
+
+        $this->putJson('/internal/profile/password', [
+            'current_password' => 'WrongPassword1',
+            'password' => 'NewPassword2',
+            'password_confirmation' => 'NewPassword2',
+        ])->assertUnprocessable();
+
+        $this->getJson('/internal/user')->assertOk();
     }
 }

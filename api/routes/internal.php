@@ -44,7 +44,7 @@ Route::post('/login', [AuthenticatedSessionController::class, 'store']);
 Route::get('/invitations/{token}', [InvitationController::class, 'show']);
 Route::post('/invitations/{token}/accept', [InvitationController::class, 'accept']);
 
-Route::middleware(['auth:sanctum', 'auth.session'])->group(function () {
+Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy']);
     // Current user
     Route::get('/user', [UserController::class, 'current']);

@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { ChangePasswordPage } from '@/admin/module/change-password/pages/ChangePasswordPage'
+import { ChangePasswordPage } from '@/admin/module/profile/pages/ChangePasswordPage'
 import { useBreadcrumbs } from '@/router/useBreadcrumbs'
 import { BreadcrumbNav } from '@/router/BreadcrumbNav'
 import { Route as PersonalSettingsIndexRoute } from '@/routes/admin/_authenticated/personal-settings/index'
@@ -17,8 +17,8 @@ function RouteComponent() {
 
   return (
     <ChangePasswordPage
-      breadcrumb={<BreadcrumbNav items={breadcrumbs} />}
-      onSuccess={() => {
+      breadcrumb={<BreadcrumbNav items={breadcrumbs} size="sm" />}
+      onClose={() => {
         navigate({})
       }}
     />

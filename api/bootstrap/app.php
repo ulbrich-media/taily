@@ -6,7 +6,6 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull;
 use Laravel\Sanctum\Http\Middleware\CheckAbilities;
 use Laravel\Sanctum\Http\Middleware\CheckForAnyAbility;
-use Taily\Http\Middleware\AuthenticateSanctumSession;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -17,9 +16,6 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'ability' => CheckAbilities::class,
             'abilities' => CheckForAnyAbility::class,
-            // Overrides Laravel's stock 'auth.session' middleware, which is
-            // incompatible with Sanctum's stateful SPA guard (see the class docblock).
-            'auth.session' => AuthenticateSanctumSession::class,
         ]);
         $middleware->statefulApi();
         $middleware->validateCsrfTokens(except: [
