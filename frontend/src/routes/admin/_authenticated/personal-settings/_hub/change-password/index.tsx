@@ -2,10 +2,10 @@ import { createFileRoute } from '@tanstack/react-router'
 import { ChangePasswordPage } from '@/admin/module/profile/pages/ChangePasswordPage'
 import { useBreadcrumbs } from '@/router/useBreadcrumbs'
 import { BreadcrumbNav } from '@/router/BreadcrumbNav'
-import { Route as PersonalSettingsIndexRoute } from '@/routes/admin/_authenticated/personal-settings/index'
+import { Route as PersonalSettingsIndexRoute } from '@/routes/admin/_authenticated/personal-settings/_hub/index'
 
 export const Route = createFileRoute(
-  '/admin/_authenticated/personal-settings/change-password/'
+  '/admin/_authenticated/personal-settings/_hub/change-password/'
 )({
   staticData: { breadcrumb: 'Passwort ändern' },
   component: RouteComponent,
