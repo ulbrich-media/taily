@@ -42,9 +42,10 @@ Route::get('/media/{mediaUuid}', [MediaController::class, 'serve'])->name('media
 // Authentication routes (Laravel Fortify controllers, see ADR-008)
 Route::post('/login', [AuthenticatedSessionController::class, 'store']);
 
-// Password reset
-Route::post('/forgot-password', [PasswordResetLinkController::class, 'store']);
-Route::post('/reset-password', [NewPasswordController::class, 'store']);
+// Password reset (login throttling lives in Fortify's login pipeline; these
+// public endpoints need their own request-level limit against reset spam)
+Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])->middleware('throttle:6,1');
+Route::post('/reset-password', [NewPasswordController::class, 'store'])->middleware('throttle:6,1');
 
 // Public invitation routes
 Route::get('/invitations/{token}', [InvitationController::class, 'show']);

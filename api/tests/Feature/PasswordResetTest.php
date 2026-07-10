@@ -133,6 +133,24 @@ class PasswordResetTest extends TestCase
         Mail::assertSent(PasswordResetMail::class, 1);
     }
 
+    public function test_reset_link_requests_are_rate_limited_per_ip(): void
+    {
+        Mail::fake();
+
+        // The route allows 6 requests per minute per IP; the broker's own
+        // per-email throttle keeps answering 200, so spraying stops at the
+        // route limit.
+        for ($attempt = 0; $attempt < 6; $attempt++) {
+            $this->postJson('/internal/forgot-password', [
+                'email' => "probe{$attempt}@example.com",
+            ])->assertOk();
+        }
+
+        $this->postJson('/internal/forgot-password', [
+            'email' => 'probe6@example.com',
+        ])->assertStatus(429);
+    }
+
     public function test_password_can_be_reset_with_valid_token(): void
     {
         $user = $this->createUser();

@@ -4,6 +4,8 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import { withPasswordConfirmation } from '@/lib/password.schema'
+import { mapPasswordValidationMessage } from '@/lib/password.messages'
+import { ApiValidationError } from '@/lib/api'
 import {
   Card,
   CardContent,
@@ -83,6 +85,13 @@ function InvitationPage() {
       }, 1500)
     },
     onError: (err) => {
+      if (err instanceof ApiValidationError && err.errors?.password) {
+        form.setError('password', {
+          message: mapPasswordValidationMessage(err.errors.password[0]),
+        })
+        return
+      }
+
       toast.error(
         err instanceof Error
           ? err.message
