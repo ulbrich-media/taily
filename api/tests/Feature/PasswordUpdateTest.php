@@ -21,6 +21,11 @@ class PasswordUpdateTest extends TestCase
         Http::fake([
             'api.pwnedpasswords.com/*' => Http::response('', 200),
         ]);
+
+        // A Referer matching config('sanctum.stateful') makes Sanctum treat the
+        // request as coming from the SPA, which is what actually pulls the session/
+        // cookie middleware (including auth.session) into the pipeline in production.
+        $this->withHeader('referer', 'http://localhost');
     }
 
     private function createUser(string $password): User
