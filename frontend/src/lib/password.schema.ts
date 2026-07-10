@@ -6,7 +6,7 @@ export const passwordFieldSchema = z
   .regex(/[A-Za-z]/, 'Das Passwort muss mindestens einen Buchstaben enthalten')
   .regex(/[0-9]/, 'Das Passwort muss mindestens eine Zahl enthalten')
 
-const passwordConfirmationSchema = z
+export const passwordConfirmationSchema = z
   .object({
     password: passwordFieldSchema,
     password_confirmation: z.string().min(1, 'Bitte bestätige dein Passwort'),

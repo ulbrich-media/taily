@@ -14,10 +14,19 @@ class FrontendUriBuilder
         return static::callback('user_invite_accepted', $token);
     }
 
-    private static function callback(string $action, string $token): string
+    public static function passwordReset(string $token, string $email): string
+    {
+        return static::callback('password_reset', $token, ['email' => $email]);
+    }
+
+    /**
+     * @param  array<string, string>  $extraParams
+     */
+    private static function callback(string $action, string $token, array $extraParams = []): string
     {
         $base = rtrim(config('taily.frontend_url'), '/');
+        $query = http_build_query(['action' => $action, 'token' => $token, ...$extraParams]);
 
-        return "{$base}/callback?action={$action}&token={$token}";
+        return "{$base}/callback?{$query}";
     }
 }

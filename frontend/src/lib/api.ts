@@ -67,7 +67,9 @@ export async function apiRequest<T = unknown>(
     )
   }
 
-  return response.json()
+  // Some endpoints (e.g. Fortify's logout) answer 204 or an empty body.
+  const body = await response.text()
+  return body ? (JSON.parse(body) as T) : (undefined as T)
 }
 
 export { API_URL }

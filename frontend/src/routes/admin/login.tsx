@@ -8,8 +8,12 @@ export const Route = createFileRoute('/admin/login')({
 
 function RouteComponent() {
   const navigate = DashboardRoute.useNavigate()
+  const loginNavigate = Route.useNavigate()
 
   return (
-    <LoginPage onAlreadyAuthenticated={() => navigate({ replace: true })} />
+    <LoginPage
+      onAlreadyAuthenticated={() => navigate({ replace: true })}
+      onForgotPassword={() => loginNavigate({ to: '/admin/forgot-password' })}
+    />
   )
 }

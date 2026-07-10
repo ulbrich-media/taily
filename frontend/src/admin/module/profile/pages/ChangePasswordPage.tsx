@@ -24,7 +24,7 @@ import {
 import { ApiValidationError } from '@/lib/api'
 import { withPasswordConfirmation } from '@/lib/password.schema'
 import { updatePassword } from '@/admin/module/profile/api/requests'
-import { mapPasswordValidationMessage } from '@/admin/module/profile/api/validationMessages'
+import { mapPasswordValidationMessage } from '@/lib/password.messages'
 
 const changePasswordSchema = withPasswordConfirmation({
   current_password: z.string().min(1, 'Bitte gib dein aktuelles Passwort ein'),
