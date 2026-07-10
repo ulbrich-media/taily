@@ -24,6 +24,7 @@ import {
 import { ApiValidationError } from '@/lib/api'
 import { withPasswordConfirmation } from '@/lib/password.schema'
 import { updatePassword } from '@/admin/module/profile/api/requests'
+import { mapPasswordValidationMessage } from '@/admin/module/profile/api/validationMessages'
 
 const changePasswordSchema = withPasswordConfirmation({
   current_password: z.string().min(1, 'Bitte gib dein aktuelles Passwort ein'),
@@ -60,11 +61,15 @@ export function ChangePasswordPage({
       if (err instanceof ApiValidationError && err.errors) {
         if (err.errors.current_password) {
           form.setError('current_password', {
-            message: err.errors.current_password[0],
+            message: mapPasswordValidationMessage(
+              err.errors.current_password[0]
+            ),
           })
         }
         if (err.errors.password) {
-          form.setError('password', { message: err.errors.password[0] })
+          form.setError('password', {
+            message: mapPasswordValidationMessage(err.errors.password[0]),
+          })
         }
         if (!err.errors.current_password && !err.errors.password) {
           toast.error(err.message)
