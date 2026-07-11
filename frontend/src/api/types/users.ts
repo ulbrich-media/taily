@@ -21,6 +21,7 @@ export interface UserResource {
   name: string
   email: string
   role: UserRole
+  two_factor_enabled: boolean
   last_login_at: string | null
   created_at: string
   updated_at: string

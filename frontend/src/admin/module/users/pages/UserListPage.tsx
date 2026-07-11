@@ -11,6 +11,7 @@ import {
 import { Badge } from '@/shadcn/components/ui/badge'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { TableListView } from '@/components/list/TableListView'
+import { formatApiDate } from '@/lib/dates.utils'
 
 interface UserResourceListPageProps {
   users: UserResource[]
@@ -44,6 +45,14 @@ export function UserListPage({
     }
 
     return <Badge variant="secondary">Einladung ausstehend</Badge>
+  }
+
+  const getTwoFactorStatus = (user: UserResource) => {
+    if (user.two_factor_enabled) {
+      return <Badge variant="success">Aktiv</Badge>
+    }
+
+    return <Badge variant="outline">Inaktiv</Badge>
   }
 
   const formatLastLogin = (lastLogin: string | null) => {
@@ -97,6 +106,8 @@ export function UserListPage({
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>E-Mail</TableHead>
+                <TableHead>2FA</TableHead>
+                <TableHead>Registriert</TableHead>
                 <TableHead>Letzter Login</TableHead>
                 {renderRowActions && (
                   <TableHead className="th-contain"></TableHead>
@@ -110,6 +121,8 @@ export function UserListPage({
                     {user.name} {user.role === 'admin' && <Badge>Admin</Badge>}
                   </TableCell>
                   <TableCell>{user.email}</TableCell>
+                  <TableCell>{getTwoFactorStatus(user)}</TableCell>
+                  <TableCell>{formatApiDate(user.created_at)}</TableCell>
                   <TableCell>{getLastLogin(user)}</TableCell>
                   {renderRowActions && (
                     <TableCell className="text-right">
