@@ -33,11 +33,13 @@ type LoginFormData = z.infer<typeof loginSchema>
 interface LoginPageProps {
   onAlreadyAuthenticated: () => void
   onForgotPassword: () => void
+  onTwoFactorRequired: () => void
 }
 
 export function LoginPage({
   onAlreadyAuthenticated,
   onForgotPassword,
+  onTwoFactorRequired,
 }: LoginPageProps) {
   const { login, isAuthenticated, isLoading } = useAuth()
 
@@ -57,7 +59,10 @@ export function LoginPage({
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      await login(data.email, data.password)
+      const { twoFactorRequired } = await login(data.email, data.password)
+      if (twoFactorRequired) {
+        onTwoFactorRequired()
+      }
     } catch (err) {
       toast.error(
         err instanceof Error

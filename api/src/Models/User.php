@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Mail;
+use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Sanctum\HasApiTokens;
 use Taily\Enums\UserRole;
 use Taily\Mail\PasswordResetMail;
@@ -17,7 +18,7 @@ use Taily\Mail\PasswordResetMail;
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasApiTokens, HasFactory, HasUuids, Notifiable;
+    use HasApiTokens, HasFactory, HasUuids, Notifiable, TwoFactorAuthenticatable;
 
     protected static function newFactory(): UserFactory
     {
@@ -44,6 +45,11 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        // Fortify's TwoFactorAuthenticatable trait does not hide these itself,
+        // and ProfileController serializes the user via toArray(); keep the
+        // (encrypted) secret and recovery codes out of every response.
+        'two_factor_secret',
+        'two_factor_recovery_codes',
     ];
 
     /**

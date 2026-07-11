@@ -4,6 +4,7 @@ import { useBreadcrumbs } from '@/router/useBreadcrumbs'
 import { BreadcrumbNav } from '@/router/BreadcrumbNav'
 import { Route as ApiTokensRoute } from '@/routes/admin/_authenticated/personal-settings/api-tokens/route'
 import { Route as ChangePasswordRoute } from '@/routes/admin/_authenticated/personal-settings/_hub/change-password/index'
+import { Route as TwoFactorRoute } from '@/routes/admin/_authenticated/personal-settings/two-factor'
 import { Button } from '@/shadcn/components/ui/button'
 
 export const Route = createFileRoute(
@@ -23,6 +24,13 @@ function RouteComponent() {
             <ChangePasswordRoute.Link aria-label="Passwort ändern öffnen">
               Öffnen
             </ChangePasswordRoute.Link>
+          </Button>
+        }
+        twoFactorAction={
+          <Button variant="default_outline" asChild>
+            <TwoFactorRoute.Link aria-label="Zwei-Faktor-Authentifizierung öffnen">
+              Öffnen
+            </TwoFactorRoute.Link>
           </Button>
         }
         apiTokensAction={
