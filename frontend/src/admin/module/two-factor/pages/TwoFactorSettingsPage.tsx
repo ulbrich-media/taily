@@ -35,6 +35,7 @@ import {
   AlertDialogTrigger,
 } from '@/shadcn/components/ui/alert-dialog'
 import { useAuth } from '@/lib/auth.hook'
+import { usePasswordConfirmation } from '@/auth/usePasswordConfirmation'
 import { ApiValidationError } from '@/lib/api'
 import {
   confirmTwoFactor,
@@ -67,6 +68,17 @@ export function TwoFactorSettingsPage({
 }: TwoFactorSettingsPageProps) {
   const { user, refreshProfile } = useAuth()
   const isEnabled = user?.two_factor_enabled ?? false
+
+  // Disabling, revealing the secret, and viewing/regenerating recovery codes
+  // are gated server-side behind a fresh password confirmation; run each only
+  // once the confirmation is in place (the user is prompted if it isn't).
+  const { ensureConfirmed, dialog: passwordDialog } = usePasswordConfirmation()
+
+  const runConfirmed = async (action: () => void) => {
+    if (await ensureConfirmed()) {
+      action()
+    }
+  }
 
   // Populated while the user is enrolling (secret generated, not yet confirmed).
   const [setup, setSetup] = useState<SetupData | null>(null)
@@ -161,7 +173,9 @@ export function TwoFactorSettingsPage({
   })
 
   const onConfirm = (data: ConfirmFormData) => {
-    confirmMutation.mutate(data)
+    // Enrolment already confirmed the password when enabling, so this normally
+    // proceeds without a second prompt (the confirmation window is still open).
+    void runConfirmed(() => confirmMutation.mutate(data))
   }
 
   const copyRecoveryCodes = async (codes: string[]) => {
@@ -292,7 +306,7 @@ export function TwoFactorSettingsPage({
           {!isEnabled && !setup && (
             <Button
               type="button"
-              onClick={() => enableMutation.mutate()}
+              onClick={() => runConfirmed(() => enableMutation.mutate())}
               disabled={enableMutation.isPending}
             >
               {enableMutation.isPending ? 'Wird gestartet...' : 'Aktivieren'}
@@ -326,7 +340,9 @@ export function TwoFactorSettingsPage({
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => showRecoveryCodesMutation.mutate()}
+                onClick={() =>
+                  runConfirmed(() => showRecoveryCodesMutation.mutate())
+                }
                 disabled={showRecoveryCodesMutation.isPending}
               >
                 Wiederherstellungscodes anzeigen
@@ -334,7 +350,7 @@ export function TwoFactorSettingsPage({
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => regenerateMutation.mutate()}
+                onClick={() => runConfirmed(() => regenerateMutation.mutate())}
                 disabled={regenerateMutation.isPending}
               >
                 Neue Codes generieren
@@ -359,7 +375,9 @@ export function TwoFactorSettingsPage({
                   <AlertDialogFooter>
                     <AlertDialogCancel>Abbrechen</AlertDialogCancel>
                     <AlertDialogAction
-                      onClick={() => disableMutation.mutate()}
+                      onClick={() =>
+                        runConfirmed(() => disableMutation.mutate())
+                      }
                       disabled={disableMutation.isPending}
                     >
                       Deaktivieren
@@ -371,6 +389,8 @@ export function TwoFactorSettingsPage({
           )}
         </CardFooter>
       </Card>
+
+      {passwordDialog}
     </div>
   )
 }

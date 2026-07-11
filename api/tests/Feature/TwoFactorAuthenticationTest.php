@@ -32,6 +32,18 @@ class TwoFactorAuthenticationTest extends TestCase
     }
 
     /**
+     * Authenticate as the user and clear the password-confirmation gate on the
+     * 2FA management endpoints by confirming the password once.
+     */
+    private function actingAsConfirmed(User $user): void
+    {
+        $this->actingAs($user);
+        $this->postJson('/internal/user/confirm-password', [
+            'password' => 'CorrectPassword1',
+        ])->assertSuccessful();
+    }
+
+    /**
      * Enable and confirm two-factor for the given (already authenticated) user
      * and return the decrypted TOTP secret.
      */
@@ -80,7 +92,7 @@ class TwoFactorAuthenticationTest extends TestCase
     public function test_enabling_two_factor_exposes_qr_secret_and_recovery_codes(): void
     {
         $user = $this->createUser();
-        $this->actingAs($user);
+        $this->actingAsConfirmed($user);
 
         $this->postJson('/internal/user/two-factor-authentication')->assertSuccessful();
 
@@ -106,7 +118,7 @@ class TwoFactorAuthenticationTest extends TestCase
     public function test_user_can_confirm_two_factor_with_a_valid_code(): void
     {
         $user = $this->createUser();
-        $this->actingAs($user);
+        $this->actingAsConfirmed($user);
 
         $this->enableAndConfirmTwoFactor();
 
@@ -116,7 +128,7 @@ class TwoFactorAuthenticationTest extends TestCase
     public function test_confirmation_fails_with_an_invalid_code(): void
     {
         $user = $this->createUser();
-        $this->actingAs($user);
+        $this->actingAsConfirmed($user);
 
         $this->postJson('/internal/user/two-factor-authentication')->assertSuccessful();
 
@@ -130,7 +142,7 @@ class TwoFactorAuthenticationTest extends TestCase
     public function test_recovery_codes_can_be_regenerated(): void
     {
         $user = $this->createUser();
-        $this->actingAs($user);
+        $this->actingAsConfirmed($user);
 
         $this->enableAndConfirmTwoFactor();
 
@@ -147,7 +159,7 @@ class TwoFactorAuthenticationTest extends TestCase
     public function test_user_can_disable_two_factor(): void
     {
         $user = $this->createUser();
-        $this->actingAs($user);
+        $this->actingAsConfirmed($user);
 
         $this->enableAndConfirmTwoFactor();
 
@@ -169,10 +181,60 @@ class TwoFactorAuthenticationTest extends TestCase
         $this->postJson('/internal/user/two-factor-recovery-codes')->assertUnauthorized();
     }
 
-    public function test_profile_reports_two_factor_state(): void
+    public function test_management_endpoints_require_a_confirmed_password(): void
     {
         $user = $this->createUser();
         $this->actingAs($user);
+
+        // Authenticated but without a fresh password confirmation, the sensitive
+        // endpoints answer 423 (Locked) rather than acting.
+        $this->postJson('/internal/user/two-factor-authentication')->assertStatus(423);
+        $this->deleteJson('/internal/user/two-factor-authentication')->assertStatus(423);
+        $this->getJson('/internal/user/two-factor-secret-key')->assertStatus(423);
+        $this->getJson('/internal/user/two-factor-recovery-codes')->assertStatus(423);
+        $this->postJson('/internal/user/two-factor-recovery-codes')->assertStatus(423);
+    }
+
+    public function test_confirming_the_password_unlocks_management(): void
+    {
+        $user = $this->createUser();
+        $this->actingAs($user);
+
+        // A wrong password does not confirm.
+        $this->postJson('/internal/user/confirm-password', [
+            'password' => 'WrongPassword1',
+        ])->assertStatus(422);
+        $this->postJson('/internal/user/two-factor-authentication')->assertStatus(423);
+
+        // The correct password confirms and unlocks the management endpoints.
+        $this->postJson('/internal/user/confirm-password', [
+            'password' => 'CorrectPassword1',
+        ])->assertSuccessful();
+        $this->postJson('/internal/user/two-factor-authentication')->assertSuccessful();
+    }
+
+    public function test_confirmed_password_status_reflects_confirmation(): void
+    {
+        $user = $this->createUser();
+        $this->actingAs($user);
+
+        $this->getJson('/internal/user/confirmed-password-status')
+            ->assertOk()
+            ->assertJson(['confirmed' => false]);
+
+        $this->postJson('/internal/user/confirm-password', [
+            'password' => 'CorrectPassword1',
+        ])->assertSuccessful();
+
+        $this->getJson('/internal/user/confirmed-password-status')
+            ->assertOk()
+            ->assertJson(['confirmed' => true]);
+    }
+
+    public function test_profile_reports_two_factor_state(): void
+    {
+        $user = $this->createUser();
+        $this->actingAsConfirmed($user);
 
         $this->getJson('/internal/profile')
             ->assertOk()
@@ -188,7 +250,7 @@ class TwoFactorAuthenticationTest extends TestCase
     public function test_profile_never_exposes_the_two_factor_secret(): void
     {
         $user = $this->createUser();
-        $this->actingAs($user);
+        $this->actingAsConfirmed($user);
         $this->enableAndConfirmTwoFactor();
 
         $this->getJson('/internal/profile')

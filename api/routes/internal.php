@@ -2,6 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Http\Controllers\AuthenticatedSessionController;
+use Laravel\Fortify\Http\Controllers\ConfirmablePasswordController;
+use Laravel\Fortify\Http\Controllers\ConfirmedPasswordStatusController;
 use Laravel\Fortify\Http\Controllers\ConfirmedTwoFactorAuthenticationController;
 use Laravel\Fortify\Http\Controllers\NewPasswordController;
 use Laravel\Fortify\Http\Controllers\PasswordController;
@@ -74,21 +76,38 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::put('/profile', [ProfileController::class, 'update']);
     Route::put('/profile/password', [PasswordController::class, 'update']);
 
+    // Password confirmation (re-authentication) gating the sensitive 2FA
+    // operations below. `status` lets the SPA check whether a fresh
+    // confirmation is still valid before prompting; `confirm` records one. The
+    // throttle guards the password against brute-forcing.
+    Route::get('/user/confirmed-password-status', [ConfirmedPasswordStatusController::class, 'show']);
+    Route::post('/user/confirm-password', [ConfirmablePasswordController::class, 'store'])
+        ->middleware('throttle:6,1');
+
     // Two-factor authentication management (Laravel Fortify controllers).
     // Enabling generates the secret and recovery codes; the second factor only
     // becomes active once the user confirms a code (see the `confirm` option in
     // FortifyServiceProvider). The management endpoints match Fortify's own
     // paths so the upstream controllers keep working unchanged.
-    Route::post('/user/two-factor-authentication', [TwoFactorAuthenticationController::class, 'store']);
-    Route::delete('/user/two-factor-authentication', [TwoFactorAuthenticationController::class, 'destroy']);
-    // Same brute-force guard as the login challenge: confirmation also checks a
-    // six-digit TOTP code.
-    Route::post('/user/confirmed-two-factor-authentication', [ConfirmedTwoFactorAuthenticationController::class, 'store'])
-        ->middleware('throttle:6,1');
-    Route::get('/user/two-factor-qr-code', [TwoFactorQrCodeController::class, 'show']);
-    Route::get('/user/two-factor-secret-key', [TwoFactorSecretKeyController::class, 'show']);
-    Route::get('/user/two-factor-recovery-codes', [RecoveryCodeController::class, 'index']);
-    Route::post('/user/two-factor-recovery-codes', [RecoveryCodeController::class, 'store']);
+    //
+    // Every endpoint sits behind `password.confirm`: disabling, revealing the
+    // secret, and viewing or regenerating recovery codes all expose or weaken
+    // the second factor, so a stolen or unattended session must re-prove the
+    // password first. Enrolment shares the same confirmation window, so the
+    // user is prompted once. This mirrors Fortify's own confirmPassword default,
+    // applied explicitly here because Taily registers these routes itself.
+    Route::middleware('password.confirm')->group(function () {
+        Route::post('/user/two-factor-authentication', [TwoFactorAuthenticationController::class, 'store']);
+        Route::delete('/user/two-factor-authentication', [TwoFactorAuthenticationController::class, 'destroy']);
+        // Same brute-force guard as the login challenge: confirmation also
+        // checks a six-digit TOTP code.
+        Route::post('/user/confirmed-two-factor-authentication', [ConfirmedTwoFactorAuthenticationController::class, 'store'])
+            ->middleware('throttle:6,1');
+        Route::get('/user/two-factor-qr-code', [TwoFactorQrCodeController::class, 'show']);
+        Route::get('/user/two-factor-secret-key', [TwoFactorSecretKeyController::class, 'show']);
+        Route::get('/user/two-factor-recovery-codes', [RecoveryCodeController::class, 'index']);
+        Route::post('/user/two-factor-recovery-codes', [RecoveryCodeController::class, 'store']);
+    });
 
     // Users administration
     Route::apiResource('users', UserController::class);
