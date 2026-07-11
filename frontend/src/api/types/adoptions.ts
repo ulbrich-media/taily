@@ -6,8 +6,7 @@ import type { AnimalListResource, AnimalDetailResource } from './animals'
 import type { PersonListResource, PersonDetailResource } from './people'
 import type { TransportListResource } from '@/api/types/transports.ts'
 
-export type AdoptionStepStatus =
-  'not_started' | 'pending' | 'in_progress' | 'finished'
+export type AdoptionStepStatus = 'not_started' | 'pending' | 'finished'
 export type AdoptionStatus = 'pending' | 'in_progress' | 'canceled' | 'done'
 
 // Scalar fields shared by list and detail resources.

@@ -1,7 +1,10 @@
 import type { ReactNode } from 'react'
 import { Copy, Check } from 'lucide-react'
 import { useState } from 'react'
-import type { PreInspectionResource } from '@/api/types/pre-inspections'
+import type {
+  PreInspectionResource,
+  PreInspectionVerdict,
+} from '@/api/types/pre-inspections'
 import { Badge } from '@/shadcn/components/ui/badge'
 import { Button } from '@/shadcn/components/ui/button'
 import {
@@ -18,21 +21,16 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/shadcn/components/ui/tooltip.tsx'
+import { formatApiDate } from '@/lib/dates.utils.ts'
 
-const VERDICT_LABELS: Record<string, string> = {
-  pending: 'Ausstehend',
-  approved: 'Genehmigt',
-  rejected: 'Abgelehnt',
-}
-
-function VerdictBadge({ verdict }: { verdict: string }) {
+function VerdictBadge({ verdict }: { verdict: PreInspectionVerdict }) {
   if (verdict === 'approved') {
-    return <Badge variant="success">{VERDICT_LABELS[verdict]}</Badge>
+    return <Badge variant="success">Geeignet</Badge>
   }
   if (verdict === 'rejected') {
-    return <Badge variant="destructive">{VERDICT_LABELS[verdict]}</Badge>
+    return <Badge variant="error">Nicht geeignet</Badge>
   }
-  return <Badge variant="outline">{VERDICT_LABELS[verdict] ?? verdict}</Badge>
+  return <Badge variant="outline">Ausstehend</Badge>
 }
 
 function CopyLinkButton({ url }: { url: string }) {
@@ -89,15 +87,17 @@ export function PreInspectionList({
     <Table>
       <TableHeader>
         <TableRow>
+          <TableHead>Datum</TableHead>
           <TableHead>Tierart</TableHead>
           <TableHead>Kontrolleur</TableHead>
-          <TableHead>Status</TableHead>
+          <TableHead>Bewertung</TableHead>
           <TableHead></TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {inspections.map((inspection) => (
           <TableRow key={inspection.id}>
+            <TableCell>{formatApiDate(inspection.created_at)}</TableCell>
             <TableCell className="font-medium">
               {inspection.animal_type.title}
             </TableCell>

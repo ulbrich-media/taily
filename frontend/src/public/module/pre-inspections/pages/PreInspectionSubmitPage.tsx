@@ -182,7 +182,7 @@ export function PreInspectionSubmitPage({
                           id="verdict-approved"
                         />
                         <FieldLabel htmlFor="verdict-approved">
-                          Angenommen – Die Person ist geeignet
+                          Geeignet
                         </FieldLabel>
                       </Field>
                       <Field orientation="horizontal">
@@ -191,7 +191,7 @@ export function PreInspectionSubmitPage({
                           id="verdict-rejected"
                         />
                         <FieldLabel htmlFor="verdict-rejected">
-                          Abgelehnt – Die Person ist nicht geeignet
+                          Nicht geeignet
                         </FieldLabel>
                       </Field>
                     </RadioGroup>

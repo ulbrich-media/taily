@@ -6,7 +6,6 @@ import { listAdoptionsQuery } from '@/admin/module/adoptions/api/queries.ts'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { Route as AdoptionDetailRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/index'
 import { Route as InspectionDetailRoute } from '@/routes/admin/_authenticated/people/$id/adoptions/pre-inspections/$preInspectionId/index'
-import { ExternalLink, Eye, Edit } from 'lucide-react'
 import type { AdoptionListResource } from '@/api/types/adoptions'
 import type { PreInspectionResource } from '@/api/types/pre-inspections'
 
@@ -35,7 +34,6 @@ function RouteComponent() {
 
   const renderAdoptionDetailLink = (adoption: AdoptionListResource) => (
     <AdoptionDetailRoute.Link params={{ adoptionId: adoption.id }}>
-      <ExternalLink className="size-4" />
       Öffnen
     </AdoptionDetailRoute.Link>
   )
@@ -44,12 +42,10 @@ function RouteComponent() {
     <InspectionDetailRoute.Link params={{ id, preInspectionId: inspection.id }}>
       {inspection.verdict !== 'pending' ? (
         <>
-          <Eye className="size-4" />
           <span>Öffnen</span>
         </>
       ) : (
         <>
-          <Edit className="size-4" />
           <span>Bearbeiten</span>
         </>
       )}

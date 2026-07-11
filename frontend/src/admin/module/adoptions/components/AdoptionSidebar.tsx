@@ -5,7 +5,7 @@ import type {
   AdoptionDetailResource,
   AdoptionStatus,
 } from '@/api/types/adoptions'
-import { Heart, PawPrint, User } from 'lucide-react'
+import { ArrowRight, PawPrint, User } from 'lucide-react'
 import {
   Avatar,
   AvatarFallback,
@@ -41,7 +41,7 @@ export function AdoptionSidebar({
           <div className="space-y-4 flex flex-col gap-4">
             <div className="flex">
               <div className="w-[calc(50%-1rem)]">
-                <div className="w-24 mx-auto aspect-square bg-muted rounded-full flex items-center justify-center mb-4 overflow-hidden">
+                <div className="w-24 mx-auto aspect-square bg-muted rounded-md flex items-center justify-center mb-4 overflow-hidden">
                   {adoption.animal.pictures?.[0]?.url ? (
                     <img
                       src={adoption.animal.pictures[0].url}
@@ -64,7 +64,7 @@ export function AdoptionSidebar({
               </div>
               <div className="w-8 pt-10">
                 <div className="size-8 rounded-full bg-muted pt-2">
-                  <Heart className="size-4 mx-auto" />
+                  <ArrowRight className="size-4 mx-auto" />
                 </div>
               </div>
               <div className="w-[calc(50%-1rem)]">

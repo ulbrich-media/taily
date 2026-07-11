@@ -71,8 +71,8 @@ type MainFormData = z.infer<typeof mainStaticSchema> & {
 }
 
 const VERDICT_OPTIONS = [
-  { value: 'approved', label: 'Genehmigt' },
-  { value: 'rejected', label: 'Abgelehnt' },
+  { value: 'approved', label: 'Geeignet' },
+  { value: 'rejected', label: 'Nicht geeignet' },
 ]
 
 // ---------------------------------------------------------------------------

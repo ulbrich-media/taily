@@ -6,16 +6,19 @@ import { cn } from '@/shadcn/lib/utils'
 function Avatar({
   className,
   size = 'default',
+  shape = 'circle',
   ...props
 }: React.ComponentProps<typeof AvatarPrimitive.Root> & {
   size?: 'default' | 'sm' | 'lg'
+  shape?: 'circle' | 'square'
 }) {
   return (
     <AvatarPrimitive.Root
       data-slot="avatar"
       data-size={size}
+      data-shape={shape}
       className={cn(
-        'group/avatar relative flex size-8 shrink-0 overflow-hidden rounded-md select-none data-[size=lg]:size-10 data-[size=sm]:size-6',
+        'group/avatar relative flex size-8 shrink-0 overflow-hidden select-none data-[size=lg]:size-10 data-[size=sm]:size-6 data-[shape=circle]:rounded-full data-[shape=square]:rounded-md',
         className
       )}
       {...props}
@@ -45,7 +48,7 @@ function AvatarFallback({
     <AvatarPrimitive.Fallback
       data-slot="avatar-fallback"
       className={cn(
-        'bg-muted text-muted-foreground flex size-full items-center justify-center rounded-md text-sm group-data-[size=sm]/avatar:text-xs',
+        'bg-muted text-muted-foreground flex size-full items-center justify-center rounded-full text-sm group-data-[size=sm]/avatar:text-xs  group-data-[shape=circle]/avatar:rounded-full group-data-[shape=square]/avatar:rounded-md',
         className
       )}
       {...props}
