@@ -83,8 +83,15 @@ export function ChangePasswordDialog({
     mutate(data)
   }
 
+  // Clear the typed passwords on every close path (Escape, backdrop, Abbrechen)
+  // so they are not still present when the dialog is reopened.
+  const handleClose = () => {
+    form.reset()
+    onClose()
+  }
+
   return (
-    <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
+    <Dialog open={open} onOpenChange={(next) => !next && handleClose()}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Passwort ändern</DialogTitle>
@@ -143,7 +150,7 @@ export function ChangePasswordDialog({
             <Button
               type="button"
               variant="outline"
-              onClick={onClose}
+              onClick={handleClose}
               disabled={isPending}
             >
               Abbrechen
