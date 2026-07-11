@@ -3,10 +3,10 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { PasswordConfirmationDialog } from './PasswordConfirmationDialog'
-import { confirmPassword } from '@/lib/password-confirmation.api'
+import { confirmPassword } from '@/admin/module/security/api/requests'
 import { ApiValidationError } from '@/lib/api'
 
-vi.mock('@/lib/password-confirmation.api', () => ({
+vi.mock('@/admin/module/security/api/requests', () => ({
   confirmPassword: vi.fn(),
 }))
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))

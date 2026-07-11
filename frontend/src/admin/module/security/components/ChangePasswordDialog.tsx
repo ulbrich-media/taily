@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -6,7 +5,6 @@ import { useMutation } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
   Dialog,
-  DialogBreadcrumb,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -19,7 +17,7 @@ import { FieldGroup } from '@/shadcn/components/ui/field'
 import { FormFieldWrapper } from '@/components/form/FormFieldWrapper'
 import { ApiValidationError } from '@/lib/api'
 import { withPasswordConfirmation } from '@/lib/password.schema'
-import { updatePassword } from '@/admin/module/profile/api/requests'
+import { updatePassword } from '@/admin/module/security/api/requests'
 import { mapPasswordValidationMessage } from '@/lib/password.messages'
 
 const changePasswordSchema = withPasswordConfirmation({
@@ -28,15 +26,15 @@ const changePasswordSchema = withPasswordConfirmation({
 
 type ChangePasswordFormData = z.infer<typeof changePasswordSchema>
 
-interface ChangePasswordPageProps {
+interface ChangePasswordDialogProps {
+  open: boolean
   onClose: () => void
-  breadcrumb?: ReactNode
 }
 
-export function ChangePasswordPage({
+export function ChangePasswordDialog({
+  open,
   onClose,
-  breadcrumb,
-}: ChangePasswordPageProps) {
+}: ChangePasswordDialogProps) {
   const form = useForm<ChangePasswordFormData>({
     resolver: zodResolver(changePasswordSchema),
     defaultValues: {
@@ -85,8 +83,15 @@ export function ChangePasswordPage({
     mutate(data)
   }
 
+  // Clear the typed passwords on every close path (Escape, backdrop, Abbrechen)
+  // so they are not still present when the dialog is reopened.
+  const handleClose = () => {
+    form.reset()
+    onClose()
+  }
+
   return (
-    <Dialog open onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={(next) => !next && handleClose()}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Passwort ändern</DialogTitle>
@@ -145,7 +150,7 @@ export function ChangePasswordPage({
             <Button
               type="button"
               variant="outline"
-              onClick={onClose}
+              onClick={handleClose}
               disabled={isPending}
             >
               Abbrechen
@@ -154,7 +159,6 @@ export function ChangePasswordPage({
               {isPending ? 'Wird gespeichert...' : 'Passwort ändern'}
             </Button>
           </DialogFooter>
-          <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
         </form>
       </DialogContent>
     </Dialog>
