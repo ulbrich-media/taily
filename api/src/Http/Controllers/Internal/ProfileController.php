@@ -14,7 +14,14 @@ class ProfileController extends Controller
      */
     public function show(Request $request): JsonResponse
     {
-        return response()->json($request->user());
+        $user = $request->user();
+
+        return response()->json([
+            ...$user->toArray(),
+            // Confirmed second factor only. A generated-but-unconfirmed secret
+            // does not gate login, so the SPA treats it as "not enabled".
+            'two_factor_enabled' => ! is_null($user->two_factor_confirmed_at),
+        ]);
     }
 
     /**

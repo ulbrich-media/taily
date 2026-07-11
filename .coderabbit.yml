@@ -20,7 +20,7 @@ reviews:
     - Flag any new model that adds token-like columns directly when `HasAccessToken` would be more appropriate, and vice versa.
 
     **Frontend links via callback** (`docs/coding-patterns/frontend-links.md`):
-    - All backend-generated frontend URLs must go through `FrontendUriBuilder`. Flag any inline construction of callback URLs using `env('FRONTEND_URL')` or string concatenation.
+    - All backend-generated frontend URLs must go through `FrontendUriBuilder`. Flag any inline construction of callback URLs using `env('TAILY_FRONTEND_URL')` or string concatenation.
     - Each new action requires a static method on `FrontendUriBuilder` and a corresponding handler in the frontend `/callback` route.
 
     **Public API spec** (`api/public/openapi.yaml`):
@@ -53,6 +53,16 @@ reviews:
     - "!**/*.min.js"
     - "!**/dist/**"
     - "!**/build/**"
+  finishing_touches:
+    docstrings:
+      enabled: false
+    unit_tests:
+      enabled: false
+    autofix:
+      enabled: false
+  pre_merge_checks:
+    docstrings:
+      mode: off
 
 issue_enrichment:
   planning:

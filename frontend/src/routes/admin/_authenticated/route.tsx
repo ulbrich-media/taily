@@ -10,7 +10,7 @@ import { Route as AdoptionsRoute } from '@/routes/admin/_authenticated/adoptions
 import { Route as TransportsRoute } from '@/routes/admin/_authenticated/transports/index'
 import { Route as SettingsRoute } from '@/routes/admin/_authenticated/settings/index'
 import { Route as ProfileRoute } from '@/routes/admin/_authenticated/profile/index'
-import { Route as PersonalSettingsRoute } from '@/routes/admin/_authenticated/personal-settings/index'
+import { Route as PersonalSettingsRoute } from '@/routes/admin/_authenticated/personal-settings/_hub/index'
 import { Route as LoginRoute } from '@/routes/admin/login'
 import { DropdownMenuItem } from '@/shadcn/components/ui/dropdown-menu'
 import { User, Settings } from 'lucide-react'

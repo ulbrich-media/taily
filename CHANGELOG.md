@@ -2,6 +2,14 @@
 
 All notable changes to Taily are documented here.
 
+## [0.7.2](https://github.com/ulbrich-media/taily/compare/v0.7.1...v0.7.2) (2026-07-09)
+
+
+### Bug Fixes
+
+* frontend env issues resolved ([32cd32f](https://github.com/ulbrich-media/taily/commit/32cd32f00ea59cf844ed24614cd40f121ee6bad3))
+* service provider registration enabled ([d87cceb](https://github.com/ulbrich-media/taily/commit/d87cceb56baa08ce662035522a6482e9e7c93d98))
+
 ## [0.7.1](https://github.com/ulbrich-media/taily/compare/v0.7.0...v0.7.1) (2026-06-27)
 
 

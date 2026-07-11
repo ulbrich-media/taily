@@ -46,8 +46,7 @@ export const radioFieldType: FieldTypeDefinition = {
     const enumValues = (schemaProp.enum ?? []) as string[]
     const opts = (uiProp['ui:options'] ?? {}) as Record<string, unknown>
     const labels = opts.labels as
-      | Array<{ value: string; label: string }>
-      | undefined
+      Array<{ value: string; label: string }> | undefined
     return {
       options: labels ?? enumValues.map((v) => ({ value: v, label: v })),
     }

@@ -1,0 +1,35 @@
+<?php
+
+namespace Taily\Actions\Fortify;
+
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rules\Password;
+use Laravel\Fortify\Contracts\UpdatesUserPasswords;
+use Taily\Models\User;
+
+class UpdateUserPassword implements UpdatesUserPasswords
+{
+    /**
+     * Validate and update the user's password.
+     *
+     * @param  array<string, string>  $input
+     */
+    public function update(User $user, array $input): void
+    {
+        Validator::make($input, [
+            'current_password' => ['required', 'string', 'current_password:web'],
+            'password' => ['required', 'string', 'confirmed', Password::defaults()],
+        ])->validate();
+
+        // auth:sanctum resolves stateful SPA requests via the underlying 'web' session
+        // guard, but logoutOtherDevices() only exists on that concrete SessionGuard —
+        // not on Sanctum's RequestGuard wrapper — so it must be called on 'web' directly.
+        // Must run before the password attribute is swapped below: logoutOtherDevices()
+        // re-checks the given plaintext against the user's *current* stored hash.
+        Auth::guard('web')->logoutOtherDevices($input['current_password']);
+
+        $user->password = $input['password'];
+        $user->save();
+    }
+}
