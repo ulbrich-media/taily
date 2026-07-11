@@ -53,6 +53,16 @@ reviews:
     - "!**/*.min.js"
     - "!**/dist/**"
     - "!**/build/**"
+  finishing_touches:
+    docstrings:
+      enabled: false
+    unit_tests:
+      enabled: false
+    autofix:
+      enabled: false
+  pre_merge_checks:
+    docstrings:
+      mode: off
 
 issue_enrichment:
   planning:
