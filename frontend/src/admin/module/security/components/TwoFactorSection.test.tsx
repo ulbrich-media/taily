@@ -57,8 +57,10 @@ describe('TwoFactorSection', () => {
     const user = userEvent.setup()
     renderSection(false)
 
-    // Disabled state.
-    expect(screen.getByText('Nicht aktiviert')).toBeInTheDocument()
+    // Disabled state: enrolment can be started.
+    expect(
+      screen.getByRole('button', { name: 'Aktivieren' })
+    ).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'Aktivieren' }))
 
@@ -90,7 +92,10 @@ describe('TwoFactorSection', () => {
     })
     renderSection(true)
 
-    expect(screen.getByText('Aktiviert')).toBeInTheDocument()
+    // Enabled state: no enrolment action, only management actions.
+    expect(
+      screen.queryByRole('button', { name: 'Aktivieren' })
+    ).not.toBeInTheDocument()
     expect(
       screen.getByRole('button', { name: 'Deaktivieren' })
     ).toBeInTheDocument()
