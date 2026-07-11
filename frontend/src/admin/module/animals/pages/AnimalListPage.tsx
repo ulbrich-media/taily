@@ -109,7 +109,7 @@ export function AnimalListPage({
                 return (
                   <TableRow key={animal.id}>
                     <TableCell>
-                      <Avatar size="lg">
+                      <Avatar size="lg" shape="square">
                         {animal.profile_picture_url && (
                           <AvatarImage
                             alt={animal.name}
