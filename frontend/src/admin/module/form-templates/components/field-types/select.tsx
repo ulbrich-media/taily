@@ -48,8 +48,7 @@ export const selectFieldType: FieldTypeDefinition = {
     const enumValues = (schemaProp.enum ?? []) as string[]
     const opts = (uiProp['ui:options'] ?? {}) as Record<string, unknown>
     const labels = opts.labels as
-      | Array<{ value: string; label: string }>
-      | undefined
+      Array<{ value: string; label: string }> | undefined
     return {
       placeholder: (uiProp['ui:placeholder'] as string) ?? undefined,
       options: labels ?? enumValues.map((v) => ({ value: v, label: v })),
