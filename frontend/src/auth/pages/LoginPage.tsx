@@ -19,6 +19,7 @@ import {
   FieldLabel,
 } from '@/shadcn/components/ui/field.tsx'
 import { toast } from 'sonner'
+import { mapAuthMessage } from '@/lib/password.messages'
 
 const loginSchema = z.object({
   email: z
@@ -31,9 +32,13 @@ type LoginFormData = z.infer<typeof loginSchema>
 
 interface LoginPageProps {
   onAlreadyAuthenticated: () => void
+  onForgotPassword: () => void
 }
 
-export function LoginPage({ onAlreadyAuthenticated }: LoginPageProps) {
+export function LoginPage({
+  onAlreadyAuthenticated,
+  onForgotPassword,
+}: LoginPageProps) {
   const { login, isAuthenticated, isLoading } = useAuth()
 
   const form = useForm<LoginFormData>({
@@ -56,8 +61,8 @@ export function LoginPage({ onAlreadyAuthenticated }: LoginPageProps) {
     } catch (err) {
       toast.error(
         err instanceof Error
-          ? err.message
-          : 'Ungültige Anmeldedaten. Bitte versuchen es erneut.'
+          ? mapAuthMessage(err.message)
+          : 'Ungültige Anmeldedaten. Bitte versuche es erneut.'
       )
     }
   }
@@ -115,9 +120,17 @@ export function LoginPage({ onAlreadyAuthenticated }: LoginPageProps) {
             </FieldGroup>
           </CardContent>
 
-          <CardFooter>
+          <CardFooter className="flex-col gap-2">
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? 'Anmelden...' : 'Anmelden'}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              className="w-full"
+              onClick={onForgotPassword}
+            >
+              Passwort vergessen?
             </Button>
           </CardFooter>
         </Card>

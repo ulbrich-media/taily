@@ -3,6 +3,9 @@ import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
+import { withPasswordConfirmation } from '@/lib/password.schema'
+import { mapPasswordValidationMessage } from '@/lib/password.messages'
+import { ApiValidationError } from '@/lib/api'
 import {
   Card,
   CardContent,
@@ -28,21 +31,12 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { Route as LoginRoute } from '@/routes/admin/login'
 
-const invitationSchema = z
-  .object({
-    name: z
-      .string()
-      .min(1, 'Bitte gib deinen Namen ein')
-      .max(255, 'Der Name ist zu lang'),
-    password: z
-      .string()
-      .min(8, 'Das Passwort muss mindestens 8 Zeichen lang sein'),
-    password_confirmation: z.string().min(1, 'Bitte bestätige dein Passwort'),
-  })
-  .refine((data) => data.password === data.password_confirmation, {
-    message: 'Die Passwörter stimmen nicht überein',
-    path: ['password_confirmation'],
-  })
+const invitationSchema = withPasswordConfirmation({
+  name: z
+    .string()
+    .min(1, 'Bitte gib deinen Namen ein')
+    .max(255, 'Der Name ist zu lang'),
+})
 
 type InvitationFormData = z.infer<typeof invitationSchema>
 
@@ -91,6 +85,13 @@ function InvitationPage() {
       }, 1500)
     },
     onError: (err) => {
+      if (err instanceof ApiValidationError && err.errors?.password) {
+        form.setError('password', {
+          message: mapPasswordValidationMessage(err.errors.password[0]),
+        })
+        return
+      }
+
       toast.error(
         err instanceof Error
           ? err.message

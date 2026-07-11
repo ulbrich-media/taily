@@ -1,13 +1,16 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Laravel\Fortify\Http\Controllers\AuthenticatedSessionController;
+use Laravel\Fortify\Http\Controllers\NewPasswordController;
+use Laravel\Fortify\Http\Controllers\PasswordController;
+use Laravel\Fortify\Http\Controllers\PasswordResetLinkController;
 use Taily\Http\Controllers\Internal\AdoptionContractController;
 use Taily\Http\Controllers\Internal\AdoptionController;
 use Taily\Http\Controllers\Internal\AnimalController;
 use Taily\Http\Controllers\Internal\AnimalPictureController;
 use Taily\Http\Controllers\Internal\AnimalTypeController;
 use Taily\Http\Controllers\Internal\ApiTokenController;
-use Taily\Http\Controllers\Internal\Auth\AuthenticatedSessionController;
 use Taily\Http\Controllers\Internal\FormTemplateController;
 use Taily\Http\Controllers\Internal\InvitationController;
 use Taily\Http\Controllers\Internal\MediaController;
@@ -36,8 +39,13 @@ use Taily\Http\Controllers\Internal\VaccinationController;
 // Media serve route (signed URL is the auth mechanism)
 Route::get('/media/{mediaUuid}', [MediaController::class, 'serve'])->name('media.serve');
 
-// Authentication routes
+// Authentication routes (Laravel Fortify controllers, see ADR-008)
 Route::post('/login', [AuthenticatedSessionController::class, 'store']);
+
+// Password reset (login throttling lives in Fortify's login pipeline; these
+// public endpoints need their own request-level limit against reset spam)
+Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])->middleware('throttle:6,1');
+Route::post('/reset-password', [NewPasswordController::class, 'store'])->middleware('throttle:6,1');
 
 // Public invitation routes
 Route::get('/invitations/{token}', [InvitationController::class, 'show']);
@@ -51,6 +59,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Profile
     Route::get('/profile', [ProfileController::class, 'show']);
     Route::put('/profile', [ProfileController::class, 'update']);
+    Route::put('/profile/password', [PasswordController::class, 'update']);
 
     // Users administration
     Route::apiResource('users', UserController::class);
