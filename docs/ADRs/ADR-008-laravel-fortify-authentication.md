@@ -6,7 +6,7 @@ Accepted
 
 ## Context
 
-Authentication was previously implemented with code copied from Laravel Breeze's API stack: a hand-maintained `AuthenticatedSessionController`, `LoginRequest`, and `PasswordController` inside the Taily package. Only login, logout, and password change existed; password reset, two-factor authentication, and other account-security features are on the roadmap and would each have to be hand-written and maintained.
+Authentication was previously implemented with code copied from Laravel Breeze's API stack: a hand-maintained `AuthenticatedSessionController` and `LoginRequest` inside the Taily package. Only login and logout existed; password change was being added at the time of this decision (initially as another hand-maintained controller), and password reset, two-factor authentication, and other account-security features are on the roadmap. Each of these would have to be hand-written and maintained.
 
 Laravel Breeze was evaluated as an alternative and rejected: it is one-time scaffolding rather than a runtime dependency (no updates flow to the project), it has been superseded by the Laravel 12 starter kits and no longer receives features, it does not include two-factor authentication at all, and its installer targets a standard app skeleton that does not match this repository's package layout (`Taily\` namespace under `api/src/`, routes registered by `TailyServiceProvider`, standalone React SPA).
 

@@ -1,4 +1,4 @@
-import { Controller, useForm } from 'react-hook-form'
+import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import {
@@ -11,12 +11,8 @@ import {
 } from '@/shadcn/components/ui/card'
 import { Input } from '@/shadcn/components/ui/input'
 import { Button } from '@/shadcn/components/ui/button'
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from '@/shadcn/components/ui/field.tsx'
+import { Field, FieldGroup, FieldLabel } from '@/shadcn/components/ui/field.tsx'
+import { FormFieldWrapper } from '@/components/form/FormFieldWrapper'
 import { toast } from 'sonner'
 import { ApiValidationError } from '@/lib/api'
 import { resetPassword } from '@/lib/password-reset.api'
@@ -58,7 +54,7 @@ export function ResetPasswordPage({
           <CardHeader>
             <CardTitle>Ungültiger Link</CardTitle>
             <CardDescription>
-              Der Link zum Zurücksetzen des Passworts ist unvollständig. Bitte
+              Der Link zum Zurücksetzen des Passworts ist ungültig. Bitte
               fordere einen neuen Link an.
             </CardDescription>
           </CardHeader>
@@ -118,50 +114,43 @@ export function ResetPasswordPage({
           <CardHeader>
             <CardTitle>Neues Passwort festlegen</CardTitle>
             <CardDescription>
-              Lege ein neues Passwort für dein Konto ({email}) fest.
+              Lege ein neues Passwort für dein Konto fest.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <FieldGroup>
-              <Controller
-                name={'password'}
+              <Field>
+                <FieldLabel htmlFor="email">E-Mail</FieldLabel>
+                <Input id="email" type="email" value={email} disabled />
+              </Field>
+
+              <FormFieldWrapper
+                name="password"
                 control={form.control}
+                label="Neues Passwort"
                 render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor={field.name}>Neues Passwort</FieldLabel>
-                    <Input
-                      {...field}
-                      id={field.name}
-                      aria-invalid={fieldState.invalid}
-                      type="password"
-                      autoComplete="new-password"
-                    />
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
+                  <Input
+                    {...field}
+                    id={field.name}
+                    aria-invalid={fieldState.invalid}
+                    type="password"
+                    autoComplete="new-password"
+                  />
                 )}
               />
 
-              <Controller
-                name={'password_confirmation'}
+              <FormFieldWrapper
+                name="password_confirmation"
                 control={form.control}
+                label="Passwort bestätigen"
                 render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor={field.name}>
-                      Passwort bestätigen
-                    </FieldLabel>
-                    <Input
-                      {...field}
-                      id={field.name}
-                      aria-invalid={fieldState.invalid}
-                      type="password"
-                      autoComplete="new-password"
-                    />
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
+                  <Input
+                    {...field}
+                    id={field.name}
+                    aria-invalid={fieldState.invalid}
+                    type="password"
+                    autoComplete="new-password"
+                  />
                 )}
               />
             </FieldGroup>

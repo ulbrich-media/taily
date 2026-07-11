@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Controller, useForm } from 'react-hook-form'
+import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useMutation } from '@tanstack/react-query'
@@ -15,12 +15,8 @@ import {
 } from '@/shadcn/components/ui/dialog'
 import { Input } from '@/shadcn/components/ui/input'
 import { Button } from '@/shadcn/components/ui/button'
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from '@/shadcn/components/ui/field'
+import { FieldGroup } from '@/shadcn/components/ui/field'
+import { FormFieldWrapper } from '@/components/form/FormFieldWrapper'
 import { ApiValidationError } from '@/lib/api'
 import { withPasswordConfirmation } from '@/lib/password.schema'
 import { updatePassword } from '@/admin/module/profile/api/requests'
@@ -99,67 +95,48 @@ export function ChangePasswordPage({
 
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <FieldGroup>
-            <Controller
+            <FormFieldWrapper
               name="current_password"
               control={form.control}
+              label="Aktuelles Passwort"
               render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={field.name}>
-                    Aktuelles Passwort
-                  </FieldLabel>
-                  <Input
-                    {...field}
-                    id={field.name}
-                    aria-invalid={fieldState.invalid}
-                    type="password"
-                    autoComplete="current-password"
-                  />
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
-                </Field>
+                <Input
+                  {...field}
+                  id={field.name}
+                  aria-invalid={fieldState.invalid}
+                  type="password"
+                  autoComplete="current-password"
+                />
               )}
             />
 
-            <Controller
+            <FormFieldWrapper
               name="password"
               control={form.control}
+              label="Neues Passwort"
               render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={field.name}>Neues Passwort</FieldLabel>
-                  <Input
-                    {...field}
-                    id={field.name}
-                    aria-invalid={fieldState.invalid}
-                    type="password"
-                    autoComplete="new-password"
-                  />
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
-                </Field>
+                <Input
+                  {...field}
+                  id={field.name}
+                  aria-invalid={fieldState.invalid}
+                  type="password"
+                  autoComplete="new-password"
+                />
               )}
             />
 
-            <Controller
+            <FormFieldWrapper
               name="password_confirmation"
               control={form.control}
+              label="Neues Passwort bestätigen"
               render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={field.name}>
-                    Neues Passwort bestätigen
-                  </FieldLabel>
-                  <Input
-                    {...field}
-                    id={field.name}
-                    aria-invalid={fieldState.invalid}
-                    type="password"
-                    autoComplete="new-password"
-                  />
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
-                </Field>
+                <Input
+                  {...field}
+                  id={field.name}
+                  aria-invalid={fieldState.invalid}
+                  type="password"
+                  autoComplete="new-password"
+                />
               )}
             />
           </FieldGroup>

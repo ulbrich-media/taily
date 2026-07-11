@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Controller, useForm } from 'react-hook-form'
+import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import {
@@ -12,12 +12,8 @@ import {
 } from '@/shadcn/components/ui/card'
 import { Input } from '@/shadcn/components/ui/input'
 import { Button } from '@/shadcn/components/ui/button'
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from '@/shadcn/components/ui/field.tsx'
+import { FieldGroup } from '@/shadcn/components/ui/field.tsx'
+import { FormFieldWrapper } from '@/components/form/FormFieldWrapper'
 import { toast } from 'sonner'
 import { ApiValidationError } from '@/lib/api'
 import { requestPasswordResetLink } from '@/lib/password-reset.api'
@@ -83,22 +79,18 @@ export function ForgotPasswordPage({ onBackToLogin }: ForgotPasswordPageProps) {
           {!linkSent && (
             <CardContent>
               <FieldGroup>
-                <Controller
-                  name={'email'}
+                <FormFieldWrapper
+                  name="email"
                   control={form.control}
+                  label="E-Mail"
                   render={({ field, fieldState }) => (
-                    <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel htmlFor={field.name}>E-Mail</FieldLabel>
-                      <Input
-                        {...field}
-                        id={field.name}
-                        aria-invalid={fieldState.invalid}
-                        type="email"
-                      />
-                      {fieldState.invalid && (
-                        <FieldError errors={[fieldState.error]} />
-                      )}
-                    </Field>
+                    <Input
+                      {...field}
+                      id={field.name}
+                      aria-invalid={fieldState.invalid}
+                      type="email"
+                      autoComplete="email"
+                    />
                   )}
                 />
               </FieldGroup>
