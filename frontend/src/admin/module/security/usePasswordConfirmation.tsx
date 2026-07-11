@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from 'react'
 import { toast } from 'sonner'
-import { PasswordConfirmationDialog } from '@/auth/components/PasswordConfirmationDialog'
-import { getConfirmedPasswordStatus } from '@/lib/password-confirmation.api'
+import { PasswordConfirmationDialog } from '@/admin/module/security/components/PasswordConfirmationDialog'
+import { getConfirmedPasswordStatus } from '@/admin/module/security/api/requests'
 
 interface UsePasswordConfirmationResult {
   /**

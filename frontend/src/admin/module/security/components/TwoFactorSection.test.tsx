@@ -2,20 +2,18 @@ import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { TwoFactorSettingsPage } from './TwoFactorSettingsPage'
+import { TwoFactorSection } from './TwoFactorSection'
 import { useAuth } from '@/lib/auth.hook'
-import * as requests from '@/admin/module/two-factor/api/requests'
-import * as passwordConfirmation from '@/lib/password-confirmation.api'
+import * as requests from '@/admin/module/security/api/requests'
 
 vi.mock('@/lib/auth.hook', () => ({ useAuth: vi.fn() }))
-vi.mock('@/admin/module/two-factor/api/requests')
-vi.mock('@/lib/password-confirmation.api')
+vi.mock('@/admin/module/security/api/requests')
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
 
 const useAuthMock = vi.mocked(useAuth)
 const refreshProfile = vi.fn()
 
-function renderPage(twoFactorEnabled: boolean) {
+function renderSection(twoFactorEnabled: boolean) {
   useAuthMock.mockReturnValue({
     user: { two_factor_enabled: twoFactorEnabled },
     refreshProfile,
@@ -27,21 +25,21 @@ function renderPage(twoFactorEnabled: boolean) {
 
   render(
     <QueryClientProvider client={queryClient}>
-      <TwoFactorSettingsPage />
+      <TwoFactorSection />
     </QueryClientProvider>
   )
 }
 
-describe('TwoFactorSettingsPage', () => {
+describe('TwoFactorSection', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
-  it('walks through the enrolment flow', async () => {
+  it('walks through the enrolment flow in a dialog', async () => {
     // Password already confirmed within the window, so no re-auth prompt.
-    vi.mocked(
-      passwordConfirmation.getConfirmedPasswordStatus
-    ).mockResolvedValue({ confirmed: true })
+    vi.mocked(requests.getConfirmedPasswordStatus).mockResolvedValue({
+      confirmed: true,
+    })
     vi.mocked(requests.enableTwoFactor).mockResolvedValue()
     vi.mocked(requests.getTwoFactorQrCode).mockResolvedValue({
       svg: '<svg data-testid="qr"></svg>',
@@ -57,14 +55,14 @@ describe('TwoFactorSettingsPage', () => {
     vi.mocked(requests.confirmTwoFactor).mockResolvedValue()
 
     const user = userEvent.setup()
-    renderPage(false)
+    renderSection(false)
 
     // Disabled state.
     expect(screen.getByText('Nicht aktiviert')).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'Aktivieren' }))
 
-    // Enrolment materials appear.
+    // Enrolment materials appear in the setup dialog.
     expect(await screen.findByText('SECRET123')).toBeInTheDocument()
     expect(screen.getByText('recovery-code-aaa')).toBeInTheDocument()
     expect(requests.enableTwoFactor).toHaveBeenCalled()
@@ -87,10 +85,10 @@ describe('TwoFactorSettingsPage', () => {
   })
 
   it('shows management actions when already enabled', () => {
-    vi.mocked(
-      passwordConfirmation.getConfirmedPasswordStatus
-    ).mockResolvedValue({ confirmed: true })
-    renderPage(true)
+    vi.mocked(requests.getConfirmedPasswordStatus).mockResolvedValue({
+      confirmed: true,
+    })
+    renderSection(true)
 
     expect(screen.getByText('Aktiviert')).toBeInTheDocument()
     expect(
@@ -103,16 +101,16 @@ describe('TwoFactorSettingsPage', () => {
 
   it('prompts for the password before a gated action when not confirmed', async () => {
     // Not confirmed yet: the password prompt must appear before codes load.
-    vi.mocked(
-      passwordConfirmation.getConfirmedPasswordStatus
-    ).mockResolvedValue({ confirmed: false })
-    vi.mocked(passwordConfirmation.confirmPassword).mockResolvedValue()
+    vi.mocked(requests.getConfirmedPasswordStatus).mockResolvedValue({
+      confirmed: false,
+    })
+    vi.mocked(requests.confirmPassword).mockResolvedValue()
     vi.mocked(requests.getRecoveryCodes).mockResolvedValue([
       'recovery-code-aaa',
     ])
 
     const user = userEvent.setup()
-    renderPage(true)
+    renderSection(true)
 
     await user.click(
       screen.getByRole('button', { name: 'Wiederherstellungscodes anzeigen' })
@@ -129,9 +127,7 @@ describe('TwoFactorSettingsPage', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Bestätigen' }))
 
     await waitFor(() =>
-      expect(passwordConfirmation.confirmPassword).toHaveBeenCalledWith(
-        'CorrectPassword1'
-      )
+      expect(requests.confirmPassword).toHaveBeenCalledWith('CorrectPassword1')
     )
     await waitFor(() => expect(requests.getRecoveryCodes).toHaveBeenCalled())
   })

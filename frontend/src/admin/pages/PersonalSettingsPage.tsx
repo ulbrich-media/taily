@@ -1,19 +1,17 @@
 import type { ReactNode } from 'react'
-import { Key, KeyRound, ShieldCheck } from 'lucide-react'
+import { Key, ShieldCheck } from 'lucide-react'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { NavigationCards } from '@/components/navigation/NavigationCards'
 
 interface PersonalSettingsPageProps {
   apiTokensAction: ReactNode
-  changePasswordAction: ReactNode
-  twoFactorAction: ReactNode
+  securityAction: ReactNode
   breadcrumb?: ReactNode
 }
 
 export function PersonalSettingsPage({
   apiTokensAction,
-  changePasswordAction,
-  twoFactorAction,
+  securityAction,
   breadcrumb,
 }: PersonalSettingsPageProps) {
   return (
@@ -27,19 +25,12 @@ export function PersonalSettingsPage({
       <NavigationCards
         cards={[
           {
-            icon: KeyRound,
-            title: 'Passwort ändern',
-            subtitle: 'Konto-Sicherheit',
-            description: 'Aktualisiere das Passwort für dein Konto',
-            actions: changePasswordAction,
-          },
-          {
             icon: ShieldCheck,
-            title: 'Zwei-Faktor-Authentifizierung',
+            title: 'Sicherheit',
             subtitle: 'Konto-Sicherheit',
             description:
-              'Sichere die Anmeldung mit einem zusätzlichen Code aus einer Authentifizierungs-App',
-            actions: twoFactorAction,
+              'Verwalte dein Passwort und die Zwei-Faktor-Authentifizierung',
+            actions: securityAction,
           },
           {
             icon: Key,

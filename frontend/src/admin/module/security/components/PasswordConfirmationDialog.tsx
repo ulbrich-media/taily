@@ -16,7 +16,7 @@ import { Button } from '@/shadcn/components/ui/button'
 import { FieldGroup } from '@/shadcn/components/ui/field'
 import { TextInput } from '@/components/field/TextInput'
 import { ApiValidationError } from '@/lib/api'
-import { confirmPassword } from '@/lib/password-confirmation.api'
+import { confirmPassword } from '@/admin/module/security/api/requests'
 
 const schema = z.object({
   password: z.string().min(1, 'Bitte gib dein Passwort ein'),

@@ -1,19 +1,17 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { TwoFactorSettingsPage } from '@/admin/module/two-factor/pages/TwoFactorSettingsPage.tsx'
+import { SecurityPage } from '@/admin/module/security/pages/SecurityPage'
 import { useBreadcrumbs } from '@/router/useBreadcrumbs'
 import { BreadcrumbNav } from '@/router/BreadcrumbNav'
 
 export const Route = createFileRoute(
-  '/admin/_authenticated/personal-settings/two-factor'
+  '/admin/_authenticated/personal-settings/security'
 )({
-  staticData: { breadcrumb: 'Zwei-Faktor-Authentifizierung' },
+  staticData: { breadcrumb: 'Sicherheit' },
   component: RouteComponent,
 })
 
 function RouteComponent() {
   const breadcrumbs = useBreadcrumbs()
 
-  return (
-    <TwoFactorSettingsPage breadcrumb={<BreadcrumbNav items={breadcrumbs} />} />
-  )
+  return <SecurityPage breadcrumb={<BreadcrumbNav items={breadcrumbs} />} />
 }

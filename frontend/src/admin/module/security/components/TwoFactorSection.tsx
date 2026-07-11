@@ -1,11 +1,10 @@
-import { type ReactNode, useState } from 'react'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useMutation } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { ShieldCheck, ShieldOff, Copy } from 'lucide-react'
-import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/shadcn/components/ui/button'
 import {
   Card,
@@ -20,6 +19,14 @@ import {
   AlertDescription,
   AlertTitle,
 } from '@/shadcn/components/ui/alert'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/shadcn/components/ui/dialog'
 import { FieldGroup } from '@/shadcn/components/ui/field'
 import { TextInput } from '@/components/field/TextInput'
 import {
@@ -34,7 +41,7 @@ import {
   AlertDialogTrigger,
 } from '@/shadcn/components/ui/alert-dialog'
 import { useAuth } from '@/lib/auth.hook'
-import { usePasswordConfirmation } from '@/auth/usePasswordConfirmation'
+import { usePasswordConfirmation } from '@/admin/module/security/usePasswordConfirmation'
 import { ApiValidationError } from '@/lib/api'
 import {
   confirmTwoFactor,
@@ -44,7 +51,7 @@ import {
   getTwoFactorQrCode,
   getTwoFactorSecret,
   regenerateRecoveryCodes,
-} from '@/admin/module/two-factor/api/requests'
+} from '@/admin/module/security/api/requests'
 
 interface SetupData {
   svg: string
@@ -58,19 +65,17 @@ const confirmSchema = z.object({
 
 type ConfirmFormData = z.infer<typeof confirmSchema>
 
-interface TwoFactorSettingsPageProps {
-  breadcrumb?: ReactNode
-}
-
-export function TwoFactorSettingsPage({
-  breadcrumb,
-}: TwoFactorSettingsPageProps) {
+/**
+ * Security page section for two-factor authentication. Shows the current state
+ * and launches the enrolment and recovery-code dialogs. Disabling, revealing
+ * the secret, and viewing/regenerating recovery codes are gated server-side
+ * behind a fresh password confirmation; each runs only once the confirmation is
+ * in place (the user is prompted if it isn't).
+ */
+export function TwoFactorSection() {
   const { user, refreshProfile } = useAuth()
   const isEnabled = user?.two_factor_enabled ?? false
 
-  // Disabling, revealing the secret, and viewing/regenerating recovery codes
-  // are gated server-side behind a fresh password confirmation; run each only
-  // once the confirmation is in place (the user is prompted if it isn't).
   const { ensureConfirmed, dialog: passwordDialog } = usePasswordConfirmation()
 
   const runConfirmed = async (action: () => void) => {
@@ -186,14 +191,11 @@ export function TwoFactorSettingsPage({
     }
   }
 
-  return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Zwei-Faktor-Authentifizierung"
-        description="Schütze dein Konto mit einem zusätzlichen Sicherheitscode bei der Anmeldung"
-        breadcrumb={breadcrumb}
-      />
+  const setupOpen = !!setup && !isEnabled
+  const recoveryOpen = isEnabled && !!revealedRecoveryCodes
 
+  return (
+    <>
       <Card className="max-w-2xl">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -202,100 +204,23 @@ export function TwoFactorSettingsPage({
             ) : (
               <ShieldOff className="size-5 text-muted-foreground" />
             )}
-            {isEnabled ? 'Aktiviert' : 'Nicht aktiviert'}
+            Zwei-Faktor-Authentifizierung
           </CardTitle>
           <CardDescription>
-            {isEnabled
-              ? 'Bei der Anmeldung wird zusätzlich zu deinem Passwort ein Code aus deiner Authentifizierungs-App abgefragt.'
-              : 'Wenn aktiviert, benötigst du bei der Anmeldung zusätzlich zu deinem Passwort einen Code aus einer Authentifizierungs-App (z. B. Google Authenticator oder 1Password).'}
+            {isEnabled ? 'Aktiviert' : 'Nicht aktiviert'}
           </CardDescription>
         </CardHeader>
 
-        {/* Setup in progress: show QR, secret, recovery codes and confirm form. */}
-        {setup && !isEnabled && (
-          <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <p className="text-sm font-medium">
-                1. Scanne den QR-Code mit deiner Authentifizierungs-App
-              </p>
-              <div
-                className="inline-block rounded-md bg-white p-4"
-                // svg markup comes from the trusted backend (Fortify-generated)
-                dangerouslySetInnerHTML={{ __html: setup.svg }}
-              />
-              <p className="text-sm text-muted-foreground">
-                Alternativ kannst du diesen Schlüssel manuell eingeben:
-              </p>
-              <code className="block break-all rounded bg-muted px-2 py-1 font-mono text-sm">
-                {setup.secretKey}
-              </code>
-            </div>
-
-            <div className="space-y-2">
-              <p className="text-sm font-medium">
-                2. Speichere deine Wiederherstellungscodes
-              </p>
-              <Alert>
-                <AlertTitle>Bewahre diese Codes sicher auf</AlertTitle>
-                <AlertDescription>
-                  Mit einem Wiederherstellungscode kannst du dich anmelden, wenn
-                  du keinen Zugriff auf deine App hast. Jeder Code ist nur
-                  einmal gültig.
-                </AlertDescription>
-              </Alert>
-              <RecoveryCodeList codes={setup.recoveryCodes} />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => copyRecoveryCodes(setup.recoveryCodes)}
-              >
-                <Copy className="size-4" />
-                Codes kopieren
-              </Button>
-            </div>
-
-            <form
-              id="form-two-factor-confirm"
-              onSubmit={confirmForm.handleSubmit(onConfirm)}
-              noValidate
-              className="space-y-4"
-            >
-              <p className="text-sm font-medium">
-                3. Gib den Code aus deiner App ein, um zu bestätigen
-              </p>
-              <FieldGroup>
-                <TextInput
-                  name="code"
-                  control={confirmForm.control}
-                  label="Bestätigungscode"
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                />
-              </FieldGroup>
-            </form>
-          </CardContent>
-        )}
-
-        {/* Enabled: reveal / regenerate recovery codes. */}
-        {isEnabled && revealedRecoveryCodes && (
-          <CardContent className="space-y-3">
-            <p className="text-sm font-medium">Wiederherstellungscodes</p>
-            <RecoveryCodeList codes={revealedRecoveryCodes} />
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => copyRecoveryCodes(revealedRecoveryCodes)}
-            >
-              <Copy className="size-4" />
-              Codes kopieren
-            </Button>
-          </CardContent>
-        )}
+        <CardContent>
+          <p className="text-sm text-muted-foreground">
+            {isEnabled
+              ? 'Bei der Anmeldung wird zusätzlich zu deinem Passwort ein Code aus deiner Authentifizierungs-App abgefragt.'
+              : 'Wenn aktiviert, benötigst du bei der Anmeldung zusätzlich zu deinem Passwort einen Code aus einer Authentifizierungs-App (z. B. Google Authenticator oder 1Password).'}
+          </p>
+        </CardContent>
 
         <CardFooter className="flex flex-wrap gap-2">
-          {!isEnabled && !setup && (
+          {!isEnabled && (
             <Button
               type="button"
               onClick={() => runConfirmed(() => enableMutation.mutate())}
@@ -303,28 +228,6 @@ export function TwoFactorSettingsPage({
             >
               {enableMutation.isPending ? 'Wird gestartet...' : 'Aktivieren'}
             </Button>
-          )}
-
-          {!isEnabled && setup && (
-            <>
-              <Button
-                type="submit"
-                form="form-two-factor-confirm"
-                disabled={confirmMutation.isPending}
-              >
-                {confirmMutation.isPending
-                  ? 'Wird bestätigt...'
-                  : 'Bestätigen und aktivieren'}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => disableMutation.mutate()}
-                disabled={disableMutation.isPending}
-              >
-                Abbrechen
-              </Button>
-            </>
           )}
 
           {isEnabled && (
@@ -382,8 +285,148 @@ export function TwoFactorSettingsPage({
         </CardFooter>
       </Card>
 
+      {/* Enrolment in progress: QR, secret, recovery codes and confirm form. */}
+      <Dialog
+        open={setupOpen}
+        onOpenChange={(next) => {
+          // Closing the dialog abandons the pending enrolment.
+          if (!next && setup) {
+            disableMutation.mutate()
+          }
+        }}
+      >
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Zwei-Faktor-Authentifizierung einrichten</DialogTitle>
+            <DialogDescription>
+              Verbinde eine Authentifizierungs-App und bestätige den ersten
+              Code, um die Zwei-Faktor-Authentifizierung zu aktivieren.
+            </DialogDescription>
+          </DialogHeader>
+
+          {setup && (
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <p className="text-sm font-medium">
+                  1. Scanne den QR-Code mit deiner Authentifizierungs-App
+                </p>
+                <div
+                  className="inline-block rounded-md bg-white p-4"
+                  // svg markup comes from the trusted backend (Fortify-generated)
+                  dangerouslySetInnerHTML={{ __html: setup.svg }}
+                />
+                <p className="text-sm text-muted-foreground">
+                  Alternativ kannst du diesen Schlüssel manuell eingeben:
+                </p>
+                <code className="block break-all rounded bg-muted px-2 py-1 font-mono text-sm">
+                  {setup.secretKey}
+                </code>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-sm font-medium">
+                  2. Speichere deine Wiederherstellungscodes
+                </p>
+                <Alert>
+                  <AlertTitle>Bewahre diese Codes sicher auf</AlertTitle>
+                  <AlertDescription>
+                    Mit einem Wiederherstellungscode kannst du dich anmelden,
+                    wenn du keinen Zugriff auf deine App hast. Jeder Code ist
+                    nur einmal gültig.
+                  </AlertDescription>
+                </Alert>
+                <RecoveryCodeList codes={setup.recoveryCodes} />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => copyRecoveryCodes(setup.recoveryCodes)}
+                >
+                  <Copy className="size-4" />
+                  Codes kopieren
+                </Button>
+              </div>
+
+              <form
+                id="form-two-factor-confirm"
+                onSubmit={confirmForm.handleSubmit(onConfirm)}
+                noValidate
+                className="space-y-4"
+              >
+                <p className="text-sm font-medium">
+                  3. Gib den Code aus deiner App ein, um zu bestätigen
+                </p>
+                <FieldGroup>
+                  <TextInput
+                    name="code"
+                    control={confirmForm.control}
+                    label="Bestätigungscode"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                  />
+                </FieldGroup>
+              </form>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => disableMutation.mutate()}
+              disabled={disableMutation.isPending}
+            >
+              Abbrechen
+            </Button>
+            <Button
+              type="submit"
+              form="form-two-factor-confirm"
+              disabled={confirmMutation.isPending}
+            >
+              {confirmMutation.isPending
+                ? 'Wird bestätigt...'
+                : 'Bestätigen und aktivieren'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Recovery codes revealed for an already-active second factor. */}
+      <Dialog
+        open={recoveryOpen}
+        onOpenChange={(next) => {
+          if (!next) {
+            setRevealedRecoveryCodes(null)
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Wiederherstellungscodes</DialogTitle>
+            <DialogDescription>
+              Bewahre diese Codes sicher auf. Jeder Code ist nur einmal gültig.
+            </DialogDescription>
+          </DialogHeader>
+
+          {revealedRecoveryCodes && (
+            <div className="space-y-3">
+              <RecoveryCodeList codes={revealedRecoveryCodes} />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => copyRecoveryCodes(revealedRecoveryCodes)}
+              >
+                <Copy className="size-4" />
+                Codes kopieren
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {passwordDialog}
-    </div>
+    </>
   )
 }
 
