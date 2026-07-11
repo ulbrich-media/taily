@@ -8,11 +8,11 @@ import { ShieldCheck, ShieldOff, Copy } from 'lucide-react'
 import { Button } from '@/shadcn/components/ui/button'
 import {
   Card,
-  CardContent,
   CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
+  CardTitleIcon,
 } from '@/shadcn/components/ui/card'
 import {
   Alert,
@@ -199,27 +199,17 @@ export function TwoFactorSection() {
       <Card className="max-w-2xl">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            {isEnabled ? (
-              <ShieldCheck className="size-5 text-primary" />
-            ) : (
-              <ShieldOff className="size-5 text-muted-foreground" />
-            )}
             Zwei-Faktor-Authentifizierung
           </CardTitle>
+          <CardTitleIcon icon={isEnabled ? ShieldCheck : ShieldOff} />
           <CardDescription>
-            {isEnabled ? 'Aktiviert' : 'Nicht aktiviert'}
+            {isEnabled
+              ? 'Dein Konto ist mit Zwei-Faktor-Authentifizierung geschützt. Bei der Anmeldung wird zusätzlich zu deinem Passwort ein Code aus deiner Authentifizierungs-App abgefragt.'
+              : 'Aktiviere die Zwei-Faktor-Authentifizierung um die Sicherheit für dein Konto zu verbessern. Wenn aktiviert, benötigst du bei der Anmeldung zusätzlich zu deinem Passwort einen Code aus einer Authentifizierungs-App (z. B. Google Authenticator oder 1Password).'}
           </CardDescription>
         </CardHeader>
 
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            {isEnabled
-              ? 'Bei der Anmeldung wird zusätzlich zu deinem Passwort ein Code aus deiner Authentifizierungs-App abgefragt.'
-              : 'Wenn aktiviert, benötigst du bei der Anmeldung zusätzlich zu deinem Passwort einen Code aus einer Authentifizierungs-App (z. B. Google Authenticator oder 1Password).'}
-          </p>
-        </CardContent>
-
-        <CardFooter className="flex flex-wrap gap-2">
+        <CardFooter className="flex flex-wrap justify-end gap-2">
           {!isEnabled && (
             <Button
               type="button"

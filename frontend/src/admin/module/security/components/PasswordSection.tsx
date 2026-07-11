@@ -3,11 +3,11 @@ import { KeyRound } from 'lucide-react'
 import { Button } from '@/shadcn/components/ui/button'
 import {
   Card,
-  CardContent,
   CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
+  CardTitleIcon,
 } from '@/shadcn/components/ui/card'
 import { ChangePasswordDialog } from '@/admin/module/security/components/ChangePasswordDialog'
 
@@ -21,24 +21,20 @@ export function PasswordSection() {
   return (
     <Card className="max-w-2xl">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <KeyRound className="size-5 text-primary" />
-          Passwort
-        </CardTitle>
+        <CardTitle className="flex items-center gap-2">Passwort</CardTitle>
+        <CardTitleIcon icon={KeyRound} />
         <CardDescription>
-          Das Passwort, mit dem du dich anmeldest.
+          Wähle ein starkes Passwort und ändere es regelmäßig, um dein Konto zu
+          schützen.
         </CardDescription>
       </CardHeader>
 
-      <CardContent>
-        <p className="text-sm text-muted-foreground">
-          Wähle ein starkes Passwort und ändere es regelmäßig, um dein Konto zu
-          schützen.
-        </p>
-      </CardContent>
-
-      <CardFooter>
-        <Button type="button" onClick={() => setChangeOpen(true)}>
+      <CardFooter className="flex flex-wrap justify-end gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setChangeOpen(true)}
+        >
           Passwort ändern
         </Button>
       </CardFooter>
