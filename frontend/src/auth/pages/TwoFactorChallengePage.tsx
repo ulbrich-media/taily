@@ -10,10 +10,9 @@ import {
   CardHeader,
   CardTitle,
 } from '@/shadcn/components/ui/card'
-import { Input } from '@/shadcn/components/ui/input'
 import { Button } from '@/shadcn/components/ui/button'
 import { FieldGroup } from '@/shadcn/components/ui/field'
-import { FormFieldWrapper } from '@/components/form/FormFieldWrapper'
+import { TextInput } from '@/components/field/TextInput'
 import { useAuth } from '@/lib/auth.hook'
 import { toast } from 'sonner'
 
@@ -99,20 +98,12 @@ export function TwoFactorChallengePage({
           >
             <CardContent>
               <FieldGroup>
-                <FormFieldWrapper
+                {/* Recovery codes are pre-saved strings, not SMS/OTP autofill
+                    candidates, so autoComplete stays off (TextInput default). */}
+                <TextInput
                   name="recovery_code"
                   control={recoveryForm.control}
                   label="Wiederherstellungscode"
-                  render={({ field, fieldState }) => (
-                    <Input
-                      {...field}
-                      id={field.name}
-                      aria-invalid={fieldState.invalid}
-                      // Recovery codes are pre-saved strings, not SMS/OTP
-                      // autofill candidates.
-                      autoComplete="off"
-                    />
-                  )}
                 />
               </FieldGroup>
             </CardContent>
@@ -153,20 +144,13 @@ export function TwoFactorChallengePage({
           >
             <CardContent>
               <FieldGroup>
-                <FormFieldWrapper
+                <TextInput
                   name="code"
                   control={codeForm.control}
                   label="Code"
-                  render={({ field, fieldState }) => (
-                    <Input
-                      {...field}
-                      id={field.name}
-                      aria-invalid={fieldState.invalid}
-                      inputMode="numeric"
-                      autoComplete="one-time-code"
-                      autoFocus
-                    />
-                  )}
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  autoFocus
                 />
               </FieldGroup>
             </CardContent>

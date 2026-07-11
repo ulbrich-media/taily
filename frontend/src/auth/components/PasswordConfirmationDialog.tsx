@@ -12,10 +12,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/shadcn/components/ui/dialog'
-import { Input } from '@/shadcn/components/ui/input'
 import { Button } from '@/shadcn/components/ui/button'
 import { FieldGroup } from '@/shadcn/components/ui/field'
-import { FormFieldWrapper } from '@/components/form/FormFieldWrapper'
+import { TextInput } from '@/components/field/TextInput'
 import { ApiValidationError } from '@/lib/api'
 import { confirmPassword } from '@/lib/password-confirmation.api'
 
@@ -85,20 +84,13 @@ export function PasswordConfirmationDialog({
           noValidate
         >
           <FieldGroup>
-            <FormFieldWrapper
+            <TextInput
               name="password"
               control={form.control}
               label="Passwort"
-              render={({ field, fieldState }) => (
-                <Input
-                  {...field}
-                  id={field.name}
-                  aria-invalid={fieldState.invalid}
-                  type="password"
-                  autoComplete="current-password"
-                  autoFocus
-                />
-              )}
+              type="password"
+              autoComplete="current-password"
+              autoFocus
             />
           </FieldGroup>
 

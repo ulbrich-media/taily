@@ -20,9 +20,8 @@ import {
   AlertDescription,
   AlertTitle,
 } from '@/shadcn/components/ui/alert'
-import { Input } from '@/shadcn/components/ui/input'
 import { FieldGroup } from '@/shadcn/components/ui/field'
-import { FormFieldWrapper } from '@/components/form/FormFieldWrapper'
+import { TextInput } from '@/components/field/TextInput'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -266,19 +265,12 @@ export function TwoFactorSettingsPage({
                 3. Gib den Code aus deiner App ein, um zu bestätigen
               </p>
               <FieldGroup>
-                <FormFieldWrapper
+                <TextInput
                   name="code"
                   control={confirmForm.control}
                   label="Bestätigungscode"
-                  render={({ field, fieldState }) => (
-                    <Input
-                      {...field}
-                      id={field.name}
-                      aria-invalid={fieldState.invalid}
-                      inputMode="numeric"
-                      autoComplete="one-time-code"
-                    />
-                  )}
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
                 />
               </FieldGroup>
             </form>
