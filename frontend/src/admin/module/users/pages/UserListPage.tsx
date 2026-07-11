@@ -9,6 +9,7 @@ import {
   TableRow,
 } from '@/shadcn/components/ui/table'
 import { Badge } from '@/shadcn/components/ui/badge'
+import { ShieldCheck, ShieldOff } from 'lucide-react'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { TableListView } from '@/components/list/TableListView'
 
@@ -45,6 +46,31 @@ export function UserListPage({
 
     return <Badge variant="secondary">Einladung ausstehend</Badge>
   }
+
+  const getTwoFactorStatus = (user: UserResource) => {
+    if (user.two_factor_enabled) {
+      return (
+        <Badge variant="success">
+          <ShieldCheck />
+          Aktiv
+        </Badge>
+      )
+    }
+
+    return (
+      <Badge variant="outline" className="text-muted-foreground">
+        <ShieldOff />
+        Inaktiv
+      </Badge>
+    )
+  }
+
+  const formatCreatedAt = (createdAt: string) =>
+    new Date(createdAt).toLocaleDateString('de-DE', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    })
 
   const formatLastLogin = (lastLogin: string | null) => {
     if (!lastLogin) {
@@ -97,6 +123,8 @@ export function UserListPage({
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>E-Mail</TableHead>
+                <TableHead>2FA</TableHead>
+                <TableHead>Registriert</TableHead>
                 <TableHead>Letzter Login</TableHead>
                 {renderRowActions && (
                   <TableHead className="th-contain"></TableHead>
@@ -110,6 +138,8 @@ export function UserListPage({
                     {user.name} {user.role === 'admin' && <Badge>Admin</Badge>}
                   </TableCell>
                   <TableCell>{user.email}</TableCell>
+                  <TableCell>{getTwoFactorStatus(user)}</TableCell>
+                  <TableCell>{formatCreatedAt(user.created_at)}</TableCell>
                   <TableCell>{getLastLogin(user)}</TableCell>
                   {renderRowActions && (
                     <TableCell className="text-right">
