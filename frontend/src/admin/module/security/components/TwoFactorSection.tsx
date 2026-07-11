@@ -302,7 +302,13 @@ export function TwoFactorSection() {
                 </p>
                 <div
                   className="inline-block rounded-md bg-white p-4"
-                  // svg markup comes from the trusted backend (Fortify-generated)
+                  // The QR SVG is generated server-side by Fortify from the
+                  // user's own freshly created TOTP secret and returned by the
+                  // two-factor-qr-code endpoint — it is first-party, trusted
+                  // markup with no user-controlled input, so injecting it here
+                  // is not an XSS sink. Sanitising it (or swapping to a
+                  // client-side QR renderer) would only add a dependency
+                  // without changing the trust boundary.
                   dangerouslySetInnerHTML={{ __html: setup.svg }}
                 />
                 <p className="text-sm text-muted-foreground">
