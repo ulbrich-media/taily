@@ -165,8 +165,12 @@ export function TwoFactorSettingsPage({
   }
 
   const copyRecoveryCodes = async (codes: string[]) => {
-    await navigator.clipboard.writeText(codes.join('\n'))
-    toast.success('Wiederherstellungscodes wurden kopiert.')
+    try {
+      await navigator.clipboard.writeText(codes.join('\n'))
+      toast.success('Wiederherstellungscodes wurden kopiert.')
+    } catch {
+      toast.error('Codes konnten nicht kopiert werden.')
+    }
   }
 
   return (

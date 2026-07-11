@@ -108,7 +108,9 @@ export function TwoFactorChallengePage({
                       {...field}
                       id={field.name}
                       aria-invalid={fieldState.invalid}
-                      autoComplete="one-time-code"
+                      // Recovery codes are pre-saved strings, not SMS/OTP
+                      // autofill candidates.
+                      autoComplete="off"
                     />
                   )}
                 />

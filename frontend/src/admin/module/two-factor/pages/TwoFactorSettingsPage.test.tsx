@@ -76,7 +76,8 @@ describe('TwoFactorSettingsPage', () => {
         code: '654321',
       })
     )
-    expect(refreshProfile).toHaveBeenCalled()
+    // refreshProfile runs in the mutation's async onSuccess, so wait for it.
+    await waitFor(() => expect(refreshProfile).toHaveBeenCalled())
   })
 
   it('shows management actions when already enabled', () => {

@@ -20,16 +20,7 @@ export type RecoveryCodes = string[]
 // Request / input types (sent to the API)
 // ---------------------------------------------------------------------------
 
-/** Confirm enrolment (or complete the login challenge) with a TOTP code. */
+/** Confirm enrolment with a TOTP code. */
 export interface TwoFactorCodeRequest {
   code: string
-}
-
-/**
- * Login challenge accepts either a TOTP code or a one-time recovery code.
- * Exactly one is sent.
- */
-export interface TwoFactorChallengeRequest {
-  code?: string
-  recovery_code?: string
 }

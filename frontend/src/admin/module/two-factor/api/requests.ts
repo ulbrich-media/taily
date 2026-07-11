@@ -1,7 +1,6 @@
 import { apiRequest } from '@/lib/api'
 import type {
   RecoveryCodes,
-  TwoFactorChallengeRequest,
   TwoFactorCodeRequest,
   TwoFactorQrCode,
   TwoFactorSecret,
@@ -45,17 +44,4 @@ export async function getRecoveryCodes(): Promise<RecoveryCodes> {
 
 export async function regenerateRecoveryCodes(): Promise<void> {
   await apiRequest('user/two-factor-recovery-codes', { method: 'POST' })
-}
-
-/**
- * Complete the login challenge. The pending login is held in the session by
- * the preceding `/login` call, so no credentials are re-sent here.
- */
-export async function submitTwoFactorChallenge(
-  data: TwoFactorChallengeRequest
-): Promise<void> {
-  await apiRequest('two-factor-challenge', {
-    method: 'POST',
-    body: JSON.stringify(data),
-  })
 }

@@ -161,8 +161,12 @@ class TwoFactorAuthenticationTest extends TestCase
     public function test_management_endpoints_require_authentication(): void
     {
         $this->postJson('/internal/user/two-factor-authentication')->assertUnauthorized();
-        $this->getJson('/internal/user/two-factor-qr-code')->assertUnauthorized();
         $this->deleteJson('/internal/user/two-factor-authentication')->assertUnauthorized();
+        $this->postJson('/internal/user/confirmed-two-factor-authentication')->assertUnauthorized();
+        $this->getJson('/internal/user/two-factor-qr-code')->assertUnauthorized();
+        $this->getJson('/internal/user/two-factor-secret-key')->assertUnauthorized();
+        $this->getJson('/internal/user/two-factor-recovery-codes')->assertUnauthorized();
+        $this->postJson('/internal/user/two-factor-recovery-codes')->assertUnauthorized();
     }
 
     public function test_profile_reports_two_factor_state(): void
@@ -179,6 +183,19 @@ class TwoFactorAuthenticationTest extends TestCase
         $this->getJson('/internal/profile')
             ->assertOk()
             ->assertJson(['two_factor_enabled' => true]);
+    }
+
+    public function test_profile_never_exposes_the_two_factor_secret(): void
+    {
+        $user = $this->createUser();
+        $this->actingAs($user);
+        $this->enableAndConfirmTwoFactor();
+
+        $this->getJson('/internal/profile')
+            ->assertOk()
+            ->assertJsonMissing(['two_factor_secret' => null])
+            ->assertJsonMissingPath('two_factor_secret')
+            ->assertJsonMissingPath('two_factor_recovery_codes');
     }
 
     public function test_login_demands_second_factor_when_enabled(): void
@@ -217,6 +234,33 @@ class TwoFactorAuthenticationTest extends TestCase
         ])->assertSuccessful();
 
         $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_a_recovery_code_cannot_be_reused(): void
+    {
+        $user = $this->createUser();
+        ['recoveryCodes' => $recoveryCodes] = $this->provisionConfirmedTwoFactor($user);
+
+        // First use succeeds and consumes the code.
+        $this->postJson('/internal/login', [
+            'email' => 'jane@example.com',
+            'password' => 'CorrectPassword1',
+        ])->assertOk()->assertJson(['two_factor' => true]);
+        $this->postJson('/internal/two-factor-challenge', [
+            'recovery_code' => $recoveryCodes[0],
+        ])->assertSuccessful();
+        $this->postJson('/internal/logout')->assertNoContent();
+
+        // Second use of the same code is rejected. (A prior successful login in
+        // this test leaves the guard resolved, so the 422 — not assertGuest — is
+        // the reliable proof that the consumed code no longer authenticates.)
+        $this->postJson('/internal/login', [
+            'email' => 'jane@example.com',
+            'password' => 'CorrectPassword1',
+        ])->assertOk()->assertJson(['two_factor' => true]);
+        $this->postJson('/internal/two-factor-challenge', [
+            'recovery_code' => $recoveryCodes[0],
+        ])->assertStatus(422);
     }
 
     public function test_two_factor_challenge_rejects_an_invalid_code(): void

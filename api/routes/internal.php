@@ -81,7 +81,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // paths so the upstream controllers keep working unchanged.
     Route::post('/user/two-factor-authentication', [TwoFactorAuthenticationController::class, 'store']);
     Route::delete('/user/two-factor-authentication', [TwoFactorAuthenticationController::class, 'destroy']);
-    Route::post('/user/confirmed-two-factor-authentication', [ConfirmedTwoFactorAuthenticationController::class, 'store']);
+    // Same brute-force guard as the login challenge: confirmation also checks a
+    // six-digit TOTP code.
+    Route::post('/user/confirmed-two-factor-authentication', [ConfirmedTwoFactorAuthenticationController::class, 'store'])
+        ->middleware('throttle:6,1');
     Route::get('/user/two-factor-qr-code', [TwoFactorQrCodeController::class, 'show']);
     Route::get('/user/two-factor-secret-key', [TwoFactorSecretKeyController::class, 'show']);
     Route::get('/user/two-factor-recovery-codes', [RecoveryCodeController::class, 'index']);

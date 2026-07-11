@@ -1,11 +1,14 @@
 import { type ReactNode } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiRequest, csrfCookie } from './api'
-import type { AuthContextType, LoginResult, User } from '@/lib/auth.types.ts'
+import type {
+  AuthContextType,
+  LoginResult,
+  TwoFactorChallengeRequest,
+  User,
+} from '@/lib/auth.types.ts'
 import { AuthContext } from '@/lib/auth.const.tsx'
 import { UserRole } from '@/api/types/users'
-import { submitTwoFactorChallenge } from '@/admin/module/two-factor/api/requests'
-import type { TwoFactorChallengeRequest } from '@/admin/module/two-factor/api/types'
 
 interface AuthProviderProps {
   children: ReactNode
@@ -66,7 +69,12 @@ export function AuthProvider({
   const completeTwoFactorChallenge = async (
     data: TwoFactorChallengeRequest
   ) => {
-    await submitTwoFactorChallenge(data)
+    // The pending login is held in the session by the preceding /login call,
+    // so no credentials are re-sent here.
+    await apiRequest('two-factor-challenge', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
 
     await refetch()
     onLoginSuccess?.()
