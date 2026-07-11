@@ -2,9 +2,15 @@
 
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Http\Controllers\AuthenticatedSessionController;
+use Laravel\Fortify\Http\Controllers\ConfirmedTwoFactorAuthenticationController;
 use Laravel\Fortify\Http\Controllers\NewPasswordController;
 use Laravel\Fortify\Http\Controllers\PasswordController;
 use Laravel\Fortify\Http\Controllers\PasswordResetLinkController;
+use Laravel\Fortify\Http\Controllers\RecoveryCodeController;
+use Laravel\Fortify\Http\Controllers\TwoFactorAuthenticatedSessionController;
+use Laravel\Fortify\Http\Controllers\TwoFactorAuthenticationController;
+use Laravel\Fortify\Http\Controllers\TwoFactorQrCodeController;
+use Laravel\Fortify\Http\Controllers\TwoFactorSecretKeyController;
 use Taily\Http\Controllers\Internal\AdoptionContractController;
 use Taily\Http\Controllers\Internal\AdoptionController;
 use Taily\Http\Controllers\Internal\AnimalController;
@@ -42,6 +48,13 @@ Route::get('/media/{mediaUuid}', [MediaController::class, 'serve'])->name('media
 // Authentication routes (Laravel Fortify controllers, see ADR-008)
 Route::post('/login', [AuthenticatedSessionController::class, 'store']);
 
+// Second factor of the login. When a user with confirmed 2FA logs in, the
+// login endpoint answers `{ "two_factor": true }` and holds the pending login
+// in the session; the SPA then posts the TOTP or a recovery code here. The
+// throttle guards against brute-forcing the six-digit code.
+Route::post('/two-factor-challenge', [TwoFactorAuthenticatedSessionController::class, 'store'])
+    ->middleware('throttle:6,1');
+
 // Password reset (login throttling lives in Fortify's login pipeline; these
 // public endpoints need their own request-level limit against reset spam)
 Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])->middleware('throttle:6,1');
@@ -60,6 +73,19 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'show']);
     Route::put('/profile', [ProfileController::class, 'update']);
     Route::put('/profile/password', [PasswordController::class, 'update']);
+
+    // Two-factor authentication management (Laravel Fortify controllers).
+    // Enabling generates the secret and recovery codes; the second factor only
+    // becomes active once the user confirms a code (see the `confirm` option in
+    // FortifyServiceProvider). The management endpoints match Fortify's own
+    // paths so the upstream controllers keep working unchanged.
+    Route::post('/user/two-factor-authentication', [TwoFactorAuthenticationController::class, 'store']);
+    Route::delete('/user/two-factor-authentication', [TwoFactorAuthenticationController::class, 'destroy']);
+    Route::post('/user/confirmed-two-factor-authentication', [ConfirmedTwoFactorAuthenticationController::class, 'store']);
+    Route::get('/user/two-factor-qr-code', [TwoFactorQrCodeController::class, 'show']);
+    Route::get('/user/two-factor-secret-key', [TwoFactorSecretKeyController::class, 'show']);
+    Route::get('/user/two-factor-recovery-codes', [RecoveryCodeController::class, 'index']);
+    Route::post('/user/two-factor-recovery-codes', [RecoveryCodeController::class, 'store']);
 
     // Users administration
     Route::apiResource('users', UserController::class);

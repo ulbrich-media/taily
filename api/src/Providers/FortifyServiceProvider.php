@@ -47,11 +47,27 @@ class FortifyServiceProvider extends ServiceProvider
         // The internal API is consumed by the SPA only; users are onboarded
         // via invitations, so registration and Fortify's other features stay
         // disabled until they are deliberately adopted.
+        //
+        // Two-factor authentication (TOTP) is opt-in per user and set up from
+        // the personal settings. `confirm` requires the user to verify a code
+        // before the second factor becomes active, so a mistyped authenticator
+        // secret can never lock anyone out. `confirmPassword` stays off: the
+        // management endpoints already sit behind the authenticated SPA session
+        // and Taily has no separate password-confirmation flow to build on.
+        //
+        // Passkeys (`Features::passkeys()`, available via laravel/passkeys which
+        // Fortify pulls in) are intentionally left disabled here; they extend
+        // both the login and settings flows with a WebAuthn ceremony layer and
+        // are tracked as separate follow-up work.
         config([
             'fortify.views' => false,
             'fortify.features' => [
                 Features::resetPasswords(),
                 Features::updatePasswords(),
+                Features::twoFactorAuthentication([
+                    'confirm' => true,
+                    'confirmPassword' => false,
+                ]),
             ],
         ]);
 

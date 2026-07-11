@@ -1,0 +1,93 @@
+import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { TwoFactorSettingsPage } from './TwoFactorSettingsPage'
+import { useAuth } from '@/lib/auth.hook'
+import * as requests from '@/admin/module/two-factor/api/requests'
+
+vi.mock('@/lib/auth.hook', () => ({ useAuth: vi.fn() }))
+vi.mock('@/admin/module/two-factor/api/requests')
+vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
+
+const useAuthMock = vi.mocked(useAuth)
+const refreshProfile = vi.fn()
+
+function renderPage(twoFactorEnabled: boolean) {
+  useAuthMock.mockReturnValue({
+    user: { two_factor_enabled: twoFactorEnabled },
+    refreshProfile,
+  } as unknown as ReturnType<typeof useAuth>)
+
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  })
+
+  render(
+    <QueryClientProvider client={queryClient}>
+      <TwoFactorSettingsPage />
+    </QueryClientProvider>
+  )
+}
+
+describe('TwoFactorSettingsPage', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('walks through the enrolment flow', async () => {
+    vi.mocked(requests.enableTwoFactor).mockResolvedValue()
+    vi.mocked(requests.getTwoFactorQrCode).mockResolvedValue({
+      svg: '<svg data-testid="qr"></svg>',
+      url: 'otpauth://totp/x',
+    })
+    vi.mocked(requests.getTwoFactorSecret).mockResolvedValue({
+      secretKey: 'SECRET123',
+    })
+    vi.mocked(requests.getRecoveryCodes).mockResolvedValue([
+      'recovery-code-aaa',
+      'recovery-code-bbb',
+    ])
+    vi.mocked(requests.confirmTwoFactor).mockResolvedValue()
+
+    const user = userEvent.setup()
+    renderPage(false)
+
+    // Disabled state.
+    expect(screen.getByText('Nicht aktiviert')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Aktivieren' }))
+
+    // Enrolment materials appear.
+    expect(await screen.findByText('SECRET123')).toBeInTheDocument()
+    expect(screen.getByText('recovery-code-aaa')).toBeInTheDocument()
+    expect(requests.enableTwoFactor).toHaveBeenCalled()
+
+    // Confirm the setup with a code.
+    await user.type(screen.getByLabelText('Bestätigungscode'), '654321')
+    await user.click(
+      screen.getByRole('button', { name: 'Bestätigen und aktivieren' })
+    )
+
+    // react-query's mutate passes a context object as a second argument, so
+    // assert on the first argument only.
+    await waitFor(() =>
+      expect(vi.mocked(requests.confirmTwoFactor).mock.calls[0]?.[0]).toEqual({
+        code: '654321',
+      })
+    )
+    expect(refreshProfile).toHaveBeenCalled()
+  })
+
+  it('shows management actions when already enabled', () => {
+    renderPage(true)
+
+    expect(screen.getByText('Aktiviert')).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Deaktivieren' })
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Neue Codes generieren' })
+    ).toBeInTheDocument()
+  })
+})
