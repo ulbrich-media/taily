@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from '@/shadcn/components/ui/card'
 import { Input } from '@/shadcn/components/ui/input'
+import { Checkbox } from '@/shadcn/components/ui/checkbox'
 import { Button } from '@/shadcn/components/ui/button'
 import {
   Tooltip,
@@ -36,6 +37,7 @@ const loginSchema = z.object({
     .email('Bitte gib eine gültige E-Mail Adresse ein')
     .min(1, 'Bitte gib deine E-Mail Adresse ein'),
   password: z.string().min(1, 'Bitte gib dein Passwort ein'),
+  remember: z.boolean(),
 })
 
 type LoginFormData = z.infer<typeof loginSchema>
@@ -58,6 +60,7 @@ export function LoginPage({
     defaultValues: {
       email: '',
       password: '',
+      remember: false,
     },
   })
 
@@ -107,7 +110,11 @@ export function LoginPage({
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      const { twoFactorRequired } = await login(data.email, data.password)
+      const { twoFactorRequired } = await login(
+        data.email,
+        data.password,
+        data.remember
+      )
       if (twoFactorRequired) {
         onTwoFactorRequired()
       }
@@ -170,6 +177,26 @@ export function LoginPage({
                     {fieldState.invalid && (
                       <FieldError errors={[fieldState.error]} />
                     )}
+                  </Field>
+                )}
+              />
+
+              <Controller
+                name={'remember'}
+                control={form.control}
+                render={({ field }) => (
+                  <Field orientation="horizontal">
+                    <Checkbox
+                      id={field.name}
+                      checked={field.value}
+                      onCheckedChange={(checked) => field.onChange(!!checked)}
+                    />
+                    <FieldLabel
+                      htmlFor={field.name}
+                      className="font-normal cursor-pointer"
+                    >
+                      Angemeldet bleiben
+                    </FieldLabel>
                   </Field>
                 )}
               />
