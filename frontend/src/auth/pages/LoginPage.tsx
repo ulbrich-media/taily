@@ -180,30 +180,29 @@ export function LoginPage({
                   </Field>
                 )}
               />
-
-              <Controller
-                name={'remember'}
-                control={form.control}
-                render={({ field }) => (
-                  <Field orientation="horizontal">
-                    <Checkbox
-                      id={field.name}
-                      checked={field.value}
-                      onCheckedChange={(checked) => field.onChange(!!checked)}
-                    />
-                    <FieldLabel
-                      htmlFor={field.name}
-                      className="font-normal cursor-pointer"
-                    >
-                      Angemeldet bleiben
-                    </FieldLabel>
-                  </Field>
-                )}
-              />
             </FieldGroup>
           </CardContent>
 
           <CardFooter className="flex-col gap-2">
+            <Controller
+              name={'remember'}
+              control={form.control}
+              render={({ field }) => (
+                <Field orientation="horizontal" className="mb-2">
+                  <Checkbox
+                    id={field.name}
+                    checked={field.value}
+                    onCheckedChange={(checked) => field.onChange(!!checked)}
+                  />
+                  <FieldLabel
+                    htmlFor={field.name}
+                    className="font-normal cursor-pointer"
+                  >
+                    Angemeldet bleiben
+                  </FieldLabel>
+                </Field>
+              )}
+            />
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? 'Anmelden...' : 'Anmelden'}
             </Button>
