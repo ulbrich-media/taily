@@ -231,6 +231,29 @@ class PasswordResetTest extends TestCase
         $this->assertTrue(Hash::check('OldPassword1', $user->fresh()->password));
     }
 
+    public function test_password_reset_rotates_the_remember_token(): void
+    {
+        $user = $this->createUser();
+        $user->setRememberToken('stale-remember-token');
+        $user->save();
+
+        $token = $this->requestResetToken($user);
+
+        $this->postJson('/internal/reset-password', [
+            'token' => $token,
+            'email' => 'jane@example.com',
+            'password' => 'NewPassword2',
+            'password_confirmation' => 'NewPassword2',
+        ])->assertOk();
+
+        // "Stay logged in" cookies authenticate via the remember token alone
+        // (Sanctum's AuthenticateSession never checks the password hash they
+        // carry), so a reset that keeps the token would leave a stolen cookie
+        // working after the very reset meant to lock it out.
+        $this->assertNotSame('stale-remember-token', $user->fresh()->remember_token);
+        $this->assertNotNull($user->fresh()->remember_token);
+    }
+
     public function test_token_cannot_be_reused_after_successful_reset(): void
     {
         $user = $this->createUser();

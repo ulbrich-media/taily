@@ -74,9 +74,14 @@ Route::post('/reset-password', [NewPasswordController::class, 'store'])->middlew
 Route::get('/passkeys/login/options', [PasskeyLoginController::class, 'index'])->middleware('throttle:6,1');
 Route::post('/passkeys/login', [PasskeyLoginController::class, 'store'])->middleware('throttle:6,1');
 
-// Public invitation routes
-Route::get('/invitations/{token}', [InvitationController::class, 'show']);
-Route::post('/invitations/{token}/accept', [InvitationController::class, 'accept']);
+// Public invitation routes. The 64-character token is the credential; the
+// throttle is defense in depth against token guessing, matching the other
+// unauthenticated endpoints above. The `invitations` key prefix gives these
+// routes their own bucket — unauthenticated inline throttles otherwise share
+// one per-IP counter, and accepting an invitation shouldn't compete with,
+// say, password-reset attempts from the same network.
+Route::get('/invitations/{token}', [InvitationController::class, 'show'])->middleware('throttle:6,1,invitations');
+Route::post('/invitations/{token}/accept', [InvitationController::class, 'accept'])->middleware('throttle:6,1,invitations');
 
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy']);

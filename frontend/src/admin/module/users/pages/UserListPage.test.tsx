@@ -27,6 +27,7 @@ describe('UserListPage', () => {
     render(
       <UserListPage
         users={[makeUser({ name: 'Anna', two_factor_enabled: true })]}
+        isAdmin
       />
     )
 
@@ -37,6 +38,7 @@ describe('UserListPage', () => {
     render(
       <UserListPage
         users={[makeUser({ name: 'Ben', two_factor_enabled: false })]}
+        isAdmin
       />
     )
 
@@ -53,5 +55,22 @@ describe('UserListPage', () => {
     )
 
     expect(within(rowFor('Clara')).getByText('15.01.2026')).toBeInTheDocument()
+  })
+
+  it('hides the 2FA and last-login columns for non-admins', () => {
+    // The API omits these fields for regular users; the table must not show
+    // empty security columns to them.
+    render(<UserListPage users={[makeUser({ name: 'Dana' })]} />)
+
+    expect(screen.queryByText('2FA')).not.toBeInTheDocument()
+    expect(screen.queryByText('Letzter Login')).not.toBeInTheDocument()
+    expect(screen.getByText('Registriert')).toBeInTheDocument()
+  })
+
+  it('shows the 2FA and last-login columns for admins', () => {
+    render(<UserListPage users={[makeUser({ name: 'Emil' })]} isAdmin />)
+
+    expect(screen.getByText('2FA')).toBeInTheDocument()
+    expect(screen.getByText('Letzter Login')).toBeInTheDocument()
   })
 })

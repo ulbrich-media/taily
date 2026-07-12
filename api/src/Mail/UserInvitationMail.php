@@ -14,8 +14,14 @@ class UserInvitationMail extends Mailable
 {
     use Queueable, SerializesModels;
 
+    /**
+     * The plaintext token is passed separately because the model only stores
+     * its hash — and, unlike a transient model property, a plain string
+     * survives SerializesModels if this mailable is ever queued.
+     */
     public function __construct(
-        public UserInvitation $invitation
+        public UserInvitation $invitation,
+        public string $plainTextToken,
     ) {}
 
     public function envelope(): Envelope
@@ -38,6 +44,6 @@ class UserInvitationMail extends Mailable
 
     protected function getInvitationUrl(): string
     {
-        return FrontendUriBuilder::userInvite($this->invitation->token);
+        return FrontendUriBuilder::userInvite($this->plainTextToken);
     }
 }
