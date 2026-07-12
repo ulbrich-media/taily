@@ -158,8 +158,15 @@ img {
     border-bottom: 1px solid #f4f4f0;
     border-top: 1px solid #f4f4f0;
     margin: 0;
-    padding: 0;
+    padding: 0 16px;
     width: 100%;
+}
+
+/* Gives the footer the same side gutter as .body, so the card above it
+   (.inner-body) always reads as a free-standing box instead of touching
+   the viewport edge on narrow screens, where both collapse to width: 100%. */
+.footer-wrapper {
+    padding: 0 16px;
 }
 
 .inner-body {
@@ -171,7 +178,7 @@ img {
     border-radius: 10px;
     border-width: 1px;
     box-shadow: 0 1px 3px 0 rgba(12, 12, 9, 0.08), 0 1px 2px -1px rgba(12, 12, 9, 0.08);
-    margin: 0 auto;
+    margin: 24px auto;
     padding: 0;
     width: 570px;
 }
@@ -323,6 +330,26 @@ img {
 .panel-item p:last-of-type {
     margin-bottom: 0;
     padding-bottom: 0;
+}
+
+/* Code box — used for plain-text fallback links (x-mail::code), a
+   reusable alternative to a clickable button/link when the raw URL
+   needs to be readable and always wraps instead of overflowing. */
+
+.code-box {
+    margin: 16px 0;
+}
+
+.code-box-content {
+    background-color: #f4f4f0;
+    border: 1px solid #e8e8e3;
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #0c0c09;
+    word-break: break-all;
 }
 
 /* Utilities */

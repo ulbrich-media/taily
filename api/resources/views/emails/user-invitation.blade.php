@@ -11,7 +11,7 @@ Einladung annehmen
 
 Falls der Button nicht funktioniert, kopiere diesen Link in deinen Browser:
 
-{{ $invitationUrl }}
+<x-mail::code>{{ $invitationUrl }}</x-mail::code>
 
 Der Link läuft am {{ $expiresAt->format('d.m.Y') }} um {{ $expiresAt->format('H:i') }} Uhr ab.
 

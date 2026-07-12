@@ -11,7 +11,7 @@ Neues Passwort festlegen
 
 Falls der Button nicht funktioniert, kopiere diesen Link in deinen Browser:
 
-{{ $resetUrl }}
+<x-mail::code>{{ $resetUrl }}</x-mail::code>
 
 Der Link läuft in {{ $expiresInMinutes }} Minuten ab.
 

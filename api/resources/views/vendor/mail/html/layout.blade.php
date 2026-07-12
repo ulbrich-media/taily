@@ -81,6 +81,12 @@ background-color: #efb839 !important;
 border-color: #efb839 !important;
 color: #2b2a22 !important;
 }
+
+.code-box-content {
+background-color: #2b2b22 !important;
+border-color: #3a3a2e !important;
+color: #fbfbf9 !important;
+}
 }
 </style>
 {!! $head ?? '' !!}
