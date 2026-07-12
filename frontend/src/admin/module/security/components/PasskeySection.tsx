@@ -2,7 +2,11 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Fingerprint, Trash2 } from 'lucide-react'
 import { Button } from '@/shadcn/components/ui/button'
@@ -37,10 +41,8 @@ import {
 } from '@/shadcn/components/ui/alert-dialog'
 import { usePasswordConfirmation } from '@/admin/module/security/usePasswordConfirmation'
 import { formatApiDate } from '@/lib/dates.utils'
-import {
-  deletePasskey,
-  getPasskeys,
-} from '@/admin/module/security/api/requests'
+import { deletePasskey } from '@/admin/module/security/api/requests'
+import { listPasskeysQuery } from '@/admin/module/security/api/queries'
 import type { Passkey } from '@/admin/module/security/api/types'
 import {
   Passkeys,
@@ -63,10 +65,7 @@ export function PasskeySection() {
   const queryClient = useQueryClient()
   const { ensureConfirmed, dialog: passwordDialog } = usePasswordConfirmation()
 
-  const { data: passkeys = [], isLoading } = useQuery({
-    queryKey: ['passkeys'],
-    queryFn: getPasskeys,
-  })
+  const { data: passkeys } = useSuspenseQuery(listPasskeysQuery)
 
   const [registerOpen, setRegisterOpen] = useState(false)
 
@@ -83,7 +82,9 @@ export function PasskeySection() {
     mutationFn: async ({ name }) =>
       Passkeys.register({ name, routes: PASSKEY_REGISTER_ROUTES }),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['passkeys'] })
+      await queryClient.invalidateQueries({
+        queryKey: listPasskeysQuery.queryKey,
+      })
       setRegisterOpen(false)
       registerForm.reset()
       toast.success('Passkey wurde hinzugefügt.')
@@ -96,7 +97,9 @@ export function PasskeySection() {
   const deleteMutation = useMutation({
     mutationFn: deletePasskey,
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['passkeys'] })
+      await queryClient.invalidateQueries({
+        queryKey: listPasskeysQuery.queryKey,
+      })
       toast.success('Passkey wurde entfernt.')
     },
     onError: () => {
@@ -136,7 +139,7 @@ export function PasskeySection() {
           </CardDescription>
         </CardHeader>
 
-        {!isLoading && passkeys.length > 0 && (
+        {passkeys.length > 0 && (
           <div className="px-6">
             <ul className="divide-y rounded-md border">
               {passkeys.map((passkey) => (

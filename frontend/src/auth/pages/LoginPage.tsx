@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -70,20 +70,34 @@ export function LoginPage({
     void csrfCookie()
   }, [])
 
-  const {
-    verify: verifyPasskey,
-    isLoading: isPasskeyLoading,
-    isSupported: isPasskeySupported,
-  } = usePasskeyVerify({
-    autofill: true,
-    routes: PASSKEY_VERIFY_ROUTES,
-    onSuccess: () => {
-      void refreshProfile()
-    },
-    onError: (err) => {
-      toast.error(err.message)
-    },
-  })
+  // The hook's own `isLoading` covers both the manual verify below *and* the
+  // passkey-autofill listener it starts in the background on mount — that
+  // listener stays "loading" for as long as the page is open (it only
+  // resolves once the user picks a credential from the browser's native
+  // dropdown), so using it to disable/label this button would make it look
+  // permanently stuck. Track the manual click separately instead.
+  const [isPasskeySigningIn, setIsPasskeySigningIn] = useState(false)
+
+  const { verify: verifyPasskey, isSupported: isPasskeySupported } =
+    usePasskeyVerify({
+      autofill: true,
+      routes: PASSKEY_VERIFY_ROUTES,
+      onSuccess: () => {
+        void refreshProfile()
+      },
+      onError: (err) => {
+        toast.error(err.message || 'Passkey-Anmeldung fehlgeschlagen.')
+      },
+    })
+
+  const handlePasskeyClick = async () => {
+    setIsPasskeySigningIn(true)
+    try {
+      await verifyPasskey()
+    } finally {
+      setIsPasskeySigningIn(false)
+    }
+  }
 
   // Redirect if already authenticated
   if (isAuthenticated) {
@@ -177,10 +191,10 @@ export function LoginPage({
                       type="button"
                       variant="outline"
                       className="w-full"
-                      onClick={() => void verifyPasskey()}
-                      disabled={!isPasskeySupported || isPasskeyLoading}
+                      onClick={() => void handlePasskeyClick()}
+                      disabled={!isPasskeySupported || isPasskeySigningIn}
                     >
-                      {isPasskeyLoading
+                      {isPasskeySigningIn
                         ? 'Wird angemeldet...'
                         : 'Mit Passkey anmelden'}
                     </Button>
