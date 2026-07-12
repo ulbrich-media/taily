@@ -13,6 +13,12 @@ import {
 } from '@/shadcn/components/ui/card'
 import { Input } from '@/shadcn/components/ui/input'
 import { Button } from '@/shadcn/components/ui/button'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/shadcn/components/ui/tooltip'
 import { useAuth } from '@/lib/auth.hook'
 import {
   Field,
@@ -160,19 +166,33 @@ export function LoginPage({
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? 'Anmelden...' : 'Anmelden'}
             </Button>
-            {isPasskeySupported && (
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full"
-                onClick={() => void verifyPasskey()}
-                disabled={isPasskeyLoading}
-              >
-                {isPasskeyLoading
-                  ? 'Wird angemeldet...'
-                  : 'Mit Passkey anmelden'}
-              </Button>
-            )}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  {/* The wrapping span keeps the tooltip hoverable even
+                      though `disabled:pointer-events-none` blocks hover on
+                      the button itself. */}
+                  <span className="block w-full">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => void verifyPasskey()}
+                      disabled={!isPasskeySupported || isPasskeyLoading}
+                    >
+                      {isPasskeyLoading
+                        ? 'Wird angemeldet...'
+                        : 'Mit Passkey anmelden'}
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                {!isPasskeySupported && (
+                  <TooltipContent>
+                    Dein Browser unterstützt keine Passkeys.
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
             <Button
               type="button"
               variant="ghost"

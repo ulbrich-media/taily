@@ -36,6 +36,7 @@ import {
   AlertDialogTrigger,
 } from '@/shadcn/components/ui/alert-dialog'
 import { usePasswordConfirmation } from '@/admin/module/security/usePasswordConfirmation'
+import { formatApiDate } from '@/lib/dates.utils'
 import {
   deletePasskey,
   getPasskeys,
@@ -152,7 +153,7 @@ export function PasskeySection() {
                         ? `${passkey.authenticator} · `
                         : ''}
                       {passkey.last_used_at
-                        ? `Zuletzt verwendet am ${new Date(passkey.last_used_at).toLocaleDateString('de-DE')}`
+                        ? `Zuletzt verwendet am ${formatApiDate(passkey.last_used_at)}`
                         : 'Noch nicht verwendet'}
                     </p>
                   </div>
@@ -164,7 +165,7 @@ export function PasskeySection() {
                         size="icon"
                         aria-label="Passkey entfernen"
                       >
-                        <Trash2 className="size-4" />
+                        <Trash2 />
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
