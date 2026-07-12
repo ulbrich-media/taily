@@ -1,6 +1,8 @@
+import { useEffect } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { usePasskeyVerify } from '@laravel/passkeys/react'
 import {
   Card,
   CardContent,
@@ -20,6 +22,8 @@ import {
 } from '@/shadcn/components/ui/field.tsx'
 import { toast } from 'sonner'
 import { mapAuthMessage } from '@/lib/password.messages'
+import { csrfCookie } from '@/lib/api'
+import { PASSKEY_VERIFY_ROUTES } from '@/lib/passkeys'
 
 const loginSchema = z.object({
   email: z
@@ -41,13 +45,37 @@ export function LoginPage({
   onForgotPassword,
   onTwoFactorRequired,
 }: LoginPageProps) {
-  const { login, isAuthenticated, isLoading } = useAuth()
+  const { login, isAuthenticated, isLoading, refreshProfile } = useAuth()
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       email: '',
       password: '',
+    },
+  })
+
+  // A passkey verification needs a CSRF cookie before it can POST the signed
+  // assertion, same as the password login below. Fetched once on mount so
+  // it's already in place by the time the (much slower, biometric-gated)
+  // ceremony completes — autofill starts automatically as soon as the browser
+  // reports support.
+  useEffect(() => {
+    void csrfCookie()
+  }, [])
+
+  const {
+    verify: verifyPasskey,
+    isLoading: isPasskeyLoading,
+    isSupported: isPasskeySupported,
+  } = usePasskeyVerify({
+    autofill: true,
+    routes: PASSKEY_VERIFY_ROUTES,
+    onSuccess: () => {
+      void refreshProfile()
+    },
+    onError: (err) => {
+      toast.error(err.message)
     },
   })
 
@@ -96,6 +124,9 @@ export function LoginPage({
                       id={field.name}
                       aria-invalid={fieldState.invalid}
                       type="email"
+                      // The "webauthn" token lets the browser anchor its
+                      // passkey autofill dropdown to this field.
+                      autoComplete="username webauthn"
                     />
                     {fieldState.invalid && (
                       <FieldError errors={[fieldState.error]} />
@@ -129,6 +160,19 @@ export function LoginPage({
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? 'Anmelden...' : 'Anmelden'}
             </Button>
+            {isPasskeySupported && (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={() => void verifyPasskey()}
+                disabled={isPasskeyLoading}
+              >
+                {isPasskeyLoading
+                  ? 'Wird angemeldet...'
+                  : 'Mit Passkey anmelden'}
+              </Button>
+            )}
             <Button
               type="button"
               variant="ghost"

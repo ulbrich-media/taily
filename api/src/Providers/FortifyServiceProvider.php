@@ -60,10 +60,15 @@ class FortifyServiceProvider extends ServiceProvider
         // explicitly (see Fortify::ignoreRoutes()), so the guard lives with the
         // routes rather than in this config.
         //
-        // Passkeys (`Features::passkeys()`, available via laravel/passkeys which
-        // Fortify pulls in) are intentionally left disabled here; they extend
-        // both the login and settings flows with a WebAuthn ceremony layer and
-        // are tracked as separate follow-up work.
+        // Passkeys (WebAuthn) are opt-in per user, managed from personal
+        // settings alongside 2FA. Registering and deleting a passkey are
+        // gated by `password.confirm` (see routes/internal.php), matching the
+        // `confirmPassword` option Fortify itself defaults to for passkeys.
+        //
+        // Fortify's own passkey routes are never registered — like every other
+        // feature here, Taily registers the package's controllers itself in
+        // routes/internal.php (see Fortify::ignoreRoutes() above, which also
+        // covers the passkey routes Fortify would otherwise add).
         config([
             'fortify.views' => false,
             'fortify.features' => [
@@ -72,7 +77,23 @@ class FortifyServiceProvider extends ServiceProvider
                 Features::twoFactorAuthentication([
                     'confirm' => true,
                 ]),
+                Features::passkeys(),
             ],
+        ]);
+
+        // Fortify's own service provider seeds passkeys.relying_party_id and
+        // passkeys.allowed_origins from `app.url`, but WebAuthn ceremonies run
+        // in the browser at the SPA's origin, not the API's — so the relying
+        // party must be derived from the frontend URL instead. The allowed
+        // origins are widened to the full CORS allow-list (config/cors.php) so
+        // every environment the SPA is actually served from can complete a
+        // ceremony, matching what already talks to the API with credentials.
+        config([
+            'passkeys.relying_party_id' => parse_url(config('taily.frontend_url'), PHP_URL_HOST),
+            'passkeys.allowed_origins' => array_values(array_unique([
+                ...config('cors.allowed_origins', []),
+                config('taily.frontend_url'),
+            ])),
         ]);
 
         Fortify::updateUserPasswordsUsing(UpdateUserPassword::class);

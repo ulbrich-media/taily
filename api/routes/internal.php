@@ -13,6 +13,8 @@ use Laravel\Fortify\Http\Controllers\TwoFactorAuthenticatedSessionController;
 use Laravel\Fortify\Http\Controllers\TwoFactorAuthenticationController;
 use Laravel\Fortify\Http\Controllers\TwoFactorQrCodeController;
 use Laravel\Fortify\Http\Controllers\TwoFactorSecretKeyController;
+use Laravel\Passkeys\Http\Controllers\PasskeyLoginController;
+use Laravel\Passkeys\Http\Controllers\PasskeyRegistrationController;
 use Taily\Http\Controllers\Internal\AdoptionContractController;
 use Taily\Http\Controllers\Internal\AdoptionController;
 use Taily\Http\Controllers\Internal\AnimalController;
@@ -24,6 +26,7 @@ use Taily\Http\Controllers\Internal\InvitationController;
 use Taily\Http\Controllers\Internal\MediaController;
 use Taily\Http\Controllers\Internal\MedicalTestController;
 use Taily\Http\Controllers\Internal\OrganizationController;
+use Taily\Http\Controllers\Internal\PasskeyController;
 use Taily\Http\Controllers\Internal\PersonController;
 use Taily\Http\Controllers\Internal\PersonPictureController;
 use Taily\Http\Controllers\Internal\PreInspectionController;
@@ -61,6 +64,15 @@ Route::post('/two-factor-challenge', [TwoFactorAuthenticatedSessionController::c
 // public endpoints need their own request-level limit against reset spam)
 Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])->middleware('throttle:6,1');
 Route::post('/reset-password', [NewPasswordController::class, 'store'])->middleware('throttle:6,1');
+
+// Passkey login (laravel/passkeys controllers, pulled in by Fortify). A
+// resident-key WebAuthn ceremony already proves possession of the device plus
+// a biometric/PIN unlock, so this authenticates on its own without a
+// subsequent two-factor challenge — the same treatment GitHub and Google give
+// passkey sign-ins. `options` starts the ceremony and stashes its challenge in
+// the session; `login` verifies the signed assertion against it.
+Route::get('/passkeys/login/options', [PasskeyLoginController::class, 'index'])->middleware('throttle:6,1');
+Route::post('/passkeys/login', [PasskeyLoginController::class, 'store'])->middleware('throttle:6,1');
 
 // Public invitation routes
 Route::get('/invitations/{token}', [InvitationController::class, 'show']);
@@ -107,7 +119,22 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/user/two-factor-secret-key', [TwoFactorSecretKeyController::class, 'show']);
         Route::get('/user/two-factor-recovery-codes', [RecoveryCodeController::class, 'index']);
         Route::post('/user/two-factor-recovery-codes', [RecoveryCodeController::class, 'store']);
+
+        // Passkey management (laravel/passkeys controllers). Registering
+        // stores a new WebAuthn credential for the account; deleting removes
+        // one. Both create or narrow how the account can be signed into, so
+        // they sit behind the same fresh-password gate as the 2FA endpoints
+        // above. `options` also lives here (not in the public group) so the
+        // registration ceremony is scoped to the already-authenticated user.
+        Route::get('/user/passkeys/options', [PasskeyRegistrationController::class, 'index']);
+        Route::post('/user/passkeys', [PasskeyRegistrationController::class, 'store']);
+        Route::delete('/user/passkeys/{passkey}', [PasskeyRegistrationController::class, 'destroy']);
     });
+
+    // Passkeys listing (Taily's own controller; the package only ships
+    // options/store/destroy). Read-only, so it does not need the fresh-password
+    // gate the mutating endpoints above require.
+    Route::get('/user/passkeys', [PasskeyController::class, 'index']);
 
     // Users administration
     Route::apiResource('users', UserController::class);

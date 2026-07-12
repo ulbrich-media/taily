@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { PageHeader } from '@/components/layout/PageHeader'
+import { PasskeySection } from '@/admin/module/security/components/PasskeySection'
 import { PasswordSection } from '@/admin/module/security/components/PasswordSection'
 import { TwoFactorSection } from '@/admin/module/security/components/TwoFactorSection'
 
@@ -17,12 +18,13 @@ export function SecurityPage({ breadcrumb }: SecurityPageProps) {
     <div className="space-y-6">
       <PageHeader
         title="Sicherheit"
-        description="Verwalte Passwort und Zwei-Faktor-Authentifizierung deines Kontos"
+        description="Verwalte Passwort, Passkeys und Zwei-Faktor-Authentifizierung deines Kontos"
         breadcrumb={breadcrumb}
       />
 
       <div className="space-y-6">
         <PasswordSection />
+        <PasskeySection />
         <TwoFactorSection />
       </div>
     </div>
