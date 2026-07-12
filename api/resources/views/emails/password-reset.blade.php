@@ -16,7 +16,4 @@ Falls der Button nicht funktioniert, kopiere diesen Link in deinen Browser:
 Der Link läuft in {{ $expiresInMinutes }} Minuten ab.
 
 Hast du kein neues Passwort angefordert? Dann kannst du diese E-Mail einfach ignorieren – dein Passwort bleibt unverändert.
-
-Viele Grüße
-dein Taily-Team
 </x-mail::message>

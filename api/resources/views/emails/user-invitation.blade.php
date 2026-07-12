@@ -16,7 +16,4 @@ Falls der Button nicht funktioniert, kopiere diesen Link in deinen Browser:
 Der Link läuft am {{ $expiresAt->format('d.m.Y') }} um {{ $expiresAt->format('H:i') }} Uhr ab.
 
 Wenn du diese Einladung nicht erwartet hast, kannst du diese E-Mail einfach ignorieren.
-
-Viele Grüße
-dein Taily-Team
 </x-mail::message>

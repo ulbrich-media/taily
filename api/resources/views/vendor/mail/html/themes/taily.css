@@ -21,7 +21,9 @@
  *   --primary (dark)     #efb839                       -> used as-is
  *   --destructive-text    (dark) #fa604c                -> used as-is
  *
- * Update this file by hand whenever those frontend tokens change.
+ * Source of truth: frontend/src/index.css. There is no automated sync — if
+ * the tokens there change (brand color, radius, neutrals), update the hex
+ * values below by hand to match.
  */
 
 /* Base */
