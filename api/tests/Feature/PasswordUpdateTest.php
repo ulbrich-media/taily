@@ -5,6 +5,8 @@ namespace Taily\Tests\Feature;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
+use Taily\Mail\SecurityNotificationMail;
 use Taily\Models\User;
 use Taily\Tests\TestCase;
 
@@ -51,6 +53,36 @@ class PasswordUpdateTest extends TestCase
         $response->assertOk();
         $this->assertTrue(Hash::check('NewPassword2', $user->fresh()->password));
         $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_changing_the_password_sends_a_security_notification(): void
+    {
+        Mail::fake();
+
+        $user = $this->createUser('OldPassword1');
+
+        $this->actingAs($user)->putJson('/internal/profile/password', [
+            'current_password' => 'OldPassword1',
+            'password' => 'NewPassword2',
+            'password_confirmation' => 'NewPassword2',
+        ])->assertOk();
+
+        Mail::assertSent(SecurityNotificationMail::class, fn (SecurityNotificationMail $mail) => $mail->hasTo($user->email));
+    }
+
+    public function test_a_failed_password_change_does_not_send_a_security_notification(): void
+    {
+        Mail::fake();
+
+        $user = $this->createUser('OldPassword1');
+
+        $this->actingAs($user)->putJson('/internal/profile/password', [
+            'current_password' => 'WrongPassword1',
+            'password' => 'NewPassword2',
+            'password_confirmation' => 'NewPassword2',
+        ])->assertUnprocessable();
+
+        Mail::assertNotSent(SecurityNotificationMail::class);
     }
 
     public function test_change_password_fails_with_wrong_current_password(): void

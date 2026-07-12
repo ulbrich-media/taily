@@ -3,9 +3,11 @@
 namespace Taily\Actions\Fortify;
 
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
 use Laravel\Fortify\Contracts\UpdatesUserPasswords;
+use Taily\Mail\SecurityNotificationMail;
 use Taily\Models\User;
 
 class UpdateUserPassword implements UpdatesUserPasswords
@@ -31,5 +33,11 @@ class UpdateUserPassword implements UpdatesUserPasswords
 
         $user->password = $input['password'];
         $user->save();
+
+        Mail::to($user->email)->send(new SecurityNotificationMail(
+            $user,
+            'Dein Passwort wurde geändert',
+            'Das Passwort deines Kontos wurde soeben geändert. Alle anderen aktiven Sitzungen wurden dabei automatisch abgemeldet.'
+        ));
     }
 }
