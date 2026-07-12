@@ -193,6 +193,8 @@ class PasswordResetTest extends TestCase
         $response->assertUnprocessable();
         $response->assertJsonValidationErrors('email');
         $this->assertTrue(Hash::check('OldPassword1', $user->fresh()->password));
+
+        Mail::assertNotSent(SecurityNotificationMail::class);
     }
 
     public function test_failed_reset_does_not_reveal_whether_the_email_exists(): void

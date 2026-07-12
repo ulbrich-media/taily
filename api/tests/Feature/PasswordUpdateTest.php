@@ -42,6 +42,8 @@ class PasswordUpdateTest extends TestCase
 
     public function test_user_can_change_password_with_correct_current_password(): void
     {
+        Mail::fake();
+
         $user = $this->createUser('OldPassword1');
 
         $response = $this->actingAs($user)->putJson('/internal/profile/password', [
@@ -147,6 +149,8 @@ class PasswordUpdateTest extends TestCase
     // with a prior request is what reproduces the self-logout regression.
     public function test_current_session_stays_authenticated_after_successful_password_change(): void
     {
+        Mail::fake();
+
         $this->createUser('OldPassword1');
 
         $this->postJson('/internal/login', [

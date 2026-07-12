@@ -2,12 +2,14 @@
 
 namespace Taily\Actions\Fortify;
 
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
 use Laravel\Fortify\Contracts\ResetsUserPasswords;
 use Taily\Mail\SecurityNotificationMail;
 use Taily\Models\User;
+use Throwable;
 
 class ResetUserPassword implements ResetsUserPasswords
 {
@@ -25,10 +27,18 @@ class ResetUserPassword implements ResetsUserPasswords
         $user->password = $input['password'];
         $user->save();
 
-        Mail::to($user->email)->send(new SecurityNotificationMail(
-            $user,
-            'Dein Passwort wurde zurückgesetzt',
-            'Das Passwort deines Kontos wurde über die "Passwort vergessen"-Funktion zurückgesetzt.'
-        ));
+        // The password reset has already succeeded at this point, so a mail
+        // delivery failure must not turn into a 500 for the user.
+        try {
+            Mail::to($user->email)->send(new SecurityNotificationMail(
+                'Dein Passwort wurde zurückgesetzt',
+                'Das Passwort deines Kontos wurde über die "Passwort vergessen"-Funktion zurückgesetzt.'
+            ));
+        } catch (Throwable $e) {
+            Log::error('Failed to send password reset security notification', [
+                'user_id' => $user->id,
+                'exception' => $e,
+            ]);
+        }
     }
 }

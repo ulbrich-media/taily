@@ -7,14 +7,12 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
-use Taily\Models\User;
 
 class SecurityNotificationMail extends Mailable
 {
     use Queueable, SerializesModels;
 
     public function __construct(
-        public User $user,
         public string $heading,
         public string $description
     ) {}

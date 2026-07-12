@@ -3,12 +3,14 @@
 namespace Taily\Actions\Fortify;
 
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
 use Laravel\Fortify\Contracts\UpdatesUserPasswords;
 use Taily\Mail\SecurityNotificationMail;
 use Taily\Models\User;
+use Throwable;
 
 class UpdateUserPassword implements UpdatesUserPasswords
 {
@@ -34,10 +36,18 @@ class UpdateUserPassword implements UpdatesUserPasswords
         $user->password = $input['password'];
         $user->save();
 
-        Mail::to($user->email)->send(new SecurityNotificationMail(
-            $user,
-            'Dein Passwort wurde geändert',
-            'Das Passwort deines Kontos wurde soeben geändert. Alle anderen aktiven Sitzungen wurden dabei automatisch abgemeldet.'
-        ));
+        // The password change has already succeeded at this point, so a mail
+        // delivery failure must not turn into a 500 for the user.
+        try {
+            Mail::to($user->email)->send(new SecurityNotificationMail(
+                'Dein Passwort wurde geändert',
+                'Das Passwort deines Kontos wurde soeben geändert. Alle anderen aktiven Sitzungen wurden dabei automatisch abgemeldet.'
+            ));
+        } catch (Throwable $e) {
+            Log::error('Failed to send password change security notification', [
+                'user_id' => $user->id,
+                'exception' => $e,
+            ]);
+        }
     }
 }
