@@ -29,7 +29,7 @@ class PasswordResetMail extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'taily::emails.password-reset',
+            markdown: 'taily::emails.password-reset',
             with: [
                 'resetUrl' => $this->getResetUrl(),
                 'expiresInMinutes' => (int) config('auth.passwords.users.expire', 60),

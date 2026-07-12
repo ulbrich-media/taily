@@ -21,14 +21,14 @@ class UserInvitationMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Einladung zum Adoption Manager',
+            subject: 'Deine Einladung zu Taily',
         );
     }
 
     public function content(): Content
     {
         return new Content(
-            view: 'taily::emails.user-invitation',
+            markdown: 'taily::emails.user-invitation',
             with: [
                 'invitationUrl' => $this->getInvitationUrl(),
                 'expiresAt' => $this->invitation->expires_at,

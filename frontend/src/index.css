@@ -1,3 +1,9 @@
+/*
+ * If you change tokens here (brand color, radius, neutrals), also update
+ * api/resources/views/vendor/mail/html/themes/taily.css — the transactional
+ * email theme mirrors this file's palette as hardcoded hex values, since
+ * email clients can't consume CSS custom properties or oklch().
+ */
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import '@fontsource-variable/public-sans';
