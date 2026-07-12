@@ -180,6 +180,17 @@ export function LoginPage({
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? 'Anmelden...' : 'Anmelden'}
             </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              className="w-full"
+              onClick={onForgotPassword}
+            >
+              Passwort vergessen?
+            </Button>
+
+            <div className="border-border border-b my-2 w-full" />
+
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -207,14 +218,6 @@ export function LoginPage({
                 )}
               </Tooltip>
             </TooltipProvider>
-            <Button
-              type="button"
-              variant="ghost"
-              className="w-full"
-              onClick={onForgotPassword}
-            >
-              Passwort vergessen?
-            </Button>
           </CardFooter>
         </Card>
       </div>
