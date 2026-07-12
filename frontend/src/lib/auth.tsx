@@ -42,18 +42,20 @@ export function AuthProvider({
 
   const login = async (
     email: string,
-    password: string
+    password: string,
+    remember: boolean
   ): Promise<LoginResult> => {
     await csrfCookie()
 
     // When the user has a confirmed second factor, the login endpoint answers
-    // `{ two_factor: true }` and holds the pending login in the session instead
-    // of authenticating. The caller then routes to the challenge screen.
+    // `{ two_factor: true }` and holds the pending login (including `remember`)
+    // in the session instead of authenticating. The caller then routes to the
+    // challenge screen, and completeTwoFactorChallenge() below finishes it.
     const response = await apiRequest<{ two_factor?: boolean } | undefined>(
       'login',
       {
         method: 'POST',
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, remember }),
       }
     )
 

@@ -29,7 +29,11 @@ export interface AuthContextType {
   isAdmin: boolean
   isLoading: boolean
   isAuthenticated: boolean
-  login: (email: string, password: string) => Promise<LoginResult>
+  login: (
+    email: string,
+    password: string,
+    remember: boolean
+  ) => Promise<LoginResult>
   completeTwoFactorChallenge: (data: TwoFactorChallengeRequest) => Promise<void>
   logout: () => Promise<void>
   refreshProfile: () => Promise<void>
