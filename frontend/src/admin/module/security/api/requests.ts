@@ -1,6 +1,7 @@
 import { apiRequest } from '@/lib/api'
 import type {
   ConfirmedPasswordStatus,
+  Passkey,
   RecoveryCodes,
   TwoFactorCodeRequest,
   TwoFactorQrCode,
@@ -90,4 +91,20 @@ export async function getRecoveryCodes(): Promise<RecoveryCodes> {
 
 export async function regenerateRecoveryCodes(): Promise<void> {
   await apiRequest('user/two-factor-recovery-codes', { method: 'POST' })
+}
+
+// ---------------------------------------------------------------------------
+// Passkeys
+// ---------------------------------------------------------------------------
+// Registration and login run through the `@laravel/passkeys` client
+// (`@/lib/passkeys`), which drives the WebAuthn ceremony itself and posts the
+// result. Listing and deletion are plain JSON endpoints.
+
+export async function getPasskeys(): Promise<Passkey[]> {
+  const { data } = await apiRequest<{ data: Passkey[] }>('user/passkeys')
+  return data
+}
+
+export async function deletePasskey(id: string): Promise<void> {
+  await apiRequest(`user/passkeys/${id}`, { method: 'DELETE' })
 }

@@ -42,3 +42,16 @@ export type RecoveryCodes = string[]
 export interface TwoFactorCodeRequest {
   code: string
 }
+
+// ---------------------------------------------------------------------------
+// Passkeys
+// ---------------------------------------------------------------------------
+
+export interface Passkey {
+  id: string
+  name: string
+  /** Human-readable authenticator label (e.g. "iCloud Keychain"), when known. */
+  authenticator: string | null
+  last_used_at: string | null
+  created_at: string
+}
