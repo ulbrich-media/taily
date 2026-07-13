@@ -1,0 +1,1 @@
+import{i as e,r as t}from"./api-CDp7u1yk.js";async function n(n){return await e(),t(`forgot-password`,{method:`POST`,body:JSON.stringify({email:n})})}async function r(n){return await e(),t(`reset-password`,{method:`POST`,body:JSON.stringify(n)})}export{r as n,n as t};

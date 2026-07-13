@@ -1,0 +1,1 @@
+import{a as e,n as t}from"./jsx-runtime-n5LQ9ujS.js";import{M as n,Zr as r}from"./index-BFnrTuFn.js";var i=r(),a=e(t());function o(){let e=(0,i.c)(3),t=n.useNavigate(),r,o;return e[0]===t?(r=e[1],o=e[2]):(r=()=>{t({replace:!0})},o=[t],e[0]=t,e[1]=r,e[2]=o),(0,a.useEffect)(r,o),null}export{o as component};
