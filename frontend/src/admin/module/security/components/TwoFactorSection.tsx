@@ -196,7 +196,7 @@ export function TwoFactorSection() {
 
   return (
     <>
-      <Card className="max-w-2xl">
+      <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             Zwei-Faktor-Authentifizierung
@@ -205,7 +205,7 @@ export function TwoFactorSection() {
           <CardDescription>
             {isEnabled
               ? 'Dein Konto ist mit Zwei-Faktor-Authentifizierung geschützt. Bei der Anmeldung wird zusätzlich zu deinem Passwort ein Code aus deiner Authentifizierungs-App abgefragt.'
-              : 'Aktiviere die Zwei-Faktor-Authentifizierung um die Sicherheit für dein Konto zu verbessern. Wenn aktiviert, benötigst du bei der Anmeldung zusätzlich zu deinem Passwort einen Code aus einer Authentifizierungs-App (z. B. Google Authenticator oder 1Password).'}
+              : 'Aktiviere die Zwei-Faktor-Authentifizierung um die Sicherheit für dein Konto zu verbessern. Wenn aktiviert, benötigst du bei der Anmeldung zusätzlich zu deinem Passwort einen Code aus deiner Authentifizierungs-App.'}
           </CardDescription>
         </CardHeader>
 
@@ -234,7 +234,7 @@ export function TwoFactorSection() {
               </Button>
               <Button
                 type="button"
-                variant="outline"
+                variant="destructive_outline"
                 onClick={() => runConfirmed(() => regenerateMutation.mutate())}
                 disabled={regenerateMutation.isPending}
               >
@@ -265,7 +265,7 @@ export function TwoFactorSection() {
                       }
                       disabled={disableMutation.isPending}
                     >
-                      Deaktivieren
+                      Ja, deaktivieren
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>

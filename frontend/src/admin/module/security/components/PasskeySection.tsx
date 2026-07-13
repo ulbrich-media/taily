@@ -127,7 +127,7 @@ export function PasskeySection({ passkeys }: PasskeySectionProps) {
 
   return (
     <>
-      <Card className="max-w-2xl">
+      <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">Passkeys</CardTitle>
           <CardTitleIcon icon={Fingerprint} />
@@ -183,8 +183,9 @@ export function PasskeySection({ passkeys }: PasskeySectionProps) {
                         <AlertDialogAction
                           onClick={() => onDelete(passkey)}
                           disabled={deleteMutation.isPending}
+                          variant="destructive"
                         >
-                          Entfernen
+                          Ja, entfernen
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>

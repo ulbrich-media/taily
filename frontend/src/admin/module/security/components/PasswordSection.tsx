@@ -19,7 +19,7 @@ export function PasswordSection() {
   const [changeOpen, setChangeOpen] = useState(false)
 
   return (
-    <Card className="max-w-2xl">
+    <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">Passwort</CardTitle>
         <CardTitleIcon icon={KeyRound} />

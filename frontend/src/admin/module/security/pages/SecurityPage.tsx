@@ -28,11 +28,11 @@ export function SecurityPage({
     <div className="space-y-6">
       <PageHeader
         title="Sicherheit"
-        description="Verwalte Passwort, Passkeys und Zwei-Faktor-Authentifizierung deines Kontos"
+        description="Alles was dir hilft dein Konto sicher zu halten"
         breadcrumb={breadcrumb}
       />
 
-      <div className="space-y-6">
+      <div className="space-y-6 max-w-3xl mx-auto">
         <PasswordSection />
         <PasskeySection passkeys={passkeys} />
         <TwoFactorSection />

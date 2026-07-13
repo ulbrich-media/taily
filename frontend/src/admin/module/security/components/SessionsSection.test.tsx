@@ -56,7 +56,7 @@ describe('SessionsSection', () => {
 
     const dialog = await screen.findByRole('alertdialog')
     await user.type(screen.getByLabelText('Passwort'), 'CorrectPassword1')
-    await user.click(screen.getByRole('button', { name: 'Abmelden' }))
+    await user.click(screen.getByRole('button', { name: 'Ja, abmelden' }))
 
     await waitFor(() =>
       expect(requests.deleteSession).toHaveBeenCalledWith(
@@ -78,7 +78,7 @@ describe('SessionsSection', () => {
       screen.getByRole('button', { name: 'Alle anderen Sitzungen abmelden' })
     )
     await user.type(screen.getByLabelText('Passwort'), 'CorrectPassword1')
-    await user.click(screen.getByRole('button', { name: 'Abmelden' }))
+    await user.click(screen.getByRole('button', { name: 'Ja, abmelden' }))
 
     await waitFor(() =>
       expect(requests.deleteOtherSessions).toHaveBeenCalledWith(
@@ -111,7 +111,7 @@ describe('SessionsSection', () => {
 
     await user.click(screen.getByRole('button', { name: 'Sitzung abmelden' }))
     await user.type(screen.getByLabelText('Passwort'), 'WrongPassword1')
-    await user.click(screen.getByRole('button', { name: 'Abmelden' }))
+    await user.click(screen.getByRole('button', { name: 'Ja, abmelden' }))
 
     expect(
       await screen.findByText('Das Passwort ist falsch.')

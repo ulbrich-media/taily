@@ -125,7 +125,7 @@ export function SessionsSection({ sessions }: SessionsSectionProps) {
 
   return (
     <>
-      <Card className="max-w-2xl">
+      <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">Sitzungen</CardTitle>
           <CardTitleIcon icon={Monitor} />
@@ -231,8 +231,9 @@ export function SessionsSection({ sessions }: SessionsSectionProps) {
               type="submit"
               form="form-session-sign-out"
               disabled={isPending}
+              variant="destructive"
             >
-              {isPending ? 'Wird abgemeldet...' : 'Abmelden'}
+              {isPending ? 'Wird abgemeldet...' : 'Ja, abmelden'}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
