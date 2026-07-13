@@ -98,6 +98,25 @@ class PasswordUpdateTest extends TestCase
         $this->assertTrue(Hash::check('OldPassword1', $user->fresh()->password));
     }
 
+    public function test_password_change_rotates_the_remember_token(): void
+    {
+        $user = $this->createUser('OldPassword1');
+        $user->setRememberToken('stale-remember-token');
+        $user->save();
+
+        $this->actingAs($user)->putJson('/internal/profile/password', [
+            'current_password' => 'OldPassword1',
+            'password' => 'NewPassword2',
+            'password_confirmation' => 'NewPassword2',
+        ])->assertOk();
+
+        // logoutOtherDevices() only evicts other sessions; "stay logged in"
+        // cookies keep working unless the remember token is rotated with the
+        // password.
+        $this->assertNotSame('stale-remember-token', $user->fresh()->remember_token);
+        $this->assertNotNull($user->fresh()->remember_token);
+    }
+
     public function test_change_password_requires_authentication(): void
     {
         $response = $this->putJson('/internal/profile/password', [

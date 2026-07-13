@@ -42,6 +42,53 @@ class UserListTest extends TestCase
         $this->assertFalse($byName['No 2FA']['two_factor_enabled']);
     }
 
+    public function test_index_omits_security_fields_for_non_admins(): void
+    {
+        $member = User::factory()->create([
+            'name' => 'Regular Member',
+            'email' => 'member@example.com',
+            'role' => UserRole::USER,
+        ]);
+
+        User::factory()->create([
+            'name' => 'Colleague',
+            'email' => 'colleague@example.com',
+        ]);
+
+        $response = $this->actingAs($member)
+            ->withHeader('referer', 'http://localhost')
+            ->getJson('/internal/users');
+
+        $response->assertOk();
+
+        // Which accounts lack a second factor (or sit unused) is a target
+        // list; only admins get to see it.
+        foreach ($response->json() as $user) {
+            $this->assertArrayNotHasKey('two_factor_enabled', $user);
+            $this->assertArrayNotHasKey('last_login_at', $user);
+        }
+    }
+
+    public function test_index_includes_security_fields_for_admins(): void
+    {
+        $admin = User::factory()->create([
+            'name' => 'Admin User',
+            'email' => 'admin@example.com',
+            'role' => UserRole::ADMIN,
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->withHeader('referer', 'http://localhost')
+            ->getJson('/internal/users');
+
+        $response->assertOk();
+
+        foreach ($response->json() as $user) {
+            $this->assertArrayHasKey('two_factor_enabled', $user);
+            $this->assertArrayHasKey('last_login_at', $user);
+        }
+    }
+
     public function test_a_generated_but_unconfirmed_secret_does_not_count_as_enabled(): void
     {
         $admin = User::factory()->create([

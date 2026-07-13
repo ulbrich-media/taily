@@ -81,6 +81,16 @@ class FortifyServiceProvider extends ServiceProvider
             ],
         ]);
 
+        // "Stay logged in" cookies would otherwise live for the framework's
+        // 400-day default. Taily holds a lot of personal data (adopters,
+        // fosters, home inspections), so cap the remember-me window at 30
+        // days — long enough to be convenient, short enough that a forgotten
+        // or stolen device ages out. A host application that has configured
+        // its own duration on the guard keeps it.
+        if (is_null(config('auth.guards.web.remember'))) {
+            config(['auth.guards.web.remember' => 60 * 24 * 30]);
+        }
+
         // Fortify's own service provider seeds passkeys.relying_party_id and
         // passkeys.allowed_origins from `app.url`, but WebAuthn ceremonies run
         // in the browser at the SPA's origin, not the API's — so the relying

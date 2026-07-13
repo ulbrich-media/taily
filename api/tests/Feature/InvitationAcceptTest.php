@@ -37,7 +37,7 @@ class InvitationAcceptTest extends TestCase
         $user = $this->createInvitedUser();
         $invitation = UserInvitation::createForUser($user);
 
-        $response = $this->postJson("/internal/invitations/{$invitation->token}/accept", [
+        $response = $this->postJson("/internal/invitations/{$invitation->plainTextToken}/accept", [
             'name' => 'New Name',
             'password' => 'ValidPassword1',
             'password_confirmation' => 'ValidPassword1',
@@ -55,7 +55,7 @@ class InvitationAcceptTest extends TestCase
         $user = $this->createInvitedUser();
         $invitation = UserInvitation::createForUser($user);
 
-        $response = $this->postJson("/internal/invitations/{$invitation->token}/accept", [
+        $response = $this->postJson("/internal/invitations/{$invitation->plainTextToken}/accept", [
             'name' => 'New Name',
             'password' => 'short',
             'password_confirmation' => 'short',
@@ -71,7 +71,7 @@ class InvitationAcceptTest extends TestCase
         $user = $this->createInvitedUser();
         $invitation = UserInvitation::createForUser($user);
 
-        $response = $this->postJson("/internal/invitations/{$invitation->token}/accept", [
+        $response = $this->postJson("/internal/invitations/{$invitation->plainTextToken}/accept", [
             'name' => 'New Name',
             'password' => 'ValidPassword1',
             'password_confirmation' => 'SomethingElse2',
@@ -91,5 +91,25 @@ class InvitationAcceptTest extends TestCase
         ]);
 
         $response->assertNotFound();
+    }
+
+    public function test_invitation_tokens_are_stored_hashed(): void
+    {
+        $user = $this->createInvitedUser();
+        $invitation = UserInvitation::createForUser($user);
+
+        // Only the hash may be persisted: a leaked database copy must not be
+        // enough to take over pending accounts.
+        $this->assertNotNull($invitation->plainTextToken);
+        $this->assertSame(hash('sha256', $invitation->plainTextToken), $invitation->fresh()->token);
+    }
+
+    public function test_invitation_endpoints_are_rate_limited_per_ip(): void
+    {
+        for ($attempt = 0; $attempt < 6; $attempt++) {
+            $this->getJson('/internal/invitations/'.Str::random(64))->assertNotFound();
+        }
+
+        $this->getJson('/internal/invitations/'.Str::random(64))->assertStatus(429);
     }
 }

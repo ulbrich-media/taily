@@ -21,10 +21,12 @@ export interface UserResource {
   name: string
   email: string
   role: UserRole
-  two_factor_enabled: boolean
-  last_login_at: string | null
+  // Only present when the requesting user is an admin: the API keeps the
+  // security posture of other accounts away from regular users.
+  two_factor_enabled?: boolean
+  last_login_at?: string | null
   created_at: string
   updated_at: string
   // Present when loaded (admin-only)
-  invitation: UserInvitationResource | null
+  invitation?: UserInvitationResource | null
 }

@@ -19,7 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         $middleware->statefulApi();
         $middleware->validateCsrfTokens(except: [
-            'internal/invitations/*',
+            'internal/invitations/*/accept',
             'internal/inspect/*/submit',
         ]);
         $middleware->remove([
