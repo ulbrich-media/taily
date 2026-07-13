@@ -13,11 +13,15 @@ use Laravel\Fortify\Events\TwoFactorAuthenticationConfirmed;
 use Laravel\Fortify\Events\TwoFactorAuthenticationDisabled;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
+use Laravel\Passkeys\Events\PasskeyDeleted;
+use Laravel\Passkeys\Events\PasskeyRegistered;
 use Taily\Actions\Fortify\ResetUserPassword;
 use Taily\Actions\Fortify\UpdateUserPassword;
 use Taily\Http\Responses\FailedPasswordResetResponse;
 use Taily\Http\Responses\PasswordResetLinkRequestedResponse;
 use Taily\Http\Responses\PasswordUpdateResponse;
+use Taily\Listeners\NotifyPasskeyDeleted;
+use Taily\Listeners\NotifyPasskeyRegistered;
 use Taily\Listeners\NotifyTwoFactorAuthenticationConfirmed;
 use Taily\Listeners\NotifyTwoFactorAuthenticationDisabled;
 use Taily\Listeners\UpdateLastLoginTimestamp;
@@ -111,5 +115,8 @@ class FortifyServiceProvider extends ServiceProvider
         // account yet at that point (see the `confirm` feature option above).
         Event::listen(TwoFactorAuthenticationConfirmed::class, NotifyTwoFactorAuthenticationConfirmed::class);
         Event::listen(TwoFactorAuthenticationDisabled::class, NotifyTwoFactorAuthenticationDisabled::class);
+
+        Event::listen(PasskeyRegistered::class, NotifyPasskeyRegistered::class);
+        Event::listen(PasskeyDeleted::class, NotifyPasskeyDeleted::class);
     }
 }
