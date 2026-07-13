@@ -3,6 +3,7 @@ import type {
   ConfirmedPasswordStatus,
   Passkey,
   RecoveryCodes,
+  Session,
   TwoFactorCodeRequest,
   TwoFactorQrCode,
   TwoFactorSecret,
@@ -107,4 +108,21 @@ export async function getPasskeys(): Promise<Passkey[]> {
 
 export async function deletePasskey(id: string): Promise<void> {
   await apiRequest(`user/passkeys/${id}`, { method: 'DELETE' })
+}
+
+// ---------------------------------------------------------------------------
+// Active sessions
+// ---------------------------------------------------------------------------
+
+export async function getSessions(): Promise<Session[]> {
+  const { data } = await apiRequest<{ data: Session[] }>('user/sessions')
+  return data
+}
+
+export async function deleteSession(id: string): Promise<void> {
+  await apiRequest(`user/sessions/${id}`, { method: 'DELETE' })
+}
+
+export async function deleteOtherSessions(): Promise<void> {
+  await apiRequest('user/sessions', { method: 'DELETE' })
 }

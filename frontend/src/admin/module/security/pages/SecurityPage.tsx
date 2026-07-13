@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { PasskeySection } from '@/admin/module/security/components/PasskeySection'
 import { PasswordSection } from '@/admin/module/security/components/PasswordSection'
+import { SessionsSection } from '@/admin/module/security/components/SessionsSection'
 import { TwoFactorSection } from '@/admin/module/security/components/TwoFactorSection'
 
 interface SecurityPageProps {
@@ -26,6 +27,7 @@ export function SecurityPage({ breadcrumb }: SecurityPageProps) {
         <PasswordSection />
         <PasskeySection />
         <TwoFactorSection />
+        <SessionsSection />
       </div>
     </div>
   )
