@@ -2,6 +2,29 @@
 
 All notable changes to Taily are documented here.
 
+# [0.8.0](https://github.com/ulbrich-media/taily/compare/v0.7.2...v0.8.0) (2026-07-13)
+
+
+### Bug Fixes
+
+* account security hardening for remember-me, invitations and user list ([#106](https://github.com/ulbrich-media/taily/issues/106)) ([0166d94](https://github.com/ulbrich-media/taily/commit/0166d9429fed7b20f7a122e2f08e14af8acddea8))
+* profile page stripped of unused functionality ([#107](https://github.com/ulbrich-media/taily/issues/107)) ([869f5b1](https://github.com/ulbrich-media/taily/commit/869f5b13a5acc3f960b61b899aab5c2e90d0c6d7))
+* security page layout and wording improved ([182d23c](https://github.com/ulbrich-media/taily/commit/182d23cc6d3fb3d7fbfe419350e9e3d011c7f0f7))
+
+
+### Features
+
+* "Stay logged in" checkbox added to login ([#103](https://github.com/ulbrich-media/taily/issues/103)) ([df29678](https://github.com/ulbrich-media/taily/commit/df29678f0f02d84b85728c48da3679114d85cb6d))
+* 2FA status and account creation date added to user list ([#96](https://github.com/ulbrich-media/taily/issues/96)) ([c2ebabe](https://github.com/ulbrich-media/taily/commit/c2ebabe70b574439fcbfd44299ae3d356190a202))
+* active sessions management added ([#108](https://github.com/ulbrich-media/taily/issues/108)) ([0f2e40d](https://github.com/ulbrich-media/taily/commit/0f2e40de0881d094957bb93294f106575f1cd92d))
+* migrate authentication to Laravel Fortify; includes password change and reset ([#92](https://github.com/ulbrich-media/taily/issues/92)) ([571f14a](https://github.com/ulbrich-media/taily/commit/571f14ab6a6448bd022656c8136f47dffe48cf1a))
+* passkey (WebAuthn) authentication added ([#99](https://github.com/ulbrich-media/taily/issues/99)) ([abffe3a](https://github.com/ulbrich-media/taily/commit/abffe3ab0afecd047b98a915f181e7feb8f4c755))
+* security settings consolidated into one security page ([#95](https://github.com/ulbrich-media/taily/issues/95)) ([b45f14b](https://github.com/ulbrich-media/taily/commit/b45f14b5bc105caf2de2648ed3c3c92855dcc6fd))
+* send security notification emails for account changes ([#105](https://github.com/ulbrich-media/taily/issues/105)) ([0e05523](https://github.com/ulbrich-media/taily/commit/0e055231b867a9abd556c6afcc6a1195b70a0526))
+* status flags and inspection list improved  ([#87](https://github.com/ulbrich-media/taily/issues/87)) ([0cebed3](https://github.com/ulbrich-media/taily/commit/0cebed33e3c9f33e64ecf486d897833256a4ea14))
+* taily-branded mail templates added ([#104](https://github.com/ulbrich-media/taily/issues/104)) ([f26411c](https://github.com/ulbrich-media/taily/commit/f26411c82f0c248f0df0c40ff6384a4f827773d6))
+* two-factor authentication (TOTP) added ([#94](https://github.com/ulbrich-media/taily/issues/94)) ([622c0c8](https://github.com/ulbrich-media/taily/commit/622c0c85ffafa12af04d2c20dac3ba705d561133))
+
 ## [0.7.2](https://github.com/ulbrich-media/taily/compare/v0.7.1...v0.7.2) (2026-07-09)
 
 
