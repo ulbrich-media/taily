@@ -4,8 +4,10 @@ namespace Taily\Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Laravel\Fortify\Fortify;
 use PragmaRX\Google2FA\Google2FA;
+use Taily\Mail\SecurityNotificationMail;
 use Taily\Models\User;
 use Taily\Tests\TestCase;
 
@@ -123,6 +125,45 @@ class TwoFactorAuthenticationTest extends TestCase
         $this->enableAndConfirmTwoFactor();
 
         $this->assertNotNull($user->fresh()->two_factor_confirmed_at);
+    }
+
+    public function test_confirming_two_factor_sends_a_security_notification(): void
+    {
+        $user = $this->createUser();
+        $this->actingAsConfirmed($user);
+
+        Mail::fake();
+
+        $this->enableAndConfirmTwoFactor();
+
+        Mail::assertSent(SecurityNotificationMail::class, fn (SecurityNotificationMail $mail) => $mail->hasTo($user->email));
+        Mail::assertSent(SecurityNotificationMail::class, 1);
+    }
+
+    public function test_generating_the_secret_without_confirming_does_not_send_a_security_notification(): void
+    {
+        $user = $this->createUser();
+        $this->actingAsConfirmed($user);
+
+        Mail::fake();
+
+        $this->postJson('/internal/user/two-factor-authentication')->assertSuccessful();
+
+        Mail::assertNotSent(SecurityNotificationMail::class);
+    }
+
+    public function test_disabling_two_factor_sends_a_security_notification(): void
+    {
+        $user = $this->createUser();
+        $this->actingAsConfirmed($user);
+        $this->enableAndConfirmTwoFactor();
+
+        Mail::fake();
+
+        $this->deleteJson('/internal/user/two-factor-authentication')->assertSuccessful();
+
+        Mail::assertSent(SecurityNotificationMail::class, fn (SecurityNotificationMail $mail) => $mail->hasTo($user->email));
+        Mail::assertSent(SecurityNotificationMail::class, 1);
     }
 
     public function test_confirmation_fails_with_an_invalid_code(): void

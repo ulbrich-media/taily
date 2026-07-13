@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Taily\Mail\PasswordResetMail;
+use Taily\Mail\SecurityNotificationMail;
 use Taily\Models\User;
 use Taily\Tests\TestCase;
 
@@ -156,6 +157,8 @@ class PasswordResetTest extends TestCase
         $user = $this->createUser();
         $token = $this->requestResetToken($user);
 
+        Mail::fake();
+
         $response = $this->postJson('/internal/reset-password', [
             'token' => $token,
             'email' => 'jane@example.com',
@@ -165,6 +168,9 @@ class PasswordResetTest extends TestCase
 
         $response->assertOk();
         $this->assertTrue(Hash::check('NewPassword2', $user->fresh()->password));
+
+        Mail::assertSent(SecurityNotificationMail::class, fn (SecurityNotificationMail $mail) => $mail->hasTo($user->email));
+        Mail::assertSent(SecurityNotificationMail::class, 1);
 
         // The new credentials work for login.
         $this->postJson('/internal/login', [
@@ -188,6 +194,8 @@ class PasswordResetTest extends TestCase
         $response->assertUnprocessable();
         $response->assertJsonValidationErrors('email');
         $this->assertTrue(Hash::check('OldPassword1', $user->fresh()->password));
+
+        Mail::assertNotSent(SecurityNotificationMail::class);
     }
 
     public function test_failed_reset_does_not_reveal_whether_the_email_exists(): void

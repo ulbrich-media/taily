@@ -9,13 +9,21 @@ use Laravel\Fortify\Contracts\FailedPasswordResetLinkRequestResponse as FailedPa
 use Laravel\Fortify\Contracts\FailedPasswordResetResponse as FailedPasswordResetResponseContract;
 use Laravel\Fortify\Contracts\PasswordUpdateResponse as PasswordUpdateResponseContract;
 use Laravel\Fortify\Contracts\SuccessfulPasswordResetLinkRequestResponse as SuccessfulPasswordResetLinkRequestResponseContract;
+use Laravel\Fortify\Events\TwoFactorAuthenticationConfirmed;
+use Laravel\Fortify\Events\TwoFactorAuthenticationDisabled;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
+use Laravel\Passkeys\Events\PasskeyDeleted;
+use Laravel\Passkeys\Events\PasskeyRegistered;
 use Taily\Actions\Fortify\ResetUserPassword;
 use Taily\Actions\Fortify\UpdateUserPassword;
 use Taily\Http\Responses\FailedPasswordResetResponse;
 use Taily\Http\Responses\PasswordResetLinkRequestedResponse;
 use Taily\Http\Responses\PasswordUpdateResponse;
+use Taily\Listeners\NotifyPasskeyDeleted;
+use Taily\Listeners\NotifyPasskeyRegistered;
+use Taily\Listeners\NotifyTwoFactorAuthenticationConfirmed;
+use Taily\Listeners\NotifyTwoFactorAuthenticationDisabled;
 use Taily\Listeners\UpdateLastLoginTimestamp;
 
 class FortifyServiceProvider extends ServiceProvider
@@ -110,5 +118,15 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
 
         Event::listen(Login::class, UpdateLastLoginTimestamp::class);
+
+        // TwoFactorAuthenticationEnabled fires as soon as a secret is
+        // generated, before the user has confirmed it with a valid code, so
+        // it's not notified on here — 2FA isn't actually protecting the
+        // account yet at that point (see the `confirm` feature option above).
+        Event::listen(TwoFactorAuthenticationConfirmed::class, NotifyTwoFactorAuthenticationConfirmed::class);
+        Event::listen(TwoFactorAuthenticationDisabled::class, NotifyTwoFactorAuthenticationDisabled::class);
+
+        Event::listen(PasskeyRegistered::class, NotifyPasskeyRegistered::class);
+        Event::listen(PasskeyDeleted::class, NotifyPasskeyDeleted::class);
     }
 }
