@@ -55,3 +55,17 @@ export interface Passkey {
   last_used_at: string | null
   created_at: string
 }
+
+// ---------------------------------------------------------------------------
+// Active sessions
+// ---------------------------------------------------------------------------
+
+export interface Session {
+  /** Opaque identifier (a hash of the session token, never the token itself). */
+  id: string
+  ip_address: string | null
+  browser: string | null
+  platform: string | null
+  is_current_device: boolean
+  last_active_at: string
+}

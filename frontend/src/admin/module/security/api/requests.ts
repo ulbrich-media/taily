@@ -3,6 +3,7 @@ import type {
   ConfirmedPasswordStatus,
   Passkey,
   RecoveryCodes,
+  Session,
   TwoFactorCodeRequest,
   TwoFactorQrCode,
   TwoFactorSecret,
@@ -107,4 +108,35 @@ export async function getPasskeys(): Promise<Passkey[]> {
 
 export async function deletePasskey(id: string): Promise<void> {
   await apiRequest(`user/passkeys/${id}`, { method: 'DELETE' })
+}
+
+// ---------------------------------------------------------------------------
+// Active sessions
+// ---------------------------------------------------------------------------
+
+export async function getSessions(): Promise<Session[]> {
+  return apiRequest<Session[]>('user/sessions')
+}
+
+/**
+ * Signing a device out requires the plaintext password again (not just a
+ * fresh password confirmation): the server rotates the account's "remember
+ * me" token so the signed-out device can't silently re-authenticate, and
+ * safely re-issuing this device's own remember cookie needs it.
+ */
+export async function deleteSession(
+  id: string,
+  password: string
+): Promise<void> {
+  await apiRequest(`user/sessions/${id}`, {
+    method: 'DELETE',
+    body: JSON.stringify({ password }),
+  })
+}
+
+export async function deleteOtherSessions(password: string): Promise<void> {
+  await apiRequest('user/sessions', {
+    method: 'DELETE',
+    body: JSON.stringify({ password }),
+  })
 }

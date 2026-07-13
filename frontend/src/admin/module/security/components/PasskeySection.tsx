@@ -2,11 +2,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import {
-  useMutation,
-  useQueryClient,
-  useSuspenseQuery,
-} from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Fingerprint, Trash2 } from 'lucide-react'
 import { Button } from '@/shadcn/components/ui/button'
@@ -56,16 +52,19 @@ const registerSchema = z.object({
 
 type RegisterFormData = z.infer<typeof registerSchema>
 
+interface PasskeySectionProps {
+  passkeys: Passkey[]
+}
+
 /**
  * Security page section for passkeys (WebAuthn). Registering and deleting a
  * passkey are gated server-side behind a fresh password confirmation, same as
- * two-factor authentication management.
+ * two-factor authentication management. The list itself is resolved by the
+ * route and passed down as a prop; this component never fetches it.
  */
-export function PasskeySection() {
+export function PasskeySection({ passkeys }: PasskeySectionProps) {
   const queryClient = useQueryClient()
   const { ensureConfirmed, dialog: passwordDialog } = usePasswordConfirmation()
-
-  const { data: passkeys } = useSuspenseQuery(listPasskeysQuery)
 
   const [registerOpen, setRegisterOpen] = useState(false)
 

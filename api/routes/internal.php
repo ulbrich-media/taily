@@ -32,6 +32,7 @@ use Taily\Http\Controllers\Internal\PersonPictureController;
 use Taily\Http\Controllers\Internal\PreInspectionController;
 use Taily\Http\Controllers\Internal\PreInspectionSubmissionController;
 use Taily\Http\Controllers\Internal\ProfileController;
+use Taily\Http\Controllers\Internal\SessionController;
 use Taily\Http\Controllers\Internal\TransportController;
 use Taily\Http\Controllers\Internal\UserController;
 use Taily\Http\Controllers\Internal\VaccinationController;
@@ -140,6 +141,18 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // options/store/destroy). Read-only, so it does not need the fresh-password
     // gate the mutating endpoints above require.
     Route::get('/user/passkeys', [PasskeyController::class, 'index']);
+
+    // Active sessions listing. Read-only, same reasoning as the passkeys
+    // listing above.
+    Route::get('/user/sessions', [SessionController::class, 'index']);
+
+    // Active sessions ("sign out this device" / "sign out everywhere"). Not
+    // behind `password.confirm` like the mutations above: these validate the
+    // plaintext password directly (see SessionController), the same
+    // convention PasswordController uses, because rotating the "remember me"
+    // token needs the plaintext rather than a session-based confirmation flag.
+    Route::delete('/user/sessions/{sessionId}', [SessionController::class, 'destroy']);
+    Route::delete('/user/sessions', [SessionController::class, 'destroyOthers']);
 
     // Users administration
     Route::apiResource('users', UserController::class);
