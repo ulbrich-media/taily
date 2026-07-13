@@ -115,14 +115,28 @@ export async function deletePasskey(id: string): Promise<void> {
 // ---------------------------------------------------------------------------
 
 export async function getSessions(): Promise<Session[]> {
-  const { data } = await apiRequest<{ data: Session[] }>('user/sessions')
-  return data
+  return apiRequest<Session[]>('user/sessions')
 }
 
-export async function deleteSession(id: string): Promise<void> {
-  await apiRequest(`user/sessions/${id}`, { method: 'DELETE' })
+/**
+ * Signing a device out requires the plaintext password again (not just a
+ * fresh password confirmation): the server rotates the account's "remember
+ * me" token so the signed-out device can't silently re-authenticate, and
+ * safely re-issuing this device's own remember cookie needs it.
+ */
+export async function deleteSession(
+  id: string,
+  password: string
+): Promise<void> {
+  await apiRequest(`user/sessions/${id}`, {
+    method: 'DELETE',
+    body: JSON.stringify({ password }),
+  })
 }
 
-export async function deleteOtherSessions(): Promise<void> {
-  await apiRequest('user/sessions', { method: 'DELETE' })
+export async function deleteOtherSessions(password: string): Promise<void> {
+  await apiRequest('user/sessions', {
+    method: 'DELETE',
+    body: JSON.stringify({ password }),
+  })
 }

@@ -38,22 +38,19 @@ class SessionControllerTest extends TestCase
         ]);
     }
 
-    private function actingAsConfirmed(User $user): void
+    /**
+     * Logs in and pins the session cookie so "the current device" stays
+     * stable across the multiple requests a single test makes (the test
+     * client does not carry cookies between requests on its own).
+     */
+    private function login(User $user): void
     {
         $this->actingAs($user);
-        $response = $this->postJson('/internal/user/confirm-password', [
-            'password' => 'CorrectPassword1',
-        ])->assertSuccessful();
+        $response = $this->getJson('/internal/user')->assertSuccessful();
 
         $this->carrySessionCookie($response);
     }
 
-    /**
-     * The test client does not carry cookies between requests on its own, so
-     * without this every call would start a brand new session row. Pinning
-     * the session cookie from a response keeps "the current device" stable
-     * across the multiple requests a single test makes.
-     */
     private function carrySessionCookie(TestResponse $response): void
     {
         $sessionCookieName = config('session.cookie');
@@ -67,22 +64,27 @@ class SessionControllerTest extends TestCase
         }
     }
 
-    private function insertFakeSession(User $user, string $id, string $userAgent, ?string $ip = '203.0.113.5'): void
-    {
+    private function insertFakeSession(
+        User $user,
+        string $id,
+        string $userAgent,
+        ?string $ip = '203.0.113.5',
+        ?int $lastActivity = null
+    ): void {
         DB::table('sessions')->insert([
             'id' => $id,
             'user_id' => $user->id,
             'ip_address' => $ip,
             'user_agent' => $userAgent,
             'payload' => base64_encode(serialize([])),
-            'last_activity' => now()->timestamp,
+            'last_activity' => $lastActivity ?? now()->timestamp,
         ]);
     }
 
     public function test_user_can_list_active_sessions_with_current_device_flagged(): void
     {
         $user = $this->createUser();
-        $this->actingAsConfirmed($user);
+        $this->login($user);
 
         $this->insertFakeSession(
             $user,
@@ -90,9 +92,7 @@ class SessionControllerTest extends TestCase
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0 Safari/537.36'
         );
 
-        $data = $this->getJson('/internal/user/sessions')
-            ->assertOk()
-            ->json('data');
+        $data = $this->getJson('/internal/user/sessions')->assertOk()->json();
 
         $this->assertCount(2, $data);
 
@@ -106,18 +106,69 @@ class SessionControllerTest extends TestCase
         $this->assertSame('203.0.113.5', $other['ip_address']);
     }
 
+    public function test_expired_sessions_are_excluded_from_the_list(): void
+    {
+        $user = $this->createUser();
+        $this->login($user);
+
+        $expiredAt = now()->subMinutes((int) config('session.lifetime') + 5)->timestamp;
+        $this->insertFakeSession($user, 'expired-session', 'Mozilla/5.0 Firefox/120.0', lastActivity: $expiredAt);
+
+        $data = $this->getJson('/internal/user/sessions')->assertOk()->json();
+
+        $this->assertCount(1, $data);
+        $this->assertTrue($data[0]['is_current_device']);
+    }
+
     public function test_user_can_sign_out_a_specific_session(): void
     {
         $user = $this->createUser();
-        $this->actingAsConfirmed($user);
+        $this->login($user);
 
         $this->insertFakeSession($user, 'other-session-id', 'Mozilla/5.0 Firefox/120.0');
 
         $hashedId = hash('sha256', 'other-session-id');
 
-        $this->deleteJson("/internal/user/sessions/{$hashedId}")->assertSuccessful();
+        $this->deleteJson("/internal/user/sessions/{$hashedId}", [
+            'password' => 'CorrectPassword1',
+        ])->assertSuccessful();
 
         $this->assertDatabaseMissing('sessions', ['id' => 'other-session-id']);
+    }
+
+    public function test_signing_out_a_session_requires_the_correct_password(): void
+    {
+        $user = $this->createUser();
+        $this->login($user);
+
+        $this->insertFakeSession($user, 'other-session-id', 'Mozilla/5.0 Firefox/120.0');
+        $hashedId = hash('sha256', 'other-session-id');
+
+        $this->deleteJson("/internal/user/sessions/{$hashedId}", [
+            'password' => 'WrongPassword1',
+        ])->assertStatus(422);
+
+        $this->assertDatabaseHas('sessions', ['id' => 'other-session-id']);
+    }
+
+    public function test_signing_out_a_session_rotates_the_remember_token(): void
+    {
+        // Regression test: deleting a session row alone does not stop a
+        // device with a valid "remember me" cookie from silently
+        // re-authenticating and recreating it. Rotating the remember token
+        // invalidates that cookie account-wide.
+        $user = $this->createUser();
+        $originalToken = $user->getRememberToken();
+        $this->login($user);
+
+        $this->insertFakeSession($user, 'other-session-id', 'Mozilla/5.0 Firefox/120.0');
+        $hashedId = hash('sha256', 'other-session-id');
+
+        $this->deleteJson("/internal/user/sessions/{$hashedId}", [
+            'password' => 'CorrectPassword1',
+        ])->assertSuccessful();
+
+        $this->assertNotSame($originalToken, $user->fresh()->getRememberToken());
     }
 
     public function test_user_cannot_sign_out_another_users_session(): void
@@ -127,11 +178,13 @@ class SessionControllerTest extends TestCase
 
         $this->insertFakeSession($otherUser, 'someone-elses-session', 'Mozilla/5.0 Firefox/120.0');
 
-        $this->actingAsConfirmed($user);
+        $this->login($user);
 
         $hashedId = hash('sha256', 'someone-elses-session');
 
-        $this->deleteJson("/internal/user/sessions/{$hashedId}")->assertStatus(404);
+        $this->deleteJson("/internal/user/sessions/{$hashedId}", [
+            'password' => 'CorrectPassword1',
+        ])->assertStatus(404);
 
         $this->assertDatabaseHas('sessions', ['id' => 'someone-elses-session']);
     }
@@ -139,43 +192,53 @@ class SessionControllerTest extends TestCase
     public function test_user_cannot_sign_out_their_own_current_session_via_the_single_delete_endpoint(): void
     {
         $user = $this->createUser();
-        $this->actingAsConfirmed($user);
+        $this->login($user);
 
         $currentSessionId = DB::table('sessions')->where('user_id', $user->id)->value('id');
         $hashedId = hash('sha256', $currentSessionId);
 
-        $this->deleteJson("/internal/user/sessions/{$hashedId}")->assertStatus(404);
+        $this->deleteJson("/internal/user/sessions/{$hashedId}", [
+            'password' => 'CorrectPassword1',
+        ])->assertStatus(404);
     }
 
     public function test_user_can_sign_out_of_all_other_sessions(): void
     {
         $user = $this->createUser();
-        $this->actingAsConfirmed($user);
+        $this->login($user);
 
         $currentSessionId = DB::table('sessions')->where('user_id', $user->id)->value('id');
 
         $this->insertFakeSession($user, 'other-session-a', 'Mozilla/5.0 Firefox/120.0');
         $this->insertFakeSession($user, 'other-session-b', 'Mozilla/5.0 Chrome/120.0');
 
-        $this->deleteJson('/internal/user/sessions')->assertSuccessful();
+        $this->deleteJson('/internal/user/sessions', [
+            'password' => 'CorrectPassword1',
+        ])->assertSuccessful();
 
         $remaining = DB::table('sessions')->where('user_id', $user->id)->pluck('id');
 
         $this->assertEquals([$currentSessionId], $remaining->all());
     }
 
-    public function test_session_management_endpoints_require_a_fresh_password_confirmation(): void
+    public function test_signing_out_all_other_sessions_requires_the_correct_password(): void
     {
         $user = $this->createUser();
-        $this->actingAs($user);
+        $this->login($user);
 
-        $this->insertFakeSession($user, 'other-session-id', 'Mozilla/5.0 Firefox/120.0');
-        $hashedId = hash('sha256', 'other-session-id');
+        $this->insertFakeSession($user, 'other-session-a', 'Mozilla/5.0 Firefox/120.0');
 
-        $this->deleteJson("/internal/user/sessions/{$hashedId}")->assertStatus(423);
-        $this->deleteJson('/internal/user/sessions')->assertStatus(423);
+        $this->deleteJson('/internal/user/sessions', [
+            'password' => 'WrongPassword1',
+        ])->assertStatus(422);
 
-        // Listing does not require a fresh confirmation.
-        $this->getJson('/internal/user/sessions')->assertOk();
+        $this->assertDatabaseHas('sessions', ['id' => 'other-session-a']);
+    }
+
+    public function test_session_management_endpoints_require_authentication(): void
+    {
+        $this->deleteJson('/internal/user/sessions', [
+            'password' => 'CorrectPassword1',
+        ])->assertStatus(401);
     }
 }

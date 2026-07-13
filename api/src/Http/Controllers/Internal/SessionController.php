@@ -4,58 +4,71 @@ namespace Taily\Http\Controllers\Internal;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Taily\Http\Controllers\Controller;
+use Taily\Http\Resources\SessionResource;
 
 /**
  * "Active sessions" listing for the security page: every row the database
  * session driver (see config/session.php) currently holds for the user, with
- * the ability to sign a device out by deleting its row. Deleting a row is
- * enough to log that device out on its next request — the session middleware
- * finds no matching session and starts a fresh, unauthenticated one.
+ * the ability to sign a device out by deleting its row.
  *
  * The `sessions.id` column is the session's own cookie value, so it is never
  * sent to the client as-is; a SHA-256 hash of it stands in as the public
  * identifier instead.
+ *
+ * Deleting a row alone is not enough to sign a device out: this app issues
+ * 30-day "remember me" cookies (see FortifyServiceProvider), and a device
+ * that still holds a valid one silently re-authenticates and recreates its
+ * session row on its next request. `destroy()` and `destroyOthers()` rotate
+ * the account's remember token first (the same recipe UpdateUserPassword
+ * uses), which invalidates every device's remember cookie; the plaintext
+ * password is required again so `logoutOtherDevices()` can safely re-issue
+ * a fresh one for the calling device.
  */
 class SessionController extends Controller
 {
-    public function index(Request $request): JsonResponse
+    public function index(Request $request): AnonymousResourceCollection
     {
         $currentId = $request->session()->getId();
+        $expiresAfter = now()->subMinutes((int) config('session.lifetime'))->timestamp;
 
         $sessions = DB::table('sessions')
             ->where('user_id', $request->user()->id)
+            ->where('last_activity', '>=', $expiresAfter)
             ->orderByDesc('last_activity')
-            ->get();
+            ->get()
+            ->each(function ($session) use ($currentId) {
+                $session->is_current_device = $session->id === $currentId;
+            });
 
-        return response()->json([
-            'data' => $sessions->map(fn ($session) => [
-                'id' => hash('sha256', $session->id),
-                'ip_address' => $session->ip_address,
-                'browser' => self::guessBrowser($session->user_agent),
-                'platform' => self::guessPlatform($session->user_agent),
-                'is_current_device' => $session->id === $currentId,
-                'last_active_at' => date(DATE_ATOM, $session->last_activity),
-            ]),
-        ]);
+        return SessionResource::collection($sessions);
     }
 
     public function destroy(Request $request, string $hashedId): JsonResponse
     {
-        $deleted = DB::table('sessions')
+        $target = DB::table('sessions')
             ->where('user_id', $request->user()->id)
             ->where('id', '!=', $request->session()->getId())
             ->get()
             ->first(fn ($session) => hash('sha256', $session->id) === $hashedId);
 
-        if (! $deleted) {
+        if (! $target) {
             return response()->json([
                 'message' => 'Sitzung nicht gefunden.',
             ], 404);
         }
 
-        DB::table('sessions')->where('id', $deleted->id)->delete();
+        $request->validate([
+            'password' => ['required', 'string', 'current_password:web'],
+        ]);
+
+        $this->rotateRememberToken($request);
+
+        DB::table('sessions')->where('id', $target->id)->delete();
 
         return response()->json([
             'message' => 'Sitzung wurde abgemeldet.',
@@ -64,6 +77,12 @@ class SessionController extends Controller
 
     public function destroyOthers(Request $request): JsonResponse
     {
+        $request->validate([
+            'password' => ['required', 'string', 'current_password:web'],
+        ]);
+
+        $this->rotateRememberToken($request);
+
         DB::table('sessions')
             ->where('user_id', $request->user()->id)
             ->where('id', '!=', $request->session()->getId())
@@ -75,42 +94,22 @@ class SessionController extends Controller
     }
 
     /**
-     * Rough browser guess from the user agent string. Good enough for a
-     * device list; not meant to be a full UA parser.
+     * Rotate the account's remember token so a signed-out device's "remember
+     * me" cookie can no longer silently re-authenticate it. Must run before
+     * the row deletion: `logoutOtherDevices()` re-queues *this* device's own
+     * remember cookie (if it has one) from the in-memory user, so it keeps
+     * working while every other device's cookie dies.
      */
-    private static function guessBrowser(?string $userAgent): ?string
+    private function rotateRememberToken(Request $request): void
     {
-        if (! $userAgent) {
-            return null;
-        }
+        $user = $request->user();
+        $user->setRememberToken(Str::random(60));
 
-        return match (true) {
-            (bool) preg_match('/Edg\//', $userAgent) => 'Edge',
-            (bool) preg_match('/OPR\/|Opera/', $userAgent) => 'Opera',
-            (bool) preg_match('/Firefox\//', $userAgent) => 'Firefox',
-            (bool) preg_match('/CriOS\//', $userAgent) => 'Chrome',
-            (bool) preg_match('/Chrome\//', $userAgent) => 'Chrome',
-            (bool) preg_match('/Safari\//', $userAgent) => 'Safari',
-            default => null,
-        };
-    }
+        // auth:sanctum resolves stateful SPA requests via the underlying
+        // 'web' session guard, but logoutOtherDevices() only exists on that
+        // concrete SessionGuard — not on Sanctum's RequestGuard wrapper.
+        Auth::guard('web')->logoutOtherDevices($request->input('password'));
 
-    /**
-     * Rough OS/platform guess from the user agent string.
-     */
-    private static function guessPlatform(?string $userAgent): ?string
-    {
-        if (! $userAgent) {
-            return null;
-        }
-
-        return match (true) {
-            (bool) preg_match('/iPhone|iPad|iPod/', $userAgent) => 'iOS',
-            (bool) preg_match('/Android/', $userAgent) => 'Android',
-            (bool) preg_match('/Mac OS X/', $userAgent) => 'macOS',
-            (bool) preg_match('/Windows/', $userAgent) => 'Windows',
-            (bool) preg_match('/Linux/', $userAgent) => 'Linux',
-            default => null,
-        };
+        $user->save();
     }
 }

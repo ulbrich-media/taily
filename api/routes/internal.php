@@ -135,13 +135,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/user/passkeys/options', [PasskeyRegistrationController::class, 'index']);
         Route::post('/user/passkeys', [PasskeyRegistrationController::class, 'store']);
         Route::delete('/user/passkeys/{passkey}', [PasskeyRegistrationController::class, 'destroy']);
-
-        // Active sessions ("sign out this device" / "sign out everywhere").
-        // Revoking a session logs that device out immediately, so both
-        // endpoints sit behind the same fresh-password gate as the mutations
-        // above.
-        Route::delete('/user/sessions/{sessionId}', [SessionController::class, 'destroy']);
-        Route::delete('/user/sessions', [SessionController::class, 'destroyOthers']);
     });
 
     // Passkeys listing (Taily's own controller; the package only ships
@@ -152,6 +145,14 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Active sessions listing. Read-only, same reasoning as the passkeys
     // listing above.
     Route::get('/user/sessions', [SessionController::class, 'index']);
+
+    // Active sessions ("sign out this device" / "sign out everywhere"). Not
+    // behind `password.confirm` like the mutations above: these validate the
+    // plaintext password directly (see SessionController), the same
+    // convention PasswordController uses, because rotating the "remember me"
+    // token needs the plaintext rather than a session-based confirmation flag.
+    Route::delete('/user/sessions/{sessionId}', [SessionController::class, 'destroy']);
+    Route::delete('/user/sessions', [SessionController::class, 'destroyOthers']);
 
     // Users administration
     Route::apiResource('users', UserController::class);

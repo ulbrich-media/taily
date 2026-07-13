@@ -1,8 +1,8 @@
-import {
-  useMutation,
-  useQueryClient,
-  useSuspenseQuery,
-} from '@tanstack/react-query'
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { LogOut, Monitor } from 'lucide-react'
 import { Button } from '@/shadcn/components/ui/button'
@@ -17,23 +17,28 @@ import {
 } from '@/shadcn/components/ui/card'
 import {
   AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/shadcn/components/ui/alert-dialog'
-import { usePasswordConfirmation } from '@/admin/module/security/usePasswordConfirmation'
+import { FieldGroup } from '@/shadcn/components/ui/field'
+import { TextInput } from '@/components/field/TextInput'
 import { formatApiDateTime } from '@/lib/dates.utils'
+import { ApiValidationError } from '@/lib/api'
 import {
   deleteOtherSessions,
   deleteSession,
 } from '@/admin/module/security/api/requests'
 import { listSessionsQuery } from '@/admin/module/security/api/queries'
 import type { Session } from '@/admin/module/security/api/types'
+
+const passwordSchema = z.object({
+  password: z.string().min(1, 'Bitte gib dein Passwort ein'),
+})
+
+type PasswordFormData = z.infer<typeof passwordSchema>
 
 function describeDevice(session: Session): string {
   if (session.browser && session.platform) {
@@ -42,17 +47,24 @@ function describeDevice(session: Session): string {
   return session.browser ?? session.platform ?? 'Unbekanntes Gerät'
 }
 
+interface SessionsSectionProps {
+  sessions: Session[]
+}
+
 /**
  * Security page section listing the account's active sessions (one row per
- * device currently logged in). Signing a device out or signing out
- * everywhere else is gated server-side behind a fresh password confirmation,
- * same as two-factor and passkey management.
+ * device currently logged in). Signing a device out requires the password
+ * again, not just a fresh password confirmation: the server rotates the
+ * account's "remember me" token so the signed-out device can't silently
+ * re-authenticate, and that needs the plaintext password (see
+ * `SessionController::rotateRememberToken`). The list itself is resolved by
+ * the route and passed down as a prop; this component never fetches it.
  */
-export function SessionsSection() {
+export function SessionsSection({ sessions }: SessionsSectionProps) {
   const queryClient = useQueryClient()
-  const { ensureConfirmed, dialog: passwordDialog } = usePasswordConfirmation()
 
-  const { data: sessions } = useSuspenseQuery(listSessionsQuery)
+  const [targetSession, setTargetSession] = useState<Session | null>(null)
+  const [signOutOthersOpen, setSignOutOthersOpen] = useState(false)
 
   const otherSessionsCount = sessions.filter(
     (session) => !session.is_current_device
@@ -61,42 +73,54 @@ export function SessionsSection() {
   const invalidateSessions = () =>
     queryClient.invalidateQueries({ queryKey: listSessionsQuery.queryKey })
 
+  const form = useForm<PasswordFormData>({
+    resolver: zodResolver(passwordSchema),
+    defaultValues: { password: '' },
+  })
+
+  const closeDialogs = () => {
+    setTargetSession(null)
+    setSignOutOthersOpen(false)
+    form.reset()
+  }
+
+  const handleError = (err: unknown) => {
+    if (err instanceof ApiValidationError && err.errors?.password) {
+      form.setError('password', { message: 'Das Passwort ist falsch.' })
+      return
+    }
+    toast.error('Die Sitzung konnte nicht abgemeldet werden.')
+  }
+
   const deleteMutation = useMutation({
-    mutationFn: deleteSession,
+    mutationFn: ({ id, password }: { id: string; password: string }) =>
+      deleteSession(id, password),
     onSuccess: async () => {
       await invalidateSessions()
+      closeDialogs()
       toast.success('Sitzung wurde abgemeldet.')
     },
-    onError: () => {
-      toast.error('Die Sitzung konnte nicht abgemeldet werden.')
-    },
+    onError: handleError,
   })
 
   const deleteOthersMutation = useMutation({
-    mutationFn: deleteOtherSessions,
+    mutationFn: (password: string) => deleteOtherSessions(password),
     onSuccess: async () => {
       await invalidateSessions()
+      closeDialogs()
       toast.success('Alle anderen Sitzungen wurden abgemeldet.')
     },
-    onError: () => {
-      toast.error('Die Sitzungen konnten nicht abgemeldet werden.')
-    },
+    onError: handleError,
   })
 
-  const onDelete = (session: Session) => {
-    void (async () => {
-      if (await ensureConfirmed()) {
-        deleteMutation.mutate(session.id)
-      }
-    })()
-  }
+  const isPending = deleteMutation.isPending || deleteOthersMutation.isPending
 
-  const onDeleteOthers = () => {
-    void (async () => {
-      if (await ensureConfirmed()) {
-        deleteOthersMutation.mutate()
-      }
-    })()
+  const onSubmit = (data: PasswordFormData) => {
+    if (targetSession) {
+      deleteMutation.mutate({ id: targetSession.id, password: data.password })
+    } else if (signOutOthersOpen) {
+      deleteOthersMutation.mutate(data.password)
+    }
   }
 
   return (
@@ -131,36 +155,15 @@ export function SessionsSection() {
                   </p>
                 </div>
                 {!session.is_current_device && (
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        aria-label="Sitzung abmelden"
-                      >
-                        <LogOut />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Sitzung abmelden?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          "{describeDevice(session)}" wird sofort abgemeldet und
-                          muss sich neu anmelden.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => onDelete(session)}
-                          disabled={deleteMutation.isPending}
-                        >
-                          Abmelden
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Sitzung abmelden"
+                    onClick={() => setTargetSession(session)}
+                  >
+                    <LogOut />
+                  </Button>
                 )}
               </li>
             ))}
@@ -169,42 +172,71 @@ export function SessionsSection() {
 
         {otherSessionsCount > 0 && (
           <CardFooter className="flex flex-wrap justify-end gap-2">
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={deleteOthersMutation.isPending}
-                >
-                  Alle anderen Sitzungen abmelden
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>
-                    Alle anderen Sitzungen abmelden?
-                  </AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Alle Geräte außer diesem werden sofort abgemeldet und müssen
-                    sich neu anmelden.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={onDeleteOthers}
-                    disabled={deleteOthersMutation.isPending}
-                  >
-                    Abmelden
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setSignOutOthersOpen(true)}
+            >
+              Alle anderen Sitzungen abmelden
+            </Button>
           </CardFooter>
         )}
       </Card>
 
-      {passwordDialog}
+      <AlertDialog
+        open={targetSession !== null || signOutOthersOpen}
+        onOpenChange={(next) => !next && closeDialogs()}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {targetSession
+                ? 'Sitzung abmelden?'
+                : 'Alle anderen Sitzungen abmelden?'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {targetSession
+                ? `"${describeDevice(targetSession)}" wird sofort abgemeldet und muss sich neu anmelden. Bitte bestätige dein Passwort.`
+                : 'Alle Geräte außer diesem werden sofort abgemeldet und müssen sich neu anmelden. Bitte bestätige dein Passwort.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <form
+            id="form-session-sign-out"
+            onSubmit={form.handleSubmit(onSubmit)}
+            noValidate
+          >
+            <FieldGroup>
+              <TextInput
+                name="password"
+                control={form.control}
+                label="Passwort"
+                type="password"
+                autoComplete="current-password"
+                autoFocus
+              />
+            </FieldGroup>
+          </form>
+
+          <AlertDialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={closeDialogs}
+              disabled={isPending}
+            >
+              Abbrechen
+            </Button>
+            <Button
+              type="submit"
+              form="form-session-sign-out"
+              disabled={isPending}
+            >
+              {isPending ? 'Wird abgemeldet...' : 'Abmelden'}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }
