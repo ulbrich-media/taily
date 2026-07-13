@@ -137,6 +137,7 @@ class TwoFactorAuthenticationTest extends TestCase
         $this->enableAndConfirmTwoFactor();
 
         Mail::assertSent(SecurityNotificationMail::class, fn (SecurityNotificationMail $mail) => $mail->hasTo($user->email));
+        Mail::assertSent(SecurityNotificationMail::class, 1);
     }
 
     public function test_generating_the_secret_without_confirming_does_not_send_a_security_notification(): void
@@ -162,6 +163,7 @@ class TwoFactorAuthenticationTest extends TestCase
         $this->deleteJson('/internal/user/two-factor-authentication')->assertSuccessful();
 
         Mail::assertSent(SecurityNotificationMail::class, fn (SecurityNotificationMail $mail) => $mail->hasTo($user->email));
+        Mail::assertSent(SecurityNotificationMail::class, 1);
     }
 
     public function test_confirmation_fails_with_an_invalid_code(): void

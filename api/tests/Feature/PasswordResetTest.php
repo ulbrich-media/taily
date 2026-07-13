@@ -170,6 +170,7 @@ class PasswordResetTest extends TestCase
         $this->assertTrue(Hash::check('NewPassword2', $user->fresh()->password));
 
         Mail::assertSent(SecurityNotificationMail::class, fn (SecurityNotificationMail $mail) => $mail->hasTo($user->email));
+        Mail::assertSent(SecurityNotificationMail::class, 1);
 
         // The new credentials work for login.
         $this->postJson('/internal/login', [

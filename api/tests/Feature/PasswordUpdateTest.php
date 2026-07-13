@@ -70,6 +70,7 @@ class PasswordUpdateTest extends TestCase
         ])->assertOk();
 
         Mail::assertSent(SecurityNotificationMail::class, fn (SecurityNotificationMail $mail) => $mail->hasTo($user->email));
+        Mail::assertSent(SecurityNotificationMail::class, 1);
     }
 
     public function test_a_failed_password_change_does_not_send_a_security_notification(): void

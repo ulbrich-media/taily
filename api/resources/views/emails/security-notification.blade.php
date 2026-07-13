@@ -3,5 +3,5 @@
 
 {{ $description }}
 
-Warst du das nicht, kontaktiere bitte umgehend deinen Administrator.
+Warst du das nicht? Dann kontaktiere bitte umgehend deinen Administrator.
 </x-mail::message>
