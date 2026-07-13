@@ -9,13 +9,18 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Mail;
+use Laravel\Fortify\Contracts\PasskeyUser;
+use Laravel\Fortify\PasskeyAuthenticatable;
+use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Sanctum\HasApiTokens;
 use Taily\Enums\UserRole;
+use Taily\Mail\PasswordResetMail;
 
-class User extends Authenticatable
+class User extends Authenticatable implements PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
-    use HasApiTokens, HasFactory, HasUuids, Notifiable;
+    use HasApiTokens, HasFactory, HasUuids, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
 
     protected static function newFactory(): UserFactory
     {
@@ -42,6 +47,11 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        // Fortify's TwoFactorAuthenticatable trait does not hide these itself,
+        // and ProfileController serializes the user via toArray(); keep the
+        // (encrypted) secret and recovery codes out of every response.
+        'two_factor_secret',
+        'two_factor_recovery_codes',
     ];
 
     /**
@@ -57,6 +67,19 @@ class User extends Authenticatable
             'password' => 'hashed',
             'role' => UserRole::class,
         ];
+    }
+
+    /**
+     * Send the password reset notification.
+     *
+     * Overrides the framework default (English markdown notification) with
+     * Taily's German mail pointing at the frontend reset page.
+     *
+     * @param  string  $token
+     */
+    public function sendPasswordResetNotification($token): void
+    {
+        Mail::to($this->email)->send(new PasswordResetMail($this, $token));
     }
 
     /**

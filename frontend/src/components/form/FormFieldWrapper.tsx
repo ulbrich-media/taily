@@ -13,7 +13,6 @@ import {
   FieldError,
   FieldLabel,
 } from '@/shadcn/components/ui/field.tsx'
-import { Badge } from '@/shadcn/components/ui/badge.tsx'
 import {
   Tooltip,
   TooltipContent,
@@ -67,7 +66,7 @@ export function FormFieldWrapper<
           <div className="flex items-center gap-1.5">
             <FieldLabel htmlFor={field.name}>
               {label}
-              {required && <Badge variant="secondary">Pflicht</Badge>}
+              {required && '*'}
             </FieldLabel>
             {info && (
               <TooltipProvider>

@@ -8,6 +8,13 @@ use Laravel\Sanctum\Http\Middleware\CheckAbilities;
 use Laravel\Sanctum\Http\Middleware\CheckForAnyAbility;
 
 return Application::configure(basePath: dirname(__DIR__))
+    // Listeners are always wired explicitly via Event::listen() in the
+    // relevant service provider (see FortifyServiceProvider::boot()).
+    // Laravel's automatic event discovery scans src/Listeners for handle()
+    // methods and would register those same listeners a second time,
+    // silently double-firing every one of them (e.g. sending each security
+    // notification email twice).
+    ->withEvents(discover: false)
     ->withRouting(
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
@@ -19,7 +26,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         $middleware->statefulApi();
         $middleware->validateCsrfTokens(except: [
-            'internal/invitations/*',
+            'internal/invitations/*/accept',
             'internal/inspect/*/submit',
         ]);
         $middleware->remove([

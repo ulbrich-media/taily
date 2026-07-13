@@ -24,9 +24,9 @@ interface AdoptionDetailPageProps {
   inspectionsData: PreInspectionResource[] | undefined
   inspectionsLoading: boolean
   inspectionsError: boolean
-  editInternalNotesAction: ReactNode
+  editInternalNotesAction: (hasNote: boolean) => ReactNode
   editContractAction: ReactNode
-  editPreInspectionAction: ReactNode
+  editPreInspectionAction: (hasNote: boolean) => ReactNode
   newInspectionAction: ReactNode
   cancelAction: ReactNode
   reopenAction: ReactNode
@@ -72,7 +72,7 @@ export function AdoptionDetailPage({
           )}
 
           <div className="flex justify-end gap-2">
-            {editInternalNotesAction}
+            {editInternalNotesAction(!!adoption.notes)}
             {canCancel && cancelAction}
             {isCanceled && reopenAction}
           </div>
@@ -84,9 +84,8 @@ export function AdoptionDetailPage({
         status={
           <BadgeBySet
             set={{
-              pending: { label: 'Offen', variant: 'outline' },
               not_started: { label: 'Offen', variant: 'outline' },
-              in_progress: { label: 'In Bearbeitung', variant: 'warning' },
+              pending: { label: 'In Bearbeitung', variant: 'info' },
               finished: { label: 'Abgeschlossen', variant: 'success' },
             }}
             value={adoption.pre_inspection_status}
@@ -117,7 +116,7 @@ export function AdoptionDetailPage({
           )}
 
           <div className="flex justify-end gap-2">
-            {editPreInspectionAction}
+            {editPreInspectionAction(!!adoption.pre_inspection_notes)}
             {newInspectionAction}
           </div>
         </div>
@@ -129,8 +128,7 @@ export function AdoptionDetailPage({
           <BadgeBySet
             set={{
               not_started: { label: 'Nicht begonnen', variant: 'outline' },
-              pending: { label: 'Nicht begonnen', variant: 'outline' },
-              in_progress: { label: 'In Bearbeitung', variant: 'warning' },
+              pending: { label: 'In Bearbeitung', variant: 'warning' },
               finished: { label: 'Abgeschlossen', variant: 'success' },
             }}
             value={adoption.contract_status}
@@ -172,8 +170,7 @@ export function AdoptionDetailPage({
           <BadgeBySet
             set={{
               not_started: { label: 'Nicht begonnen', variant: 'outline' },
-              pending: { label: 'Transport geplant', variant: 'warning' },
-              in_progress: { label: 'Transport geplant', variant: 'warning' },
+              pending: { label: 'Transport geplant', variant: 'info' },
               finished: { label: 'Abgeschlossen', variant: 'success' },
             }}
             value={adoption.transport_status}
@@ -235,8 +232,7 @@ export function AdoptionDetailPage({
           <BadgeBySet
             set={{
               not_started: { label: 'Nicht begonnen', variant: 'outline' },
-              pending: { label: 'Nicht begonnen', variant: 'outline' },
-              in_progress: { label: 'In Bearbeitung', variant: 'warning' },
+              pending: { label: 'In Bearbeitung', variant: 'info' },
               finished: { label: 'Abgeschlossen', variant: 'success' },
             }}
             value={adoption.handover_status}

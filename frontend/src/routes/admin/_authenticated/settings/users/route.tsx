@@ -56,6 +56,7 @@ function RouteComponent() {
     <>
       <UserListPage
         users={users}
+        isAdmin={isAdmin}
         createAction={createAction}
         renderRowActions={renderRowActions}
         breadcrumb={<BreadcrumbNav items={breadcrumbs} />}

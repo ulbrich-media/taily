@@ -1,7 +1,12 @@
 import { type ReactNode } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiRequest, csrfCookie } from './api'
-import type { AuthContextType, User } from '@/lib/auth.types.ts'
+import type {
+  AuthContextType,
+  LoginResult,
+  TwoFactorChallengeRequest,
+  User,
+} from '@/lib/auth.types.ts'
 import { AuthContext } from '@/lib/auth.const.tsx'
 import { UserRole } from '@/api/types/users'
 
@@ -35,12 +40,42 @@ export function AuthProvider({
     retry: false,
   })
 
-  const login = async (email: string, password: string) => {
+  const login = async (
+    email: string,
+    password: string,
+    remember: boolean
+  ): Promise<LoginResult> => {
     await csrfCookie()
 
-    await apiRequest('login', {
+    // When the user has a confirmed second factor, the login endpoint answers
+    // `{ two_factor: true }` and holds the pending login (including `remember`)
+    // in the session instead of authenticating. The caller then routes to the
+    // challenge screen, and completeTwoFactorChallenge() below finishes it.
+    const response = await apiRequest<{ two_factor?: boolean } | undefined>(
+      'login',
+      {
+        method: 'POST',
+        body: JSON.stringify({ email, password, remember }),
+      }
+    )
+
+    if (response?.two_factor) {
+      return { twoFactorRequired: true }
+    }
+
+    await refetch()
+    onLoginSuccess?.()
+    return { twoFactorRequired: false }
+  }
+
+  const completeTwoFactorChallenge = async (
+    data: TwoFactorChallengeRequest
+  ) => {
+    // The pending login is held in the session by the preceding /login call,
+    // so no credentials are re-sent here.
+    await apiRequest('two-factor-challenge', {
       method: 'POST',
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify(data),
     })
 
     await refetch()
@@ -71,6 +106,7 @@ export function AuthProvider({
     isLoading,
     isAuthenticated: !!user,
     login,
+    completeTwoFactorChallenge,
     logout,
     refreshProfile,
   }

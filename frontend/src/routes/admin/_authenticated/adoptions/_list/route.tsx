@@ -6,7 +6,7 @@ import { queryClient } from '@/lib/queryClient'
 import { listAdoptionsQuery } from '@/admin/module/adoptions/api/queries'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { Button } from '@/shadcn/components/ui/button'
-import { ExternalLink, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { Route as CreateRoute } from '@/routes/admin/_authenticated/adoptions/_list/create'
 import { Route as DetailRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/index'
 import type { AdoptionListResource } from '@/api/types/adoptions'
@@ -33,7 +33,6 @@ function RouteComponent() {
 
   const renderDetailLink = (adoption: AdoptionListResource) => (
     <DetailRoute.Link params={{ adoptionId: adoption.id }}>
-      <ExternalLink className="size-4" />
       Öffnen
     </DetailRoute.Link>
   )

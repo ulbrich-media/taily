@@ -10,8 +10,11 @@ export const badgeVariants = cva(
           'bg-secondary text-secondary-foreground [a&]:hover:bg-secondary/90',
         destructive:
           'bg-destructive text-white [a&]:hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60',
+        error:
+          'bg-red-100 text-red-700 border-transparent dark:bg-red-900/30 dark:text-red-400',
         warning:
           'bg-amber-100 text-amber-700 border-transparent dark:bg-amber-900/30 dark:text-amber-400',
+        info: 'bg-blumine-100 text-blumine-800 border-transparent dark:bg-blumine-900/40 dark:text-blumine-400',
         success:
           'bg-green-100 text-green-700 border-transparent dark:bg-green-900/30 dark:text-green-400',
         outline:

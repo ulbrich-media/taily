@@ -4,6 +4,7 @@ import { z } from 'zod'
 const CallbackAction = {
   UserInviteAccepted: 'user_invite_accepted',
   Inspect: 'inspect',
+  PasswordReset: 'password_reset',
 } as const
 
 type CallbackAction = (typeof CallbackAction)[keyof typeof CallbackAction]
@@ -11,6 +12,7 @@ type CallbackAction = (typeof CallbackAction)[keyof typeof CallbackAction]
 const callbackSearchSchema = z.object({
   action: z.enum(CallbackAction),
   token: z.string().optional(),
+  email: z.string().optional(),
 })
 
 export const Route = createFileRoute('/callback')({
@@ -19,7 +21,7 @@ export const Route = createFileRoute('/callback')({
 })
 
 function CallbackPage() {
-  const { action, token } = Route.useSearch()
+  const { action, token, email } = Route.useSearch()
 
   // Handle different actions
   switch (action) {
@@ -52,6 +54,15 @@ function CallbackPage() {
         )
       }
       return <Navigate to="/inspect/$token" params={{ token }} replace />
+
+    case CallbackAction.PasswordReset:
+      return (
+        <Navigate
+          to="/admin/reset-password"
+          search={{ token, email }}
+          replace
+        />
+      )
 
     default:
       return (

@@ -1,15 +1,17 @@
 import type { ReactNode } from 'react'
-import { Key } from 'lucide-react'
+import { Key, ShieldCheck } from 'lucide-react'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { NavigationCards } from '@/components/navigation/NavigationCards'
 
 interface PersonalSettingsPageProps {
   apiTokensAction: ReactNode
+  securityAction: ReactNode
   breadcrumb?: ReactNode
 }
 
 export function PersonalSettingsPage({
   apiTokensAction,
+  securityAction,
   breadcrumb,
 }: PersonalSettingsPageProps) {
   return (
@@ -22,6 +24,14 @@ export function PersonalSettingsPage({
 
       <NavigationCards
         cards={[
+          {
+            icon: ShieldCheck,
+            title: 'Sicherheit',
+            subtitle: 'Konto-Sicherheit',
+            description:
+              'Verwalte dein Passwort und die Zwei-Faktor-Authentifizierung',
+            actions: securityAction,
+          },
           {
             icon: Key,
             title: 'API Tokens',

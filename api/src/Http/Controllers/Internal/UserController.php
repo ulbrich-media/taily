@@ -79,7 +79,7 @@ class UserController extends Controller
 
         // Create invitation and send email
         $invitation = UserInvitation::createForUser($user);
-        Mail::to($user->email)->send(new UserInvitationMail($invitation));
+        Mail::to($user->email)->send(new UserInvitationMail($invitation, $invitation->plainTextToken));
 
         $user->load('invitation');
 

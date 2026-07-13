@@ -14,21 +14,27 @@ class UserInvitationMail extends Mailable
 {
     use Queueable, SerializesModels;
 
+    /**
+     * The plaintext token is passed separately because the model only stores
+     * its hash — and, unlike a transient model property, a plain string
+     * survives SerializesModels if this mailable is ever queued.
+     */
     public function __construct(
-        public UserInvitation $invitation
+        public UserInvitation $invitation,
+        public string $plainTextToken,
     ) {}
 
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Einladung zum Adoption Manager',
+            subject: 'Deine Einladung zu Taily',
         );
     }
 
     public function content(): Content
     {
         return new Content(
-            view: 'taily::emails.user-invitation',
+            markdown: 'taily::emails.user-invitation',
             with: [
                 'invitationUrl' => $this->getInvitationUrl(),
                 'expiresAt' => $this->invitation->expires_at,
@@ -38,6 +44,6 @@ class UserInvitationMail extends Mailable
 
     protected function getInvitationUrl(): string
     {
-        return FrontendUriBuilder::userInvite($this->invitation->token);
+        return FrontendUriBuilder::userInvite($this->plainTextToken);
     }
 }

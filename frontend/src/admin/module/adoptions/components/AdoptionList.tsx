@@ -31,12 +31,13 @@ function StepStatusIcon({ status }: { status: AdoptionStepStatus }) {
   if (status === 'finished') {
     return <CheckCircle2 className="size-5 text-green-500" />
   }
-  if (status === 'in_progress') {
-    return <Clock className="size-5 text-amber-500" />
-  }
   if (status === 'pending') {
-    return <Clock className="size-5 text-amber-500" />
+    return <Clock className="size-5 text-blumine-600" />
   }
+  // Delayed status not implemented, yet
+  // if (status === 'delayed') {
+  //   return <CircleAlert className="size-5 text-amber-500" />
+  // }
   return <Circle className="size-5 text-muted-foreground/40" />
 }
 
@@ -47,7 +48,7 @@ function OverallStatusIcon({ status }: { status: AdoptionStatus }) {
   if (status === 'canceled') {
     return <XCircle className="size-5 text-destructive" />
   }
-  return <Clock className="size-5 text-amber-500" />
+  return <Clock className="size-5 text-blumine-600" />
 }
 
 interface AdoptionListProps {
@@ -86,7 +87,7 @@ export function AdoptionList({
             {showAnimal && (
               <TableCell>
                 <div className="flex gap-2 items-center">
-                  <Avatar size="lg">
+                  <Avatar size="lg" shape="square">
                     {adoption.animal.profile_picture_url && (
                       <AvatarImage
                         alt={adoption.animal.name}
@@ -113,17 +114,6 @@ export function AdoptionList({
             {showApplicant && (
               <TableCell>
                 <div className="flex gap-2 items-center">
-                  <Avatar size="lg">
-                    {adoption.applicant.profile_picture_url && (
-                      <AvatarImage
-                        alt={adoption.applicant.full_name}
-                        src={adoption.applicant.profile_picture_url}
-                      />
-                    )}
-                    <AvatarFallback>
-                      <User className="size-5 text-muted-foreground" />
-                    </AvatarFallback>
-                  </Avatar>
                   <div>
                     <p>{adoption.applicant.full_name ?? ''}</p>
                     {adoption.applicant.city && (
