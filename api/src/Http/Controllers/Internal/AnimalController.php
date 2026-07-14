@@ -28,7 +28,7 @@ class AnimalController extends Controller
             $query->where('animal_type_id', $request->input('animal_type_id'));
         }
 
-        $animals = $query->with(['media', 'animalType'])->orderBy('intake_date', 'desc')->get();
+        $animals = $query->with(['media', 'animalType'])->orderBy('created_at', 'desc')->get();
 
         return AnimalListResource::collection($animals);
     }

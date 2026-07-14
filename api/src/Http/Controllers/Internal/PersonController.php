@@ -54,7 +54,7 @@ class PersonController extends Controller
             });
         }
 
-        $people = $query->orderBy('last_name')->orderBy('first_name')->get();
+        $people = $query->orderBy('created_at', 'desc')->get();
 
         return PersonListResource::collection($people);
     }
