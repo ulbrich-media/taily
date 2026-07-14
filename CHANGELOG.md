@@ -2,6 +2,13 @@
 
 All notable changes to Taily are documented here.
 
+## [0.8.1](https://github.com/ulbrich-media/taily/compare/v0.8.0...v0.8.1) (2026-07-14)
+
+
+### Bug Fixes
+
+* sort people and animals lists by creation date descending ([#109](https://github.com/ulbrich-media/taily/issues/109)) ([d2ff9dc](https://github.com/ulbrich-media/taily/commit/d2ff9dcc702ed96a7c4a2b20cc6d33cb9596daa2))
+
 # [0.8.0](https://github.com/ulbrich-media/taily/compare/v0.7.2...v0.8.0) (2026-07-13)
 
 
