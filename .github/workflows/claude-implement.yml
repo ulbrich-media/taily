@@ -53,6 +53,10 @@ jobs:
       # *any* open PR a collaborator points it at. Pinning to the SHA closes the race; refusing
       # anything outside claude/implement/* branches or from a fork means this job only ever
       # executes code that originated from this automation's own build step in the first place.
+      # (No separate check on the PR's own author: only OWNER/MEMBER/COLLABORATOR can trigger
+      # this at all, and a collaborator naming their own branch claude/implement/* isn't a
+      # privilege escalation — they already have contents: write and could push to development
+      # directly.)
       - name: Resolve and validate PR head (iterate mode only)
         id: resolve
         if: github.event.issue.pull_request != null
@@ -60,11 +64,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           PR_JSON=$(gh pr view ${{ github.event.issue.number }} --repo ${{ github.repository }} \
-            --json headRefName,headRefOid,isCrossRepository,author)
+            --json headRefName,headRefOid,isCrossRepository)
           HEAD_REF=$(echo "$PR_JSON" | jq -r .headRefName)
           HEAD_SHA=$(echo "$PR_JSON" | jq -r .headRefOid)
           IS_FORK=$(echo "$PR_JSON" | jq -r .isCrossRepository)
-          AUTHOR=$(echo "$PR_JSON" | jq -r .author.login)
 
           if [ "$IS_FORK" = "true" ]; then
             echo "::error::Refusing to run — PR head is on a fork ($HEAD_REF)."
@@ -77,14 +80,6 @@ jobs:
               exit 1
               ;;
           esac
-          # Branch-name prefix alone can be spoofed by anyone with push access (they could
-          # name their own branch claude/implement/whatever and open a PR from it). The PR's
-          # author can't be spoofed the same way — build mode's gh pr create always runs as
-          # the bot, so a PR genuinely produced by this automation is always authored by it.
-          if [ "$AUTHOR" != "claude[bot]" ]; then
-            echo "::error::Refusing to iterate — PR was not opened by claude[bot] (author: $AUTHOR)."
-            exit 1
-          fi
 
           echo "head_sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
           echo "head_ref=$HEAD_REF" >> "$GITHUB_OUTPUT"
