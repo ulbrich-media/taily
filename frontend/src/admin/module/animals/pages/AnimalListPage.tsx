@@ -23,6 +23,7 @@ import {
   AvatarImage,
 } from '@/shadcn/components/ui/avatar.tsx'
 import { Card, CardContent } from '@/shadcn/components/ui/card.tsx'
+import { Badge } from '@/shadcn/components/ui/badge.tsx'
 
 interface AnimalListPageProps {
   animals: AnimalListResource[]
@@ -98,6 +99,7 @@ export function AnimalListPage({
                 <TableHead>Rasse</TableHead>
                 <TableHead>Geschlecht</TableHead>
                 <TableHead>Farbe</TableHead>
+                <TableHead>Veröffentlicht</TableHead>
                 <TableHead className="th-contain"></TableHead>
               </TableRow>
             </TableHeader>
@@ -128,6 +130,13 @@ export function AnimalListPage({
                       {animal.gender === 'male' ? 'Männlich' : 'Weiblich'}
                     </TableCell>
                     <TableCell>{animal.color || '-'}</TableCell>
+                    <TableCell>
+                      {animal.do_publish ? (
+                        <Badge variant="success">Veröffentlicht</Badge>
+                      ) : (
+                        <Badge variant="outline">Nicht veröffentlicht</Badge>
+                      )}
+                    </TableCell>
                     <TableCell className="text-right">
                       {renderRowActions(animal)}
                     </TableCell>
