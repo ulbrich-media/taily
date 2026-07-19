@@ -8,7 +8,7 @@ Write or update the implementation plan for the current issue, keeping everythin
 
 ## Step 1 — Determine mode
 
-List the issue's comments (`gh api repos/{owner}/{repo}/issues/{issue_number}/comments`) and check whether one of them contains the `<!-- claude-plan -->` marker.
+Fetch the issue itself with `gh api repos/{owner}/{repo}/issues/{issue_number}` (do not use `gh issue view` — it isn't in the allowed toolset) and list its comments with `gh api repos/{owner}/{repo}/issues/{issue_number}/comments`. Check whether one of the comments contains the `<!-- claude-plan -->` marker.
 
 - **No marker found → initial mode.** Read the issue title and body, plus any comments already present (treat them as early feedback/context, not just noise). Write a new plan from scratch.
 - **Marker found → refinement mode.** Read every comment posted *after* the marked comment — that is the feedback to incorporate. Rewrite the full plan (not a diff) incorporating that feedback.
@@ -17,7 +17,7 @@ In both modes, feel free to post an additional (unmarked) comment asking a clari
 
 ## Step 2 — Write the plan
 
-Use exactly this structure. Write the body to a file (e.g. `plan.md`) before posting/patching.
+Use exactly this structure. Compose it as a single markdown string in memory — do not write it to a file. The only permitted tools are repo inspection (`Read`/`Glob`/`Grep`, read-only) and `gh api` / `gh issue comment`; there is no `Write` tool available, so the body must be passed inline as a heredoc when you run the `gh` command in Step 3.
 
 ```
 <!-- claude-plan -->
@@ -90,8 +90,21 @@ Feature areas, not technical layers — align with the domain vocabulary in [`ap
 
 ## Step 3 — Post or update the comment
 
-- **Initial mode:** post a new comment with `gh issue comment {issue_number} --body-file plan.md`.
+Pass the plan body inline via a quoted heredoc (`<<'PLAN_EOF'`) so shell/markdown special characters aren't interpreted — never write it to disk first.
+
+- **Initial mode:** post a new comment:
+  ```
+  gh issue comment {issue_number} --body "$(cat <<'PLAN_EOF'
+  <plan markdown>
+  PLAN_EOF
+  )"
+  ```
 - **Refinement mode:** edit the existing marked comment in place — do not post a new one. Find its id from the comment listing in Step 1, then:
-  `gh api repos/{owner}/{repo}/issues/comments/{comment_id} -X PATCH -f body=@plan.md`
+  ```
+  gh api repos/{owner}/{repo}/issues/comments/{comment_id} -X PATCH -f body="$(cat <<'PLAN_EOF'
+  <plan markdown>
+  PLAN_EOF
+  )"
+  ```
 
 Keep the plan concise — it's for a human to review and an agent to later implement, not the implementation itself.
