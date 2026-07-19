@@ -11,9 +11,9 @@ You were handed `IS_PULL_REQUEST` (`true`/`false`) and an issue/PR number in you
 
 If `IS_PULL_REQUEST` is `false`, first check whether a PR already exists for this issue before doing anything else:
 
-`gh api search/issues -f q="repo:{owner}/{repo} is:pr is:open head:claude/implement/issue-{issue_number}-"`
+`gh api search/issues -X GET -f q="repo:{owner}/{repo} is:pr is:open head:claude/implement/issue-{issue_number}-"`
 
-(Note the trailing hyphen — GitHub's `head:` search qualifier does a prefix match, so without it `issue-4` would also match a branch like `issue-42-add-export`.)
+(The trailing hyphen closes a prefix-match ambiguity — GitHub's `head:` qualifier does a prefix match, so without it `issue-4` would also match a branch like `issue-42-add-export`. The explicit `-X GET` matters too: `gh api` silently defaults to POST once any `-f`/`-F` param is given, and `search/issues` only accepts GET.)
 
 If one is found: stop immediately. Output `mode: "blocked"` with a `blocked_reason` explaining a PR already exists and that further work should happen by commenting `@claude implement` **on that PR** (not the issue) — commenting on the issue again would create a second, disconnected branch instead of continuing the existing one.
 
