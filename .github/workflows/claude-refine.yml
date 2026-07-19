@@ -31,6 +31,6 @@ jobs:
 
             /refine
           claude_args: >
-            --max-turns 30
+            --max-turns 100
             --model claude-sonnet-5
             --allowedTools "Read,Glob,Grep,Bash(gh api:*),Bash(gh issue comment:*)"
