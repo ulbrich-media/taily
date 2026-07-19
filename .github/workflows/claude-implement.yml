@@ -17,6 +17,9 @@ jobs:
       (github.event.comment.author_association == 'OWNER' ||
        github.event.comment.author_association == 'MEMBER' ||
        github.event.comment.author_association == 'COLLABORATOR')
+    concurrency:
+      group: claude-implement-${{ github.event.issue.number }}
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     services:
       mysql:
@@ -57,10 +60,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           PR_JSON=$(gh pr view ${{ github.event.issue.number }} --repo ${{ github.repository }} \
-            --json headRefName,headRefOid,isCrossRepository)
+            --json headRefName,headRefOid,isCrossRepository,author)
           HEAD_REF=$(echo "$PR_JSON" | jq -r .headRefName)
           HEAD_SHA=$(echo "$PR_JSON" | jq -r .headRefOid)
           IS_FORK=$(echo "$PR_JSON" | jq -r .isCrossRepository)
+          AUTHOR=$(echo "$PR_JSON" | jq -r .author.login)
 
           if [ "$IS_FORK" = "true" ]; then
             echo "::error::Refusing to run — PR head is on a fork ($HEAD_REF)."
@@ -73,6 +77,14 @@ jobs:
               exit 1
               ;;
           esac
+          # Branch-name prefix alone can be spoofed by anyone with push access (they could
+          # name their own branch claude/implement/whatever and open a PR from it). The PR's
+          # author can't be spoofed the same way — build mode's gh pr create always runs as
+          # the bot, so a PR genuinely produced by this automation is always authored by it.
+          if [ "$AUTHOR" != "claude[bot]" ]; then
+            echo "::error::Refusing to iterate — PR was not opened by claude[bot] (author: $AUTHOR)."
+            exit 1
+          fi
 
           echo "head_sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
 
@@ -80,6 +92,10 @@ jobs:
         with:
           ref: ${{ github.event.issue.pull_request != null && steps.resolve.outputs.head_sha || 'development' }}
           fetch-depth: 0
+          # No later step needs local git push/fetch credentials: Claude's own commits are
+          # pushed via the action's own token exchange, and the lockfile-diff guards below use
+          # `gh api compare` instead of raw git, specifically so this can safely stay false.
+          persist-credentials: false
 
       # CI-parity setup, run as plain deterministic steps (not Claude tool calls) so Claude's
       # own in-turn checks run against an environment ci.yml will actually reproduce.
@@ -130,7 +146,7 @@ jobs:
             --max-turns 200
             --model claude-sonnet-5
             --allowedTools "Read,Glob,Grep,Edit,Write,Bash(gh api:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(api/vendor/bin/pint:*),Bash(php api/artisan test:*),Bash(npm run lint:*),Bash(npm run format:*),Bash(npm run test:*),Bash(npm run build:*)"
-            --json-schema '{"type":"object","required":["mode","checks_passed"],"properties":{"mode":{"type":"string","enum":["build","iterate","blocked"]},"checks_passed":{"type":"boolean"},"checks_summary":{"type":"string"},"pr_title":{"type":"string"},"pr_body":{"type":"string"},"what_changed":{"type":"string"},"blocked_reason":{"type":"string"},"feedback_responses":{"type":"array","items":{"type":"object","required":["comment_type","action","reasoning"],"properties":{"comment_id":{"type":"integer"},"comment_type":{"type":"string","enum":["review_comment","general"]},"action":{"type":"string","enum":["implemented","declined","clarification_needed"]},"reasoning":{"type":"string"}}}}}}'
+            --json-schema '{"type":"object","required":["mode","checks_passed"],"properties":{"mode":{"type":"string","enum":["build","iterate","blocked"]},"checks_passed":{"type":"boolean"},"checks_summary":{"type":"string"},"pr_title":{"type":"string"},"pr_body":{"type":"string"},"what_changed":{"type":"string"},"blocked_reason":{"type":"string"},"feedback_responses":{"type":"array","items":{"type":"object","required":["comment_type","action","reasoning"],"properties":{"comment_id":{"type":"integer"},"comment_type":{"type":"string","enum":["review_comment","general"]},"action":{"type":"string","enum":["implemented","declined","clarification_needed"]},"reasoning":{"type":"string"}},"allOf":[{"if":{"properties":{"comment_type":{"const":"review_comment"}}},"then":{"required":["comment_id"]}}]}}},"allOf":[{"if":{"properties":{"mode":{"const":"build"}}},"then":{"required":["pr_title","pr_body"]}},{"if":{"properties":{"mode":{"const":"iterate"}}},"then":{"required":["what_changed"]}},{"if":{"properties":{"mode":{"const":"blocked"}}},"then":{"required":["blocked_reason"]}}]}'
 
       # Everything below is deterministic (no LLM involved) — Claude never creates PRs,
       # comments, or toggles state itself. It only ever produces structured_output above.
@@ -151,9 +167,8 @@ jobs:
             FLAG="--draft"
           fi
 
-          git fetch origin "$BRANCH" development
-          if ! git diff --quiet "origin/development...origin/$BRANCH" -- \
-            composer.json composer.lock frontend/package.json frontend/package-lock.json; then
+          CHANGED_FILES=$(gh api "repos/${{ github.repository }}/compare/development...$BRANCH" --jq '.files[].filename')
+          if echo "$CHANGED_FILES" | grep -qE '^(composer\.(json|lock)|frontend/package(-lock)?\.json)$'; then
             FLAG="--draft"
             PR_BODY=$(printf '> [!WARNING]\n> Dependency files changed on this branch (composer.json/lock or package.json/lock). New packages require human consent per AGENTS.md — review before merging.\n\n%s' "$PR_BODY")
           fi
@@ -171,13 +186,16 @@ jobs:
           WHAT_CHANGED: ${{ fromJSON(steps.claude.outputs.structured_output).what_changed }}
           CHECKS_PASSED: ${{ fromJSON(steps.claude.outputs.structured_output).checks_passed }}
           STRUCTURED: ${{ steps.claude.outputs.structured_output }}
+          HEAD_SHA: ${{ steps.resolve.outputs.head_sha }}
         run: |
           gh pr comment "$PR_NUMBER" --repo ${{ github.repository }} --body "$WHAT_CHANGED"
 
           # Reply individually to each inline review comment Claude evaluated — this is what
           # lets Claude push back on feedback it disagrees with, attached to the specific
-          # comment thread, instead of only ever complying or staying silent.
-          echo "$STRUCTURED" | jq -c '.feedback_responses // [] | .[] | select(.comment_type == "review_comment")' |
+          # comment thread, instead of only ever complying or staying silent. Failures are
+          # collected (not swallowed) and posted as a fallback comment, since a silently lost
+          # "declined" reply would defeat the whole point of this feature.
+          FAILED_REPLIES=""
           while IFS= read -r item; do
             COMMENT_ID=$(echo "$item" | jq -r '.comment_id')
             ACTION=$(echo "$item" | jq -r '.action')
@@ -189,12 +207,24 @@ jobs:
               *) LABEL="$ACTION" ;;
             esac
             REPLY_BODY=$(printf '**%s** — %s' "$LABEL" "$REASONING")
-            gh api "repos/${{ github.repository }}/pulls/$PR_NUMBER/comments/$COMMENT_ID/replies" \
-              -f body="$REPLY_BODY" || true
-          done
+            if ! gh api "repos/${{ github.repository }}/pulls/$PR_NUMBER/comments/$COMMENT_ID/replies" -f body="$REPLY_BODY"; then
+              FAILED_REPLIES=$(printf '%s\n- Comment #%s (%s): %s' "$FAILED_REPLIES" "$COMMENT_ID" "$LABEL" "$REASONING")
+            fi
+          done < <(echo "$STRUCTURED" | jq -c '.feedback_responses // [] | .[] | select(.comment_type == "review_comment")')
+
+          if [ -n "$FAILED_REPLIES" ]; then
+            gh pr comment "$PR_NUMBER" --repo ${{ github.repository }} --body "$(printf '⚠️ Could not post individual replies to the following review comments — recording the verdicts here instead:%s' "$FAILED_REPLIES")"
+          fi
 
           IS_DRAFT=$(gh pr view "$PR_NUMBER" --repo ${{ github.repository }} --json isDraft -q .isDraft)
-          if [ "$CHECKS_PASSED" = "true" ] && [ "$IS_DRAFT" = "true" ]; then
+
+          LOCKFILES_CHANGED=false
+          CHANGED_FILES=$(gh api "repos/${{ github.repository }}/compare/development...$HEAD_SHA" --jq '.files[].filename')
+          if echo "$CHANGED_FILES" | grep -qE '^(composer\.(json|lock)|frontend/package(-lock)?\.json)$'; then
+            LOCKFILES_CHANGED=true
+          fi
+
+          if [ "$CHECKS_PASSED" = "true" ] && [ "$IS_DRAFT" = "true" ] && [ "$LOCKFILES_CHANGED" = "false" ]; then
             gh pr ready "$PR_NUMBER" --repo ${{ github.repository }}
           fi
 
