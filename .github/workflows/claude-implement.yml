@@ -178,7 +178,7 @@ jobs:
           claude_args: >
             --max-turns 500
             --model claude-sonnet-5
-            --allowedTools "Read,Glob,Grep,Edit,Write,mcp__github_file_ops__commit_files,mcp__github_file_ops__delete_files,Bash(gh api:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(api/vendor/bin/pint:*),Bash(php api/artisan test:*),Bash(npm run lint:*),Bash(npm run format:*),Bash(npm run test:*),Bash(npm run build:*)"
+            --allowedTools "Read,Glob,Grep,Edit,Write,mcp__github_file_ops__commit_files,mcp__github_file_ops__delete_files,Bash(gh api:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(api/vendor/bin/pint:*),Bash(vendor/bin/pint:*),Bash(php api/artisan test:*),Bash(php artisan test:*),Bash(npm run lint:*),Bash(npm run format:*),Bash(npm run test:*),Bash(npm run build:*)"
             --disallowedTools "Agent,Task,ScheduleWakeup,CronCreate,CronList,CronDelete,RemoteTrigger,PushNotification,SendMessage,Monitor,TaskCreate,TaskGet,TaskList,TaskOutput,TaskStop,EnterWorktree,ExitWorktree,DesignSync"
             --json-schema '{"type":"object","required":["mode","checks_passed"],"properties":{"mode":{"type":"string","enum":["build","iterate","blocked"]},"checks_passed":{"type":"boolean"},"checks_summary":{"type":"string"},"pr_title":{"type":"string"},"pr_body":{"type":"string"},"what_changed":{"type":"string"},"blocked_reason":{"type":"string"},"feedback_responses":{"type":"array","items":{"type":"object","required":["comment_type","action","reasoning"],"properties":{"comment_id":{"type":"integer"},"comment_type":{"type":"string","enum":["review_comment","general"]},"action":{"type":"string","enum":["implemented","declined","clarification_needed"]},"reasoning":{"type":"string"}}}}}}'
 
@@ -219,13 +219,23 @@ jobs:
             echo "::warning::Local commit exists but pushing to $BRANCH failed — this can happen if commit_files already pushed newer commits to that branch that this checkout never fetched. Check the branch directly before assuming work was lost."
           fi
 
+      # Everything below uses github.token, not steps.claude.outputs.github_token. The latter
+      # looks like the natural choice (it's a real GitHub App token, not the default job token,
+      # so PRs/comments it creates would trigger other workflows), but it's dead by the time any
+      # step here runs — the action revokes it itself as its own last internal action right after
+      # Claude's turn ends (confirmed live: a `curl -X DELETE .../installation/token` call inside
+      # the composite action's own log output, before control ever returns here). Trade-off of
+      # falling back to github.token: PRs/comments made with it don't trigger other
+      # pull_request-listening workflows (ci.yml, the title-lint check) — a deliberate GitHub
+      # anti-recursion rule, not a bug. Fixing that fully needs a real PAT/GitHub App credential
+      # provisioned as a secret; out of scope for just getting this unblocked.
       - name: Create PR (build mode)
         if: >
           github.event.issue.pull_request == null &&
           steps.claude.outputs.structured_output != '' &&
           fromJSON(steps.claude.outputs.structured_output).mode == 'build'
         env:
-          GH_TOKEN: ${{ steps.claude.outputs.github_token }}
+          GH_TOKEN: ${{ github.token }}
           PR_TITLE: ${{ fromJSON(steps.claude.outputs.structured_output).pr_title }}
           PR_BODY: ${{ fromJSON(steps.claude.outputs.structured_output).pr_body }}
           CHECKS_PASSED: ${{ fromJSON(steps.claude.outputs.structured_output).checks_passed }}
@@ -251,7 +261,7 @@ jobs:
           steps.claude.outputs.structured_output != '' &&
           fromJSON(steps.claude.outputs.structured_output).mode == 'iterate'
         env:
-          GH_TOKEN: ${{ steps.claude.outputs.github_token }}
+          GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.issue.number }}
           WHAT_CHANGED: ${{ fromJSON(steps.claude.outputs.structured_output).what_changed }}
           CHECKS_PASSED: ${{ fromJSON(steps.claude.outputs.structured_output).checks_passed }}
@@ -303,7 +313,7 @@ jobs:
           steps.claude.outputs.structured_output != '' &&
           fromJSON(steps.claude.outputs.structured_output).mode == 'blocked'
         env:
-          GH_TOKEN: ${{ steps.claude.outputs.github_token }}
+          GH_TOKEN: ${{ github.token }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           REASON: ${{ fromJSON(steps.claude.outputs.structured_output).blocked_reason }}
         run: |
