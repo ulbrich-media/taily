@@ -165,6 +165,10 @@ jobs:
           # git commands either, and nothing it edits ever reaches GitHub, regardless of how
           # the run ends. See docs/ai-github-automation.md for how this was actually found.
           use_commit_signing: true
+          # --disallowedTools below blocks async/session-persistence tools (background Agent
+          # spawning, ScheduleWakeup, Cron*, etc.) — see claude-refine.yml for why: this job is
+          # a one-shot process with no persistent session, so a run that hands off to one of
+          # these can end its turn "successfully" having only kicked off work that never resumes.
           prompt: |
             REPO: ${{ github.repository }}
             ISSUE OR PR NUMBER: ${{ github.event.issue.number }}
@@ -175,6 +179,7 @@ jobs:
             --max-turns 500
             --model claude-sonnet-5
             --allowedTools "Read,Glob,Grep,Edit,Write,mcp__github_file_ops__commit_files,mcp__github_file_ops__delete_files,Bash(gh api:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(api/vendor/bin/pint:*),Bash(php api/artisan test:*),Bash(npm run lint:*),Bash(npm run format:*),Bash(npm run test:*),Bash(npm run build:*)"
+            --disallowedTools "Agent,Task,ScheduleWakeup,CronCreate,CronList,CronDelete,RemoteTrigger,PushNotification,SendMessage,Monitor,TaskCreate,TaskGet,TaskList,TaskOutput,TaskStop,EnterWorktree,ExitWorktree,DesignSync"
             --json-schema '{"type":"object","required":["mode","checks_passed"],"properties":{"mode":{"type":"string","enum":["build","iterate","blocked"]},"checks_passed":{"type":"boolean"},"checks_summary":{"type":"string"},"pr_title":{"type":"string"},"pr_body":{"type":"string"},"what_changed":{"type":"string"},"blocked_reason":{"type":"string"},"feedback_responses":{"type":"array","items":{"type":"object","required":["comment_type","action","reasoning"],"properties":{"comment_id":{"type":"integer"},"comment_type":{"type":"string","enum":["review_comment","general"]},"action":{"type":"string","enum":["implemented","declined","clarification_needed"]},"reasoning":{"type":"string"}}}}}}'
 
       # Everything below is deterministic (no LLM involved) — Claude never creates PRs,
