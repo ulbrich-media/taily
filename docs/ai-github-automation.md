@@ -1,0 +1,79 @@
+# AI GitHub Automation (Claude)
+
+How Claude is wired into this repo's GitHub issues via `anthropics/claude-code-action`, what it can and can't do, and what's planned next.
+
+For *why* this approach (vs. a custom-built agent, vs. a managed SaaS) was chosen, see [ADR-011](ADRs/ADR-011-claude-code-github-automation.md).
+
+> [!NOTE]
+> This is a separate, narrower initiative from [docs/ai-development-process.md](ai-development-process.md), which describes the broader human-driven loop using CodeRabbit and interactive Claude Code sessions. This doc covers a small, fully automated slice of that loop (issue planning today; implementation and PR review are planned — see Roadmap below). Whether CodeRabbit's issue-planning role eventually moves onto this automation, or the two continue to coexist, hasn't been decided yet.
+
+## What's implemented
+
+**One command today: `/refine`.** Comment `@claude refine` at the start of a comment on an open issue (see [CONTRIBUTING.md](../CONTRIBUTING.md#using-claude-on-issues) for the user-facing how-to). It writes or updates a single tracked implementation plan comment on that issue:
+
+- **First run** (no existing plan comment): writes an initial plan from the issue title/body and any comments already present.
+- **Every following run**: rewrites that same comment in place, treating every comment posted since as feedback to incorporate.
+
+The plan comment always starts with an invisible `<!-- claude-plan -->` marker, which is how the skill finds "its" comment again on the next run.
+
+### Comment structure
+
+Defined in [`.claude/skills/refine/SKILL.md`](../.claude/skills/refine/SKILL.md):
+
+1. **Summary** — 1-3 sentences, high level, benefit-focused, no implementation detail.
+2. **Status** — ✅/⚠️ derived deterministically: `Ready to implement` only if Confidence is High *and* there are no open questions left; every other combination is `Currently being refined`. Not GitHub's native `[!TIP]`/`[!WARNING]` alert syntax — that syntax's header text is one of five fixed keywords that can't be relabeled to "Status".
+3. **Plan Metadata** — one line: Confidence and Complexity (each ✅/⚠️/🚨-style, deterministic per the skill's mapping), and Scope. Scope uses this repo's own domain vocabulary (`people`, `animals`, `adoption`, `inspection`, `contract`, `transport`, `form-builder`, `organizations`, `public-api`, `auth`, `infrastructure`, `docs`) sourced from `api/CONTEXT.md` / `frontend/CONTEXT.md`, not generic technical layers (backend/frontend/db/...) — chosen so a plan's scope is filterable/greppable by the part of the product it touches, not by which files change.
+4. **Functional Plan** — concrete problem + behavior description, with a collapsible for edge cases / extended decisions.
+5. **Technical Plan** — high-level approach, with a collapsible for file/module-level detail (written for a developer and for a future implementation agent, not just a human skimming).
+6. **Resolved Decisions** — always-visible heading with an always-present collapsible underneath (defaults to "No decisions made yet.") — the answers to questions asked while refining.
+
+No external images anywhere in the template (shields.io-style badges were considered and rejected — see Decisions below) — everything is plain markdown and native emoji.
+
+### Workflow
+
+[`.github/workflows/claude-refine.yml`](../.github/workflows/claude-refine.yml):
+
+- Triggers on `issue_comment: created`, gated to issues (not PRs).
+- Runs in **automation ("agent") mode** — the action is given an explicit `prompt` input rather than relying on tag/interactive mode, so Claude is handed a fixed instruction rather than left to infer intent from the comment text.
+- Tool access is allowlisted to exactly what the skill needs: `Read`, `Glob`, `Grep` (read-only repo inspection, for the Technical Plan) and two narrow Bash patterns, `Bash(gh api:*)` / `Bash(gh issue comment:*)`.
+
+## Security model
+
+- **Author gating**: only comments from users with `OWNER`, `MEMBER`, or `COLLABORATOR` association on the repo can trigger the job. This is a public repo; random commenters can't invoke it or spend API budget.
+- **Exact-prefix trigger matching**: the job's `if:` uses `startsWith(comment.body, '@claude refine')`, not `contains(...)`. A comment that merely *mentions* `@claude` or `refine` in passing (e.g. "hey @claude, how does refine work?") does not trigger the job.
+- **No slash in the human-facing trigger**: the GitHub-facing convention is `@claude <command>` with no `/`, since slash commands are a Claude Code/terminal convention rather than a typical GitHub-bot one. The literal `/refine` is still used internally, in the `prompt:` string handed to the Claude Code CLI — that's the correct layer for a slash command, since it invokes the skill of that exact name deterministically.
+- **Deterministic command routing**: the workflow's gate decides which command runs and hands Claude a hardcoded prompt; Claude never chooses between skills itself. Each future command should follow the same pattern — its own job, its own exact-match gate, its own hardcoded prompt.
+- **Least-privilege tool access**: no general `Bash`, no `Write`/`Edit` tool. Claude can read the repo (to name real file paths in the Technical Plan) and talk to GitHub only through the two allowlisted `gh` command shapes — it cannot modify the working tree or run arbitrary shell commands.
+- **Least-privilege workflow permissions**: `contents: read`, `issues: write`, `pull-requests: read`, `id-token: write`. No `contents: write` — this job cannot push commits or open PRs.
+- **Ephemeral OIDC token**: `id-token: write` lets the action mint a short-lived GitHub App token per run via OIDC instead of using a long-lived PAT.
+- **Per-command permission isolation** (forward-looking): future commands with broader needs — e.g. an implementation agent that needs `contents: write` and branch push access — should live in their own workflow/job rather than widening this one's permissions. A shared "dispatcher" job was deliberately rejected for this reason (see ADR-011).
+
+## Decisions made along the way
+
+- **One merged skill, not two.** `plan-issue` and `refine-plan` were originally separate skills, but the underlying trigger (any `@claude` comment) was already generic, so Claude had to guess which one applied. Merged into a single `refine` skill that checks for the marker comment itself (POST if absent, PATCH if present) — deterministic instead of guessed.
+- **Command naming**: renamed to `/refine` to match already-established internal terminology.
+- **Comment body is composed inline, never written to a file.** The skill originally wrote a `plan.md` file before posting/patching it — but no `Write` tool is granted, so that step silently failed (see the permission-debugging note below). Fixed by composing the body as a heredoc passed directly into the `gh` command.
+- **`gh api`, not `gh issue view`**, for reading the issue — both are equally read-only, but standardizing on one command keeps the tool allowlist to a single pattern instead of two that do the same thing.
+- **Status derived by a literal rule**, not left to per-run judgment, so it stays trustworthy across refinements.
+- **Scope vocabulary replaced, not supplemented.** Considered adding a second "Feature Area" field alongside a technical-layer Scope field; decided to replace Scope's values instead — a technical-layer tag is usually redundant once the domain area is known, and duplicating it would just add table noise.
+- **No external images.** shields.io-badge-style color coding was proposed for Confidence/Complexity, then rejected in favor of native emoji — avoids any dependency on a third-party image service for something that renders inside every issue.
+- **No GitHub alert syntax for Status.** `> [!TIP]` / `> [!WARNING]` looked good but their header text ("Tip", "Warning", ...) is one of five fixed keywords GitHub doesn't let you relabel — using it left "Status:" awkwardly duplicated under a generic "Tip" heading. Replaced with a plain emoji-prefixed line instead.
+- **Debug/telemetry footer (turns used, token cost, refinement count) considered and deferred.** Turn count and cost are only known to the *harness* after a run completes (surfaced via the action's `execution_file` output), not to Claude while it's running — Claude cannot self-report these. A refinement counter, by contrast, *could* be self-maintained by Claude (it already re-reads the old comment each run). Decided to defer both: GitHub's own comment edit history already answers "how often was this changed," and wiring up the cost/turn footer needs an extra workflow step that isn't worth building yet. See Roadmap.
+
+### Permission debugging notes (for future commands hitting the same issues)
+
+Two real bugs surfaced only once the workflow was actually triggered against a live issue — both left `permission_denials_count > 0` in the run's result summary:
+
+1. **Missing repo-read tools.** The Technical Plan step asks Claude to "inspect the repo to name real paths," but `Read`/`Glob`/`Grep` weren't allowlisted. Fixed by adding them.
+2. **Missing `Write` tool for the file-based comment-body approach.** Fixed by dropping the file entirely (see above) rather than granting `Write`.
+
+A run can report `"is_error": false"` / `"subtype": "success"` in its result summary while still having done nothing useful — that field means the Claude Code session didn't crash, not that the task succeeded. When debugging a "ran but did nothing" case, `show_full_output: true` on the action step (currently enabled in `claude-refine.yml`) reveals the actual tool-call transcript instead of just the summary JSON — worth checking whether it should be turned back off once the workflow has proven stable for a while, to keep run logs shorter.
+
+## Roadmap / not yet implemented
+
+- **Implementation-agent workflow**: issue (+ finalized plan) → code → PR. Needs `contents: write`, branch restrictions, no direct `main` access, its own workflow/job. Could gate on the plan comment's own `Status: Ready to implement` line as a precondition for the trigger.
+- **PR code review workflow** (general + specialized/pattern-based reviews).
+- **Feedback loop**: the agent acting on review comments left on its own PRs.
+- **Debug/telemetry footer** on the plan comment: turns used and cost, read from the action's `execution_file` output by a workflow step that runs after Claude and injects the values via placeholder substitution (Claude would leave literal placeholders like `{{CLAUDE_TURNS}}` in its output for that step to fill in, since it can't know the real numbers itself).
+- **Self-maintained `Refinements: N` counter** in the plan comment — low priority, since GitHub's built-in comment edit history already covers this.
+- **More slash commands**, each following the established pattern: its own workflow/job, its own exact-prefix `@claude <command>` gate, its own hardcoded `prompt`, its own least-privilege tool/permission scope.

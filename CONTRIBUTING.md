@@ -63,3 +63,14 @@ Scopes are optional. Use them when the change is clearly contained to a subsyste
 - All work targets `development`. Open a PR against `development`.
 - `main` is managed exclusively by CI. Do not push to it directly.
 - For hotfixes against a released version, see the [Hotfix Process](docs/release-architecture.md#hotfix-process) in the release architecture docs.
+
+## Using Claude on Issues
+
+Maintainers and collaborators can ask Claude to draft or refine an implementation plan directly on a GitHub issue, instead of writing one by hand.
+
+- Comment `@claude refine` — at the very start of the comment — on an open issue (not a PR) to trigger it. The rest of that same comment can contain your actual feedback, e.g. `@claude refine — also require re-verification when the email changes`.
+- **First run**: Claude writes an initial functional + technical plan as a single tracked comment on the issue.
+- **Every following `@claude refine`**: Claude rewrites that same comment, incorporating everything commented on the issue since the last update as feedback — including whatever you wrote in the same message that triggered this run.
+- Only comments from users with write access to the repo (`OWNER`/`MEMBER`/`COLLABORATOR`) can trigger it.
+
+See [docs/ai-github-automation.md](docs/ai-github-automation.md) for how this works under the hood, how it's protected, and what's planned next.
