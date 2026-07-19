@@ -1,0 +1,162 @@
+name: Claude Implementation Agent
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  id-token: write
+
+jobs:
+  implement:
+    if: |
+      startsWith(github.event.comment.body, '@claude implement') &&
+      (github.event.comment.author_association == 'OWNER' ||
+       github.event.comment.author_association == 'MEMBER' ||
+       github.event.comment.author_association == 'COLLABORATOR')
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: taily
+          MYSQL_USER: db
+          MYSQL_PASSWORD: db
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    env:
+      DB_CONNECTION: mysql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_DATABASE: taily
+      DB_USERNAME: db
+      DB_PASSWORD: db
+    steps:
+      - name: Resolve PR head ref (iterate mode only)
+        id: resolve
+        if: github.event.issue.pull_request != null
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          HEAD_REF=$(gh pr view ${{ github.event.issue.number }} --repo ${{ github.repository }} --json headRefName -q .headRefName)
+          echo "head_ref=$HEAD_REF" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.issue.pull_request != null && steps.resolve.outputs.head_ref || 'development' }}
+          fetch-depth: 0
+
+      # CI-parity setup, run as plain deterministic steps (not Claude tool calls) so Claude's
+      # own in-turn checks run against an environment ci.yml will actually reproduce.
+      - name: Set up PHP 8.3
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          tools: composer
+          extensions: pdo_mysql
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Copy .env / generate key / migrate
+        working-directory: api
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          php artisan migrate --force
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install npm dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Claude implement
+        id: claude
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          show_full_output: true
+          base_branch: development
+          branch_prefix: 'claude/implement/'
+          branch_name_template: '{{prefix}}{{entityType}}-{{entityNumber}}-{{description}}'
+          prompt: |
+            REPO: ${{ github.repository }}
+            ISSUE OR PR NUMBER: ${{ github.event.issue.number }}
+            IS_PULL_REQUEST: ${{ github.event.issue.pull_request != null }}
+
+            /implement
+          claude_args: >
+            --max-turns 200
+            --model claude-sonnet-5
+            --allowedTools "Read,Glob,Grep,Edit,Write,Bash(gh api:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(api/vendor/bin/pint:*),Bash(php api/artisan test:*),Bash(npm run lint:*),Bash(npm run format:*),Bash(npm run test:*),Bash(npm run build:*)"
+            --json-schema '{"type":"object","required":["mode","checks_passed"],"properties":{"mode":{"type":"string","enum":["build","iterate","blocked"]},"checks_passed":{"type":"boolean"},"checks_summary":{"type":"string"},"pr_title":{"type":"string"},"pr_body":{"type":"string"},"what_changed":{"type":"string"},"blocked_reason":{"type":"string"}}}'
+
+      # Everything below is deterministic (no LLM involved) — Claude never creates PRs,
+      # comments, or toggles state itself. It only ever produces structured_output above.
+
+      - name: Create PR (build mode)
+        if: >
+          github.event.issue.pull_request == null &&
+          fromJSON(steps.claude.outputs.structured_output).mode == 'build'
+        env:
+          GH_TOKEN: ${{ steps.claude.outputs.github_token }}
+          PR_TITLE: ${{ fromJSON(steps.claude.outputs.structured_output).pr_title }}
+          PR_BODY: ${{ fromJSON(steps.claude.outputs.structured_output).pr_body }}
+          CHECKS_PASSED: ${{ fromJSON(steps.claude.outputs.structured_output).checks_passed }}
+          BRANCH: ${{ steps.claude.outputs.branch_name }}
+        run: |
+          FLAG=""
+          if [ "$CHECKS_PASSED" != "true" ]; then
+            FLAG="--draft"
+          fi
+
+          git fetch origin "$BRANCH" development
+          if ! git diff --quiet "origin/development...origin/$BRANCH" -- \
+            composer.json composer.lock frontend/package.json frontend/package-lock.json; then
+            FLAG="--draft"
+            PR_BODY=$(printf '> [!WARNING]\n> Dependency files changed on this branch (composer.json/lock or package.json/lock). New packages require human consent per AGENTS.md — review before merging.\n\n%s' "$PR_BODY")
+          fi
+
+          gh pr create --repo ${{ github.repository }} --base development \
+            --head "$BRANCH" --title "$PR_TITLE" --body "$PR_BODY" $FLAG
+
+      - name: Post iterate summary + toggle ready (iterate mode)
+        if: >
+          github.event.issue.pull_request != null &&
+          fromJSON(steps.claude.outputs.structured_output).mode == 'iterate'
+        env:
+          GH_TOKEN: ${{ steps.claude.outputs.github_token }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+          WHAT_CHANGED: ${{ fromJSON(steps.claude.outputs.structured_output).what_changed }}
+          CHECKS_PASSED: ${{ fromJSON(steps.claude.outputs.structured_output).checks_passed }}
+        run: |
+          gh pr comment "$PR_NUMBER" --repo ${{ github.repository }} --body "$WHAT_CHANGED"
+
+          IS_DRAFT=$(gh pr view "$PR_NUMBER" --repo ${{ github.repository }} --json isDraft -q .isDraft)
+          if [ "$CHECKS_PASSED" = "true" ] && [ "$IS_DRAFT" = "true" ]; then
+            gh pr ready "$PR_NUMBER" --repo ${{ github.repository }}
+          fi
+
+      - name: Post blocked explanation
+        if: fromJSON(steps.claude.outputs.structured_output).mode == 'blocked'
+        env:
+          GH_TOKEN: ${{ steps.claude.outputs.github_token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          REASON: ${{ fromJSON(steps.claude.outputs.structured_output).blocked_reason }}
+        run: |
+          gh issue comment "$ISSUE_NUMBER" --repo ${{ github.repository }} --body "$REASON"
