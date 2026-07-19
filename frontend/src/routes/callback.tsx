@@ -5,6 +5,7 @@ const CallbackAction = {
   UserInviteAccepted: 'user_invite_accepted',
   Inspect: 'inspect',
   PasswordReset: 'password_reset',
+  EmailChange: 'email_change',
 } as const
 
 type CallbackAction = (typeof CallbackAction)[keyof typeof CallbackAction]
@@ -62,6 +63,11 @@ function CallbackPage() {
           search={{ token, email }}
           replace
         />
+      )
+
+    case CallbackAction.EmailChange:
+      return (
+        <Navigate to="/admin/email-change-confirm" search={{ token }} replace />
       )
 
     default:
