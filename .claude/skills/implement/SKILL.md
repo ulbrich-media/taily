@@ -42,6 +42,8 @@ Hard constraints, all from `AGENTS.md` and the repo's own documented conventions
 - Keep solutions simple — avoid over-engineering, and follow existing Laravel/React conventions already present in the surrounding code rather than introducing new patterns.
 - UI copy is German; code, identifiers, and comments are English.
 
+**Commit your work as you go, using the `commit_files` tool** (and `delete_files` for removals) — this is your only mechanism for actually persisting anything to GitHub. Editing files with `Edit`/`Write` only changes the local sandbox; nothing reaches GitHub until you call `commit_files` on it, and a run that doesn't finish normally loses whatever was never committed this way. Commit after each logical unit of work rather than saving it all for one commit at the end, and always call `commit_files` one last time immediately before Step 4's output, even if you already committed everything you think you changed — that guarantees nothing from your final edits is left stranded.
+
 ## Step 3 — Check-and-fix loop (bounded)
 
 Run, in this order, from the repo root unless noted:
@@ -75,7 +77,7 @@ End your turn by producing JSON matching the schema you were given, nothing else
 ## Must not do
 
 - Merge, close, or approve anything.
-- Force-push, rebase, or run any raw `git` command — you don't have Bash access to git, and shouldn't need it; the harness handles branch/commit/push.
+- Force-push, rebase, or run any raw `git` command — you don't have Bash access to git; use `commit_files`/`delete_files` for every commit instead.
 - Edit anything under `.github/workflows/` or `.claude/`.
 - Add, remove, or upgrade a dependency, or otherwise touch a lockfile, without it being something the issue/plan already explicitly asked for.
 - Post anything to GitHub directly, by any means — everything goes through the Step 4 JSON.

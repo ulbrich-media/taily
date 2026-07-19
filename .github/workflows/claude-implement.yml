@@ -138,15 +138,38 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      # Agent mode (the explicit `prompt:` below) never runs the action's own branch-setup
+      # logic — that only exists on the tag-mode code path. Instead it reads the branch name
+      # straight from the CLAUDE_BRANCH env var and falls back to the checked-out ref
+      # (development) if that's unset. Computing it ourselves, here, means every later step in
+      # this workflow (PR creation, recovery, salvage) can rely on one known value instead of
+      # trusting the action's own `branch_name` output — which, with CLAUDE_BRANCH unset, always
+      # comes back empty and previously caused the PR-creation step to build a malformed compare
+      # URL and PR head.
+      - name: Determine Claude's working branch
+        id: branch
+        run: |
+          if [ "${{ github.event.issue.pull_request != null }}" = "true" ]; then
+            echo "name=${{ steps.resolve.outputs.head_ref }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "name=claude/implement/issue-${{ github.event.issue.number }}-${{ github.run_id }}" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Claude implement
         id: claude
         uses: anthropics/claude-code-action@v1
+        env:
+          CLAUDE_BRANCH: ${{ steps.branch.outputs.name }}
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           show_full_output: true
           base_branch: development
-          branch_prefix: 'claude/implement/'
-          branch_name_template: '{{prefix}}{{entityType}}-{{entityNumber}}-{{description}}'
+          # Commits via GitHub's API instead of the git CLI — the only commit mechanism
+          # available to Claude at all in agent mode. Without this, the file-ops MCP server
+          # (commit_files/delete_files) never gets installed, Claude has no allowlisted raw
+          # git commands either, and nothing it edits ever reaches GitHub, regardless of how
+          # the run ends. See docs/ai-github-automation.md for how this was actually found.
+          use_commit_signing: true
           prompt: |
             REPO: ${{ github.repository }}
             ISSUE OR PR NUMBER: ${{ github.event.issue.number }}
@@ -156,32 +179,27 @@ jobs:
           claude_args: >
             --max-turns 500
             --model claude-sonnet-5
-            --allowedTools "Read,Glob,Grep,Edit,Write,Bash(gh api:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(api/vendor/bin/pint:*),Bash(php api/artisan test:*),Bash(npm run lint:*),Bash(npm run format:*),Bash(npm run test:*),Bash(npm run build:*)"
+            --allowedTools "Read,Glob,Grep,Edit,Write,mcp__github_file_ops__commit_files,mcp__github_file_ops__delete_files,Bash(gh api:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(api/vendor/bin/pint:*),Bash(php api/artisan test:*),Bash(npm run lint:*),Bash(npm run format:*),Bash(npm run test:*),Bash(npm run build:*)"
             --json-schema '{"type":"object","required":["mode","checks_passed"],"properties":{"mode":{"type":"string","enum":["build","iterate","blocked"]},"checks_passed":{"type":"boolean"},"checks_summary":{"type":"string"},"pr_title":{"type":"string"},"pr_body":{"type":"string"},"what_changed":{"type":"string"},"blocked_reason":{"type":"string"},"feedback_responses":{"type":"array","items":{"type":"object","required":["comment_type","action","reasoning"],"properties":{"comment_id":{"type":"integer"},"comment_type":{"type":"string","enum":["review_comment","general"]},"action":{"type":"string","enum":["implemented","declined","clarification_needed"]},"reasoning":{"type":"string"}}}}}}'
 
       # Everything below is deterministic (no LLM involved) — Claude never creates PRs,
       # comments, or toggles state itself. It only ever produces structured_output above.
 
-      # Claude's Edit/Write tool calls land directly in this checkout's working tree regardless
-      # of whether anyone ever ran `git commit` — the harness appears to finalize its own
-      # commit+push only once the session completes normally, so a run that hits --max-turns (or
-      # errors) before that point can leave real edits sitting uncommitted, about to be destroyed
-      # with the runner. This step doesn't trust that the harness got that far: it commits
-      # anything uncommitted itself, then pushes whatever HEAD ends up being — whether that
-      # commit came from the harness, from Claude's own turn, or from this step just now — as
-      # long as it differs from the starting SHA. Only runs on failure: on a successful run HEAD
-      # has already moved on legitimately (real, already-pushed commits), so this would just be a
-      # redundant no-op push rather than an actual recovery.
+      # commit_files (via use_commit_signing above) is Claude's real commit mechanism now, and
+      # it pushes straight to GitHub's API in real time as Claude calls it — it doesn't touch
+      # local git state at all, so `git status`/`git log` in this checkout stay unaware of it.
+      # This step is a narrower safety net than it used to be: it only catches Edit/Write changes
+      # still sitting in the working tree that were never wrapped in a commit_files call before
+      # the run died (e.g. mid-edit when --max-turns hit). Only runs on failure — on success
+      # SKILL.md instructs Claude to call commit_files as its last action, so anything still
+      # dirty here on a successful run would be an already-known, documented gap, not silence.
       - name: Recover uncommitted or unpushed work
         id: recover
         if: always() && steps.claude.outcome == 'failure'
         env:
           GH_TOKEN: ${{ github.token }}
           START_SHA: ${{ steps.start_sha.outputs.sha }}
-          IS_PR: ${{ github.event.issue.pull_request != null }}
-          ISSUE_NUMBER: ${{ github.event.issue.number }}
-          EXISTING_BRANCH: ${{ steps.resolve.outputs.head_ref }}
-          HARNESS_BRANCH: ${{ steps.claude.outputs.branch_name }}
+          BRANCH: ${{ steps.branch.outputs.name }}
         run: |
           if [ -n "$(git status --porcelain)" ]; then
             git config user.name "claude[bot]"
@@ -191,23 +209,14 @@ jobs:
           fi
 
           if [ "$(git rev-parse HEAD)" = "$START_SHA" ]; then
-            echo "No changes, committed or otherwise, beyond the starting point — nothing to recover."
+            echo "No local changes beyond the starting point — nothing this step needs to recover."
             exit 0
-          fi
-
-          if [ "$IS_PR" = "true" ]; then
-            BRANCH="$EXISTING_BRANCH"
-          elif [ -n "$HARNESS_BRANCH" ]; then
-            BRANCH="$HARNESS_BRANCH"
-          else
-            BRANCH="claude/implement/issue-${ISSUE_NUMBER}-recovered-${{ github.run_id }}"
           fi
 
           if git push "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" "HEAD:refs/heads/$BRANCH"; then
             echo "pushed=true" >> "$GITHUB_OUTPUT"
-            echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
           else
-            echo "::warning::Recovery commit exists locally but the push to $BRANCH failed (possibly a race with another push) — it was not recovered."
+            echo "::warning::Local commit exists but pushing to $BRANCH failed — this can happen if commit_files already pushed newer commits to that branch that this checkout never fetched. Check the branch directly before assuming work was lost."
           fi
 
       - name: Create PR (build mode)
@@ -220,7 +229,7 @@ jobs:
           PR_TITLE: ${{ fromJSON(steps.claude.outputs.structured_output).pr_title }}
           PR_BODY: ${{ fromJSON(steps.claude.outputs.structured_output).pr_body }}
           CHECKS_PASSED: ${{ fromJSON(steps.claude.outputs.structured_output).checks_passed }}
-          BRANCH: ${{ steps.claude.outputs.branch_name }}
+          BRANCH: ${{ steps.branch.outputs.name }}
         run: |
           FLAG=""
           if [ "$CHECKS_PASSED" != "true" ]; then
@@ -314,7 +323,7 @@ jobs:
           steps.recover.outputs.pushed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
-          BRANCH: ${{ steps.recover.outputs.branch }}
+          BRANCH: ${{ steps.branch.outputs.name }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
