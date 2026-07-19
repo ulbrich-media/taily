@@ -87,6 +87,7 @@ jobs:
           fi
 
           echo "head_sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
+          echo "head_ref=$HEAD_REF" >> "$GITHUB_OUTPUT"
 
       - uses: actions/checkout@v7
         with:
@@ -94,8 +95,18 @@ jobs:
           fetch-depth: 0
           # No later step needs local git push/fetch credentials: Claude's own commits are
           # pushed via the action's own token exchange, and the lockfile-diff guards below use
-          # `gh api compare` instead of raw git, specifically so this can safely stay false.
+          # `gh api compare` instead of raw git. The one exception is the recovery step further
+          # down, which authenticates its own one-off push explicitly rather than relying on
+          # anything persisted here.
           persist-credentials: false
+
+      # Baseline to diff the working tree against later, regardless of mode — 'development' HEAD
+      # for a build-mode run, the existing PR's head SHA for iterate mode. Needed because the
+      # recovery step can't tell "Claude changed nothing" from "Claude changed things but nothing
+      # ever got committed" without knowing where the tree started.
+      - name: Capture starting SHA
+        id: start_sha
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
       # CI-parity setup, run as plain deterministic steps (not Claude tool calls) so Claude's
       # own in-turn checks run against an environment ci.yml will actually reproduce.
@@ -143,13 +154,61 @@ jobs:
 
             /implement
           claude_args: >
-            --max-turns 200
+            --max-turns 500
             --model claude-sonnet-5
             --allowedTools "Read,Glob,Grep,Edit,Write,Bash(gh api:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(api/vendor/bin/pint:*),Bash(php api/artisan test:*),Bash(npm run lint:*),Bash(npm run format:*),Bash(npm run test:*),Bash(npm run build:*)"
             --json-schema '{"type":"object","required":["mode","checks_passed"],"properties":{"mode":{"type":"string","enum":["build","iterate","blocked"]},"checks_passed":{"type":"boolean"},"checks_summary":{"type":"string"},"pr_title":{"type":"string"},"pr_body":{"type":"string"},"what_changed":{"type":"string"},"blocked_reason":{"type":"string"},"feedback_responses":{"type":"array","items":{"type":"object","required":["comment_type","action","reasoning"],"properties":{"comment_id":{"type":"integer"},"comment_type":{"type":"string","enum":["review_comment","general"]},"action":{"type":"string","enum":["implemented","declined","clarification_needed"]},"reasoning":{"type":"string"}}}}}}'
 
       # Everything below is deterministic (no LLM involved) — Claude never creates PRs,
       # comments, or toggles state itself. It only ever produces structured_output above.
+
+      # Claude's Edit/Write tool calls land directly in this checkout's working tree regardless
+      # of whether anyone ever ran `git commit` — the harness appears to finalize its own
+      # commit+push only once the session completes normally, so a run that hits --max-turns (or
+      # errors) before that point can leave real edits sitting uncommitted, about to be destroyed
+      # with the runner. This step doesn't trust that the harness got that far: it commits
+      # anything uncommitted itself, then pushes whatever HEAD ends up being — whether that
+      # commit came from the harness, from Claude's own turn, or from this step just now — as
+      # long as it differs from the starting SHA. Only runs on failure: on a successful run HEAD
+      # has already moved on legitimately (real, already-pushed commits), so this would just be a
+      # redundant no-op push rather than an actual recovery.
+      - name: Recover uncommitted or unpushed work
+        id: recover
+        if: always() && steps.claude.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          START_SHA: ${{ steps.start_sha.outputs.sha }}
+          IS_PR: ${{ github.event.issue.pull_request != null }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          EXISTING_BRANCH: ${{ steps.resolve.outputs.head_ref }}
+          HARNESS_BRANCH: ${{ steps.claude.outputs.branch_name }}
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git config user.name "claude[bot]"
+            git config user.email "41898282+claude[bot]@users.noreply.github.com"
+            git add -A
+            git commit -m "wip: partial /implement changes (run did not finish)"
+          fi
+
+          if [ "$(git rev-parse HEAD)" = "$START_SHA" ]; then
+            echo "No changes, committed or otherwise, beyond the starting point — nothing to recover."
+            exit 0
+          fi
+
+          if [ "$IS_PR" = "true" ]; then
+            BRANCH="$EXISTING_BRANCH"
+          elif [ -n "$HARNESS_BRANCH" ]; then
+            BRANCH="$HARNESS_BRANCH"
+          else
+            BRANCH="claude/implement/issue-${ISSUE_NUMBER}-recovered-${{ github.run_id }}"
+          fi
+
+          if git push "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" "HEAD:refs/heads/$BRANCH"; then
+            echo "pushed=true" >> "$GITHUB_OUTPUT"
+            echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::Recovery commit exists locally but the push to $BRANCH failed (possibly a race with another push) — it was not recovered."
+          fi
 
       - name: Create PR (build mode)
         if: >
@@ -241,16 +300,43 @@ jobs:
         run: |
           gh issue comment "$ISSUE_NUMBER" --repo ${{ github.repository }} --body "$REASON"
 
-      # None of the three steps above run if Claude's own turn errored out before producing
-      # structured_output (exactly what happened here: an API-rejected --json-schema caused
-      # the claude step to fail at turn 0) — without this, a hard failure like that leaves no
-      # trace anywhere except the Actions log, which is what "failed without notice" meant.
-      - name: Post failure notice (Claude step errored)
-        if: always() && steps.claude.outcome == 'failure'
+      # In build mode, if the recovery step above actually pushed something (whether that came
+      # from an incomplete harness commit or purely from this workflow's own safety-net commit),
+      # expose it as a draft PR instead of leaving it sitting on an unreferenced branch that
+      # nobody would ever find. Iterate mode needs no equivalent step: recovery already pushed
+      # straight onto the existing PR's own branch, so there's nothing further to expose.
+      - name: Salvage recovered build-mode work as draft PR
+        id: salvage
+        if: >
+          always() &&
+          steps.claude.outcome == 'failure' &&
+          github.event.issue.pull_request == null &&
+          steps.recover.outputs.pushed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ steps.recover.outputs.branch }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          ISSUE_TITLE=$(gh issue view "$ISSUE_NUMBER" --repo ${{ github.repository }} --json title -q .title)
+          gh pr create --repo ${{ github.repository }} --base development --head "$BRANCH" --draft \
+            --title "chore: wip $ISSUE_TITLE (#$ISSUE_NUMBER)" \
+            --body "$(printf '⚠️ Opened automatically — the `/implement` run for #%s failed or ran out of turns before finishing (see the [workflow run](%s)). Whatever partial progress existed is preserved here as a draft rather than discarded — note some of it may come from a safety-net commit this workflow made itself, not Claude, if the run stopped before its own commit landed. It may be incomplete or broken — review before relying on it. Comment `@claude implement` on this PR to continue the work.' "$ISSUE_NUMBER" "$RUN_URL")"
+          echo "created=true" >> "$GITHUB_OUTPUT"
+
+      # Fallback for everything the salvage step doesn't cover: iterate-mode failures, and
+      # build-mode failures where the recovery step found nothing to push at all.
+      - name: Post failure notice (nothing further to salvage)
+        if: always() && steps.claude.outcome == 'failure' && steps.salvage.outputs.created != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          RECOVERED: ${{ steps.recover.outputs.pushed }}
         run: |
-          gh issue comment "$ISSUE_NUMBER" --repo ${{ github.repository }} \
-            --body "⚠️ \`/implement\` failed before producing a result. See the [workflow run]($RUN_URL) for details."
+          if [ "$RECOVERED" = "true" ]; then
+            BODY="⚠️ \`/implement\` failed before finishing, but partial progress was pushed before the run ended — see the latest commit(s) and the [workflow run]($RUN_URL)."
+          else
+            BODY="⚠️ \`/implement\` failed before producing a result, and no changes were recovered. See the [workflow run]($RUN_URL) for details."
+          fi
+          gh issue comment "$ISSUE_NUMBER" --repo ${{ github.repository }} --body "$BODY"
