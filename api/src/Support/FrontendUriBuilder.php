@@ -19,6 +19,11 @@ class FrontendUriBuilder
         return static::callback('password_reset', $token, ['email' => $email]);
     }
 
+    public static function emailChange(string $token): string
+    {
+        return static::callback('email_change', $token);
+    }
+
     /**
      * @param  array<string, string>  $extraParams
      */

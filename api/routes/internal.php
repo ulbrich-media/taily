@@ -21,6 +21,7 @@ use Taily\Http\Controllers\Internal\AnimalController;
 use Taily\Http\Controllers\Internal\AnimalPictureController;
 use Taily\Http\Controllers\Internal\AnimalTypeController;
 use Taily\Http\Controllers\Internal\ApiTokenController;
+use Taily\Http\Controllers\Internal\EmailChangeController;
 use Taily\Http\Controllers\Internal\FormTemplateController;
 use Taily\Http\Controllers\Internal\InvitationController;
 use Taily\Http\Controllers\Internal\MediaController;
@@ -84,6 +85,12 @@ Route::post('/passkeys/login', [PasskeyLoginController::class, 'store'])->middle
 Route::get('/invitations/{token}', [InvitationController::class, 'show'])->middleware('throttle:6,1,invitations');
 Route::post('/invitations/{token}/accept', [InvitationController::class, 'accept'])->middleware('throttle:6,1,invitations');
 
+// Public email change confirmation. The 64-character token is the credential
+// (same trust model as password reset/invitation accept above), so this stays
+// outside the auth:sanctum group — the browser confirming a pending change
+// need not be logged in as the account it belongs to.
+Route::post('/profile/email/confirm/{token}', [EmailChangeController::class, 'confirm'])->middleware('throttle:6,1');
+
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy']);
     // Current user
@@ -93,6 +100,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'show']);
     Route::put('/profile', [ProfileController::class, 'update']);
     Route::put('/profile/password', [PasswordController::class, 'update']);
+    Route::delete('/profile/email', [EmailChangeController::class, 'destroy']);
 
     // Password confirmation (re-authentication) gating the sensitive 2FA
     // operations below. `status` lets the SPA check whether a fresh
@@ -115,6 +123,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // user is prompted once. This mirrors Fortify's own confirmPassword default,
     // applied explicitly here because Taily registers these routes itself.
     Route::middleware('password.confirm')->group(function () {
+        // Requesting an email change starts a login-credential change, so it
+        // sits behind the same fresh-password gate as the security-sensitive
+        // endpoints below.
+        Route::post('/profile/email', [EmailChangeController::class, 'store']);
+
         Route::post('/user/two-factor-authentication', [TwoFactorAuthenticationController::class, 'store']);
         Route::delete('/user/two-factor-authentication', [TwoFactorAuthenticationController::class, 'destroy']);
         // Same brute-force guard as the login challenge: confirmation also
