@@ -1,4 +1,5 @@
-name: Claude Issue Planning
+name: Claude Issue Refinement
+
 on:
   issue_comment:
     types: [created]
@@ -10,10 +11,10 @@ permissions:
   id-token: write
 
 jobs:
-  plan:
+  refine:
     if: |
       !github.event.issue.pull_request &&
-      contains(github.event.comment.body, '@claude') &&
+      startsWith(github.event.comment.body, '@claude refine') &&
       (github.event.comment.author_association == 'OWNER' ||
        github.event.comment.author_association == 'MEMBER' ||
        github.event.comment.author_association == 'COLLABORATOR')
@@ -23,6 +24,11 @@ jobs:
       - uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            ISSUE NUMBER: ${{ github.event.issue.number }}
+
+            /refine
           claude_args: >
             --max-turns 30
             --model claude-sonnet-5
