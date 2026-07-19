@@ -11,10 +11,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/shadcn/components/ui/dialog'
-import { Input } from '@/shadcn/components/ui/input'
 import { Button } from '@/shadcn/components/ui/button'
 import { FieldGroup } from '@/shadcn/components/ui/field'
-import { FormFieldWrapper } from '@/components/form/FormFieldWrapper'
+import { TextInput } from '@/components/field/TextInput'
 import { ApiValidationError } from '@/lib/api'
 import { useAuth } from '@/lib/auth.hook'
 import { requestEmailChange } from '@/admin/module/profile/api/requests'
@@ -85,19 +84,12 @@ export function ChangeEmailDialog({ open, onClose }: ChangeEmailDialogProps) {
 
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <FieldGroup>
-            <FormFieldWrapper
+            <TextInput
               name="email"
               control={form.control}
               label="Neue E-Mail-Adresse"
-              render={({ field, fieldState }) => (
-                <Input
-                  {...field}
-                  id={field.name}
-                  aria-invalid={fieldState.invalid}
-                  type="email"
-                  autoComplete="email"
-                />
-              )}
+              type="email"
+              autoComplete="email"
             />
           </FieldGroup>
 

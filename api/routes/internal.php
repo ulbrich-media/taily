@@ -89,7 +89,7 @@ Route::post('/invitations/{token}/accept', [InvitationController::class, 'accept
 // (same trust model as password reset/invitation accept above), so this stays
 // outside the auth:sanctum group — the browser confirming a pending change
 // need not be logged in as the account it belongs to.
-Route::post('/profile/email/confirm/{token}', [EmailChangeController::class, 'confirm'])->middleware('throttle:6,1');
+Route::post('/profile/email/confirm/{token}', [EmailChangeController::class, 'confirm'])->middleware('throttle:6,1,email_change');
 
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy']);

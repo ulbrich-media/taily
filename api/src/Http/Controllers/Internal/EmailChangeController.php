@@ -2,6 +2,7 @@
 
 namespace Taily\Http\Controllers\Internal;
 
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -55,8 +56,18 @@ class EmailChangeController extends Controller
         $user = $pending->user;
         $oldEmail = $user->email;
 
-        $user->email = $pending->new_email;
-        $user->save();
+        try {
+            $user->email = $pending->new_email;
+            $user->save();
+        } catch (QueryException $e) {
+            // Another user's pending change already claimed this email
+            // address between validation and confirmation.
+            $pending->delete();
+
+            return response()->json([
+                'message' => 'Diese E-Mail-Adresse wird bereits verwendet.',
+            ], 409);
+        }
 
         $pending->delete();
 

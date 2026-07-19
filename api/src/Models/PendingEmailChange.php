@@ -5,6 +5,8 @@ namespace Taily\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class PendingEmailChange extends Model
@@ -43,16 +45,27 @@ class PendingEmailChange extends Model
      */
     public static function createForUser(User $user, string $newEmail): self
     {
-        static::where('user_id', $user->id)->delete();
-
         $token = Str::random(64);
-
-        $pending = self::create([
+        $attributes = [
             'user_id' => $user->id,
             'new_email' => $newEmail,
             'token' => hash('sha256', $token),
             'expires_at' => now()->addMinutes(60),
-        ]);
+        ];
+
+        try {
+            $pending = DB::transaction(function () use ($user, $attributes) {
+                static::where('user_id', $user->id)->lockForUpdate()->delete();
+
+                return self::create($attributes);
+            });
+        } catch (QueryException $e) {
+            // Lost the race against a concurrent request for the same user
+            // (e.g. a double-clicked submit); retry now that the other
+            // transaction has committed its row for us to replace.
+            static::where('user_id', $user->id)->delete();
+            $pending = self::create($attributes);
+        }
 
         $pending->plainTextToken = $token;
 

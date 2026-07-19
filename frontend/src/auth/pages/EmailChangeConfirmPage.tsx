@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query'
+import { useEffect, useRef } from 'react'
+import { useMutation } from '@tanstack/react-query'
 import {
   Card,
   CardDescription,
@@ -18,12 +19,19 @@ export function EmailChangeConfirmPage({
   token,
   onGoToLogin,
 }: EmailChangeConfirmPageProps) {
-  const { isLoading, isSuccess } = useQuery({
-    queryKey: ['email-change-confirm', token],
-    queryFn: () => confirmEmailChange(token!),
-    enabled: !!token,
-    retry: false,
+  const calledRef = useRef(false)
+  const { mutate, isPending, isIdle, isSuccess } = useMutation({
+    mutationFn: (t: string) => confirmEmailChange(t),
   })
+
+  useEffect(() => {
+    if (token && !calledRef.current) {
+      calledRef.current = true
+      mutate(token)
+    }
+  }, [token, mutate])
+
+  const isLoading = !!token && (isPending || isIdle)
 
   const title = !token
     ? 'Ungültiger Link'
