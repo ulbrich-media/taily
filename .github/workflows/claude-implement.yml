@@ -1,0 +1,238 @@
+name: Claude Implementation Agent
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  id-token: write
+
+jobs:
+  implement:
+    if: |
+      startsWith(github.event.comment.body, '@claude implement') &&
+      (github.event.comment.author_association == 'OWNER' ||
+       github.event.comment.author_association == 'MEMBER' ||
+       github.event.comment.author_association == 'COLLABORATOR')
+    concurrency:
+      group: claude-implement-${{ github.event.issue.number }}
+      cancel-in-progress: false
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: taily
+          MYSQL_USER: db
+          MYSQL_PASSWORD: db
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    env:
+      DB_CONNECTION: mysql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_DATABASE: taily
+      DB_USERNAME: db
+      DB_PASSWORD: db
+    steps:
+      # Resolves and validates the PR head in one call, then pins to that exact commit SHA
+      # rather than a mutable branch name — this is a privileged job (contents: write,
+      # id-token: write, the Claude secret) that's about to run composer install/npm ci/tests
+      # against whatever it checks out, so re-resolving a branch *name* right before checkout
+      # would leave a TOCTOU window (new commits could land on the branch between the
+      # author-association check above and checkout) and would happily build/test the code of
+      # *any* open PR a collaborator points it at. Pinning to the SHA closes the race; refusing
+      # anything outside claude/implement/* branches or from a fork means this job only ever
+      # executes code that originated from this automation's own build step in the first place.
+      - name: Resolve and validate PR head (iterate mode only)
+        id: resolve
+        if: github.event.issue.pull_request != null
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PR_JSON=$(gh pr view ${{ github.event.issue.number }} --repo ${{ github.repository }} \
+            --json headRefName,headRefOid,isCrossRepository,author)
+          HEAD_REF=$(echo "$PR_JSON" | jq -r .headRefName)
+          HEAD_SHA=$(echo "$PR_JSON" | jq -r .headRefOid)
+          IS_FORK=$(echo "$PR_JSON" | jq -r .isCrossRepository)
+          AUTHOR=$(echo "$PR_JSON" | jq -r .author.login)
+
+          if [ "$IS_FORK" = "true" ]; then
+            echo "::error::Refusing to run — PR head is on a fork ($HEAD_REF)."
+            exit 1
+          fi
+          case "$HEAD_REF" in
+            claude/implement/*) ;;
+            *)
+              echo "::error::Refusing to iterate — '$HEAD_REF' wasn't created by /implement. Only branches under claude/implement/ are eligible for this privileged job."
+              exit 1
+              ;;
+          esac
+          # Branch-name prefix alone can be spoofed by anyone with push access (they could
+          # name their own branch claude/implement/whatever and open a PR from it). The PR's
+          # author can't be spoofed the same way — build mode's gh pr create always runs as
+          # the bot, so a PR genuinely produced by this automation is always authored by it.
+          if [ "$AUTHOR" != "claude[bot]" ]; then
+            echo "::error::Refusing to iterate — PR was not opened by claude[bot] (author: $AUTHOR)."
+            exit 1
+          fi
+
+          echo "head_sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.issue.pull_request != null && steps.resolve.outputs.head_sha || 'development' }}
+          fetch-depth: 0
+          # No later step needs local git push/fetch credentials: Claude's own commits are
+          # pushed via the action's own token exchange, and the lockfile-diff guards below use
+          # `gh api compare` instead of raw git, specifically so this can safely stay false.
+          persist-credentials: false
+
+      # CI-parity setup, run as plain deterministic steps (not Claude tool calls) so Claude's
+      # own in-turn checks run against an environment ci.yml will actually reproduce.
+      - name: Set up PHP 8.3
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          tools: composer
+          extensions: pdo_mysql
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Copy .env / generate key / migrate
+        working-directory: api
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          php artisan migrate --force
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install npm dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Claude implement
+        id: claude
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          show_full_output: true
+          base_branch: development
+          branch_prefix: 'claude/implement/'
+          branch_name_template: '{{prefix}}{{entityType}}-{{entityNumber}}-{{description}}'
+          prompt: |
+            REPO: ${{ github.repository }}
+            ISSUE OR PR NUMBER: ${{ github.event.issue.number }}
+            IS_PULL_REQUEST: ${{ github.event.issue.pull_request != null }}
+
+            /implement
+          claude_args: >
+            --max-turns 200
+            --model claude-sonnet-5
+            --allowedTools "Read,Glob,Grep,Edit,Write,Bash(gh api:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(api/vendor/bin/pint:*),Bash(php api/artisan test:*),Bash(npm run lint:*),Bash(npm run format:*),Bash(npm run test:*),Bash(npm run build:*)"
+            --json-schema '{"type":"object","required":["mode","checks_passed"],"properties":{"mode":{"type":"string","enum":["build","iterate","blocked"]},"checks_passed":{"type":"boolean"},"checks_summary":{"type":"string"},"pr_title":{"type":"string"},"pr_body":{"type":"string"},"what_changed":{"type":"string"},"blocked_reason":{"type":"string"},"feedback_responses":{"type":"array","items":{"type":"object","required":["comment_type","action","reasoning"],"properties":{"comment_id":{"type":"integer"},"comment_type":{"type":"string","enum":["review_comment","general"]},"action":{"type":"string","enum":["implemented","declined","clarification_needed"]},"reasoning":{"type":"string"}},"allOf":[{"if":{"properties":{"comment_type":{"const":"review_comment"}}},"then":{"required":["comment_id"]}}]}}},"allOf":[{"if":{"properties":{"mode":{"const":"build"}}},"then":{"required":["pr_title","pr_body"]}},{"if":{"properties":{"mode":{"const":"iterate"}}},"then":{"required":["what_changed"]}},{"if":{"properties":{"mode":{"const":"blocked"}}},"then":{"required":["blocked_reason"]}}]}'
+
+      # Everything below is deterministic (no LLM involved) — Claude never creates PRs,
+      # comments, or toggles state itself. It only ever produces structured_output above.
+
+      - name: Create PR (build mode)
+        if: >
+          github.event.issue.pull_request == null &&
+          fromJSON(steps.claude.outputs.structured_output).mode == 'build'
+        env:
+          GH_TOKEN: ${{ steps.claude.outputs.github_token }}
+          PR_TITLE: ${{ fromJSON(steps.claude.outputs.structured_output).pr_title }}
+          PR_BODY: ${{ fromJSON(steps.claude.outputs.structured_output).pr_body }}
+          CHECKS_PASSED: ${{ fromJSON(steps.claude.outputs.structured_output).checks_passed }}
+          BRANCH: ${{ steps.claude.outputs.branch_name }}
+        run: |
+          FLAG=""
+          if [ "$CHECKS_PASSED" != "true" ]; then
+            FLAG="--draft"
+          fi
+
+          CHANGED_FILES=$(gh api "repos/${{ github.repository }}/compare/development...$BRANCH" --jq '.files[].filename')
+          if echo "$CHANGED_FILES" | grep -qE '^(composer\.(json|lock)|frontend/package(-lock)?\.json)$'; then
+            FLAG="--draft"
+            PR_BODY=$(printf '> [!WARNING]\n> Dependency files changed on this branch (composer.json/lock or package.json/lock). New packages require human consent per AGENTS.md — review before merging.\n\n%s' "$PR_BODY")
+          fi
+
+          gh pr create --repo ${{ github.repository }} --base development \
+            --head "$BRANCH" --title "$PR_TITLE" --body "$PR_BODY" $FLAG
+
+      - name: Post iterate summary + per-comment replies + toggle ready (iterate mode)
+        if: >
+          github.event.issue.pull_request != null &&
+          fromJSON(steps.claude.outputs.structured_output).mode == 'iterate'
+        env:
+          GH_TOKEN: ${{ steps.claude.outputs.github_token }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+          WHAT_CHANGED: ${{ fromJSON(steps.claude.outputs.structured_output).what_changed }}
+          CHECKS_PASSED: ${{ fromJSON(steps.claude.outputs.structured_output).checks_passed }}
+          STRUCTURED: ${{ steps.claude.outputs.structured_output }}
+          HEAD_SHA: ${{ steps.resolve.outputs.head_sha }}
+        run: |
+          gh pr comment "$PR_NUMBER" --repo ${{ github.repository }} --body "$WHAT_CHANGED"
+
+          # Reply individually to each inline review comment Claude evaluated — this is what
+          # lets Claude push back on feedback it disagrees with, attached to the specific
+          # comment thread, instead of only ever complying or staying silent. Failures are
+          # collected (not swallowed) and posted as a fallback comment, since a silently lost
+          # "declined" reply would defeat the whole point of this feature.
+          FAILED_REPLIES=""
+          while IFS= read -r item; do
+            COMMENT_ID=$(echo "$item" | jq -r '.comment_id')
+            ACTION=$(echo "$item" | jq -r '.action')
+            REASONING=$(echo "$item" | jq -r '.reasoning')
+            case "$ACTION" in
+              implemented) LABEL="✅ Implemented" ;;
+              declined) LABEL="❌ Declined" ;;
+              clarification_needed) LABEL="❓ Needs clarification" ;;
+              *) LABEL="$ACTION" ;;
+            esac
+            REPLY_BODY=$(printf '**%s** — %s' "$LABEL" "$REASONING")
+            if ! gh api "repos/${{ github.repository }}/pulls/$PR_NUMBER/comments/$COMMENT_ID/replies" -f body="$REPLY_BODY"; then
+              FAILED_REPLIES=$(printf '%s\n- Comment #%s (%s): %s' "$FAILED_REPLIES" "$COMMENT_ID" "$LABEL" "$REASONING")
+            fi
+          done < <(echo "$STRUCTURED" | jq -c '.feedback_responses // [] | .[] | select(.comment_type == "review_comment")')
+
+          if [ -n "$FAILED_REPLIES" ]; then
+            gh pr comment "$PR_NUMBER" --repo ${{ github.repository }} --body "$(printf '⚠️ Could not post individual replies to the following review comments — recording the verdicts here instead:%s' "$FAILED_REPLIES")"
+          fi
+
+          IS_DRAFT=$(gh pr view "$PR_NUMBER" --repo ${{ github.repository }} --json isDraft -q .isDraft)
+
+          LOCKFILES_CHANGED=false
+          CHANGED_FILES=$(gh api "repos/${{ github.repository }}/compare/development...$HEAD_SHA" --jq '.files[].filename')
+          if echo "$CHANGED_FILES" | grep -qE '^(composer\.(json|lock)|frontend/package(-lock)?\.json)$'; then
+            LOCKFILES_CHANGED=true
+          fi
+
+          if [ "$CHECKS_PASSED" = "true" ] && [ "$IS_DRAFT" = "true" ] && [ "$LOCKFILES_CHANGED" = "false" ]; then
+            gh pr ready "$PR_NUMBER" --repo ${{ github.repository }}
+          fi
+
+      - name: Post blocked explanation
+        if: fromJSON(steps.claude.outputs.structured_output).mode == 'blocked'
+        env:
+          GH_TOKEN: ${{ steps.claude.outputs.github_token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          REASON: ${{ fromJSON(steps.claude.outputs.structured_output).blocked_reason }}
+        run: |
+          gh issue comment "$ISSUE_NUMBER" --repo ${{ github.repository }} --body "$REASON"
