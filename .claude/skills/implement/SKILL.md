@@ -21,7 +21,9 @@ If one is found: stop immediately. Output `mode: "blocked"` with a `blocked_reas
 
 - No marker comment at all, or Status is not "Ready to implement": stop. Output `mode: "blocked"` with a specific `blocked_reason` (e.g. "no plan comment found — run `@claude refine` first" or "plan is still marked Currently being refined").
 
-**Iterate mode** (`IS_PULL_REQUEST: true`): read the PR's conversation comments (`gh api repos/{owner}/{repo}/issues/{pr_number}/comments`) and inline review feedback (`gh api repos/{owner}/{repo}/pulls/{pr_number}/comments` and `.../pulls/{pr_number}/reviews`). There's no persistent "since last run" marker on a PR — read all open feedback and cross-reference it against the current diff (`gh pr diff {pr_number}`), acting only on what isn't already reflected in the code. Don't build your own timestamp/identity bookkeeping to track what's "new."
+**Iterate mode** (`IS_PULL_REQUEST: true`): read the PR's conversation comments (`gh api repos/{owner}/{repo}/issues/{pr_number}/comments`) and inline review feedback (`gh api repos/{owner}/{repo}/pulls/{pr_number}/comments` and `.../pulls/{pr_number}/reviews`) — note each item's `id` and whether it's an inline review comment or a plain conversation/review-body comment, you'll need both later. There's no persistent "since last run" marker on a PR — read all open feedback and cross-reference it against the current diff (`gh pr diff {pr_number}`), only treating what isn't already reflected in the code as new.
+
+**Evaluate every piece of feedback — don't blindly implement it.** You're not a mail merge for review comments. For each distinct point raised, form your own judgment: implement it if it's correct and applicable; decline it, with your reasoning, if it's factually wrong, conflicts with an established pattern or ADR, is out of scope for this PR, or you simply disagree; ask for clarification if you can't tell what's actually being requested. Disagreeing with a clear explanation is exactly as valid an outcome as making the change — silently complying with feedback you think is wrong is worse than pushing back on it. Every item you evaluate becomes one entry in `feedback_responses` (Step 4), whether you agreed with it or not.
 
 ## Step 2 — Implement
 
@@ -60,7 +62,12 @@ End your turn by producing JSON matching the schema you were given, nothing else
 - `checks_summary`: what's still failing, if anything. Empty string if everything passed.
 - `pr_title` (build mode only): a valid [Conventional Commit](https://www.conventionalcommits.org) type + description (`feat`, `fix`, `perf`, `refactor`, `chore`, `docs`, `style`, `test`, `ci`, `build`) — this becomes the actual squash-merge commit message, and the PR will fail its title-lint check if it doesn't conform.
 - `pr_body` (build mode only): what was implemented and why, referencing the issue (`Closes #{issue_number}`) so merging auto-closes it. Fold `checks_summary` into this if checks didn't pass.
-- `what_changed` (iterate mode only): a short markdown summary of what you changed in response to the feedback, posted as a plain PR comment.
+- `what_changed` (iterate mode only): a short markdown summary of what you changed overall, posted as a plain PR comment. Also cover any `feedback_responses` entries of `comment_type: "general"` here (see below), since those don't get an individual reply — reference what they were about.
+- `feedback_responses` (iterate mode only): one entry per distinct piece of feedback you evaluated in Step 1, whether you agreed with it or not:
+  - `comment_id`: the numeric id of the specific inline review comment, when `comment_type` is `"review_comment"` (omit/ignore for `"general"`).
+  - `comment_type`: `"review_comment"` for an inline diff comment (GitHub can thread a reply under it), or `"general"` for a conversation-tab comment or a review's overall body text (no threading primitive exists for these — they get folded into `what_changed` instead).
+  - `action`: `"implemented"`, `"declined"`, or `"clarification_needed"`.
+  - `reasoning`: for `"declined"` or `"clarification_needed"`, this is the whole point — explain why clearly enough that a human can evaluate your judgment. For `"implemented"`, a short confirmation is enough.
 - `blocked_reason` (blocked mode only): a clear, specific explanation of why you stopped and what needs to happen next.
 
 ## Must not do

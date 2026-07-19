@@ -104,7 +104,7 @@ jobs:
             --max-turns 200
             --model claude-sonnet-5
             --allowedTools "Read,Glob,Grep,Edit,Write,Bash(gh api:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(api/vendor/bin/pint:*),Bash(php api/artisan test:*),Bash(npm run lint:*),Bash(npm run format:*),Bash(npm run test:*),Bash(npm run build:*)"
-            --json-schema '{"type":"object","required":["mode","checks_passed"],"properties":{"mode":{"type":"string","enum":["build","iterate","blocked"]},"checks_passed":{"type":"boolean"},"checks_summary":{"type":"string"},"pr_title":{"type":"string"},"pr_body":{"type":"string"},"what_changed":{"type":"string"},"blocked_reason":{"type":"string"}}}'
+            --json-schema '{"type":"object","required":["mode","checks_passed"],"properties":{"mode":{"type":"string","enum":["build","iterate","blocked"]},"checks_passed":{"type":"boolean"},"checks_summary":{"type":"string"},"pr_title":{"type":"string"},"pr_body":{"type":"string"},"what_changed":{"type":"string"},"blocked_reason":{"type":"string"},"feedback_responses":{"type":"array","items":{"type":"object","required":["comment_type","action","reasoning"],"properties":{"comment_id":{"type":"integer"},"comment_type":{"type":"string","enum":["review_comment","general"]},"action":{"type":"string","enum":["implemented","declined","clarification_needed"]},"reasoning":{"type":"string"}}}}}}'
 
       # Everything below is deterministic (no LLM involved) — Claude never creates PRs,
       # comments, or toggles state itself. It only ever produces structured_output above.
@@ -135,7 +135,7 @@ jobs:
           gh pr create --repo ${{ github.repository }} --base development \
             --head "$BRANCH" --title "$PR_TITLE" --body "$PR_BODY" $FLAG
 
-      - name: Post iterate summary + toggle ready (iterate mode)
+      - name: Post iterate summary + per-comment replies + toggle ready (iterate mode)
         if: >
           github.event.issue.pull_request != null &&
           fromJSON(steps.claude.outputs.structured_output).mode == 'iterate'
@@ -144,8 +144,28 @@ jobs:
           PR_NUMBER: ${{ github.event.issue.number }}
           WHAT_CHANGED: ${{ fromJSON(steps.claude.outputs.structured_output).what_changed }}
           CHECKS_PASSED: ${{ fromJSON(steps.claude.outputs.structured_output).checks_passed }}
+          STRUCTURED: ${{ steps.claude.outputs.structured_output }}
         run: |
           gh pr comment "$PR_NUMBER" --repo ${{ github.repository }} --body "$WHAT_CHANGED"
+
+          # Reply individually to each inline review comment Claude evaluated — this is what
+          # lets Claude push back on feedback it disagrees with, attached to the specific
+          # comment thread, instead of only ever complying or staying silent.
+          echo "$STRUCTURED" | jq -c '.feedback_responses // [] | .[] | select(.comment_type == "review_comment")' |
+          while IFS= read -r item; do
+            COMMENT_ID=$(echo "$item" | jq -r '.comment_id')
+            ACTION=$(echo "$item" | jq -r '.action')
+            REASONING=$(echo "$item" | jq -r '.reasoning')
+            case "$ACTION" in
+              implemented) LABEL="✅ Implemented" ;;
+              declined) LABEL="❌ Declined" ;;
+              clarification_needed) LABEL="❓ Needs clarification" ;;
+              *) LABEL="$ACTION" ;;
+            esac
+            REPLY_BODY=$(printf '**%s** — %s' "$LABEL" "$REASONING")
+            gh api "repos/${{ github.repository }}/pulls/$PR_NUMBER/comments/$COMMENT_ID/replies" \
+              -f body="$REPLY_BODY" || true
+          done
 
           IS_DRAFT=$(gh pr view "$PR_NUMBER" --repo ${{ github.repository }} --json isDraft -q .isDraft)
           if [ "$CHECKS_PASSED" = "true" ] && [ "$IS_DRAFT" = "true" ]; then
