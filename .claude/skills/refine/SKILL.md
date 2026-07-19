@@ -24,21 +24,9 @@ Use exactly this structure. Compose it as a single markdown string in memory —
 ## Summary
 <1-3 sentences, high level. What benefit does the user gain from this being implemented — no code, no implementation detail.>
 
-> [!TIP]
-> **Status: Ready to implement**
+**Status**: ✅ Ready to implement / ⚠️ Currently being refined**
 
-(or, if not ready:)
-
-> [!WARNING]
-> **Status: Currently being refined**
-
-## Plan Metadata
-
-| Field | Value |
-| --- | --- |
-| Confidence | Low / Medium / High |
-| Complexity | Low / Medium / High |
-| Scope | comma-separated tags, see list below |
+**Confidence:** 🚨 Low / ⚠️ Medium / ✅ High · **Complexity:** ✅ Low / ⚠️ Medium / 🚨 High · **Scope:** `tag`, `tag`
 
 ## Functional Plan
 <Concrete description of the problem being solved and the behavior being implemented.>
@@ -72,11 +60,18 @@ Use exactly this structure. Compose it as a single markdown string in memory —
 
 Formatting rules:
 - Use GitHub's native `<details><summary>` syntax for collapsibles, with a blank line after `</summary>` and before `</details>` so the markdown inside renders correctly.
-- Use GitHub's native alert syntax (`> [!TIP]` / `> [!WARNING]`) for the status line, placed directly under the Summary and before the Metadata table.
+- Prefix the Status line with ✅ (ready) or ⚠️ (being refined), placed directly under the Summary and before the Metadata line. Don't use GitHub's `> [!TIP]`/`> [!WARNING]` alert syntax here.
+- No external images anywhere in the comment (no shields.io badges etc.) — use plain markdown and emoji only, so nothing depends on a third-party image service.
 
 ### Status rule (apply literally, don't eyeball it)
 
 `Status: Ready to implement` **only** if Confidence = High **and** the Resolved Decisions / feedback leaves no open questions. Every other combination (Low or Medium confidence, or any unresolved open question) is `Status: Currently being refined`.
+
+### Confidence / Complexity emoji (apply literally, don't eyeball it)
+
+Prefix each with a single colored circle — ✅ = good, ⚠️ = medium, 🚨 = needs attention:
+- Confidence: ✅ High, ⚠️ Medium, 🚨 Low
+- Complexity (inverted — simple is the good outcome): ✅ Low, ⚠️ Medium, 🚨 High
 
 ### Complexity (pick one)
 
