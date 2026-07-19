@@ -23,4 +23,7 @@ jobs:
       - uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          claude_args: "--max-turns 30 --model claude-sonnet-5"
+          claude_args: >
+            --max-turns 30
+            --model claude-sonnet-5
+            --allowedTools "Bash(gh api:*),Bash(gh issue comment:*)"
