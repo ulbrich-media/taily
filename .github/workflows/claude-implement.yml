@@ -150,6 +150,12 @@ jobs:
             echo "name=claude/implement/issue-${{ github.event.issue.number }}-${{ github.run_id }}" >> "$GITHUB_OUTPUT"
           fi
 
+      # Reference point for the iterate-mode safety net below — lets it tell "Claude posted a
+      # comment during this run" apart from "claude[bot] happened to comment on this PR before".
+      - name: Capture pre-Claude timestamp
+        id: pre_claude
+        run: echo "time=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+
       - name: Claude implement
         id: claude
         uses: anthropics/claude-code-action@v1
@@ -178,7 +184,7 @@ jobs:
           claude_args: >
             --max-turns 500
             --model claude-sonnet-5
-            --allowedTools "Read,Glob,Grep,Edit,Write,mcp__github_file_ops__commit_files,mcp__github_file_ops__delete_files,Bash(gh api:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr create:*),Bash(api/vendor/bin/pint:*),Bash(vendor/bin/pint:*),Bash(php api/artisan test:*),Bash(php artisan test:*),Bash(npm run lint:*),Bash(npm run format:*),Bash(npm run test:*),Bash(npm run build:*)"
+            --allowedTools "Read,Glob,Grep,Edit,Write,mcp__github_file_ops__commit_files,mcp__github_file_ops__delete_files,Bash(gh api:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr create:*),Bash(gh pr comment:*),Bash(api/vendor/bin/pint:*),Bash(vendor/bin/pint:*),Bash(php api/artisan test:*),Bash(php artisan test:*),Bash(npm run lint:*),Bash(npm run format:*),Bash(npm run test:*),Bash(npm run build:*)"
             --disallowedTools "Agent,Task,ScheduleWakeup,CronCreate,CronList,CronDelete,RemoteTrigger,PushNotification,SendMessage,Monitor,TaskCreate,TaskGet,TaskList,TaskOutput,TaskStop,EnterWorktree,ExitWorktree,DesignSync"
             --json-schema '{"type":"object","required":["mode","checks_passed"],"properties":{"mode":{"type":"string","enum":["build","iterate","blocked"]},"checks_passed":{"type":"boolean"},"checks_summary":{"type":"string"},"pr_title":{"type":"string"},"pr_body":{"type":"string"},"what_changed":{"type":"string"},"blocked_reason":{"type":"string"},"feedback_responses":{"type":"array","items":{"type":"object","required":["comment_type","action","reasoning"],"properties":{"comment_id":{"type":"integer"},"comment_type":{"type":"string","enum":["review_comment","general"]},"action":{"type":"string","enum":["implemented","declined","clarification_needed"]},"reasoning":{"type":"string"}}}}}}'
 
@@ -247,7 +253,15 @@ jobs:
             gh issue comment "$ISSUE_NUMBER" --repo ${{ github.repository }} --body "$(printf '⚠️ `/implement` finished and reported success, but no PR was found for branch `%s` — the PR-creation call in Claude'"'"'s own turn may have failed. See the [workflow run](%s) for details.' "$BRANCH" "$RUN_URL")"
           fi
 
-      - name: Post iterate summary + per-comment replies + toggle ready (iterate mode)
+      # steps.claude.outputs.github_token is dead by the time this runs (same revocation-timing
+      # issue as the build-mode PR-creation step above), and posting the summary/replies with
+      # github.token instead would just re-introduce the "authored by github-actions[bot], not
+      # claude[bot]" problem this step used to have — so Claude now posts these itself, as its
+      # own live action, in SKILL.md Step 3.6. This step is the safety net: confirm at least one
+      # comment from claude[bot] actually landed on the PR during this run, and say so (via
+      # github.token, fine for a fallback warning) if it didn't — it never posts the summary or
+      # replies itself.
+      - name: Verify iterate comments were posted (iterate mode)
         if: >
           github.event.issue.pull_request != null &&
           steps.claude.outputs.structured_output != '' &&
@@ -255,39 +269,26 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.issue.number }}
-          WHAT_CHANGED: ${{ fromJSON(steps.claude.outputs.structured_output).what_changed }}
-          CHECKS_PASSED: ${{ fromJSON(steps.claude.outputs.structured_output).checks_passed }}
-          STRUCTURED: ${{ steps.claude.outputs.structured_output }}
-          HEAD_SHA: ${{ steps.resolve.outputs.head_sha }}
+          SINCE: ${{ steps.pre_claude.outputs.time }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          gh pr comment "$PR_NUMBER" --repo ${{ github.repository }} --body "$WHAT_CHANGED"
-
-          # Reply individually to each inline review comment Claude evaluated — this is what
-          # lets Claude push back on feedback it disagrees with, attached to the specific
-          # comment thread, instead of only ever complying or staying silent. Failures are
-          # collected (not swallowed) and posted as a fallback comment, since a silently lost
-          # "declined" reply would defeat the whole point of this feature.
-          FAILED_REPLIES=""
-          while IFS= read -r item; do
-            COMMENT_ID=$(echo "$item" | jq -r '.comment_id')
-            ACTION=$(echo "$item" | jq -r '.action')
-            REASONING=$(echo "$item" | jq -r '.reasoning')
-            case "$ACTION" in
-              implemented) LABEL="✅ Implemented" ;;
-              declined) LABEL="❌ Declined" ;;
-              clarification_needed) LABEL="❓ Needs clarification" ;;
-              *) LABEL="$ACTION" ;;
-            esac
-            REPLY_BODY=$(printf '**%s** — %s' "$LABEL" "$REASONING")
-            if ! gh api "repos/${{ github.repository }}/pulls/$PR_NUMBER/comments/$COMMENT_ID/replies" -f body="$REPLY_BODY"; then
-              FAILED_REPLIES=$(printf '%s\n- Comment #%s (%s): %s' "$FAILED_REPLIES" "$COMMENT_ID" "$LABEL" "$REASONING")
-            fi
-          done < <(echo "$STRUCTURED" | jq -c '.feedback_responses // [] | .[] | select(.comment_type == "review_comment")')
-
-          if [ -n "$FAILED_REPLIES" ]; then
-            gh pr comment "$PR_NUMBER" --repo ${{ github.repository }} --body "$(printf '⚠️ Could not post individual replies to the following review comments — recording the verdicts here instead:%s' "$FAILED_REPLIES")"
+          POSTED=$(gh api "repos/${{ github.repository }}/issues/$PR_NUMBER/comments" --jq \
+            "[.[] | select(.user.login == \"claude[bot]\" and .created_at > \"$SINCE\")] | length")
+          if [ "$POSTED" = "0" ]; then
+            gh pr comment "$PR_NUMBER" --repo ${{ github.repository }} --body "$(printf '⚠️ `/implement` finished and reported success, but no comment from claude[bot] was found on this PR — the summary/reply calls in Claude'"'"'s own turn may have failed. See the [workflow run](%s) for details.' "$RUN_URL")"
           fi
 
+      - name: Toggle ready for review (iterate mode)
+        if: >
+          github.event.issue.pull_request != null &&
+          steps.claude.outputs.structured_output != '' &&
+          fromJSON(steps.claude.outputs.structured_output).mode == 'iterate'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+          CHECKS_PASSED: ${{ fromJSON(steps.claude.outputs.structured_output).checks_passed }}
+          HEAD_SHA: ${{ steps.resolve.outputs.head_sha }}
+        run: |
           IS_DRAFT=$(gh pr view "$PR_NUMBER" --repo ${{ github.repository }} --json isDraft -q .isDraft)
 
           LOCKFILES_CHANGED=false
