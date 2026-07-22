@@ -3,7 +3,7 @@ name: implement
 description: Implement a finalized issue plan and open a PR, or iterate on an existing PR from review/comment feedback. Use when the user runs /implement.
 ---
 
-Implement code changes and communicate the result **only** through the structured JSON output described in Step 4 — you have no tool access to create PRs, post comments, or write to GitHub in any other way. Deterministic workflow steps outside this skill read your JSON and act on it.
+Implement code changes and communicate the result through the structured JSON output described in Step 4 — you have no tool access to post comments or otherwise write to GitHub, with exactly two exceptions, both for the same reason: in build mode you create the PR yourself (Step 3.5), and in iterate mode you post your review replies and summary comment yourself (Step 3.6), because each must be authored by you while your own credentials are still live — a deterministic step running after your turn ends only has a dead token or the generic Actions identity to work with. Ready-toggling is the one thing still left to a deterministic workflow step outside this skill, since it's a state change rather than something that needs your authorship attached.
 
 You were handed `IS_PULL_REQUEST` (`true`/`false`) and an issue/PR number in your prompt — that tells you your mode unambiguously, no detection needed beyond that.
 
@@ -57,16 +57,43 @@ Run, in this order, from the repo root unless noted:
 
 If anything fails, fix it and re-run the full set. **Up to 3 full cycles.** If checks are still failing after the third cycle, stop trying — set `checks_passed: false` and describe exactly what's still failing in `checks_summary`. Do not loop indefinitely, and do not skip producing output because checks aren't green — a draft PR with a clear explanation is the expected outcome in that case, not silence.
 
+## Step 3.5 — Create the PR yourself (build mode only)
+
+This is the one exception to "everything goes through Step 4's JSON," and it exists for a specific reason: the credentials you're running with right now are revoked the moment your turn ends, so a PR created by *you* is the only way it ends up authored by `claude[bot]` (matching your commits) instead of a generic Actions identity — which matters, because PRs opened by the default Actions identity don't auto-trigger `ci.yml` or the title-lint check the way one authored by an App identity does.
+
+Do this immediately after Step 3, before producing the Step 4 JSON:
+
+1. Decide the flag: `--draft` if `checks_passed` is `false`.
+2. Check for dependency changes yourself: `gh api repos/{owner}/{repo}/compare/development...$CLAUDE_BRANCH --jq '.files[].filename'` (your working branch name is in the `$CLAUDE_BRANCH` environment variable — use it, don't guess or reconstruct it). If the result includes `composer.json`, `composer.lock`, `frontend/package.json`, or `frontend/package-lock.json`, force `--draft` regardless of `checks_passed`, and prepend this to your `pr_body` before creating the PR:
+   ```
+   > [!WARNING]
+   > Dependency files changed on this branch (composer.json/lock or package.json/lock). New packages require human consent per AGENTS.md — review before merging.
+   ```
+3. Create it: `gh pr create --repo {owner}/{repo} --base development --head "$CLAUDE_BRANCH" --title "<pr_title>" --body "<pr_body>" [--draft]` — using the exact `pr_title`/`pr_body` you're about to report in Step 4 (with the warning prepended per above, if applicable).
+
+Then continue to Step 4 as normal — still produce the full JSON (including `pr_title`/`pr_body` reflecting what you actually used) even though the workflow no longer creates the PR itself; it uses your JSON to verify the PR exists and as a fallback if this step failed for some reason.
+
+## Step 3.6 — Post your replies and summary yourself (iterate mode only)
+
+Same reasoning as Step 3.5, applied to comments instead of the PR itself: a reply or comment posted by *you* is attributed to `claude[bot]`, matching your commits, instead of the generic Actions identity — and by the time any later workflow step could post on your behalf, your credentials are already dead.
+
+Do this immediately after Step 3, before producing the Step 4 JSON:
+
+1. Post the overall summary: `gh pr comment {pr_number} --repo {owner}/{repo} --body "<what_changed>"` — use the exact `what_changed` text you're about to report in Step 4.
+2. Reply individually to each inline review comment you evaluated in Step 1 — every `feedback_responses` entry with `comment_type: "review_comment"`: `gh api repos/{owner}/{repo}/pulls/{pr_number}/comments/{comment_id}/replies -f body="<label> — <reasoning>"`, where `<label>` is `✅ Implemented`, `❌ Declined`, or `❓ Needs clarification` matching that entry's `action`. If a reply call fails, don't let the verdict silently disappear — fold that item into your summary comment (or post a short follow-up `gh pr comment`) so it's visible somewhere.
+
+Then continue to Step 4 as normal — still produce the full JSON (including `what_changed`/`feedback_responses` reflecting what you actually posted); the workflow uses it to verify your comments actually landed and as a fallback if this step failed for some reason.
+
 ## Step 4 — Structured output
 
-End your turn by producing JSON matching the schema you were given, nothing else. Do not post to GitHub, do not write PR or comment text to a file — the workflow's deterministic follow-up steps read this JSON directly:
+End your turn by producing JSON matching the schema you were given, nothing else. Aside from Step 3.5's PR creation and Step 3.6's replies/summary comment, do not post to GitHub, and do not write PR or comment text to a file — the workflow's deterministic follow-up steps read this JSON directly:
 
 - `mode`: `"build"`, `"iterate"`, or `"blocked"` (matches what you determined in Step 0/1).
 - `checks_passed`: boolean, from Step 3.
 - `checks_summary`: what's still failing, if anything. Empty string if everything passed.
 - `pr_title` (build mode only): a valid [Conventional Commit](https://www.conventionalcommits.org) type + description (`feat`, `fix`, `perf`, `refactor`, `chore`, `docs`, `style`, `test`, `ci`, `build`) — this becomes the actual squash-merge commit message, and the PR will fail its title-lint check if it doesn't conform.
 - `pr_body` (build mode only): what was implemented and why, referencing the issue (`Closes #{issue_number}`) so merging auto-closes it. Fold `checks_summary` into this if checks didn't pass.
-- `what_changed` (iterate mode only): a short markdown summary of what you changed overall, posted as a plain PR comment. Also cover any `feedback_responses` entries of `comment_type: "general"` here (see below), since those don't get an individual reply — reference what they were about.
+- `what_changed` (iterate mode only): a short markdown summary of what you changed overall — the exact text you posted as a plain PR comment in Step 3.6. Also cover any `feedback_responses` entries of `comment_type: "general"` here (see below), since those don't get an individual reply — reference what they were about.
 - `feedback_responses` (iterate mode only): one entry per distinct piece of feedback you evaluated in Step 1, whether you agreed with it or not:
   - `comment_id`: the numeric id of the specific inline review comment, when `comment_type` is `"review_comment"` (omit/ignore for `"general"`).
   - `comment_type`: `"review_comment"` for an inline diff comment (GitHub can thread a reply under it), or `"general"` for a conversation-tab comment or a review's overall body text (no threading primitive exists for these — they get folded into `what_changed` instead).
@@ -80,4 +107,4 @@ End your turn by producing JSON matching the schema you were given, nothing else
 - Force-push, rebase, or run any raw `git` command — you don't have Bash access to git; use `commit_files`/`delete_files` for every commit instead.
 - Edit anything under `.github/workflows/` or `.claude/`.
 - Add, remove, or upgrade a dependency, or otherwise touch a lockfile, without it being something the issue/plan already explicitly asked for.
-- Post anything to GitHub directly, by any means — everything goes through the Step 4 JSON.
+- Call `gh pr ready`, `gh pr merge`, `gh issue comment`, or any other GitHub write beyond: the `gh pr create` call in Step 3.5 (build mode), and the `gh pr comment` / `gh api .../replies` calls in Step 3.6 (iterate mode) — those are the entire exception; everything else still goes through the Step 4 JSON.

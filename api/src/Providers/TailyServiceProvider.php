@@ -7,6 +7,8 @@ use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
+use Taily\Console\Commands\SeedDatabase;
+use Taily\Console\Commands\SmokeTestMailViews;
 use Taily\Http\Middleware\EnsureUserIsAdmin;
 use Taily\Http\Middleware\PublicApiCors;
 use Taily\Models\User;
@@ -38,9 +40,14 @@ class TailyServiceProvider extends ServiceProvider
 
         $this->registerRoutes();
         $this->registerMiddlewareAlias();
+        $this->registerCommands();
 
         $this->publishes([
             __DIR__.'/../../public/dist' => public_path(),
+        ], 'taily-assets');
+
+        $this->publishes([
+            __DIR__.'/../../resources/views/vendor/mail' => resource_path('views/vendor/mail'),
         ], 'taily-assets');
 
         $this->publishes([
@@ -64,6 +71,25 @@ class TailyServiceProvider extends ServiceProvider
         Route::prefix('internal')
             ->middleware(['api', EnsureFrontendRequestsAreStateful::class])
             ->group(__DIR__.'/../../routes/internal.php');
+    }
+
+    /**
+     * Register the package's console commands.
+     *
+     * Laravel's default command auto-discovery scans app_path('Console/Commands'),
+     * which only resolves into this package's own src/Console/Commands when
+     * running standalone (bootstrap/app.php calls useAppPath() for local dev).
+     * In a consuming app, app_path() points elsewhere, so these commands must
+     * be registered explicitly or they silently disappear outside this repo.
+     */
+    protected function registerCommands(): void
+    {
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                SeedDatabase::class,
+                SmokeTestMailViews::class,
+            ]);
+        }
     }
 
     /**
