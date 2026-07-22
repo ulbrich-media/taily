@@ -151,6 +151,19 @@ jobs:
           tools: composer
           extensions: pdo_sqlite, sqlite3
 
+      # A real deploy already has .env pointing at a working database before
+      # `composer install` runs, because taily-app's post-update-cmd hooks
+      # (vendor:publish, migrate) fire mid-install and need one. Set that up
+      # first so the hooks below succeed instead of hitting a database file
+      # that doesn't exist yet.
+      - name: Configure environment
+        working-directory: taily-app
+        run: |
+          cp .env.example .env
+          sed -i 's/^DB_CONNECTION=.*/DB_CONNECTION=sqlite/' .env
+          mkdir -p database
+          touch database/database.sqlite
+
       # taily-app normally installs Taily from a tagged release. Point it at
       # this checkout instead so the CI run reflects the branch under test,
       # not the last published version — this is what catches package-
@@ -162,30 +175,19 @@ jobs:
           composer config repositories.under-test '{"type": "path", "url": "../taily", "options": {"symlink": false}}'
           composer require "ulbrich-media/taily:@dev" --no-interaction --prefer-dist --optimize-autoloader --no-progress
 
-      - name: Configure environment
+      - name: Generate application key
         working-directory: taily-app
-        run: |
-          cp .env.example .env
-          php artisan key:generate
-        env:
-          DB_CONNECTION: sqlite
-          DB_DATABASE: ':memory:'
+        run: php artisan key:generate
 
-      - name: Publish package assets (mirrors production post-install-cmd)
+      # post-update-cmd already published taily-assets; taily-config is only
+      # wired to post-install-cmd, which `composer require` doesn't trigger.
+      - name: Publish remaining package assets
         working-directory: taily-app
-        run: |
-          php artisan vendor:publish --tag=taily-assets --force
-          php artisan vendor:publish --tag=taily-config --force
-        env:
-          DB_CONNECTION: sqlite
-          DB_DATABASE: ':memory:'
+        run: php artisan vendor:publish --tag=taily-config --force
 
       - name: Render every transactional mail view
         working-directory: taily-app
         run: php artisan taily:smoke-test-mail
-        env:
-          DB_CONNECTION: sqlite
-          DB_DATABASE: ':memory:'
 
   frontend-build:
     name: Frontend Build
