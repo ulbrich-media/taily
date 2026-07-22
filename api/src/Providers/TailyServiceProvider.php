@@ -44,6 +44,10 @@ class TailyServiceProvider extends ServiceProvider
         ], 'taily-assets');
 
         $this->publishes([
+            __DIR__.'/../../resources/views/vendor/mail' => resource_path('views/vendor/mail'),
+        ], 'taily-assets');
+
+        $this->publishes([
             __DIR__.'/../../resources/views' => resource_path('views/vendor/taily'),
         ], 'taily-views');
 
