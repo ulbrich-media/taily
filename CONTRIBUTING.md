@@ -63,3 +63,23 @@ Scopes are optional. Use them when the change is clearly contained to a subsyste
 - All work targets `development`. Open a PR against `development`.
 - `main` is managed exclusively by CI. Do not push to it directly.
 - For hotfixes against a released version, see the [Hotfix Process](docs/release-architecture.md#hotfix-process) in the release architecture docs.
+
+## Using Claude on Issues and Pull Requests
+
+Maintainers and collaborators can ask Claude to draft/refine an implementation plan, then implement it, directly from GitHub.
+
+### Planning: `@claude refine`
+
+- Comment `@claude refine` — at the very start of the comment — on an open issue (not a PR) to trigger it. The rest of that same comment can contain your actual feedback, e.g. `@claude refine — also require re-verification when the email changes`.
+- **First run**: Claude writes an initial functional + technical plan as a single tracked comment on the issue.
+- **Every following `@claude refine`**: Claude rewrites that same comment, incorporating everything commented on the issue since the last update as feedback — including whatever you wrote in the same message that triggered this run.
+
+### Implementation: `@claude implement`
+
+- Once the plan comment says **`Status: Ready to implement`**, comment `@claude implement` on the issue to have Claude write the code and open a PR against `development`. If the plan isn't ready yet, or a PR already exists for that issue, Claude posts an explanatory comment instead of proceeding.
+- Comment `@claude implement` on the resulting PR itself to have Claude act on review feedback or comments and push more commits to the same branch — no new PR is created.
+- If the automated checks (tests, lint, build) don't fully pass, the PR is still opened as a **draft**, with the failures explained in the description, rather than silently doing nothing.
+
+Only comments from users with write access to the repo (`OWNER`/`MEMBER`/`COLLABORATOR`) can trigger either command.
+
+See [docs/ai-github-automation.md](docs/ai-github-automation.md) for how this works under the hood, how it's protected, and what's planned next.

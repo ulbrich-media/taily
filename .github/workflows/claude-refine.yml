@@ -1,0 +1,45 @@
+name: Claude Issue Refinement
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+  id-token: write
+
+jobs:
+  refine:
+    if: |
+      !github.event.issue.pull_request &&
+      startsWith(github.event.comment.body, '@claude refine') &&
+      (github.event.comment.author_association == 'OWNER' ||
+       github.event.comment.author_association == 'MEMBER' ||
+       github.event.comment.author_association == 'COLLABORATOR')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # --disallowedTools blocks the async/session-persistence toolset (background Agent
+      # spawning, ScheduleWakeup, Cron*, etc.) — these are interactive Claude Code features that
+      # assume a session can be resumed later. This job is a single one-shot process: once
+      # Claude's turn ends, the workflow immediately moves on and exits, so nothing ever wakes a
+      # deferred session back up or checks on a background task. --allowedTools alone doesn't
+      # stop these — they aren't gated by it — so an unblocked run can end its turn "successfully"
+      # (no error, no permission denial) having only kicked off async work that then never
+      # resumes, silently skipping the rest of the skill (e.g. never posting the plan comment).
+      - uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          show_full_output: true
+          prompt: |
+            REPO: ${{ github.repository }}
+            ISSUE NUMBER: ${{ github.event.issue.number }}
+
+            /refine
+          claude_args: >
+            --max-turns 100
+            --model claude-sonnet-5
+            --allowedTools "Read,Glob,Grep,Bash(gh api:*),Bash(gh issue comment:*)"
+            --disallowedTools "Agent,Task,ScheduleWakeup,CronCreate,CronList,CronDelete,RemoteTrigger,PushNotification,SendMessage,Monitor,TaskCreate,TaskGet,TaskList,TaskOutput,TaskStop,EnterWorktree,ExitWorktree,DesignSync"

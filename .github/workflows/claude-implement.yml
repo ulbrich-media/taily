@@ -1,0 +1,367 @@
+name: Claude Implementation Agent
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  id-token: write
+
+jobs:
+  implement:
+    if: |
+      startsWith(github.event.comment.body, '@claude implement') &&
+      (github.event.comment.author_association == 'OWNER' ||
+       github.event.comment.author_association == 'MEMBER' ||
+       github.event.comment.author_association == 'COLLABORATOR')
+    concurrency:
+      group: claude-implement-${{ github.event.issue.number }}
+      cancel-in-progress: false
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: taily
+          MYSQL_USER: db
+          MYSQL_PASSWORD: db
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    env:
+      DB_CONNECTION: mysql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_DATABASE: taily
+      DB_USERNAME: db
+      DB_PASSWORD: db
+    steps:
+      # Resolves and validates the PR head in one call, then pins to that exact commit SHA
+      # rather than a mutable branch name — this is a privileged job (contents: write,
+      # id-token: write, the Claude secret) that's about to run composer install/npm ci/tests
+      # against whatever it checks out, so re-resolving a branch *name* right before checkout
+      # would leave a TOCTOU window (new commits could land on the branch between the
+      # author-association check above and checkout) and would happily build/test the code of
+      # *any* open PR a collaborator points it at. Pinning to the SHA closes the race; refusing
+      # anything outside claude/implement/* branches or from a fork means this job only ever
+      # executes code that originated from this automation's own build step in the first place.
+      # (No separate check on the PR's own author: only OWNER/MEMBER/COLLABORATOR can trigger
+      # this at all, and a collaborator naming their own branch claude/implement/* isn't a
+      # privilege escalation — they already have contents: write and could push to development
+      # directly.)
+      - name: Resolve and validate PR head (iterate mode only)
+        id: resolve
+        if: github.event.issue.pull_request != null
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PR_JSON=$(gh pr view ${{ github.event.issue.number }} --repo ${{ github.repository }} \
+            --json headRefName,headRefOid,isCrossRepository)
+          HEAD_REF=$(echo "$PR_JSON" | jq -r .headRefName)
+          HEAD_SHA=$(echo "$PR_JSON" | jq -r .headRefOid)
+          IS_FORK=$(echo "$PR_JSON" | jq -r .isCrossRepository)
+
+          if [ "$IS_FORK" = "true" ]; then
+            echo "::error::Refusing to run — PR head is on a fork ($HEAD_REF)."
+            exit 1
+          fi
+          case "$HEAD_REF" in
+            claude/implement/*) ;;
+            *)
+              echo "::error::Refusing to iterate — '$HEAD_REF' wasn't created by /implement. Only branches under claude/implement/ are eligible for this privileged job."
+              exit 1
+              ;;
+          esac
+
+          echo "head_sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
+          echo "head_ref=$HEAD_REF" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.issue.pull_request != null && steps.resolve.outputs.head_sha || 'development' }}
+          fetch-depth: 0
+          # No later step needs local git push/fetch credentials: Claude's own commits are
+          # pushed via the action's own token exchange, and the lockfile-diff guards below use
+          # `gh api compare` instead of raw git. The one exception is the recovery step further
+          # down, which authenticates its own one-off push explicitly rather than relying on
+          # anything persisted here.
+          persist-credentials: false
+
+      # Baseline to diff the working tree against later, regardless of mode — 'development' HEAD
+      # for a build-mode run, the existing PR's head SHA for iterate mode. Needed because the
+      # recovery step can't tell "Claude changed nothing" from "Claude changed things but nothing
+      # ever got committed" without knowing where the tree started.
+      - name: Capture starting SHA
+        id: start_sha
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      # CI-parity setup, run as plain deterministic steps (not Claude tool calls) so Claude's
+      # own in-turn checks run against an environment ci.yml will actually reproduce.
+      - name: Set up PHP 8.3
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          tools: composer
+          extensions: pdo_mysql
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Copy .env / generate key / migrate
+        working-directory: api
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          php artisan migrate --force
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install npm dependencies
+        working-directory: frontend
+        run: npm ci
+
+      # Agent mode (the explicit `prompt:` below) never runs the action's own branch-setup
+      # logic — that only exists on the tag-mode code path. Instead it reads the branch name
+      # straight from the CLAUDE_BRANCH env var and falls back to the checked-out ref
+      # (development) if that's unset. Computing it ourselves, here, means every later step in
+      # this workflow (PR creation, recovery, salvage) can rely on one known value instead of
+      # trusting the action's own `branch_name` output — which, with CLAUDE_BRANCH unset, always
+      # comes back empty and previously caused the PR-creation step to build a malformed compare
+      # URL and PR head.
+      - name: Determine Claude's working branch
+        id: branch
+        run: |
+          if [ "${{ github.event.issue.pull_request != null }}" = "true" ]; then
+            echo "name=${{ steps.resolve.outputs.head_ref }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "name=claude/implement/issue-${{ github.event.issue.number }}-${{ github.run_id }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Reference point for the iterate-mode safety net below — lets it tell "Claude posted a
+      # comment during this run" apart from "claude[bot] happened to comment on this PR before".
+      - name: Capture pre-Claude timestamp
+        id: pre_claude
+        run: echo "time=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+
+      - name: Claude implement
+        id: claude
+        uses: anthropics/claude-code-action@v1
+        env:
+          CLAUDE_BRANCH: ${{ steps.branch.outputs.name }}
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          show_full_output: true
+          base_branch: development
+          # Commits via GitHub's API instead of the git CLI — the only commit mechanism
+          # available to Claude at all in agent mode. Without this, the file-ops MCP server
+          # (commit_files/delete_files) never gets installed, Claude has no allowlisted raw
+          # git commands either, and nothing it edits ever reaches GitHub, regardless of how
+          # the run ends. See docs/ai-github-automation.md for how this was actually found.
+          use_commit_signing: true
+          # --disallowedTools below blocks async/session-persistence tools (background Agent
+          # spawning, ScheduleWakeup, Cron*, etc.) — see claude-refine.yml for why: this job is
+          # a one-shot process with no persistent session, so a run that hands off to one of
+          # these can end its turn "successfully" having only kicked off work that never resumes.
+          prompt: |
+            REPO: ${{ github.repository }}
+            ISSUE OR PR NUMBER: ${{ github.event.issue.number }}
+            IS_PULL_REQUEST: ${{ github.event.issue.pull_request != null }}
+
+            /implement
+          claude_args: >
+            --max-turns 500
+            --model claude-sonnet-5
+            --allowedTools "Read,Glob,Grep,Edit,Write,mcp__github_file_ops__commit_files,mcp__github_file_ops__delete_files,Bash(gh api:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr create:*),Bash(gh pr comment:*),Bash(api/vendor/bin/pint:*),Bash(vendor/bin/pint:*),Bash(php api/artisan test:*),Bash(php artisan test:*),Bash(npm run lint:*),Bash(npm run format:*),Bash(npm run test:*),Bash(npm run build:*)"
+            --disallowedTools "Agent,Task,ScheduleWakeup,CronCreate,CronList,CronDelete,RemoteTrigger,PushNotification,SendMessage,Monitor,TaskCreate,TaskGet,TaskList,TaskOutput,TaskStop,EnterWorktree,ExitWorktree,DesignSync"
+            --json-schema '{"type":"object","required":["mode","checks_passed"],"properties":{"mode":{"type":"string","enum":["build","iterate","blocked"]},"checks_passed":{"type":"boolean"},"checks_summary":{"type":"string"},"pr_title":{"type":"string"},"pr_body":{"type":"string"},"what_changed":{"type":"string"},"blocked_reason":{"type":"string"},"feedback_responses":{"type":"array","items":{"type":"object","required":["comment_type","action","reasoning"],"properties":{"comment_id":{"type":"integer"},"comment_type":{"type":"string","enum":["review_comment","general"]},"action":{"type":"string","enum":["implemented","declined","clarification_needed"]},"reasoning":{"type":"string"}}}}}}'
+
+      # Everything below is deterministic (no LLM involved) — Claude never creates PRs,
+      # comments, or toggles state itself. It only ever produces structured_output above.
+
+      # commit_files (via use_commit_signing above) is Claude's real commit mechanism now, and
+      # it pushes straight to GitHub's API in real time as Claude calls it — it doesn't touch
+      # local git state at all, so `git status`/`git log` in this checkout stay unaware of it.
+      # This step is a narrower safety net than it used to be: it only catches Edit/Write changes
+      # still sitting in the working tree that were never wrapped in a commit_files call before
+      # the run died (e.g. mid-edit when --max-turns hit). Only runs on failure — on success
+      # SKILL.md instructs Claude to call commit_files as its last action, so anything still
+      # dirty here on a successful run would be an already-known, documented gap, not silence.
+      - name: Recover uncommitted or unpushed work
+        id: recover
+        if: always() && steps.claude.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          START_SHA: ${{ steps.start_sha.outputs.sha }}
+          BRANCH: ${{ steps.branch.outputs.name }}
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git config user.name "claude[bot]"
+            git config user.email "41898282+claude[bot]@users.noreply.github.com"
+            git add -A
+            git commit -m "wip: partial /implement changes (run did not finish)"
+          fi
+
+          if [ "$(git rev-parse HEAD)" = "$START_SHA" ]; then
+            echo "No local changes beyond the starting point — nothing this step needs to recover."
+            exit 0
+          fi
+
+          if git push "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" "HEAD:refs/heads/$BRANCH"; then
+            echo "pushed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::Local commit exists but pushing to $BRANCH failed — this can happen if commit_files already pushed newer commits to that branch that this checkout never fetched. Check the branch directly before assuming work was lost."
+          fi
+
+      # steps.claude.outputs.github_token would be the natural choice here (it's a real GitHub
+      # App token, not the default job token) but it's dead by the time any step here runs — the
+      # action revokes it itself as its own last internal action right after Claude's turn ends
+      # (confirmed live: a `curl -X DELETE .../installation/token` call inside the composite
+      # action's own log output, before control ever returns here). github.token (the default
+      # job token) stays alive, but PR *creation* with it is blocked outright unless the repo's
+      # "Allow GitHub Actions to create and approve pull requests" setting is on — which this repo
+      # deliberately leaves off. So build-mode PR creation happens inside Claude's own turn
+      # instead (SKILL.md Step 3.5, using its own live App token, authored as claude[bot], which
+      # is exempt from both restrictions). This step is just the safety net: confirm a PR
+      # actually exists for the branch, and say so if it doesn't (e.g. Claude's own gh pr create
+      # failed for some other reason) — it never creates the PR itself.
+      - name: Verify PR was created (build mode)
+        if: >
+          github.event.issue.pull_request == null &&
+          steps.claude.outputs.structured_output != '' &&
+          fromJSON(steps.claude.outputs.structured_output).mode == 'build'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ steps.branch.outputs.name }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          EXISTS=$(gh api search/issues -X GET -f q="repo:${{ github.repository }} is:pr head:$BRANCH" --jq '.total_count')
+          if [ "$EXISTS" = "0" ]; then
+            gh issue comment "$ISSUE_NUMBER" --repo ${{ github.repository }} --body "$(printf '⚠️ `/implement` finished and reported success, but no PR was found for branch `%s` — the PR-creation call in Claude'"'"'s own turn may have failed. See the [workflow run](%s) for details.' "$BRANCH" "$RUN_URL")"
+          fi
+
+      # steps.claude.outputs.github_token is dead by the time this runs (same revocation-timing
+      # issue as the build-mode PR-creation step above), and posting the summary/replies with
+      # github.token instead would just re-introduce the "authored by github-actions[bot], not
+      # claude[bot]" problem this step used to have — so Claude now posts these itself, as its
+      # own live action, in SKILL.md Step 3.6. This step is the safety net: confirm at least one
+      # comment from claude[bot] actually landed on the PR during this run, and say so (via
+      # github.token, fine for a fallback warning) if it didn't — it never posts the summary or
+      # replies itself.
+      - name: Verify iterate comments were posted (iterate mode)
+        if: >
+          github.event.issue.pull_request != null &&
+          steps.claude.outputs.structured_output != '' &&
+          fromJSON(steps.claude.outputs.structured_output).mode == 'iterate'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+          SINCE: ${{ steps.pre_claude.outputs.time }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          POSTED=$(gh api "repos/${{ github.repository }}/issues/$PR_NUMBER/comments" --jq \
+            "[.[] | select(.user.login == \"claude[bot]\" and .created_at > \"$SINCE\")] | length")
+          if [ "$POSTED" = "0" ]; then
+            gh pr comment "$PR_NUMBER" --repo ${{ github.repository }} --body "$(printf '⚠️ `/implement` finished and reported success, but no comment from claude[bot] was found on this PR — the summary/reply calls in Claude'"'"'s own turn may have failed. See the [workflow run](%s) for details.' "$RUN_URL")"
+          fi
+
+      - name: Toggle ready for review (iterate mode)
+        if: >
+          github.event.issue.pull_request != null &&
+          steps.claude.outputs.structured_output != '' &&
+          fromJSON(steps.claude.outputs.structured_output).mode == 'iterate'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+          CHECKS_PASSED: ${{ fromJSON(steps.claude.outputs.structured_output).checks_passed }}
+          HEAD_SHA: ${{ steps.resolve.outputs.head_sha }}
+        run: |
+          IS_DRAFT=$(gh pr view "$PR_NUMBER" --repo ${{ github.repository }} --json isDraft -q .isDraft)
+
+          LOCKFILES_CHANGED=false
+          CHANGED_FILES=$(gh api "repos/${{ github.repository }}/compare/development...$HEAD_SHA" --jq '.files[].filename')
+          if echo "$CHANGED_FILES" | grep -qE '^(composer\.(json|lock)|frontend/package(-lock)?\.json)$'; then
+            LOCKFILES_CHANGED=true
+          fi
+
+          if [ "$CHECKS_PASSED" = "true" ] && [ "$IS_DRAFT" = "true" ] && [ "$LOCKFILES_CHANGED" = "false" ]; then
+            gh pr ready "$PR_NUMBER" --repo ${{ github.repository }}
+          fi
+
+      - name: Post blocked explanation
+        if: >
+          steps.claude.outputs.structured_output != '' &&
+          fromJSON(steps.claude.outputs.structured_output).mode == 'blocked'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          REASON: ${{ fromJSON(steps.claude.outputs.structured_output).blocked_reason }}
+        run: |
+          gh issue comment "$ISSUE_NUMBER" --repo ${{ github.repository }} --body "$REASON"
+
+      # In build mode, if the recovery step above actually pushed something (whether that came
+      # from an incomplete harness commit or purely from this workflow's own safety-net commit),
+      # expose it as a draft PR instead of leaving it sitting on an unreferenced branch that
+      # nobody would ever find. Iterate mode needs no equivalent step: recovery already pushed
+      # straight onto the existing PR's own branch, so there's nothing further to expose.
+      #
+      # Unlike the normal build-mode PR (created by Claude itself, in its own turn, per SKILL.md
+      # Step 3.5), this one has no choice but to use github.token — Claude's turn already failed
+      # by the time this runs, so there's no live App token left to create it with. That means
+      # this call hits the same "Actions can't create PRs" restriction the normal path was built
+      # to route around, unless the repo's "Allow GitHub Actions to create and approve pull
+      # requests" setting is on. Since this repo deliberately leaves that off, this is expected to
+      # fail — the `|| true` keeps that from hard-failing the job, and the fallback comment below
+      # still points a human at the branch either way.
+      - name: Salvage recovered build-mode work as draft PR
+        id: salvage
+        if: >
+          always() &&
+          steps.claude.outcome == 'failure' &&
+          github.event.issue.pull_request == null &&
+          steps.recover.outputs.pushed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ steps.branch.outputs.name }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          ISSUE_TITLE=$(gh issue view "$ISSUE_NUMBER" --repo ${{ github.repository }} --json title -q .title)
+          if gh pr create --repo ${{ github.repository }} --base development --head "$BRANCH" --draft \
+            --title "chore: wip $ISSUE_TITLE (#$ISSUE_NUMBER)" \
+            --body "$(printf '⚠️ Opened automatically — the `/implement` run for #%s failed or ran out of turns before finishing (see the [workflow run](%s)). Whatever partial progress existed is preserved here as a draft rather than discarded — note some of it may come from a safety-net commit this workflow made itself, not Claude, if the run stopped before its own commit landed. It may be incomplete or broken — review before relying on it. Comment `@claude implement` on this PR to continue the work.' "$ISSUE_NUMBER" "$RUN_URL")"; then
+            echo "created=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::Recovered work was pushed to $BRANCH but this step couldn't open a PR for it (likely blocked by the repo's Actions PR-creation restriction) — open one manually from that branch."
+          fi
+
+      # Fallback for everything the salvage step doesn't cover: iterate-mode failures, and
+      # build-mode failures where the recovery step found nothing to push at all.
+      - name: Post failure notice (nothing further to salvage)
+        if: always() && steps.claude.outcome == 'failure' && steps.salvage.outputs.created != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ steps.branch.outputs.name }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          RECOVERED: ${{ steps.recover.outputs.pushed }}
+        run: |
+          if [ "$RECOVERED" = "true" ]; then
+            BODY="⚠️ \`/implement\` failed before finishing, but partial progress was pushed to \`$BRANCH\` before the run ended — see that branch and the [workflow run]($RUN_URL). A PR couldn't be opened for it automatically (see the run's warnings); open one manually from that branch if the work looks worth keeping."
+          else
+            BODY="⚠️ \`/implement\` failed before producing a result, and no changes were recovered. See the [workflow run]($RUN_URL) for details."
+          fi
+          gh issue comment "$ISSUE_NUMBER" --repo ${{ github.repository }} --body "$BODY"
