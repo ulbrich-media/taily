@@ -2,6 +2,19 @@
 
 All notable changes to Taily are documented here.
 
+# [0.9.0](https://github.com/ulbrich-media/taily/compare/v0.8.1...v0.9.0) (2026-07-22)
+
+
+### Bug Fixes
+
+* missing command registration added ([4516fde](https://github.com/ulbrich-media/taily/commit/4516fde00ae56c258a59803601bb702ba3ea0490))
+* missing mail resource publish added ([11c5b89](https://github.com/ulbrich-media/taily/commit/11c5b8972d48c9813d90f62d306d17033ce98843))
+
+
+### Features
+
+* **animals:** show publish status badge in animals table ([#118](https://github.com/ulbrich-media/taily/issues/118)) ([e67f120](https://github.com/ulbrich-media/taily/commit/e67f120e407025721ccf6b7b26dd18f77dd62579))
+
 ## [0.8.1](https://github.com/ulbrich-media/taily/compare/v0.8.0...v0.8.1) (2026-07-14)
 
 
