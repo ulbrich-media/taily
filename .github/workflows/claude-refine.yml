@@ -20,7 +20,7 @@ jobs:
        github.event.comment.author_association == 'COLLABORATOR')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # --disallowedTools blocks the async/session-persistence toolset (background Agent
       # spawning, ScheduleWakeup, Cron*, etc.) — these are interactive Claude Code features that
       # assume a session can be resumed later. This job is a single one-shot process: once
