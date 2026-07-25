@@ -1,1 +1,0 @@
-import{ri as e}from"./index-BFnrTuFn.js";var t=e;export{t as component};

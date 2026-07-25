@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { PawPrint } from 'lucide-react'
+import { Eye, EyeOff, PawPrint } from 'lucide-react'
 import type { AnimalListResource } from '@/api/types/animals'
 import type { AnimalTypeResource } from '@/api/types/animal-types'
 import {
@@ -23,6 +23,13 @@ import {
   AvatarImage,
 } from '@/shadcn/components/ui/avatar.tsx'
 import { Card, CardContent } from '@/shadcn/components/ui/card.tsx'
+import { Badge } from '@/shadcn/components/ui/badge.tsx'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/shadcn/components/ui/tooltip.tsx'
 
 interface AnimalListPageProps {
   animals: AnimalListResource[]
@@ -98,6 +105,7 @@ export function AnimalListPage({
                 <TableHead>Rasse</TableHead>
                 <TableHead>Geschlecht</TableHead>
                 <TableHead>Farbe</TableHead>
+                <TableHead className="w-20">Status</TableHead>
                 <TableHead className="th-contain"></TableHead>
               </TableRow>
             </TableHeader>
@@ -128,6 +136,9 @@ export function AnimalListPage({
                       {animal.gender === 'male' ? 'Männlich' : 'Weiblich'}
                     </TableCell>
                     <TableCell>{animal.color || '-'}</TableCell>
+                    <TableCell>
+                      <PublishStatusIndicator published={animal.do_publish} />
+                    </TableCell>
                     <TableCell className="text-right">
                       {renderRowActions(animal)}
                     </TableCell>
@@ -139,5 +150,24 @@ export function AnimalListPage({
         )}
       </TableListView>
     </div>
+  )
+}
+
+function PublishStatusIndicator({ published }: { published: boolean }) {
+  const label = published ? 'Veröffentlicht' : 'Nicht veröffentlicht'
+  const Icon = published ? Eye : EyeOff
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Badge variant={published ? 'success' : 'outline'}>
+            <Icon />
+            <span className="sr-only">{label}</span>
+          </Badge>
+        </TooltipTrigger>
+        <TooltipContent>{label}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   )
 }

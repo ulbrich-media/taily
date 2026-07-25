@@ -36,7 +36,7 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Set up Node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: '24'
           cache: npm
@@ -115,7 +115,7 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Set up Node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: '24'
           cache: npm
@@ -129,6 +129,66 @@ jobs:
         working-directory: frontend
         run: npm run test
 
+  distribution-smoke-test:
+    name: Distribution Smoke Test (taily-app)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout taily (package under test)
+        uses: actions/checkout@v7
+        with:
+          path: taily
+
+      - name: Checkout taily-app (distribution scaffold)
+        uses: actions/checkout@v7
+        with:
+          repository: ulbrich-media/taily-app
+          path: taily-app
+
+      - name: Set up PHP 8.3
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          tools: composer
+          extensions: pdo_sqlite, sqlite3
+
+      # A real deploy already has .env pointing at a working database before
+      # `composer install` runs, because taily-app's post-update-cmd hooks
+      # (vendor:publish, migrate) fire mid-install and need one. Set that up
+      # first so the hooks below succeed instead of hitting a database file
+      # that doesn't exist yet.
+      - name: Configure environment
+        working-directory: taily-app
+        run: |
+          cp .env.example .env
+          sed -i 's/^DB_CONNECTION=.*/DB_CONNECTION=sqlite/' .env
+          mkdir -p database
+          touch database/database.sqlite
+
+      # taily-app normally installs Taily from a tagged release. Point it at
+      # this checkout instead so the CI run reflects the branch under test,
+      # not the last published version — this is what catches package-
+      # boundary bugs (missing publishes(), app_path()-dependent behavior)
+      # before they ship.
+      - name: Install this checkout of Taily into taily-app
+        working-directory: taily-app
+        run: |
+          composer config repositories.under-test '{"type": "path", "url": "../taily", "options": {"symlink": false}}'
+          composer require "ulbrich-media/taily:@dev" --no-interaction --prefer-dist --optimize-autoloader --no-progress
+
+      - name: Generate application key
+        working-directory: taily-app
+        run: php artisan key:generate
+
+      # post-update-cmd already published taily-assets; taily-config is only
+      # wired to post-install-cmd, which `composer require` doesn't trigger.
+      - name: Publish remaining package assets
+        working-directory: taily-app
+        run: php artisan vendor:publish --tag=taily-config --force
+
+      - name: Render every transactional mail view
+        working-directory: taily-app
+        run: php artisan taily:smoke-test-mail
+
   frontend-build:
     name: Frontend Build
     runs-on: ubuntu-latest
@@ -136,7 +196,7 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Set up Node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: '24'
           cache: npm

@@ -1,0 +1,1 @@
+import{ri as e}from"./index-Dh7dnq37.js";var t=e;export{t as component};
