@@ -28,11 +28,10 @@ const changeEmailSchema = z.object({
 type ChangeEmailFormData = z.infer<typeof changeEmailSchema>
 
 interface ChangeEmailDialogProps {
-  open: boolean
   onClose: () => void
 }
 
-export function ChangeEmailDialog({ open, onClose }: ChangeEmailDialogProps) {
+export function ChangeEmailDialog({ onClose }: ChangeEmailDialogProps) {
   const { refreshProfile } = useAuth()
 
   const form = useForm<ChangeEmailFormData>({
@@ -72,7 +71,7 @@ export function ChangeEmailDialog({ open, onClose }: ChangeEmailDialogProps) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={(next) => !next && handleClose()}>
+    <Dialog open onOpenChange={(next) => !next && handleClose()}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>E-Mail-Adresse ändern</DialogTitle>
