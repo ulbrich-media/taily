@@ -28,6 +28,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: [
             'internal/invitations/*/accept',
             'internal/inspect/*/submit',
+            'internal/profile/email/confirm/*',
         ]);
         $middleware->remove([
             ConvertEmptyStringsToNull::class,

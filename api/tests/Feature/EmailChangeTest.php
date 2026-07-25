@@ -119,6 +119,7 @@ class EmailChangeTest extends TestCase
 
         $response->assertUnprocessable();
         $response->assertJsonValidationErrors('email');
+        $response->assertJsonPath('errors.email.0', 'Diese E-Mail-Adresse wird bereits verwendet.');
     }
 
     public function test_a_second_request_replaces_the_earlier_pending_one(): void
@@ -166,6 +167,30 @@ class EmailChangeTest extends TestCase
         $this->app['auth']->forgetGuards();
 
         $this->postJson("/internal/profile/email/confirm/{$token}")->assertOk();
+    }
+
+    public function test_show_returns_the_old_and_new_address_without_applying_the_change(): void
+    {
+        $user = $this->createUser();
+        $this->actingAsConfirmed($user);
+        $token = $this->requestChangeToken('new@example.com');
+
+        // Fresh, unauthenticated request instance: previewing the change
+        // must not require being logged in as the account it belongs to.
+        $this->app['auth']->forgetGuards();
+
+        $response = $this->getJson("/internal/profile/email/confirm/{$token}");
+
+        $response->assertOk();
+        $response->assertJsonPath('old_email', 'jane@example.com');
+        $response->assertJsonPath('new_email', 'new@example.com');
+        $this->assertSame('jane@example.com', $user->fresh()->email);
+        $this->assertDatabaseCount('pending_email_changes', 1);
+    }
+
+    public function test_show_fails_with_invalid_token(): void
+    {
+        $this->getJson('/internal/profile/email/confirm/invalid-token')->assertNotFound();
     }
 
     public function test_confirm_fails_with_invalid_token(): void
