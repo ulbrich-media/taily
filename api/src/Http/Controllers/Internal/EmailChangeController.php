@@ -25,6 +25,8 @@ class EmailChangeController extends Controller
     {
         $validated = $request->validate([
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
+        ], [
+            'email.unique' => 'Diese E-Mail-Adresse wird bereits verwendet.',
         ]);
 
         $user = $request->user();
@@ -35,6 +37,29 @@ class EmailChangeController extends Controller
         return response()->json([
             'message' => 'Bestätigungslink wurde an die neue E-Mail-Adresse gesendet.',
             'data' => $pending->only(['new_email', 'expires_at']),
+        ]);
+    }
+
+    /**
+     * Show the pending change a confirmation token belongs to, without
+     * applying it. Lets the confirmation page display the old and new
+     * address before the user commits, the same show/accept split as
+     * invitation links.
+     */
+    public function show(string $token): JsonResponse
+    {
+        $pending = PendingEmailChange::findByToken($token);
+
+        if (! $pending) {
+            return response()->json([
+                'message' => 'Bestätigungslink nicht gefunden oder abgelaufen.',
+            ], 404);
+        }
+
+        return response()->json([
+            'old_email' => $pending->user->email,
+            'new_email' => $pending->new_email,
+            'expires_at' => $pending->expires_at->toIso8601String(),
         ]);
     }
 

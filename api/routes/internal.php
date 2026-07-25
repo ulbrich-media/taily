@@ -88,7 +88,10 @@ Route::post('/invitations/{token}/accept', [InvitationController::class, 'accept
 // Public email change confirmation. The 64-character token is the credential
 // (same trust model as password reset/invitation accept above), so this stays
 // outside the auth:sanctum group — the browser confirming a pending change
-// need not be logged in as the account it belongs to.
+// need not be logged in as the account it belongs to. `show` previews the old
+// and new address for the confirmation page; `confirm` applies the change
+// once the user accepts.
+Route::get('/profile/email/confirm/{token}', [EmailChangeController::class, 'show'])->middleware('throttle:6,1,email_change');
 Route::post('/profile/email/confirm/{token}', [EmailChangeController::class, 'confirm'])->middleware('throttle:6,1,email_change');
 
 Route::middleware(['auth:sanctum'])->group(function () {
