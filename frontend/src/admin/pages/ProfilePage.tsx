@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { useAuth } from '@/lib/auth.hook'
@@ -20,17 +21,14 @@ import {
 } from '@/shadcn/components/ui/alert'
 import { Mail, Clock } from 'lucide-react'
 import { usePasswordConfirmation } from '@/admin/module/security/usePasswordConfirmation'
+import { ChangeEmailDialog } from '@/admin/module/profile/components/ChangeEmailDialog'
 import { cancelEmailChange } from '@/admin/module/profile/api/requests'
 import { getInitials } from '@/lib/utils.ts'
 
-interface ProfilePageProps {
-  /** Called once a fresh password confirmation is in place. */
-  onChangeEmail: () => void
-}
-
-export function ProfilePage({ onChangeEmail }: ProfilePageProps) {
+export function ProfilePage() {
   const { user, refreshProfile } = useAuth()
   const { ensureConfirmed, dialog: passwordDialog } = usePasswordConfirmation()
+  const [changeEmailOpen, setChangeEmailOpen] = useState(false)
 
   const cancelMutation = useMutation({
     mutationFn: cancelEmailChange,
@@ -45,7 +43,7 @@ export function ProfilePage({ onChangeEmail }: ProfilePageProps) {
 
   const openChangeEmail = async () => {
     if (await ensureConfirmed()) {
-      onChangeEmail()
+      setChangeEmailOpen(true)
     }
   }
 
@@ -108,6 +106,10 @@ export function ProfilePage({ onChangeEmail }: ProfilePageProps) {
         </CardFooter>
       </Card>
 
+      <ChangeEmailDialog
+        open={changeEmailOpen}
+        onClose={() => setChangeEmailOpen(false)}
+      />
       {passwordDialog}
     </div>
   )
