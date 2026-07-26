@@ -4,8 +4,11 @@ import { useAuth } from '@/lib/auth.hook'
 import {
   Card,
   CardContent,
+  CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
+  CardTitleIcon,
 } from '@/shadcn/components/ui/card'
 import { Avatar, AvatarFallback } from '@/shadcn/components/ui/avatar'
 import { Badge } from '@/shadcn/components/ui/badge'
@@ -18,6 +21,7 @@ import {
 import { Mail, Clock } from 'lucide-react'
 import { usePasswordConfirmation } from '@/admin/module/security/usePasswordConfirmation'
 import { cancelEmailChange } from '@/admin/module/profile/api/requests'
+import { getInitials } from '@/lib/utils.ts'
 
 interface ProfilePageProps {
   /** Called once a fresh password confirmation is in place. */
@@ -45,26 +49,32 @@ export function ProfilePage({ onChangeEmail }: ProfilePageProps) {
     }
   }
 
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2)
-  }
-
   return (
     <div className="flex flex-col items-center gap-4">
-      <Card className="w-full max-w-sm">
+      <Card className="w-full max-w-md">
+        <CardHeader className="flex flex-col items-center text-center">
+          <Avatar className="h-24 w-24">
+            <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
+              {user && getInitials(user.name)}
+            </AvatarFallback>
+          </Avatar>
+          <CardTitle className="mt-4 flex items-center gap-2">
+            {user?.name}
+            {user?.role === 'admin' && <Badge>Admin</Badge>}
+          </CardTitle>
+        </CardHeader>
+      </Card>
+
+      <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>E-Mail-Adresse</CardTitle>
+          <CardTitleIcon icon={Mail} />
+          <CardDescription>
+            Deine E-Mail für Benachrichtigungen und den Login.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Mail className="h-4 w-4" />
-            {user?.email}
-          </div>
+          <div>{user?.email}</div>
 
           {user?.pending_email && (
             <Alert>
@@ -79,7 +89,7 @@ export function ProfilePage({ onChangeEmail }: ProfilePageProps) {
                 </p>
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="destructive_outline"
                   size="sm"
                   className="mt-2"
                   onClick={() => cancelMutation.mutate()}
@@ -90,25 +100,12 @@ export function ProfilePage({ onChangeEmail }: ProfilePageProps) {
               </AlertDescription>
             </Alert>
           )}
-
+        </CardContent>
+        <CardFooter className="flex gap-2 justify-end flex-wrap">
           <Button type="button" variant="outline" onClick={openChangeEmail}>
             E-Mail-Adresse ändern
           </Button>
-        </CardContent>
-      </Card>
-
-      <Card className="w-full max-w-sm">
-        <CardHeader className="flex flex-col items-center text-center">
-          <Avatar className="h-24 w-24">
-            <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
-              {user && getInitials(user.name)}
-            </AvatarFallback>
-          </Avatar>
-          <CardTitle className="mt-4 flex items-center gap-2">
-            {user?.name}
-            {user?.role === 'admin' && <Badge>Admin</Badge>}
-          </CardTitle>
-        </CardHeader>
+        </CardFooter>
       </Card>
 
       {passwordDialog}
