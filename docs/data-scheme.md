@@ -61,7 +61,6 @@ Learn more in [features/adoption.md](./features/adoption.md)
 | `canceled_reason` | text | Why the adoption was canceled (specific, separate from notes) |
 | `notes` | text | General mediator notes about the adoption |
 | `pre_inspection_notes` | text | Mediator notes on the pre-inspection step |
-| `contract_sent_at` | date, nullable | When the contract was sent to the adopter |
 | `contract_signed` | boolean | Whether the contract has been signed by both parties |
 | `contract_signed_at` | timestamp, nullable | When the contract was signed |
 | `handed_over_at` | timestamp, nullable | When the animal was handed over to the adopter |
@@ -82,9 +81,11 @@ Steps are optional and can be taken in any order. Each step derives its status i
 | Step | not_started / pending | in_progress | finished |
 |---|---|---|---|
 | Pre-inspection | no pre-inspection records exist for the applicant + animal type (mediator creates them manually) | at least one pre-inspection exists but has not yet been submitted by the inspector | all pre-inspections have been submitted (regardless of verdict) |
-| Contract | `contract_sent_at` is null and `contract_signed` is false | `contract_sent_at` is set, not signed | `contract_signed` is true |
+| Contract | `contract_signed` is false | — (no in-progress state currently derived; see note below) | `contract_signed` is true |
 | Transport | `transport_id` is null | transport assigned (details TBD) | transport completed (TBD) |
 | Handover | `handed_over_at` is null | — | `handed_over_at` is set |
+
+The contract step is currently binary (`getContractStatusAttribute()` only checks `contract_signed`) because the feature only supports the Simple Version today — see [features/contract.md](./features/contract.md). The Advanced Version (generated PDF, separate mediator/adopter signing) will need this reworked; the shape of that rework depends on the still-open questions in [ADR-012](./ADRs/ADR-012-contract-generation-and-signing.md) and isn't designed yet.
 
 #### Relations
 
