@@ -48,6 +48,7 @@ class AnimalBaseResource extends JsonResource
             'alternate_transport_trace' => $this->resource->alternate_transport_trace,
             'alternate_arrival_location' => $this->resource->alternate_arrival_location,
             'do_publish' => $this->resource->do_publish,
+            'is_reserved' => $this->resource->is_reserved,
             'publish_description' => $this->resource->publish_description,
             'application_url' => $this->resource->application_url,
             'is_deceased' => $this->resource->is_deceased,

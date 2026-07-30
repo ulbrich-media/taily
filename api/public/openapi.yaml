@@ -173,7 +173,7 @@ components:
 
     Animal:
       type: object
-      required: [id, do_publish, compatibilities, personality_traits,
+      required: [id, do_publish, is_reserved, compatibilities, personality_traits,
                  created_at, updated_at, vaccinations, medical_tests, media]
       properties:
         id:
@@ -245,6 +245,11 @@ components:
         do_publish:
           type: boolean
           description: Always `true` for animals returned by this endpoint.
+        is_reserved:
+          type: boolean
+          description: |
+            Whether the animal is already reserved for an ongoing adoption.
+            Does not affect whether the animal is returned by this endpoint.
         publish_description:
           type: string
           nullable: true

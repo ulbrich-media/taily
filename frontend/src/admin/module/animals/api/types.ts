@@ -56,6 +56,7 @@ export interface UpdateAnimalRequest extends CreateAnimalRequest {
   alternate_transport_trace?: string
   alternate_arrival_location?: string
   do_publish: boolean
+  is_reserved: boolean
   publish_description?: string | null
   compatibilities?: string[]
   personality_traits?: string[]
