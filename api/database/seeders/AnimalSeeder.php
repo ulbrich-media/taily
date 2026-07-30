@@ -213,6 +213,7 @@ class AnimalSeeder extends Seeder
                 'alternate_transport_trace' => $faker->boolean(15) ? 'ALT'.$faker->numerify('######') : '',
                 'alternate_arrival_location' => $faker->boolean(10) ? $faker->randomElement($locations) : '',
                 'do_publish' => $faker->boolean(85),
+                'is_reserved' => $faker->boolean(20),
                 'publish_description' => $faker->boolean(60) ? $faker->realText(300) : '',
                 'application_url' => $faker->boolean(50) ? $faker->url() : '',
                 'is_deceased' => $isDeceased,
