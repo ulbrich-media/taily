@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Eye, EyeOff, PawPrint } from 'lucide-react'
+import { Bookmark, Eye, EyeOff, PawPrint } from 'lucide-react'
 import type { AnimalListResource } from '@/api/types/animals'
 import type { AnimalTypeResource } from '@/api/types/animal-types'
 import {
@@ -137,7 +137,12 @@ export function AnimalListPage({
                     </TableCell>
                     <TableCell>{animal.color || '-'}</TableCell>
                     <TableCell>
-                      <PublishStatusIndicator published={animal.do_publish} />
+                      <div className="flex gap-1">
+                        <PublishStatusIndicator published={animal.do_publish} />
+                        {animal.do_publish && animal.is_reserved && (
+                          <ReservedStatusIndicator />
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="text-right">
                       {renderRowActions(animal)}
@@ -163,6 +168,24 @@ function PublishStatusIndicator({ published }: { published: boolean }) {
         <TooltipTrigger asChild>
           <Badge variant={published ? 'success' : 'outline'}>
             <Icon />
+            <span className="sr-only">{label}</span>
+          </Badge>
+        </TooltipTrigger>
+        <TooltipContent>{label}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  )
+}
+
+function ReservedStatusIndicator() {
+  const label = 'Reserviert'
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Badge variant="warning">
+            <Bookmark />
             <span className="sr-only">{label}</span>
           </Badge>
         </TooltipTrigger>

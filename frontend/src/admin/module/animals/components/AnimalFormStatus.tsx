@@ -33,6 +33,7 @@ const animalFormStatusSchema = z.object({
   alternate_transport_trace: zFieldString(),
   alternate_arrival_location: zFieldString(),
   do_publish: z.boolean(),
+  is_reserved: z.boolean(),
   publish_description: zFieldString({ maxLength: STRING_LENGTH_TEXTAREA }),
   compatibilities: z
     .array(z.string())
@@ -87,6 +88,7 @@ export function AnimalFormStatus({
       alternate_arrival_location:
         defaultValues?.alternate_arrival_location || '',
       do_publish: defaultValues?.do_publish || false,
+      is_reserved: defaultValues?.is_reserved || false,
       publish_description: defaultValues?.publish_description || '',
       compatibilities: defaultValues?.compatibilities ?? [],
       personality_traits: defaultValues?.personality_traits ?? [],
@@ -131,6 +133,28 @@ export function AnimalFormStatus({
                     <FieldDescription>
                       Soll dieses Tier auf der Website/in sozialen Medien
                       veröffentlicht werden?
+                    </FieldDescription>
+                  </FieldContent>
+                </Field>
+              )}
+            />
+
+            <Controller
+              name="is_reserved"
+              control={form.control}
+              render={({ field }) => (
+                <Field orientation="horizontal">
+                  <SwitchComponent
+                    id={field.name}
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                  <FieldContent>
+                    <FieldLabel htmlFor={field.name}>Reserviert</FieldLabel>
+                    <FieldDescription>
+                      Ist dieses Tier bereits für eine laufende Adoption
+                      reserviert? Es bleibt weiterhin auf der Website sichtbar,
+                      wird aber als reserviert gekennzeichnet.
                     </FieldDescription>
                   </FieldContent>
                 </Field>
