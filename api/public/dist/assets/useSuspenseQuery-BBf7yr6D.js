@@ -1,0 +1,1 @@
+import{$r as e,ei as t,ni as n}from"./index-Bkby8I5q.js";function r(r,i){return e({...r,enabled:!0,suspense:!0,throwOnError:t,placeholderData:void 0},n,i)}export{r as t};

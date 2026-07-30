@@ -2,6 +2,13 @@
 
 All notable changes to Taily are documented here.
 
+# [0.10.0](https://github.com/ulbrich-media/taily/compare/v0.9.0...v0.10.0) (2026-07-30)
+
+
+### Features
+
+* **animals:** add reserved flag for published animals ([#129](https://github.com/ulbrich-media/taily/issues/129)) ([3b8d4ce](https://github.com/ulbrich-media/taily/commit/3b8d4ce5d87e67ad043d42c2ef25784d2ffd6516)), closes [#128](https://github.com/ulbrich-media/taily/issues/128)
+
 # [0.9.0](https://github.com/ulbrich-media/taily/compare/v0.8.1...v0.9.0) (2026-07-22)
 
 
