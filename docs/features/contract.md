@@ -32,7 +32,7 @@ How generation and signing are handled technically — whether natively in Taily
 
 #### Relevant factors
 
-- **Hosting.** Taily targets plain PHP shared hosting with no Node.js, Docker, or background worker infrastructure required (see [release-architecture.md](../release-architecture.md)). Any tool that needs a Node runtime, headless Chrome, or a separate always-on service at request time breaks that promise for the default path — it becomes an opt-in for operators already running extra infrastructure, not the baseline.
+- **Hosting.** Taily targets plain PHP shared hosting with no Node.js, Docker, or background worker infrastructure required (see [release-architecture.md](../release-architecture.md)). This rules out *running* a Node runtime, headless Chrome, or any other always-on service at request time as part of the default path — but not *calling* one: a plain outbound HTTP request from Taily's PHP process to an external API (a SaaS vendor, or a DocuSeal instance hosted elsewhere) is no different from any other third-party integration and stays shared-hosting compatible. Only self-hosting such a tool alongside Taily becomes an opt-in for operators already running extra infrastructure, not the baseline.
 - **Cost and data protection.** Contracts carry the same personal data as the rest of an adoption plus, once signed, legally binding proof of identity. Third-party tools raise two questions per organization: recurring cost on top of a free/open-source product, and a data processing agreement covering the vendor's own retention policy, sub-processors, and hosting region.
 - **Legal signature level.** eIDAS defines three tiers — SES, AES, QES — with increasing evidentiary weight and increasing technical requirements (SES is buildable in-house; AES/QES realistically require a trust-service integration). Current research suggests SES is sufficient for a Schutzvertrag, but this needs legal confirmation before it can drive the technical decision.
 
@@ -40,7 +40,7 @@ How generation and signing are handled technically — whether natively in Taily
 
 If generation and/or signing are built into Taily rather than delegated to a third party:
 
-- **Audit trail** — every step (generated, sent, viewed, signed by whom, when, from where) recorded immutably enough to serve as evidence if a signature is disputed.
+- **Audit trail** — every step (generated, sent, viewed, signed by whom, when, from where) recorded immutably enough to serve as evidence if a signature is disputed. The raw log needs to be paired with a human-readable completion certificate — both signers, their signing timestamps, origin details, and the exact document hash — not just database rows.
 - **Signer access without an account** — adopters have no Taily login. Access needs a signed, single-purpose token following the pattern already used for the [pre-inspection public link](./pre-inspection.md), hardened further given the sensitivity of what it grants access to (entropy, expiry, brute-force protection).
 - **Signature capture** — canvas-drawn signature vs. typed name + consent checkbox is still open, and is more of a UX question than a legal one if SES is confirmed sufficient.
 - **Document integrity and storage** — a signed PDF must become permanently read-only, verifiable via a stored content hash.
