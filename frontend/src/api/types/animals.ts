@@ -58,6 +58,7 @@ export interface AnimalBaseResource {
   alternate_transport_trace: string | null
   alternate_arrival_location: string | null
   do_publish: boolean
+  is_reserved: boolean
   publish_description: string | null
   compatibilities: string[]
   personality_traits: string[]
