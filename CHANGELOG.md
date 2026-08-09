@@ -2,6 +2,13 @@
 
 All notable changes to Taily are documented here.
 
+## [0.10.1](https://github.com/ulbrich-media/taily/compare/v0.10.0...v0.10.1) (2026-08-09)
+
+
+### Bug Fixes
+
+* passkey issues resolved for distribution package ([d309bc8](https://github.com/ulbrich-media/taily/commit/d309bc84a03782a8f199bac49c1ee5fd84d6705f))
+
 # [0.10.0](https://github.com/ulbrich-media/taily/compare/v0.9.0...v0.10.0) (2026-07-30)
 
 

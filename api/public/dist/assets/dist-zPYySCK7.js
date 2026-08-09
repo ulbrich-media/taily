@@ -1,0 +1,1 @@
+import{a as e,n as t}from"./jsx-runtime-B-hcVAMW.js";var n=e(t(),1),r=Object.defineProperty,i=(e,t)=>r(e,`name`,{value:t,configurable:!0});function a(e){let t=n.useRef({value:e,previous:e});return n.useMemo(()=>(t.current.value!==e&&(t.current.previous=t.current.value,t.current.value=e),t.current.previous),[e])}i(a,`usePrevious`);export{a as t};

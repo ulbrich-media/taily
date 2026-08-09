@@ -1,0 +1,1 @@
+import{ri as e}from"./index-BoOhQavL.js";var t=e;export{t as component};
