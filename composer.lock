@@ -12692,6 +12692,7 @@
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
+        "psalm/plugin-laravel": 5,
         "vimeo/psalm": 10
     },
     "prefer-stable": true,
