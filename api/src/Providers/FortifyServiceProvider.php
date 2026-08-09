@@ -15,6 +15,7 @@ use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
 use Laravel\Passkeys\Events\PasskeyDeleted;
 use Laravel\Passkeys\Events\PasskeyRegistered;
+use Laravel\Passkeys\Passkeys;
 use Taily\Actions\Fortify\ResetUserPassword;
 use Taily\Actions\Fortify\UpdateUserPassword;
 use Taily\Http\Responses\FailedPasswordResetResponse;
@@ -25,6 +26,7 @@ use Taily\Listeners\NotifyPasskeyRegistered;
 use Taily\Listeners\NotifyTwoFactorAuthenticationConfirmed;
 use Taily\Listeners\NotifyTwoFactorAuthenticationDisabled;
 use Taily\Listeners\UpdateLastLoginTimestamp;
+use Taily\Models\User;
 
 class FortifyServiceProvider extends ServiceProvider
 {
@@ -113,6 +115,13 @@ class FortifyServiceProvider extends ServiceProvider
                 config('taily.frontend_url'),
             ])),
         ]);
+
+        // laravel/passkeys defaults its user model to App\Models\User, which
+        // doesn't exist in Taily (or in host apps installing this package) —
+        // the authenticatable model is Taily\Models\User. Without this, the
+        // Passkey::user() relation throws "Class App\Models\User not found"
+        // the moment a passkey login is attempted.
+        Passkeys::useUserModel(User::class);
 
         Fortify::updateUserPasswordsUsing(UpdateUserPassword::class);
         Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
