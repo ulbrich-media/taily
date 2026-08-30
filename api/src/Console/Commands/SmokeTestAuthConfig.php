@@ -3,6 +3,7 @@
 namespace Taily\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 use Laravel\Passkeys\Passkeys;
 use RuntimeException;
 use Taily\Models\User;
@@ -26,6 +27,7 @@ class SmokeTestAuthConfig extends Command
 
     public function handle(): int
     {
+        /** @var array<string, callable(): void> $checks */
         $checks = [
             'Passkeys user model points at Taily\Models\User' => function (): void {
                 if (Passkeys::userModel() !== User::class) {
@@ -37,19 +39,27 @@ class SmokeTestAuthConfig extends Command
                 }
             },
             'Passkey::user() relation resolves without error' => function (): void {
-                $user = User::factory()->create([
-                    'name' => 'Smoke Test',
-                    'email' => 'smoke-test-auth@example.com',
-                ]);
+                DB::beginTransaction();
 
-                $passkey = $user->passkeys()->create([
-                    'name' => 'smoke-test',
-                    'credential_id' => base64_encode(random_bytes(16)),
-                    'credential' => ['type' => 'fake'],
-                ]);
+                try {
+                    $user = User::factory()->create([
+                        'name' => 'Smoke Test',
+                        'email' => 'smoke-test-auth@example.com',
+                    ]);
 
-                if (! $passkey->user->is($user)) {
-                    throw new RuntimeException('Passkey::user() did not resolve back to the owning user.');
+                    $passkey = $user->passkeys()->create([
+                        'name' => 'smoke-test',
+                        'credential_id' => base64_encode(random_bytes(16)),
+                        'credential' => ['type' => 'fake'],
+                    ]);
+
+                    $owner = $passkey->user;
+
+                    if (! $owner instanceof User || ! $owner->is($user)) {
+                        throw new RuntimeException('Passkey::user() did not resolve back to the owning user.');
+                    }
+                } finally {
+                    DB::rollBack();
                 }
             },
             'Passkey allowed origins are not a bare wildcard' => function (): void {
@@ -67,18 +77,18 @@ class SmokeTestAuthConfig extends Command
             },
         ];
 
-        $failures = [];
+        $hasFailures = false;
 
         foreach ($checks as $name => $check) {
             try {
                 $check();
                 $this->info("PASS  {$name}");
             } catch (Throwable $e) {
-                $failures[] = $name;
+                $hasFailures = true;
                 $this->error("FAIL  {$name}: {$e->getMessage()}");
             }
         }
 
-        return $failures === [] ? self::SUCCESS : self::FAILURE;
+        return $hasFailures ? self::FAILURE : self::SUCCESS;
     }
 }
