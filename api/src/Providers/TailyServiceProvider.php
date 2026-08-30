@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
 use Taily\Console\Commands\SeedDatabase;
+use Taily\Console\Commands\SmokeTestAuthConfig;
 use Taily\Console\Commands\SmokeTestMailViews;
 use Taily\Http\Middleware\EnsureUserIsAdmin;
 use Taily\Http\Middleware\PublicApiCors;
@@ -22,6 +23,16 @@ class TailyServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->mergeConfigFrom(__DIR__.'/../../config/taily.php', 'taily');
+
+        // Set as early as possible so anything that reads this config key
+        // gets the right value. This alone does NOT fix laravel/fortify's
+        // eager passkeys setup — Fortify reads this same key even earlier,
+        // from its own register() (package-discovered providers register
+        // before bootstrap/providers.php entries like this one ever run) —
+        // that specific case is corrected separately, by directly calling
+        // Passkeys::useUserModel() in FortifyServiceProvider::boot() (which
+        // runs after Fortify's register()+boot() have both completed).
+        config(['auth.providers.users.model' => User::class]);
     }
 
     /**
@@ -36,7 +47,6 @@ class TailyServiceProvider extends ServiceProvider
         $this->configureMediaLibrary();
 
         JsonResource::withoutWrapping();
-        config(['auth.providers.users.model' => User::class]);
 
         $this->registerRoutes();
         $this->registerMiddlewareAlias();
@@ -88,6 +98,7 @@ class TailyServiceProvider extends ServiceProvider
             $this->commands([
                 SeedDatabase::class,
                 SmokeTestMailViews::class,
+                SmokeTestAuthConfig::class,
             ]);
         }
     }
