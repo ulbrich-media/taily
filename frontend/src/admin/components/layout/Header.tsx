@@ -31,6 +31,7 @@ import {
   NavigationMenu,
   NavigationMenuList,
 } from '@/shadcn/components/ui/navigation-menu.tsx'
+import { getInitials } from '@/lib/utils.ts'
 
 interface HeaderProps {
   navLinks: ReactNode
@@ -46,16 +47,6 @@ export function Header({
   const { logout, user, isAdmin } = useAuth()
   const { mode, setMode } = useTheme()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-
-  // Get user initials
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2)
-  }
 
   const getThemeIcon = (themeMode: typeof mode) => {
     switch (themeMode) {

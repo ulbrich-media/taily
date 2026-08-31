@@ -1,11 +1,18 @@
 import type { UserRole } from '@/api/types/users'
 
+/** An email change requested but not yet confirmed via the mailed link. */
+export interface PendingEmailChange {
+  new_email: string
+  expires_at: string
+}
+
 export interface User {
   id: number
   name: string
   email: string
   role: UserRole
   two_factor_enabled: boolean
+  pending_email: PendingEmailChange | null
 }
 
 /** Outcome of a credential login: whether a second factor is still required. */

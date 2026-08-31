@@ -97,4 +97,12 @@ class User extends Authenticatable implements PasskeyUser
     {
         return $this->hasOne(UserInvitation::class);
     }
+
+    /**
+     * Get the user's pending email change, if any.
+     */
+    public function pendingEmailChange(): HasOne
+    {
+        return $this->hasOne(PendingEmailChange::class);
+    }
 }
