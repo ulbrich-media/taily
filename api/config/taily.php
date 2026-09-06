@@ -30,4 +30,23 @@ return [
         explode(',', env('TAILY_CORS_ALLOWED_ORIGINS', ''))
     ),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Contract Templates
+    |--------------------------------------------------------------------------
+    |
+    | Templates available for generating a Schutzvertrag PDF for an adoption.
+    | Each entry's `view` is resolved as `taily::{$view}`, so overriding a
+    | template means publishing the `taily-views` tag and editing the file at
+    | the corresponding `resources/views/vendor/taily/...` path. See ADR-013.
+    |
+    */
+
+    'contracts' => [
+        'default' => [
+            'label' => 'Schutzvertrag',
+            'view' => 'contracts.default',
+        ],
+    ],
+
 ];

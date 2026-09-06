@@ -186,8 +186,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // Adoptions
     Route::get('/adoptions/options', [AdoptionController::class, 'options']);
+    // Registered before the apiResource below so "contract-templates" isn't
+    // swallowed by the resource's /adoptions/{adoption} show route.
+    Route::get('/adoptions/contract-templates', [AdoptionContractController::class, 'templates']);
     Route::apiResource('adoptions', AdoptionController::class);
     Route::put('/adoptions/{adoption}/contract', [AdoptionContractController::class, 'store']);
+    Route::get('/adoptions/{adoption}/contract/generate', [AdoptionContractController::class, 'generate']);
 
     // API Tokens
     Route::get('/api-tokens/abilities', [ApiTokenController::class, 'abilities']);

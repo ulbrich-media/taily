@@ -4,9 +4,11 @@ namespace Taily\Http\Controllers\Internal;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Taily\Http\Controllers\Controller;
 use Taily\Http\Resources\AdoptionDetailResource;
 use Taily\Models\Adoption;
+use Taily\Support\ContractPdfService;
 
 class AdoptionContractController extends Controller
 {
@@ -51,6 +53,32 @@ class AdoptionContractController extends Controller
         return response()->json([
             'message' => 'Schutzvertrag erfolgreich gespeichert.',
             'data' => new AdoptionDetailResource($adoption),
+        ]);
+    }
+
+    public function templates(): JsonResponse
+    {
+        $templates = collect(config('taily.contracts'))
+            ->map(fn (array $template, string $key) => [
+                'key' => $key,
+                'label' => $template['label'],
+            ])
+            ->values();
+
+        return response()->json($templates);
+    }
+
+    public function generate(Request $request, Adoption $adoption, ContractPdfService $contractPdfService): Response
+    {
+        $validated = $request->validate([
+            'template' => 'required|string|in:'.implode(',', array_keys(config('taily.contracts'))),
+        ]);
+
+        $pdf = $contractPdfService->generate($adoption, $validated['template']);
+
+        return response($pdf, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="'.$contractPdfService->filename($adoption).'"',
         ]);
     }
 }
