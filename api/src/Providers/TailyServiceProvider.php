@@ -2,6 +2,7 @@
 
 namespace Taily\Providers;
 
+use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Route;
@@ -11,6 +12,7 @@ use Taily\Console\Commands\SeedDatabase;
 use Taily\Console\Commands\SmokeTestAuthConfig;
 use Taily\Console\Commands\SmokeTestMailViews;
 use Taily\Http\Middleware\EnsureUserIsAdmin;
+use Taily\Http\Middleware\ForceJsonResponse;
 use Taily\Http\Middleware\PublicApiCors;
 use Taily\Models\User;
 use Taily\Support\MediaUrlGenerator;
@@ -50,6 +52,7 @@ class TailyServiceProvider extends ServiceProvider
 
         $this->registerRoutes();
         $this->registerMiddlewareAlias();
+        $this->registerMiddlewarePriority();
         $this->registerCommands();
 
         $this->publishes([
@@ -75,11 +78,11 @@ class TailyServiceProvider extends ServiceProvider
     protected function registerRoutes(): void
     {
         Route::prefix('api')
-            ->middleware(['api', PublicApiCors::class])
+            ->middleware(['api', ForceJsonResponse::class, PublicApiCors::class])
             ->group(__DIR__.'/../../routes/api.php');
 
         Route::prefix('internal')
-            ->middleware(['api', EnsureFrontendRequestsAreStateful::class])
+            ->middleware(['api', ForceJsonResponse::class, EnsureFrontendRequestsAreStateful::class])
             ->group(__DIR__.'/../../routes/internal.php');
     }
 
@@ -111,6 +114,23 @@ class TailyServiceProvider extends ServiceProvider
         $this->callAfterResolving(Router::class, function (Router $router) {
             $router->aliasMiddleware('admin', EnsureUserIsAdmin::class);
         });
+    }
+
+    /**
+     * Force ForceJsonResponse to always run before auth middleware.
+     *
+     * It isn't itself a priority-listed middleware, so without this it can
+     * get leapfrogged: Laravel's priority sort (see SortedMiddleware) only
+     * reorders middleware that appear in Kernel::$middlewarePriority, and it
+     * moves a later priority middleware to sit right before an earlier one
+     * it was originally behind — jumping over any non-priority middleware
+     * (like ours) in between. Sanctum's EnsureFrontendRequestsAreStateful
+     * registers itself the same way (prependToMiddlewarePriority), which is
+     * exactly what caused this leapfrogging for `auth:sanctum` routes.
+     */
+    protected function registerMiddlewarePriority(): void
+    {
+        $this->app->make(Kernel::class)->prependToMiddlewarePriority(ForceJsonResponse::class);
     }
 
     protected function configureMediaLibrary(): void

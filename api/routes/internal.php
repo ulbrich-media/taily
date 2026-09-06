@@ -51,6 +51,10 @@ use Taily\Http\Controllers\Internal\VaccinationController;
 // Media serve route (signed URL is the auth mechanism)
 Route::get('/media/{mediaUuid}', [MediaController::class, 'serve'])->name('media.serve');
 
+// Contract PDF download (signed URL is the auth mechanism; see AdoptionContractController::generate)
+Route::get('/adoptions/{adoption}/contract/download', [AdoptionContractController::class, 'download'])
+    ->name('adoptions.contract.download');
+
 // Authentication routes (Laravel Fortify controllers, see ADR-008)
 Route::post('/login', [AuthenticatedSessionController::class, 'store']);
 

@@ -3,6 +3,7 @@
 namespace Taily\Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\URL;
 use Taily\Models\Adoption;
 use Taily\Models\Animal;
 use Taily\Models\AnimalType;
@@ -72,19 +73,27 @@ class AdoptionContractGenerateTest extends TestCase
         $this->assertNotEquals($adoption->id, $response->json('0.key'));
     }
 
-    public function test_generate_downloads_a_pdf_for_a_valid_template(): void
+    public function test_generate_returns_a_signed_download_url(): void
     {
         $user = $this->createUser();
         $adoption = $this->createAdoption();
 
         $response = $this->actingAs($user)
             ->withHeader('referer', 'http://localhost')
-            ->get("/internal/adoptions/{$adoption->id}/contract/generate?template=default");
+            ->getJson("/internal/adoptions/{$adoption->id}/contract/generate?template=default");
 
         $response->assertOk();
-        $response->assertHeader('Content-Type', 'application/pdf');
-        $this->assertStringContainsString('no-store', $response->headers->get('Cache-Control'));
-        $this->assertStringStartsWith('%PDF', $response->getContent());
+        $url = $response->json('url');
+
+        $this->assertStringContainsString("/internal/adoptions/{$adoption->id}/contract/download", $url);
+        $this->assertStringContainsString('signature=', $url);
+
+        // The signed URL itself needs no session/auth to actually download the file.
+        $download = $this->get($url);
+        $download->assertOk();
+        $download->assertHeader('Content-Type', 'application/pdf');
+        $this->assertStringContainsString('no-store', $download->headers->get('Cache-Control'));
+        $this->assertStringStartsWith('%PDF', $download->getContent());
     }
 
     public function test_generate_does_not_change_adoption_state(): void
@@ -127,5 +136,48 @@ class AdoptionContractGenerateTest extends TestCase
             ->getJson("/internal/adoptions/{$adoption->id}/contract/generate");
 
         $response->assertStatus(422);
+    }
+
+    public function test_generate_returns_json_401_when_unauthenticated(): void
+    {
+        $adoption = $this->createAdoption();
+
+        // Deliberately a plain (non-JSON-Accept) request: this is what a
+        // browser sends for a top-level navigation, e.g. an <a target="_blank">
+        // download link. Regression test for the app crashing with
+        // "Route [login] not defined" instead of a graceful 401, since this
+        // API-only app has no named "login" route for Laravel's default
+        // unauthenticated-redirect behaviour to target.
+        $response = $this
+            ->withHeader('referer', 'http://localhost')
+            ->get("/internal/adoptions/{$adoption->id}/contract/generate?template=default");
+
+        $response->assertStatus(401);
+        $response->assertJson(['message' => 'Unauthenticated.']);
+    }
+
+    public function test_download_rejects_a_missing_or_invalid_signature(): void
+    {
+        $adoption = $this->createAdoption();
+
+        $response = $this->get("/internal/adoptions/{$adoption->id}/contract/download?template=default");
+
+        $response->assertForbidden();
+    }
+
+    public function test_download_rejects_a_tampered_query_parameter(): void
+    {
+        $adoption = $this->createAdoption();
+
+        $signedUrl = URL::temporarySignedRoute('adoptions.contract.download', now()->addHour(), [
+            'adoption' => $adoption->id,
+            'template' => 'default',
+        ]);
+
+        $tamperedUrl = str_replace('template=default', 'template=unknown', $signedUrl);
+
+        $response = $this->get($tamperedUrl);
+
+        $response->assertForbidden();
     }
 }

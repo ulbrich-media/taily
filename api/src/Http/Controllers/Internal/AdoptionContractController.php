@@ -5,6 +5,7 @@ namespace Taily\Http\Controllers\Internal;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\Rule;
 use Taily\Http\Controllers\Controller;
 use Taily\Http\Resources\AdoptionDetailResource;
@@ -69,8 +70,37 @@ class AdoptionContractController extends Controller
         return response()->json($templates);
     }
 
-    public function generate(Request $request, Adoption $adoption, ContractPdfService $contractPdfService): Response
+    /**
+     * Authorizes a contract download and hands back a signed URL for it.
+     *
+     * The actual PDF is served by the unauthenticated `download` action
+     * below — its signature (not a session cookie) is the auth mechanism,
+     * so the frontend can open it as a plain link. See ADR on why: a direct
+     * `auth:sanctum`-protected download opened via <a target="_blank">
+     * depends on the browser sending a Referer/Origin header for Sanctum to
+     * recognize it as a stateful frontend request, which isn't guaranteed
+     * (e.g. rel="noreferrer", strict referrer policies, some extensions).
+     */
+    public function generate(Request $request, Adoption $adoption): JsonResponse
     {
+        $validated = $request->validate([
+            'template' => ['required', 'string', Rule::in(array_keys(config('taily.contracts')))],
+        ]);
+
+        $url = URL::temporarySignedRoute('adoptions.contract.download', now()->addHour(), [
+            'adoption' => $adoption->id,
+            'template' => $validated['template'],
+        ]);
+
+        return response()->json(['url' => $url]);
+    }
+
+    public function download(Request $request, Adoption $adoption, ContractPdfService $contractPdfService): Response
+    {
+        if (! $request->hasValidSignature()) {
+            abort(403);
+        }
+
         $validated = $request->validate([
             'template' => ['required', 'string', Rule::in(array_keys(config('taily.contracts')))],
         ]);

@@ -15,7 +15,10 @@ import { z } from 'zod'
 import { format } from 'date-fns'
 import { FileDown, X } from 'lucide-react'
 import { adoptionQueryKeys } from '@/admin/module/adoptions/api/queries.ts'
-import { updateContract } from '@/admin/module/adoptions/api/requests.ts'
+import {
+  generateContract,
+  updateContract,
+} from '@/admin/module/adoptions/api/requests.ts'
 import { toast } from 'sonner'
 import { Button } from '@/shadcn/components/ui/button.tsx'
 import { DateInput } from '@/components/field/DateInput.tsx'
@@ -39,7 +42,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/shadcn/components/ui/select.tsx'
-import { API_URL } from '@/lib/api.ts'
 
 const schema = z.object({
   contract_signed: z.boolean(),
@@ -98,6 +100,33 @@ export function AdoptionEditContractPage({
     },
     onError: () => {
       toast.error('Fehler beim Speichern des Schutzvertrags')
+    },
+  })
+
+  const generateMutation = useMutation({
+    // Open the tab synchronously (still within the click's user-gesture
+    // context) and navigate it once the signed URL comes back, since
+    // browsers block window.open() calls made after an await.
+    mutationFn: async () => {
+      const downloadTab = window.open()
+      if (downloadTab) {
+        downloadTab.opener = null
+      }
+
+      try {
+        const { url } = await generateContract(adoption.id, selectedTemplate)
+        if (downloadTab) {
+          downloadTab.location.href = url
+        } else {
+          toast.error('Popup wurde blockiert. Bitte Popups für diese Seite erlauben.')
+        }
+      } catch (error) {
+        downloadTab?.close()
+        throw error
+      }
+    },
+    onError: () => {
+      toast.error('Fehler beim Generieren des Schutzvertrags')
     },
   })
 
@@ -174,28 +203,16 @@ export function AdoptionEditContractPage({
                   ))}
                 </SelectContent>
               </Select>
-              {selectedTemplate ? (
-                <Button variant="outline" size="icon" asChild>
-                  <a
-                    href={`${API_URL}/adoptions/${adoption.id}/contract/generate?template=${encodeURIComponent(selectedTemplate)}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    aria-label="Vertrag generieren"
-                  >
-                    <FileDown />
-                  </a>
-                </Button>
-              ) : (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  aria-label="Vertrag generieren"
-                  disabled
-                >
-                  <FileDown />
-                </Button>
-              )}
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                aria-label="Vertrag generieren"
+                disabled={!selectedTemplate || generateMutation.isPending}
+                onClick={() => generateMutation.mutate()}
+              >
+                <FileDown />
+              </Button>
             </ButtonGroup>
             {templates.length === 0 && (
               <p className="text-sm text-muted-foreground">
