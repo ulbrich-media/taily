@@ -1,4 +1,5 @@
 import { apiRequest } from '@/lib/api'
+import type { ContractTemplate } from '@/api/types/adoptions'
 import type {
   Adoption,
   AdoptionResponse,
@@ -68,4 +69,8 @@ export async function updateContract(
     method: 'POST',
     body: formData,
   })
+}
+
+export async function getContractTemplates(): Promise<ContractTemplate[]> {
+  return apiRequest<ContractTemplate[]>('adoptions/contract-templates')
 }

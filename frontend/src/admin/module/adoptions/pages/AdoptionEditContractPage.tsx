@@ -8,13 +8,16 @@ import {
   DialogTitle,
   DialogBreadcrumb,
 } from '@/shadcn/components/ui/dialog.tsx'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { format } from 'date-fns'
-import { X } from 'lucide-react'
-import { adoptionQueryKeys } from '@/admin/module/adoptions/api/queries.ts'
+import { FileDown, X } from 'lucide-react'
+import {
+  adoptionQueryKeys,
+  getContractTemplatesQuery,
+} from '@/admin/module/adoptions/api/queries.ts'
 import { updateContract } from '@/admin/module/adoptions/api/requests.ts'
 import { toast } from 'sonner'
 import { Button } from '@/shadcn/components/ui/button.tsx'
@@ -29,6 +32,14 @@ import {
 } from '@/components/field/DateInput.utils.ts'
 import { Input } from '@/shadcn/components/ui/input.tsx'
 import { ButtonGroup } from '@/shadcn/components/ui/button-group.tsx'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/shadcn/components/ui/select.tsx'
+import { API_URL } from '@/lib/api.ts'
 
 const schema = z.object({
   contract_signed: z.boolean(),
@@ -52,6 +63,9 @@ export function AdoptionEditContractPage({
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [removeExistingFile, setRemoveExistingFile] = useState(false)
+  const [selectedTemplate, setSelectedTemplate] = useState('')
+
+  const { data: templates } = useQuery(getContractTemplatesQuery())
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -137,6 +151,59 @@ export function AdoptionEditContractPage({
           onSubmit={form.handleSubmit((data) => mutation.mutate(data))}
           className="space-y-4"
         >
+          <div className="space-y-2">
+            <p className="text-sm font-medium">Vertrag generieren</p>
+
+            <ButtonGroup className="w-full">
+              <Select
+                value={selectedTemplate}
+                onValueChange={setSelectedTemplate}
+              >
+                <SelectTrigger
+                  className="flex-1"
+                  aria-label="Vertragsvorlage auswählen"
+                  disabled={!templates?.length}
+                >
+                  <SelectValue placeholder="Vorlage auswählen" />
+                </SelectTrigger>
+                <SelectContent>
+                  {templates?.map((template) => (
+                    <SelectItem key={template.key} value={template.key}>
+                      {template.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedTemplate ? (
+                <Button variant="outline" size="icon" asChild>
+                  <a
+                    href={`${API_URL}/adoptions/${adoption.id}/contract/generate?template=${selectedTemplate}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="Vertrag generieren"
+                  >
+                    <FileDown />
+                  </a>
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  aria-label="Vertrag generieren"
+                  disabled
+                >
+                  <FileDown />
+                </Button>
+              )}
+            </ButtonGroup>
+            {templates?.length === 0 && (
+              <p className="text-sm text-muted-foreground">
+                Keine Vertragsvorlagen verfügbar.
+              </p>
+            )}
+          </div>
+
           <Switch
             name="contract_signed"
             control={form.control}

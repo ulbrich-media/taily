@@ -54,6 +54,12 @@ export interface ContractFile {
   url: string
 }
 
+// Returned by GET /adoptions/contract-templates.
+export interface ContractTemplate {
+  key: string
+  label: string
+}
+
 // Returned by GET /adoptions/:id (show), POST /adoptions (store), PATCH /adoptions/:id (update).
 export interface AdoptionDetailResource extends AdoptionBaseResource {
   animal: AnimalDetailResource
