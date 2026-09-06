@@ -85,7 +85,7 @@ Steps are optional and can be taken in any order. Each step derives its status i
 | Transport | `transport_id` is null | transport assigned (details TBD) | transport completed (TBD) |
 | Handover | `handed_over_at` is null | — | `handed_over_at` is set |
 
-The contract step is currently binary (`getContractStatusAttribute()` only checks `contract_signed`) because the feature only supports the Simple Version today — see [features/contract.md](./features/contract.md). The Advanced Version (generated PDF, separate mediator/adopter signing) will need this reworked; the shape of that rework depends on the still-open questions in [ADR-012](./ADRs/ADR-012-contract-generation-and-signing.md) and isn't designed yet.
+The contract step is currently binary (`getContractStatusAttribute()` only checks `contract_signed`) because the feature only supports the Simple Version today — see [features/contract.md](./features/contract.md). The Advanced Version (generated PDF, separate mediator/adopter signing) will need this reworked; the native, SES-targeted approach is decided in [ADR-012](./ADRs/ADR-012-contract-generation-and-signing.md), but the reworked status-derivation logic itself isn't designed yet.
 
 #### Relations
 

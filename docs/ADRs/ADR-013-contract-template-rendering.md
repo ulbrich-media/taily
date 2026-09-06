@@ -1,0 +1,43 @@
+# ADR-013: Contract Template Rendering and PDF Generation
+
+## Status
+
+Accepted
+
+## Context
+
+[ADR-012](ADR-012-contract-generation-and-signing.md) decided contract generation happens natively in PHP, and left the specific PDF-rendering library as a deliberately deferred, second-order choice (see its [PDF generation](ADR-012-contract-generation-and-signing.md#pdf-generation) table) — dompdf and mPDF were both flagged as realistic pure-PHP candidates. This ADR makes that choice concrete, and additionally decides how contract *content* (prose, merge fields, per-organization branding) is authored and overridden, which ADR-012 raised under its [Customization](ADR-012-contract-generation-and-signing.md#what-a-custom-non-outsourced-solution-would-need) requirement but did not resolve.
+
+Contract content is a different shape from [form-templates.md](../features/form-templates.md)'s schema-driven, DB-stored, versioned data-collection forms: it is prose with embedded variables, edited by whoever operates a Taily install, not something an org admin fills in through a UI at runtime. Building a WYSIWYG prose-with-merge-fields editor comparable to what DocuSeal ships was already noted in ADR-012 as real effort that a native build is unlikely to match soon — this ADR does not attempt it.
+
+A single organization needs more than one contract template available at once — different animal types (a dog Schutzvertrag and a cat one may carry different obligations) and potentially different situations for different adopters are both real cases, not speculative ones. Whatever mechanism is chosen for authoring one template needs to work for a set of them, selectable at generation time — see [Decision](#decision) below.
+
+Also relevant: the ADR-012 decision that each signing step ([features/contract.md](../features/contract.md)) shows participants the *frozen* PDF generated at the start of the flow, not a live re-render from the current template state at every step. SES does not impose a specific rendering-fidelity or re-rendering requirement — its bar is just "electronic data attached to other data, used by the signer to sign" (see ADR-012's [signature-level table](ADR-012-contract-generation-and-signing.md#constraint-3-legal-signature-level)). What actually carries evidentiary weight, at any eIDAS tier, is being able to prove *which exact document* a signer reviewed and agreed to. A single frozen artifact hashed once at generation time is a strictly easier claim to defend than "here is what a template renderer would have produced at moment T" — proving the latter requires trusting that nothing about the template, the data, or the renderer changed between generation and each viewing, which is an unnecessary burden to take on when the frozen approach avoids the question entirely. That reasoning, not a legal requirement, is why generation happens exactly once per contract instance and every later step reads that same artifact.
+
+## Decision
+
+**Contract templates are Laravel Blade views, not database-stored/versioned schemas. Rendering to PDF happens once per contract, via `barryvdh/laravel-dompdf`.**
+
+- **Blade, not a custom templating syntax.** Contract prose is authored as ordinary `.blade.php` files. Merge fields use Blade's own variable syntax (`{{ $adopter->first_name }}`, `{{ $animal->name }}`, `{{ $organization->name }}`, etc.) fed by a small view-model assembled per contract instance — no bespoke `{{ }}`-like templating layer needs to be built or maintained, since Blade already is one.
+- **Override via Laravel's standard package view convention**, the same mechanism already established for mail theming in [ADR-010](ADR-010-transactional-email-styling.md): Taily ships default templates under its package views, and an operator overrides one by placing a file at the corresponding `resources/views/vendor/taily/contracts/...` path in their installation — no publish-and-edit-in-place step needed for the override itself (Laravel resolves the override path first automatically), consistent with `vendor:publish` being the established pattern for the handful of things operators are expected to customize (see [release-architecture.md](../release-architecture.md)).
+- **This requires editing a Blade file, i.e. coding knowledge**, unlike form-templates' schema-driven, versioned, DB-backed model. That is an accepted trade-off for now, not an oversight: building a non-technical prose editor is real effort (see [ADR-012](ADR-012-contract-generation-and-signing.md#docuseal-as-a-combined-generation-customization-and-signing-option)'s DocuSeal comparison) and is deferred until there's a concrete need for it.
+- **No per-organization template versioning is needed at the database level.** Unlike `form_submissions` (see [form-templates.md](../features/form-templates.md#version-pinning)), a contract template being edited later cannot retroactively change a contract that already exists, because the PDF is rendered once at generation time and that rendered artifact — not the template — is what's stored, hashed, and referenced from then on (see [Context](#context) above, and [features/contract.md](../features/contract.md) for the full signing flow this enables).
+- **Multiple templates are registered in published config, not the database.** `config('taily.contracts')` holds an array of available templates, each with a stable key, an admin-facing label, and the Blade view path to render (e.g. `['dog' => ['label' => 'Dog Adoption Contract', 'view' => 'contracts.dog'], ...]`). Adding a new template — a new animal type, a variant for a specific situation — means adding a Blade file plus a config entry, the same two-step "ship a default, let the operator override the published config" pattern already used elsewhere (see [release-architecture.md](../release-architecture.md)). The mediator picks one of these by label when triggering generation for a given adoption (see [features/contract.md](../features/contract.md#flow)); there is no auto-suggestion based on animal type in this first version — the mediator always chooses explicitly.
+- **`barryvdh/laravel-dompdf` is the chosen renderer.** dompdf has the weakest CSS support of the pure-PHP options (no flexbox/grid), but contract layouts are simple print-style documents (headings, paragraphs, a merge-field table, a signature block) that don't need modern layout CSS, and it's the most common, actively-maintained choice in the Laravel ecosystem — lowest-friction for anyone extending this later. If a specific contract template later needs CSS dompdf can't render correctly, mPDF is the documented fallback (see ADR-012's table); this is not expected to be a common case.
+
+## Consequences
+
+### Positive
+
+- Reuses Blade and Laravel's own view-resolution/override mechanism end to end — no new templating engine, no new override mechanism to build or document beyond what `vendor:publish`/view overriding already covers elsewhere in the codebase.
+- No database schema for template versioning is needed for contracts, because freezing happens at the PDF layer instead — one less concept for this feature to introduce.
+- `barryvdh/laravel-dompdf` is a single, well-maintained Composer dependency, pure PHP, zero infrastructure — consistent with [ADR-012's hosting constraint](ADR-012-contract-generation-and-signing.md#constraint-1-hosting).
+
+### Negative
+
+- Editing contract wording, adding a merge field, or rebranding a template requires touching a Blade file and redeploying (or overriding it via the package-view path) — not something a non-technical org admin can do from the Taily UI. This is the same limitation ADR-012 already accepted for the native path generally.
+- dompdf's limited CSS support constrains how visually elaborate a contract template can be without hitting rendering issues; this is a known trade-off of picking dompdf over mPDF or Browsershot, not a defect discovered later.
+
+## Alternatives Considered
+
+See [ADR-012's PDF generation table](ADR-012-contract-generation-and-signing.md#pdf-generation) for the full comparison (mPDF, TCPDF, Browsershot, hosted PDF APIs, DocuSeal) — none of that reasoning is repeated here. The only alternative specific to this ADR's scope was building a small custom merge-field syntax on top of plain HTML instead of using Blade directly; rejected as pure duplication of what Blade already does, for no benefit.
