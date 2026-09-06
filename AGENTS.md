@@ -92,7 +92,7 @@ The public API is documented via a static OpenAPI spec at `api/public/openapi.ya
 
 ## Restrictions
 
-- You are not allowed to add packages on your own. You can consider them but have to ask for consent before installation.
+- You are not allowed to add packages on your own. You can consider them but have to ask for consent before installation. See `docs/agents/dependency-approval.md` for the procedure once a dependency is approved.
 
 ## Agent skills
 
