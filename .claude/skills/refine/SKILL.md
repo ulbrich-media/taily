@@ -19,14 +19,24 @@ In both modes, feel free to post an additional (unmarked) comment asking a clari
 
 Use exactly this structure. Compose it as a single markdown string in memory — do not write it to a file. The only permitted tools are repo inspection (`Read`/`Glob`/`Grep`, read-only) and `gh api` / `gh issue comment`; there is no `Write` tool available, so the body must be passed inline as a heredoc when you run the `gh` command in Step 3.
 
+### Dependency check (do this before finalizing Status — every refine pass, including the first)
+
+If the technical approach requires a package that isn't already installed — grep the root `composer.json` (`require`/`require-dev`) for a PHP package, or `frontend/package.json` (`dependencies`/`devDependencies`) for a JS package — set `Status: 🚫 Blocked — new dependency required` (overriding whatever Confidence/open-questions would otherwise give) and include the `## ⚠️ Blocking: New Dependency Required` section (template below) right after the metadata line. Only finding the package actually installed during a later `/refine` pass clears this — drop the section and evaluate Status normally once it does.
+
 ```
 <!-- claude-plan -->
 ## Summary
 <1-3 sentences, high level. What benefit does the user gain from this being implemented — no code, no implementation detail.>
 
-**Status**: ✅ Ready to implement / ⚠️ Currently being refined**
+**Status**: ✅ Ready to implement / ⚠️ Currently being refined / 🚫 Blocked — new dependency required
 
 **Confidence:** 🚨 Low / ⚠️ Medium / ✅ High · **Complexity:** ✅ Low / ⚠️ Medium / 🚨 High · **Scope:** `tag`, `tag`
+
+<Only when the dependency check above found something missing, insert this section here — before Functional Plan, not inside a details block:>
+
+## ⚠️ Blocking: New Dependency Required
+
+`<vendor>/<package>` isn't installed yet, and `/implement` can't install it itself. Land it on `development` first (see [docs/agents/dependency-approval.md](docs/agents/dependency-approval.md)), then re-run `@claude refine`.
 
 ## Functional Plan
 <Concrete description of the problem being solved and the behavior being implemented.>
@@ -60,12 +70,16 @@ Use exactly this structure. Compose it as a single markdown string in memory —
 
 Formatting rules:
 - Use GitHub's native `<details><summary>` syntax for collapsibles, with a blank line after `</summary>` and before `</details>` so the markdown inside renders correctly.
-- Prefix the Status line with ✅ (ready) or ⚠️ (being refined), placed directly under the Summary and before the Metadata line. Don't use GitHub's `> [!TIP]`/`> [!WARNING]` alert syntax here.
+- Prefix the Status line with ✅ (ready), ⚠️ (being refined), or 🚫 (blocked on a missing dependency), placed directly under the Summary and before the Metadata line. Don't use GitHub's `> [!TIP]`/`> [!WARNING]` alert syntax here — including in the blocking section.
 - No external images anywhere in the comment (no shields.io badges etc.) — use plain markdown and emoji only, so nothing depends on a third-party image service.
 
 ### Status rule (apply literally, don't eyeball it)
 
-`Status: Ready to implement` **only** if Confidence = High **and** the Resolved Decisions / feedback leaves no open questions. Every other combination (Low or Medium confidence, or any unresolved open question) is `Status: Currently being refined`.
+Evaluate in this order:
+
+1. Dependency check above found something missing → `Status: 🚫 Blocked — new dependency required`. This takes priority over everything below, regardless of Confidence or how many decisions are resolved.
+2. Otherwise, `Status: Ready to implement` **only** if Confidence = High **and** the Resolved Decisions / feedback leaves no open questions.
+3. Otherwise (Low or Medium confidence, or any unresolved open question), `Status: Currently being refined`.
 
 ### Confidence / Complexity emoji (apply literally, don't eyeball it)
 
