@@ -140,6 +140,10 @@ class ContractSigningService
 
             $locked->final_document_hash = $finalDocumentHash;
             $locked->save();
+
+            $this->writeAuditEvent($locked, null, ContractSigningEventType::FINALIZED, metadata: [
+                'final_document_hash' => $finalDocumentHash,
+            ]);
         });
 
         $process->refresh();
@@ -149,10 +153,15 @@ class ContractSigningService
      * Full reset: invalidates any outstanding signer tokens and marks the
      * process cancelled. Only the mediator can cancel.
      *
-     * @throws ContractSigningStateException if the process is already terminal or completed.
+     * @throws ContractSigningStateException if the process is already terminal or completed, or if
+     *                                       $canceledBy isn't the adoption's mediator.
      */
     public function cancel(ContractSigningProcess $process, Person $canceledBy, ?string $reason = null): void
     {
+        if ($process->adoption->mediator_id !== $canceledBy->id) {
+            throw new ContractSigningStateException('Nur der Vermittler kann diesen Signaturvorgang abbrechen.');
+        }
+
         DB::transaction(function () use ($process, $canceledBy, $reason) {
             $locked = $this->terminate($process, ContractSigningStatus::CANCELLED, $reason);
 

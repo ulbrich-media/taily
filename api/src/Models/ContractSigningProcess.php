@@ -8,11 +8,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Taily\Enums\ContractSigningStatus;
 
 class ContractSigningProcess extends Model implements HasMedia
 {
-    use HasUuids, InteractsWithMedia;
+    use HasUuids;
+
+    /** @use InteractsWithMedia<Media> */
+    use InteractsWithMedia;
 
     protected $attributes = [
         'cancellation_reason' => '',

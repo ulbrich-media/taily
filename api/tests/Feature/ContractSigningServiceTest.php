@@ -118,7 +118,11 @@ class ContractSigningServiceTest extends TestCase
             'signature_submitted',
             'link_generated',
             'signature_submitted',
+            'finalized',
         ], $eventTypes);
+
+        $finalizedEvent = $process->auditEvents()->where('event_type', ContractSigningEventType::FINALIZED->value)->first();
+        $this->assertSame(hash('sha256', 'final-artifact-bytes'), $finalizedEvent->metadata['final_document_hash']);
     }
 
     public function test_recording_mediator_signature_rejects_a_cancelled_process(): void
@@ -187,6 +191,21 @@ class ContractSigningServiceTest extends TestCase
         $this->expectException(ContractSigningStateException::class);
 
         $this->service->cancel($process, $adoption->mediator, null);
+    }
+
+    public function test_cancel_rejects_a_non_mediator(): void
+    {
+        $adoption = $this->createAdoption();
+        $process = $this->service->start($adoption, 'default', '%PDF-bytes');
+
+        $this->expectException(ContractSigningStateException::class);
+
+        try {
+            $this->service->cancel($process, $adoption->applicant, null);
+        } finally {
+            $this->assertSame(ContractSigningStatus::AWAITING_MEDIATOR_SIGNATURE, $process->fresh()->status);
+            $this->assertNotNull($process->signers->first()->fresh()->activeToken());
+        }
     }
 
     public function test_audit_events_are_written_for_each_transition(): void

@@ -49,6 +49,7 @@ return new class extends Migration
                 'email_sent',
                 'link_opened',
                 'signature_submitted',
+                'finalized',
                 'cancelled',
                 'expired',
             ]);
