@@ -88,7 +88,15 @@ class AdoptionContractGenerateTest extends TestCase
         $this->assertStringContainsString("/internal/adoptions/{$adoption->id}/contract/download", $url);
         $this->assertStringContainsString('signature=', $url);
 
-        // The signed URL itself needs no session/auth to actually download the file.
+        // The signed URL itself needs no session/auth to actually download the
+        // file — prove it by dropping the authenticated session first. Must
+        // target the "web" guard explicitly: the earlier auth:sanctum success
+        // above flips Auth's *default* guard to "sanctum" for the rest of the
+        // test (see Authenticate::authenticate()), so a bare actingAsGuest()/
+        // assertGuest() would target "sanctum" instead — whose RequestGuard
+        // just re-derives the user from the still-logged-in "web" session.
+        $this->actingAsGuest('web');
+        $this->assertGuest('web');
         $download = $this->get($url);
         $download->assertOk();
         $download->assertHeader('Content-Type', 'application/pdf');
@@ -179,5 +187,45 @@ class AdoptionContractGenerateTest extends TestCase
         $response = $this->get($tamperedUrl);
 
         $response->assertForbidden();
+    }
+
+    public function test_download_is_rate_limited_per_signed_link(): void
+    {
+        $adoption = $this->createAdoption();
+
+        $signedUrl = URL::temporarySignedRoute('adoptions.contract.download', now()->addHour(), [
+            'adoption' => $adoption->id,
+            'template' => 'default',
+        ]);
+
+        // The limiter allows 10 requests per minute for a given signature.
+        for ($i = 0; $i < 10; $i++) {
+            $this->get($signedUrl)->assertOk();
+        }
+
+        $this->get($signedUrl)->assertStatus(429);
+    }
+
+    public function test_download_rate_limit_is_keyed_per_signature_not_per_ip(): void
+    {
+        $adoptionA = $this->createAdoption();
+        $adoptionB = $this->createAdoption();
+
+        $urlA = URL::temporarySignedRoute('adoptions.contract.download', now()->addHour(), [
+            'adoption' => $adoptionA->id,
+            'template' => 'default',
+        ]);
+        $urlB = URL::temporarySignedRoute('adoptions.contract.download', now()->addHour(), [
+            'adoption' => $adoptionB->id,
+            'template' => 'default',
+        ]);
+
+        for ($i = 0; $i < 10; $i++) {
+            $this->get($urlA)->assertOk();
+        }
+        $this->get($urlA)->assertStatus(429);
+
+        // A different signed link, from the same IP, is a different bucket.
+        $this->get($urlB)->assertOk();
     }
 }

@@ -2,9 +2,12 @@
 
 namespace Taily\Providers;
 
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Http\Kernel;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Routing\Router;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
@@ -53,6 +56,7 @@ class TailyServiceProvider extends ServiceProvider
         $this->registerRoutes();
         $this->registerMiddlewareAlias();
         $this->registerMiddlewarePriority();
+        $this->registerRateLimiters();
         $this->registerCommands();
 
         $this->publishes([
@@ -131,6 +135,20 @@ class TailyServiceProvider extends ServiceProvider
     protected function registerMiddlewarePriority(): void
     {
         $this->app->make(Kernel::class)->prependToMiddlewarePriority(ForceJsonResponse::class);
+    }
+
+    /**
+     * A signed contract-download URL stays valid (and replayable) for an
+     * hour, so anyone who obtains one — e.g. via a browser history, proxy
+     * log, or leaked link — could otherwise trigger unlimited PDF renders.
+     * Keying by the signature itself (rather than IP) bounds each distinct
+     * link regardless of how many source IPs the requests come from.
+     */
+    protected function registerRateLimiters(): void
+    {
+        RateLimiter::for('contract-download', function (Request $request) {
+            return Limit::perMinute(10)->by($request->query('signature', $request->ip()));
+        });
     }
 
     protected function configureMediaLibrary(): void

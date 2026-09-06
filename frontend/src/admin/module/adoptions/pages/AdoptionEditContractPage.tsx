@@ -118,7 +118,9 @@ export function AdoptionEditContractPage({
         if (downloadTab) {
           downloadTab.location.href = url
         } else {
-          toast.error('Popup wurde blockiert. Bitte Popups für diese Seite erlauben.')
+          toast.error(
+            'Popup wurde blockiert. Bitte Popups für diese Seite erlauben.'
+          )
         }
       } catch (error) {
         downloadTab?.close()

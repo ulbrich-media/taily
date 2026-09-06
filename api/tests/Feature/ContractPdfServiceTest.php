@@ -89,6 +89,21 @@ class ContractPdfServiceTest extends TestCase
         (new ContractPdfService)->generate($adoption, 'unknown');
     }
 
+    public function test_generate_resolves_a_template_key_containing_a_dot(): void
+    {
+        // A key like "regional.v1" must be looked up literally, not treated
+        // as a nested config path ("contracts.regional.v1") by config().
+        config(['taily.contracts' => array_merge(config('taily.contracts'), [
+            'regional.v1' => ['label' => 'Regional', 'view' => 'contracts.default'],
+        ])]);
+
+        $adoption = $this->createAdoption();
+
+        $pdf = (new ContractPdfService)->generate($adoption, 'regional.v1');
+
+        $this->assertStringStartsWith('%PDF', $pdf);
+    }
+
     public function test_filename_includes_a_slugified_animal_name_and_the_adoption_id(): void
     {
         $adoption = $this->createAdoption();

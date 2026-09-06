@@ -51,8 +51,11 @@ use Taily\Http\Controllers\Internal\VaccinationController;
 // Media serve route (signed URL is the auth mechanism)
 Route::get('/media/{mediaUuid}', [MediaController::class, 'serve'])->name('media.serve');
 
-// Contract PDF download (signed URL is the auth mechanism; see AdoptionContractController::generate)
+// Contract PDF download (signed URL is the auth mechanism; see AdoptionContractController::generate).
+// Rate-limited per signature (see TailyServiceProvider::registerRateLimiters)
+// so a leaked link can't be replayed to force unlimited PDF renders.
 Route::get('/adoptions/{adoption}/contract/download', [AdoptionContractController::class, 'download'])
+    ->middleware('throttle:contract-download')
     ->name('adoptions.contract.download');
 
 // Authentication routes (Laravel Fortify controllers, see ADR-008)

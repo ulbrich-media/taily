@@ -15,7 +15,11 @@ class ContractPdfService
      */
     public function generate(Adoption $adoption, string $templateKey): string
     {
-        $template = config("taily.contracts.{$templateKey}");
+        // Indexed directly (not via the "taily.contracts.{$templateKey}" dot
+        // path) so a configured key containing a dot, e.g. "regional.v1",
+        // resolves to itself instead of being parsed as a nested path.
+        $templates = config('taily.contracts', []);
+        $template = $templates[$templateKey] ?? null;
 
         abort_if($template === null, 404, 'Unbekannte Vertragsvorlage.');
 
