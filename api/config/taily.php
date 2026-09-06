@@ -44,7 +44,7 @@ return [
 
     'contracts' => [
         'default' => [
-            'label' => 'Schutzvertrag',
+            'label' => 'Schutzvertrag (Beispielvorlage)',
             'view' => 'contracts.default',
         ],
     ],

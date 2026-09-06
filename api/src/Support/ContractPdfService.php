@@ -3,6 +3,7 @@
 namespace Taily\Support;
 
 use Barryvdh\DomPDF\Facade\Pdf;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Taily\Models\Adoption;
 
 class ContractPdfService
@@ -10,7 +11,7 @@ class ContractPdfService
     /**
      * Render the given adoption's contract template to PDF bytes.
      *
-     * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException if the template key is unknown.
+     * @throws NotFoundHttpException if the template key is unknown.
      */
     public function generate(Adoption $adoption, string $templateKey): string
     {

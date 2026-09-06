@@ -55,10 +55,15 @@
 </head>
 <body>
     <h1>Schutzvertrag</h1>
+    <p style="color: #b91c1c; font-style: italic;">
+        Hinweis: Dies ist eine Beispielvorlage zu Demonstrationszwecken und kein
+        rechtssicherer, produktionsreifer Vertrag. Vor dem Einsatz muss sie durch
+        eine eigene, rechtlich geprüfte Fassung ersetzt werden.
+    </p>
     <p>
         Dieser Schutzvertrag wird geschlossen zwischen {{ $organization->name ?? 'der Organisation' }}
         (vertreten durch {{ $mediator->full_name ?? 'den Vermittler' }}) und
-        {{ $applicant->full_name }} ("Übernehmer:in").
+        {{ $applicant->full_name }} ("Adoptant:in").
     </p>
 
     <h2>Tier</h2>
@@ -81,7 +86,7 @@
         </tr>
     </table>
 
-    <h2>Übernehmer:in</h2>
+    <h2>Adoptant:in</h2>
     <table>
         <tr>
             <td class="label">Name</td>
@@ -118,7 +123,7 @@
 
     <h2>Bedingungen</h2>
     <p>
-        Der/die Übernehmer:in verpflichtet sich, das oben genannte Tier artgerecht zu halten, zu
+        Der/die Adoptant:in verpflichtet sich, das oben genannte Tier artgerecht zu halten, zu
         pflegen und tierärztlich zu versorgen. Eine Weitergabe an Dritte sowie eine gewerbliche
         Nutzung des Tieres sind ohne vorherige schriftliche Zustimmung der vermittelnden
         Organisation untersagt. Bei Zuwiderhandlung gegen diesen Vertrag behält sich die
@@ -134,7 +139,7 @@
             </td>
             <td>
                 <div class="signature-line">
-                    Ort, Datum, Unterschrift Übernehmer:in
+                    Ort, Datum, Unterschrift Adoptant:in
                 </div>
             </td>
         </tr>

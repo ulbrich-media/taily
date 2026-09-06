@@ -5,6 +5,7 @@ namespace Taily\Http\Controllers\Internal;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Validation\Rule;
 use Taily\Http\Controllers\Controller;
 use Taily\Http\Resources\AdoptionDetailResource;
 use Taily\Models\Adoption;
@@ -71,7 +72,7 @@ class AdoptionContractController extends Controller
     public function generate(Request $request, Adoption $adoption, ContractPdfService $contractPdfService): Response
     {
         $validated = $request->validate([
-            'template' => 'required|string|in:'.implode(',', array_keys(config('taily.contracts'))),
+            'template' => ['required', 'string', Rule::in(array_keys(config('taily.contracts')))],
         ]);
 
         $pdf = $contractPdfService->generate($adoption, $validated['template']);
@@ -79,6 +80,7 @@ class AdoptionContractController extends Controller
         return response($pdf, 200, [
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'attachment; filename="'.$contractPdfService->filename($adoption).'"',
+            'Cache-Control' => 'no-store',
         ]);
     }
 }

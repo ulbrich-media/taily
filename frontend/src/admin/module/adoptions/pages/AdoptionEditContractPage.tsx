@@ -8,23 +8,23 @@ import {
   DialogTitle,
   DialogBreadcrumb,
 } from '@/shadcn/components/ui/dialog.tsx'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { format } from 'date-fns'
 import { FileDown, X } from 'lucide-react'
-import {
-  adoptionQueryKeys,
-  getContractTemplatesQuery,
-} from '@/admin/module/adoptions/api/queries.ts'
+import { adoptionQueryKeys } from '@/admin/module/adoptions/api/queries.ts'
 import { updateContract } from '@/admin/module/adoptions/api/requests.ts'
 import { toast } from 'sonner'
 import { Button } from '@/shadcn/components/ui/button.tsx'
 import { DateInput } from '@/components/field/DateInput.tsx'
 import { Switch } from '@/components/field/Switch.tsx'
 import { FieldGroup } from '@/shadcn/components/ui/field.tsx'
-import type { AdoptionDetailResource } from '@/api/types/adoptions'
+import type {
+  AdoptionDetailResource,
+  ContractTemplate,
+} from '@/api/types/adoptions'
 import {
   toApiDate,
   toDateFieldValue,
@@ -50,12 +50,14 @@ type FormData = z.infer<typeof schema>
 
 interface AdoptionEditContractPageProps {
   adoption: AdoptionDetailResource
+  templates: ContractTemplate[]
   onClose: () => void
   breadcrumb?: ReactNode
 }
 
 export function AdoptionEditContractPage({
   adoption,
+  templates,
   onClose,
   breadcrumb,
 }: AdoptionEditContractPageProps) {
@@ -64,8 +66,6 @@ export function AdoptionEditContractPage({
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [removeExistingFile, setRemoveExistingFile] = useState(false)
   const [selectedTemplate, setSelectedTemplate] = useState('')
-
-  const { data: templates } = useQuery(getContractTemplatesQuery())
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -162,12 +162,12 @@ export function AdoptionEditContractPage({
                 <SelectTrigger
                   className="flex-1"
                   aria-label="Vertragsvorlage auswählen"
-                  disabled={!templates?.length}
+                  disabled={!templates.length}
                 >
                   <SelectValue placeholder="Vorlage auswählen" />
                 </SelectTrigger>
                 <SelectContent>
-                  {templates?.map((template) => (
+                  {templates.map((template) => (
                     <SelectItem key={template.key} value={template.key}>
                       {template.label}
                     </SelectItem>
@@ -177,7 +177,7 @@ export function AdoptionEditContractPage({
               {selectedTemplate ? (
                 <Button variant="outline" size="icon" asChild>
                   <a
-                    href={`${API_URL}/adoptions/${adoption.id}/contract/generate?template=${selectedTemplate}`}
+                    href={`${API_URL}/adoptions/${adoption.id}/contract/generate?template=${encodeURIComponent(selectedTemplate)}`}
                     target="_blank"
                     rel="noreferrer"
                     aria-label="Vertrag generieren"
@@ -197,7 +197,7 @@ export function AdoptionEditContractPage({
                 </Button>
               )}
             </ButtonGroup>
-            {templates?.length === 0 && (
+            {templates.length === 0 && (
               <p className="text-sm text-muted-foreground">
                 Keine Vertragsvorlagen verfügbar.
               </p>

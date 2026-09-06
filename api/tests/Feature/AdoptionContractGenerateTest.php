@@ -65,7 +65,7 @@ class AdoptionContractGenerateTest extends TestCase
 
         $response->assertOk();
         $response->assertJson([
-            ['key' => 'default', 'label' => 'Schutzvertrag'],
+            ['key' => 'default', 'label' => 'Schutzvertrag (Beispielvorlage)'],
         ]);
 
         // Doesn't accidentally hit /adoptions/{adoption} (resource show route).
@@ -83,6 +83,7 @@ class AdoptionContractGenerateTest extends TestCase
 
         $response->assertOk();
         $response->assertHeader('Content-Type', 'application/pdf');
+        $this->assertStringContainsString('no-store', $response->headers->get('Cache-Control'));
         $this->assertStringStartsWith('%PDF', $response->getContent());
     }
 
