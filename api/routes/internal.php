@@ -51,6 +51,13 @@ use Taily\Http\Controllers\Internal\VaccinationController;
 // Media serve route (signed URL is the auth mechanism)
 Route::get('/media/{mediaUuid}', [MediaController::class, 'serve'])->name('media.serve');
 
+// Contract PDF download (signed URL is the auth mechanism; see AdoptionContractController::generate).
+// Rate-limited per signature (see TailyServiceProvider::registerRateLimiters)
+// so a leaked link can't be replayed to force unlimited PDF renders.
+Route::get('/adoptions/{adoption}/contract/download', [AdoptionContractController::class, 'download'])
+    ->middleware('throttle:contract-download')
+    ->name('adoptions.contract.download');
+
 // Authentication routes (Laravel Fortify controllers, see ADR-008)
 Route::post('/login', [AuthenticatedSessionController::class, 'store']);
 
@@ -186,8 +193,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // Adoptions
     Route::get('/adoptions/options', [AdoptionController::class, 'options']);
+    // Registered before the apiResource below so "contract-templates" isn't
+    // swallowed by the resource's /adoptions/{adoption} show route.
+    Route::get('/adoptions/contract-templates', [AdoptionContractController::class, 'templates']);
     Route::apiResource('adoptions', AdoptionController::class);
     Route::put('/adoptions/{adoption}/contract', [AdoptionContractController::class, 'store']);
+    Route::get('/adoptions/{adoption}/contract/generate', [AdoptionContractController::class, 'generate']);
 
     // API Tokens
     Route::get('/api-tokens/abilities', [ApiTokenController::class, 'abilities']);

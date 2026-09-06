@@ -13,15 +13,21 @@ import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { format } from 'date-fns'
-import { X } from 'lucide-react'
+import { FileDown, X } from 'lucide-react'
 import { adoptionQueryKeys } from '@/admin/module/adoptions/api/queries.ts'
-import { updateContract } from '@/admin/module/adoptions/api/requests.ts'
+import {
+  generateContract,
+  updateContract,
+} from '@/admin/module/adoptions/api/requests.ts'
 import { toast } from 'sonner'
 import { Button } from '@/shadcn/components/ui/button.tsx'
 import { DateInput } from '@/components/field/DateInput.tsx'
 import { Switch } from '@/components/field/Switch.tsx'
 import { FieldGroup } from '@/shadcn/components/ui/field.tsx'
-import type { AdoptionDetailResource } from '@/api/types/adoptions'
+import type {
+  AdoptionDetailResource,
+  ContractTemplate,
+} from '@/api/types/adoptions'
 import {
   toApiDate,
   toDateFieldValue,
@@ -29,6 +35,13 @@ import {
 } from '@/components/field/DateInput.utils.ts'
 import { Input } from '@/shadcn/components/ui/input.tsx'
 import { ButtonGroup } from '@/shadcn/components/ui/button-group.tsx'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/shadcn/components/ui/select.tsx'
 
 const schema = z.object({
   contract_signed: z.boolean(),
@@ -39,12 +52,14 @@ type FormData = z.infer<typeof schema>
 
 interface AdoptionEditContractPageProps {
   adoption: AdoptionDetailResource
+  templates: ContractTemplate[]
   onClose: () => void
   breadcrumb?: ReactNode
 }
 
 export function AdoptionEditContractPage({
   adoption,
+  templates,
   onClose,
   breadcrumb,
 }: AdoptionEditContractPageProps) {
@@ -52,6 +67,7 @@ export function AdoptionEditContractPage({
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [removeExistingFile, setRemoveExistingFile] = useState(false)
+  const [selectedTemplate, setSelectedTemplate] = useState('')
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -84,6 +100,35 @@ export function AdoptionEditContractPage({
     },
     onError: () => {
       toast.error('Fehler beim Speichern des Schutzvertrags')
+    },
+  })
+
+  const generateMutation = useMutation({
+    // Open the tab synchronously (still within the click's user-gesture
+    // context) and navigate it once the signed URL comes back, since
+    // browsers block window.open() calls made after an await.
+    mutationFn: async () => {
+      const downloadTab = window.open()
+      if (downloadTab) {
+        downloadTab.opener = null
+      }
+
+      try {
+        const { url } = await generateContract(adoption.id, selectedTemplate)
+        if (downloadTab) {
+          downloadTab.location.href = url
+        } else {
+          toast.error(
+            'Popup wurde blockiert. Bitte Popups für diese Seite erlauben.'
+          )
+        }
+      } catch (error) {
+        downloadTab?.close()
+        throw error
+      }
+    },
+    onError: () => {
+      toast.error('Fehler beim Generieren des Schutzvertrags')
     },
   })
 
@@ -137,6 +182,47 @@ export function AdoptionEditContractPage({
           onSubmit={form.handleSubmit((data) => mutation.mutate(data))}
           className="space-y-4"
         >
+          <div className="space-y-2">
+            <p className="text-sm font-medium">Vertrag generieren</p>
+
+            <ButtonGroup className="w-full">
+              <Select
+                value={selectedTemplate}
+                onValueChange={setSelectedTemplate}
+              >
+                <SelectTrigger
+                  className="flex-1"
+                  aria-label="Vertragsvorlage auswählen"
+                  disabled={!templates.length}
+                >
+                  <SelectValue placeholder="Vorlage auswählen" />
+                </SelectTrigger>
+                <SelectContent>
+                  {templates.map((template) => (
+                    <SelectItem key={template.key} value={template.key}>
+                      {template.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                aria-label="Vertrag generieren"
+                disabled={!selectedTemplate || generateMutation.isPending}
+                onClick={() => generateMutation.mutate()}
+              >
+                <FileDown />
+              </Button>
+            </ButtonGroup>
+            {templates.length === 0 && (
+              <p className="text-sm text-muted-foreground">
+                Keine Vertragsvorlagen verfügbar.
+              </p>
+            )}
+          </div>
+
           <Switch
             name="contract_signed"
             control={form.control}
