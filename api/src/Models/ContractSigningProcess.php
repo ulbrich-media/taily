@@ -63,6 +63,8 @@ class ContractSigningProcess extends Model implements HasMedia
 
     public function auditEvents(): HasMany
     {
-        return $this->hasMany(ContractSigningAuditEvent::class, 'signing_process_id');
+        return $this->hasMany(ContractSigningAuditEvent::class, 'signing_process_id')
+            ->orderBy('occurred_at')
+            ->orderBy('id');
     }
 }

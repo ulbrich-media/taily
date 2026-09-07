@@ -101,6 +101,21 @@ class ContractSigningControllerTest extends TestCase
         Mail::assertNothingSent();
     }
 
+    public function test_store_rejects_when_mediator_has_no_email(): void
+    {
+        Mail::fake();
+
+        $user = $this->createUser();
+        $adoption = $this->createAdoption(mediatorEmail: '');
+
+        $response = $this->actingAs($user)
+            ->withHeader('referer', 'http://localhost')
+            ->postJson("/internal/adoptions/{$adoption->id}/contract/signing", ['template' => 'default']);
+
+        $response->assertStatus(422);
+        Mail::assertNothingSent();
+    }
+
     public function test_store_rejects_an_unknown_template(): void
     {
         $user = $this->createUser();

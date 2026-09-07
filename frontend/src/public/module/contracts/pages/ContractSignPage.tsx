@@ -1,5 +1,9 @@
 import { useState } from 'react'
-import { useSuspenseQuery, useMutation } from '@tanstack/react-query'
+import {
+  useSuspenseQuery,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query'
 import {
   useForm,
   Controller,
@@ -96,6 +100,7 @@ interface ContractSignPageProps {
 }
 
 export function ContractSignPage({ token }: ContractSignPageProps) {
+  const queryClient = useQueryClient()
   const { data: contract } = useSuspenseQuery(getPublicContractQuery(token))
 
   const [confirmOpen, setConfirmOpen] = useState(false)
@@ -113,6 +118,10 @@ export function ContractSignPage({ token }: ContractSignPageProps) {
   const submitMutation = useMutation({
     mutationFn: (data: SignFormData) =>
       submitPublicContractSignature(token, data),
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: getPublicContractQuery(token).queryKey,
+      }),
     onError: () => setConfirmOpen(false),
   })
 
@@ -249,8 +258,7 @@ export function ContractSignPage({ token }: ContractSignPageProps) {
             <AlertDialogTitle>Unterschrift bestätigen</AlertDialogTitle>
             <AlertDialogDescription>
               Möchtest du den Schutzvertrag wirklich unterschreiben? Diese
-              Aktion kann nicht rückgängig gemacht werden. Der Link wird danach
-              ungültig.
+              Aktion kann nicht rückgängig gemacht werden.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

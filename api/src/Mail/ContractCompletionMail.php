@@ -22,7 +22,7 @@ class ContractCompletionMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Euer Schutzvertrag ist vollständig unterschrieben',
+            subject: 'Dein Schutzvertrag ist vollständig unterschrieben',
         );
     }
 

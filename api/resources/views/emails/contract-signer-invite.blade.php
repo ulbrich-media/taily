@@ -19,5 +19,5 @@ Falls der Button nicht funktioniert, kopiere diesen Link in deinen Browser:
 
 <x-mail::code>{{ $signUrl }}</x-mail::code>
 
-Der Link ist nur einmal gültig und läuft nach einer begrenzten Zeit ab.
+Der Link ist nur einmal gültig.
 </x-mail::message>

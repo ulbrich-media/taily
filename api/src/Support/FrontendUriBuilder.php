@@ -6,22 +6,22 @@ class FrontendUriBuilder
 {
     public static function inspect(string $token): string
     {
-        return static::callback('inspect', $token);
+        return self::callback('inspect', $token);
     }
 
     public static function contractSign(string $token): string
     {
-        return static::callback('contract_sign', $token);
+        return self::callback('contract_sign', $token);
     }
 
     public static function userInvite(string $token): string
     {
-        return static::callback('user_invite_accepted', $token);
+        return self::callback('user_invite_accepted', $token);
     }
 
     public static function passwordReset(string $token, string $email): string
     {
-        return static::callback('password_reset', $token, ['email' => $email]);
+        return self::callback('password_reset', $token, ['email' => $email]);
     }
 
     /**

@@ -5,6 +5,7 @@ namespace Taily\Http\Controllers\Internal;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Taily\Enums\ContractSignerRole;
@@ -15,6 +16,7 @@ use Taily\Models\ContractSigner;
 use Taily\Models\ContractSigningProcess;
 use Taily\Support\ContractCompletionService;
 use Taily\Support\ContractSigningService;
+use Throwable;
 
 class ContractSigningSubmissionController extends Controller
 {
@@ -153,11 +155,22 @@ class ContractSigningSubmissionController extends Controller
     {
         $adopterSigner = $process->signers()->where('role', ContractSignerRole::ADOPTER)->with('person')->firstOrFail();
 
-        if ($adopterSigner->person->email) {
+        if (! $adopterSigner->person->email) {
+            return;
+        }
+
+        try {
             Mail::to($adopterSigner->person->email)->send(
                 new ContractSignerInviteMail($adopterSigner, $adopterSigner->activeToken()->token)
             );
             $this->signingService->recordEmailSent($adopterSigner);
+        } catch (Throwable $e) {
+            // The mediator's signature is already committed at this point,
+            // so a mail delivery failure must not turn into a 500 here.
+            Log::error('Failed to send contract signer invite to adopter', [
+                'signing_process_id' => $process->id,
+                'exception' => $e,
+            ]);
         }
     }
 
