@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
@@ -70,6 +71,16 @@ class Adoption extends Model implements HasMedia
     public function preInspections(): HasMany
     {
         return $this->hasMany(PreInspection::class, 'person_id', 'applicant_id');
+    }
+
+    public function contractSigningProcesses(): HasMany
+    {
+        return $this->hasMany(ContractSigningProcess::class);
+    }
+
+    public function latestContractSigningProcess(): HasOne
+    {
+        return $this->hasOne(ContractSigningProcess::class)->latestOfMany();
     }
 
     public function registerMediaCollections(): void

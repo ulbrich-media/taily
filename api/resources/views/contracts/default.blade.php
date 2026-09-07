@@ -51,6 +51,13 @@
             border-top: 1px solid #1a1a1a;
             padding-top: 4px;
         }
+        .signature-name {
+            font-family: 'DejaVu Serif', serif;
+            font-style: italic;
+            font-size: 18px;
+            border-bottom: 1px solid #1a1a1a;
+            padding-bottom: 4px;
+        }
     </style>
 </head>
 <body>
@@ -133,16 +140,34 @@
     <table class="signatures">
         <tr>
             <td>
-                <div class="signature-line">
-                    Ort, Datum, Unterschrift Vermittler:in
-                </div>
+                @if(($mediatorSigner ?? null)?->isSigned())
+                    <div class="signature-name">{{ $mediatorSigner->typed_name }}</div>
+                    <div class="signature-line">
+                        Elektronisch unterschrieben am {{ $mediatorSigner->signed_at->format('d.m.Y, H:i') }} Uhr
+                    </div>
+                @else
+                    <div class="signature-line">
+                        Ort, Datum, Unterschrift Vermittler:in
+                    </div>
+                @endif
             </td>
             <td>
-                <div class="signature-line">
-                    Ort, Datum, Unterschrift Adoptant:in
-                </div>
+                @if(($adopterSigner ?? null)?->isSigned())
+                    <div class="signature-name">{{ $adopterSigner->typed_name }}</div>
+                    <div class="signature-line">
+                        Elektronisch unterschrieben am {{ $adopterSigner->signed_at->format('d.m.Y, H:i') }} Uhr
+                    </div>
+                @else
+                    <div class="signature-line">
+                        Ort, Datum, Unterschrift Adoptant:in
+                    </div>
+                @endif
             </td>
         </tr>
     </table>
+
+    @if($includeAuditTrail ?? false)
+        @include('taily::contracts.partials.audit-trail', ['auditEvents' => $auditEvents])
+    @endif
 </body>
 </html>

@@ -9,6 +9,11 @@ class FrontendUriBuilder
         return static::callback('inspect', $token);
     }
 
+    public static function contractSign(string $token): string
+    {
+        return static::callback('contract_sign', $token);
+    }
+
     public static function userInvite(string $token): string
     {
         return static::callback('user_invite_accepted', $token);
