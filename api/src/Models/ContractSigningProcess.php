@@ -45,6 +45,10 @@ class ContractSigningProcess extends Model implements HasMedia
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('document')->singleFile()->useDisk('contract-signing-document');
+        // Holds the re-rendered PDF (both signatures + audit trail appendix)
+        // produced once the process completes. `document` is kept alongside
+        // it, unsigned, so the two can later be compared to check for drift.
+        $this->addMediaCollection('final')->singleFile()->useDisk('contract-signing-document');
     }
 
     public function adoption(): BelongsTo
@@ -59,6 +63,8 @@ class ContractSigningProcess extends Model implements HasMedia
 
     public function auditEvents(): HasMany
     {
-        return $this->hasMany(ContractSigningAuditEvent::class, 'signing_process_id');
+        return $this->hasMany(ContractSigningAuditEvent::class, 'signing_process_id')
+            ->orderBy('occurred_at')
+            ->orderBy('id');
     }
 }

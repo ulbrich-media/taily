@@ -13,19 +13,22 @@ import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { format } from 'date-fns'
-import { FileDown, X } from 'lucide-react'
+import { FileDown, Send, X } from 'lucide-react'
 import { adoptionQueryKeys } from '@/admin/module/adoptions/api/queries.ts'
 import {
   generateContract,
+  startContractSigning,
   updateContract,
 } from '@/admin/module/adoptions/api/requests.ts'
 import { toast } from 'sonner'
 import { Button } from '@/shadcn/components/ui/button.tsx'
+import { ContractSigningStatus } from '@/admin/module/adoptions/components/ContractSigningStatus.tsx'
 import { DateInput } from '@/components/field/DateInput.tsx'
 import { Switch } from '@/components/field/Switch.tsx'
 import { FieldGroup } from '@/shadcn/components/ui/field.tsx'
 import type {
   AdoptionDetailResource,
+  ContractSigningStatus as ContractSigningStatusType,
   ContractTemplate,
 } from '@/api/types/adoptions'
 import {
@@ -50,6 +53,11 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>
 
+const ACTIVE_SIGNING_STATUSES: ContractSigningStatusType[] = [
+  'awaiting_mediator_signature',
+  'awaiting_adopter_signature',
+]
+
 interface AdoptionEditContractPageProps {
   adoption: AdoptionDetailResource
   templates: ContractTemplate[]
@@ -64,6 +72,8 @@ export function AdoptionEditContractPage({
   breadcrumb,
 }: AdoptionEditContractPageProps) {
   const queryClient = useQueryClient()
+
+  const signingProcess = adoption.contract_signing_process
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [removeExistingFile, setRemoveExistingFile] = useState(false)
@@ -129,6 +139,20 @@ export function AdoptionEditContractPage({
     },
     onError: () => {
       toast.error('Fehler beim Generieren des Schutzvertrags')
+    },
+  })
+
+  const startSigningMutation = useMutation({
+    mutationFn: () => startContractSigning(adoption.id, selectedTemplate),
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: adoptionQueryKeys.list() })
+      queryClient.invalidateQueries({
+        queryKey: adoptionQueryKeys.detail(adoption.id),
+      })
+      toast.success(response.message)
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Fehler beim Starten des Signaturvorgangs')
     },
   })
 
@@ -215,6 +239,21 @@ export function AdoptionEditContractPage({
               >
                 <FileDown />
               </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                aria-label="Signaturvorgang starten"
+                disabled={
+                  !selectedTemplate ||
+                  startSigningMutation.isPending ||
+                  (signingProcess !== null &&
+                    ACTIVE_SIGNING_STATUSES.includes(signingProcess.status))
+                }
+                onClick={() => startSigningMutation.mutate()}
+              >
+                <Send />
+              </Button>
             </ButtonGroup>
             {templates.length === 0 && (
               <p className="text-sm text-muted-foreground">
@@ -222,6 +261,8 @@ export function AdoptionEditContractPage({
               </p>
             )}
           </div>
+
+          {signingProcess && <ContractSigningStatus process={signingProcess} />}
 
           <Switch
             name="contract_signed"

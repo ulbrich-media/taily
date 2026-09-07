@@ -149,6 +149,20 @@ class TailyServiceProvider extends ServiceProvider
         RateLimiter::for('contract-download', function (Request $request) {
             return Limit::perMinute(10)->by($request->query('signature', $request->ip()));
         });
+
+        // Guards the public signing-token endpoints against brute-forcing or
+        // automated abuse of a specific token. Keyed by the token itself
+        // (not IP) so a single leaked/guessed token can't be hammered from
+        // many source IPs, and so other signers' links aren't affected. The
+        // added IP limit closes the gap where an attacker who controls the
+        // (invalid) token value could otherwise open a fresh 20/minute
+        // bucket per guess and bypass the per-token limit entirely.
+        RateLimiter::for('contract-sign', function (Request $request) {
+            return [
+                Limit::perMinute(20)->by('contract-sign-token:'.$request->route('token')),
+                Limit::perMinute(60)->by('contract-sign-ip:'.$request->ip()),
+            ];
+        });
     }
 
     protected function configureMediaLibrary(): void

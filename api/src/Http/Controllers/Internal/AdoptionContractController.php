@@ -19,6 +19,7 @@ class AdoptionContractController extends Controller
         'mediator', 'mediator.media',
         'applicant', 'applicant.media',
         'media',
+        'latestContractSigningProcess.signers.person',
     ];
 
     public function store(Request $request, Adoption $adoption): JsonResponse

@@ -21,6 +21,8 @@ use Taily\Http\Controllers\Internal\AnimalController;
 use Taily\Http\Controllers\Internal\AnimalPictureController;
 use Taily\Http\Controllers\Internal\AnimalTypeController;
 use Taily\Http\Controllers\Internal\ApiTokenController;
+use Taily\Http\Controllers\Internal\ContractSigningController;
+use Taily\Http\Controllers\Internal\ContractSigningSubmissionController;
 use Taily\Http\Controllers\Internal\FormTemplateController;
 use Taily\Http\Controllers\Internal\InvitationController;
 use Taily\Http\Controllers\Internal\MediaController;
@@ -199,6 +201,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::apiResource('adoptions', AdoptionController::class);
     Route::put('/adoptions/{adoption}/contract', [AdoptionContractController::class, 'store']);
     Route::get('/adoptions/{adoption}/contract/generate', [AdoptionContractController::class, 'generate']);
+    Route::post('/adoptions/{adoption}/contract/signing', [ContractSigningController::class, 'store']);
 
     // API Tokens
     Route::get('/api-tokens/abilities', [ApiTokenController::class, 'abilities']);
@@ -221,3 +224,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
 // Public pre-inspection submission routes (token-protected, no auth required)
 Route::get('/inspect/{token}', [PreInspectionSubmissionController::class, 'show']);
 Route::post('/inspect/{token}/submit', [PreInspectionSubmissionController::class, 'submit']);
+
+// Public contract signing routes (token-protected, no auth required). Rate
+// limited per token (not IP) — see TailyServiceProvider::registerRateLimiters.
+Route::get('/contracts/{token}', [ContractSigningSubmissionController::class, 'show'])
+    ->middleware('throttle:contract-sign');
+Route::get('/contracts/{token}/document', [ContractSigningSubmissionController::class, 'document'])
+    ->middleware('throttle:contract-sign');
+Route::post('/contracts/{token}/submit', [ContractSigningSubmissionController::class, 'submit'])
+    ->middleware('throttle:contract-sign');

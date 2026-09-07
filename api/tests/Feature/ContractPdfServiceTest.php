@@ -3,6 +3,7 @@
 namespace Taily\Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Taily\Models\Adoption;
 use Taily\Models\Animal;
@@ -10,6 +11,7 @@ use Taily\Models\AnimalType;
 use Taily\Models\Organization;
 use Taily\Models\Person;
 use Taily\Support\ContractPdfService;
+use Taily\Support\ContractSigningService;
 use Taily\Tests\TestCase;
 
 class ContractPdfServiceTest extends TestCase
@@ -111,5 +113,22 @@ class ContractPdfServiceTest extends TestCase
         $filename = (new ContractPdfService)->filename($adoption);
 
         $this->assertSame("schutzvertrag-bello-{$adoption->id}.pdf", $filename);
+    }
+
+    public function test_generate_final_renders_a_pdf_with_both_signatures_and_the_audit_trail(): void
+    {
+        Storage::fake('contract-signing-document');
+
+        $adoption = $this->createAdoption();
+        $pdfService = new ContractPdfService;
+        $signingService = new ContractSigningService;
+
+        $process = $signingService->start($adoption, 'default', $pdfService->generate($adoption, 'default'));
+        $signingService->recordMediatorSignature($process, 'Maria Vermittlerin', true, true, true);
+        $signingService->recordAdopterSignature($process, 'Anna Übernehmerin', true, true, true);
+
+        $pdf = $pdfService->generateFinal($process->fresh());
+
+        $this->assertStringStartsWith('%PDF', $pdf);
     }
 }
