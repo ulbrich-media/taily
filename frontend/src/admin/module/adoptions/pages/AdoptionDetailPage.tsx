@@ -8,6 +8,7 @@ import {
   CardTitle,
 } from '@/shadcn/components/ui/card'
 import { PreInspectionList } from '@/admin/module/pre-inspections/components/PreInspectionList'
+import { ContractSigningStatus } from '@/admin/module/adoptions/components/ContractSigningStatus.tsx'
 import { BadgeBySet } from '@/shadcn/components/ui/badge-utils.tsx'
 import {
   InfoRow,
@@ -160,6 +161,11 @@ export function AdoptionDetailPage({
               </InfoRow>
             )}
           </div>
+          {adoption.contract_signing_process && (
+            <ContractSigningStatus
+              process={adoption.contract_signing_process}
+            />
+          )}
           <div className="flex justify-end">{editContractAction}</div>
         </div>
       </StepCard>

@@ -29,11 +29,6 @@ class ContractSigningController extends Controller
         'latestContractSigningProcess.signers.person',
     ];
 
-    private const ACTIVE_STATUSES = [
-        ContractSigningStatus::AWAITING_MEDIATOR_SIGNATURE,
-        ContractSigningStatus::AWAITING_ADOPTER_SIGNATURE,
-    ];
-
     public function __construct(
         private ContractPdfService $pdfService,
         private ContractSigningService $signingService,
@@ -68,7 +63,7 @@ class ContractSigningController extends Controller
             Adoption::whereKey($adoption->id)->lockForUpdate()->firstOrFail();
 
             $hasActiveProcess = $adoption->contractSigningProcesses()
-                ->whereIn('status', self::ACTIVE_STATUSES)
+                ->whereIn('status', ContractSigningStatus::activeStatuses())
                 ->exists();
 
             if ($hasActiveProcess) {

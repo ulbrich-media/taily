@@ -11,6 +11,21 @@ enum ContractSigningStatus: string
     case EXPIRED = 'expired';
 
     /**
+     * Statuses for a signing process that is still awaiting a signature.
+     *
+     * @return list<self>
+     */
+    public static function activeStatuses(): array
+    {
+        return [self::AWAITING_MEDIATOR_SIGNATURE, self::AWAITING_ADOPTER_SIGNATURE];
+    }
+
+    public function isActive(): bool
+    {
+        return in_array($this, self::activeStatuses(), true);
+    }
+
+    /**
      * German label for the admin-facing status readout.
      */
     public function label(): string

@@ -13,7 +13,7 @@ import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { format } from 'date-fns'
-import { CheckCircle2, Circle, FileDown, Send, X } from 'lucide-react'
+import { FileDown, Send, X } from 'lucide-react'
 import { adoptionQueryKeys } from '@/admin/module/adoptions/api/queries.ts'
 import {
   generateContract,
@@ -22,14 +22,13 @@ import {
 } from '@/admin/module/adoptions/api/requests.ts'
 import { toast } from 'sonner'
 import { Button } from '@/shadcn/components/ui/button.tsx'
-import { Badge } from '@/shadcn/components/ui/badge.tsx'
+import { ContractSigningStatus } from '@/admin/module/adoptions/components/ContractSigningStatus.tsx'
 import { DateInput } from '@/components/field/DateInput.tsx'
 import { Switch } from '@/components/field/Switch.tsx'
 import { FieldGroup } from '@/shadcn/components/ui/field.tsx'
 import type {
   AdoptionDetailResource,
-  ContractSignerRole,
-  ContractSigningStatus,
+  ContractSigningStatus as ContractSigningStatusType,
   ContractTemplate,
 } from '@/api/types/adoptions'
 import {
@@ -54,20 +53,7 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>
 
-const SIGNING_STATUS_LABELS: Record<ContractSigningStatus, string> = {
-  awaiting_mediator_signature: 'Wartet auf Unterschrift des Vermittlers',
-  awaiting_adopter_signature: 'Wartet auf Unterschrift des Adoptanten',
-  completed: 'Abgeschlossen',
-  cancelled: 'Abgebrochen',
-  expired: 'Abgelaufen',
-}
-
-const SIGNER_ROLE_LABELS: Record<ContractSignerRole, string> = {
-  mediator: 'Vermittler:in',
-  adopter: 'Adoptant:in',
-}
-
-const ACTIVE_SIGNING_STATUSES: ContractSigningStatus[] = [
+const ACTIVE_SIGNING_STATUSES: ContractSigningStatusType[] = [
   'awaiting_mediator_signature',
   'awaiting_adopter_signature',
 ]
@@ -276,32 +262,7 @@ export function AdoptionEditContractPage({
             )}
           </div>
 
-          {signingProcess && (
-            <div className="space-y-2 rounded-md border p-3">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium">Signaturvorgang</p>
-                <Badge variant="secondary">
-                  {SIGNING_STATUS_LABELS[signingProcess.status]}
-                </Badge>
-              </div>
-              <ul className="space-y-1">
-                {signingProcess.signers.map((signer) => (
-                  <li
-                    key={signer.role}
-                    className="flex items-center gap-2 text-sm text-muted-foreground"
-                  >
-                    {signer.signed_at ? (
-                      <CheckCircle2 className="size-4 text-green-600" />
-                    ) : (
-                      <Circle className="size-4" />
-                    )}
-                    {SIGNER_ROLE_LABELS[signer.role]}
-                    {signer.full_name ? ` – ${signer.full_name}` : ''}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+          {signingProcess && <ContractSigningStatus process={signingProcess} />}
 
           <Switch
             name="contract_signed"

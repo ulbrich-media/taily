@@ -90,7 +90,17 @@ class Adoption extends Model implements HasMedia
 
     public function getContractStatusAttribute(): string
     {
-        return $this->contract_signed ? 'finished' : 'not_started';
+        if ($this->contract_signed) {
+            return 'finished';
+        }
+
+        $signingProcess = $this->getRelationValue('latestContractSigningProcess');
+
+        if ($signingProcess?->status->isActive()) {
+            return 'pending';
+        }
+
+        return 'not_started';
     }
 
     public function getTransportStatusAttribute(): string

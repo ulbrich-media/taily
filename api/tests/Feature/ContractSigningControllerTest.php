@@ -86,6 +86,28 @@ class ContractSigningControllerTest extends TestCase
         Mail::assertSent(ContractSignerInviteMail::class, fn (ContractSignerInviteMail $mail) => $mail->hasTo('maria@example.com'));
     }
 
+    public function test_store_marks_the_adoptions_contract_status_as_pending(): void
+    {
+        Mail::fake();
+
+        $user = $this->createUser();
+        $adoption = $this->createAdoption();
+
+        $response = $this->actingAs($user)
+            ->withHeader('referer', 'http://localhost')
+            ->postJson("/internal/adoptions/{$adoption->id}/contract/signing", ['template' => 'default']);
+
+        $response->assertCreated();
+        $this->assertSame('pending', $response->json('data.contract_status'));
+
+        $index = $this->actingAs($user)->getJson('/internal/adoptions');
+        $index->assertOk();
+        $this->assertSame(
+            'pending',
+            collect($index->json())->firstWhere('id', $adoption->id)['contract_status']
+        );
+    }
+
     public function test_store_rejects_when_adoption_has_no_mediator(): void
     {
         Mail::fake();
