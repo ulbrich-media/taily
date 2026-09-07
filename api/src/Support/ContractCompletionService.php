@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Taily\Enums\ContractSignerRole;
 use Taily\Mail\ContractCompletionMail;
+use Taily\Models\Adoption;
 use Taily\Models\ContractSigningProcess;
 use Throwable;
 
@@ -36,26 +37,33 @@ class ContractCompletionService
         $finalBytes = $this->pdfService->generateFinal($process);
         $hash = hash('sha256', $finalBytes);
 
-        $process->addMediaFromString($finalBytes)
-            ->usingFileName('final.pdf')
-            ->toMediaCollection('final');
+        // The adoption row is locked here under the same lock that
+        // ContractSigningController::store() takes before its contract_signed
+        // check, closing the race where a new signing process could be
+        // started while completion for this adoption is in flight. Media
+        // writes and both state transitions happen inside the same
+        // transaction: leaving the adoption marked as signed without a
+        // matching final_document_hash on the process (or media written
+        // without either) would be an inconsistent, half-completed state.
+        $adoption = DB::transaction(function () use ($process, $finalBytes, $hash) {
+            $adoption = Adoption::whereKey($process->adoption_id)->with('animal')->lockForUpdate()->firstOrFail();
 
-        $adoption = $process->adoption;
-        $adoption->clearMediaCollection('contract');
-        $adoption->addMediaFromString($finalBytes)
-            ->usingFileName($this->pdfService->filename($adoption))
-            ->toMediaCollection('contract');
+            $process->addMediaFromString($finalBytes)
+                ->usingFileName('final.pdf')
+                ->toMediaCollection('final');
 
-        // Both state transitions happen together: leaving the adoption
-        // marked as signed without a matching final_document_hash on the
-        // process (or vice versa) would be an inconsistent, half-completed
-        // state.
-        DB::transaction(function () use ($adoption, $process, $hash) {
+            $adoption->clearMediaCollection('contract');
+            $adoption->addMediaFromString($finalBytes)
+                ->usingFileName($this->pdfService->filename($adoption))
+                ->toMediaCollection('contract');
+
             $adoption->contract_signed = true;
             $adoption->contract_signed_at = now();
             $adoption->save();
 
             $this->signingService->finalize($process, $hash);
+
+            return $adoption;
         });
 
         $downloadUrl = $adoption->getFirstMedia('contract')->getTemporaryUrl(now()->addDays(7));

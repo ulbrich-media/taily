@@ -25,8 +25,12 @@ class ContractSigningControllerTest extends TestCase
         Storage::fake('contract-signing-document');
     }
 
-    private function createAdoption(bool $withMediator = true, ?string $mediatorEmail = 'maria@example.com'): Adoption
-    {
+    private function createAdoption(
+        bool $withMediator = true,
+        ?string $mediatorEmail = 'maria@example.com',
+        string $applicantEmail = 'anna@example.com',
+        bool $contractSigned = false,
+    ): Adoption {
         $animalType = AnimalType::create(['title' => 'Hund']);
 
         $animal = Animal::create([
@@ -47,14 +51,14 @@ class ContractSigningControllerTest extends TestCase
         $applicant = Person::create([
             'first_name' => 'Anna',
             'last_name' => 'Übernehmerin',
-            'email' => 'anna@example.com',
+            'email' => $applicantEmail,
         ]);
 
         return Adoption::create([
             'animal_id' => $animal->id,
             'mediator_id' => $mediatorId,
             'applicant_id' => $applicant->id,
-            'contract_signed' => false,
+            'contract_signed' => $contractSigned,
         ]);
     }
 
@@ -129,6 +133,36 @@ class ContractSigningControllerTest extends TestCase
 
         $user = $this->createUser();
         $adoption = $this->createAdoption(mediatorEmail: '');
+
+        $response = $this->actingAs($user)
+            ->withHeader('referer', 'http://localhost')
+            ->postJson("/internal/adoptions/{$adoption->id}/contract/signing", ['template' => 'default']);
+
+        $response->assertStatus(422);
+        Mail::assertNothingSent();
+    }
+
+    public function test_store_rejects_when_applicant_has_no_email(): void
+    {
+        Mail::fake();
+
+        $user = $this->createUser();
+        $adoption = $this->createAdoption(applicantEmail: '');
+
+        $response = $this->actingAs($user)
+            ->withHeader('referer', 'http://localhost')
+            ->postJson("/internal/adoptions/{$adoption->id}/contract/signing", ['template' => 'default']);
+
+        $response->assertStatus(422);
+        Mail::assertNothingSent();
+    }
+
+    public function test_store_rejects_when_adoption_contract_is_already_signed(): void
+    {
+        Mail::fake();
+
+        $user = $this->createUser();
+        $adoption = $this->createAdoption(contractSigned: true);
 
         $response = $this->actingAs($user)
             ->withHeader('referer', 'http://localhost')

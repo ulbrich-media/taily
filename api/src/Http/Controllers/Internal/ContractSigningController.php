@@ -56,13 +56,28 @@ class ContractSigningController extends Controller
             ]);
         }
 
-        // The active-process check and creation are locked together so two
-        // concurrent requests for the same adoption can't both pass the
-        // check and end up with two active signing processes.
-        $process = DB::transaction(function () use ($adoption, $validated) {
-            Adoption::whereKey($adoption->id)->lockForUpdate()->firstOrFail();
+        if (! $adoption->applicant?->email) {
+            throw ValidationException::withMessages([
+                'template' => ['Der Adoptant hat keine E-Mail-Adresse hinterlegt.'],
+            ]);
+        }
 
-            $hasActiveProcess = $adoption->contractSigningProcesses()
+        // The contract_signed check, the active-process check, and the
+        // process creation all run against the same row-locked instance, and
+        // under the same adoption lock that ContractCompletionService::complete()
+        // takes. This closes two races: two concurrent requests both passing
+        // the active-process check, and a request starting a new process for
+        // an adoption whose completion is concurrently in flight.
+        $process = DB::transaction(function () use ($adoption, $validated) {
+            $lockedAdoption = Adoption::whereKey($adoption->id)->lockForUpdate()->firstOrFail();
+
+            if ($lockedAdoption->contract_signed) {
+                throw ValidationException::withMessages([
+                    'template' => ['Der Vertrag für diese Vermittlung ist bereits unterschrieben.'],
+                ]);
+            }
+
+            $hasActiveProcess = $lockedAdoption->contractSigningProcesses()
                 ->whereIn('status', ContractSigningStatus::activeStatuses())
                 ->exists();
 

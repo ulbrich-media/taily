@@ -80,7 +80,7 @@ class Adoption extends Model implements HasMedia
 
     public function latestContractSigningProcess(): HasOne
     {
-        return $this->hasOne(ContractSigningProcess::class)->latestOfMany();
+        return $this->hasOne(ContractSigningProcess::class)->latestOfMany('created_at');
     }
 
     public function registerMediaCollections(): void
