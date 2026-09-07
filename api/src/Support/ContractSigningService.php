@@ -20,7 +20,7 @@ use Taily\Models\Person;
  */
 class ContractSigningService
 {
-    private const SIGNER_TOKEN_LIFETIME_WEEKS = 2;
+    private const SIGNER_TOKEN_LIFETIME_DAYS = 14;
 
     /**
      * Start a brand-new signing process for the given adoption: freezes the
@@ -245,7 +245,7 @@ class ContractSigningService
             'role' => $role,
         ]);
 
-        $signer->issueToken(now()->addWeeks(self::SIGNER_TOKEN_LIFETIME_WEEKS));
+        $signer->issueToken(now()->addDays(self::SIGNER_TOKEN_LIFETIME_DAYS));
 
         return $signer;
     }
