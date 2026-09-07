@@ -84,3 +84,13 @@ export async function generateContract(
     `adoptions/${id}/contract/generate?template=${encodeURIComponent(template)}`
   )
 }
+
+export async function startContractSigning(
+  id: string,
+  template: string
+): Promise<AdoptionResponse> {
+  return apiRequest<AdoptionResponse>(`adoptions/${id}/contract/signing`, {
+    method: 'POST',
+    body: JSON.stringify({ template }),
+  })
+}

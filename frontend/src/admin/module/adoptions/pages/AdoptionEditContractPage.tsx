@@ -13,19 +13,23 @@ import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { format } from 'date-fns'
-import { FileDown, X } from 'lucide-react'
+import { CheckCircle2, Circle, FileDown, Send, X } from 'lucide-react'
 import { adoptionQueryKeys } from '@/admin/module/adoptions/api/queries.ts'
 import {
   generateContract,
+  startContractSigning,
   updateContract,
 } from '@/admin/module/adoptions/api/requests.ts'
 import { toast } from 'sonner'
 import { Button } from '@/shadcn/components/ui/button.tsx'
+import { Badge } from '@/shadcn/components/ui/badge.tsx'
 import { DateInput } from '@/components/field/DateInput.tsx'
 import { Switch } from '@/components/field/Switch.tsx'
 import { FieldGroup } from '@/shadcn/components/ui/field.tsx'
 import type {
   AdoptionDetailResource,
+  ContractSignerRole,
+  ContractSigningStatus,
   ContractTemplate,
 } from '@/api/types/adoptions'
 import {
@@ -50,6 +54,24 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>
 
+const SIGNING_STATUS_LABELS: Record<ContractSigningStatus, string> = {
+  awaiting_mediator_signature: 'Wartet auf Unterschrift des Vermittlers',
+  awaiting_adopter_signature: 'Wartet auf Unterschrift des Adoptanten',
+  completed: 'Abgeschlossen',
+  cancelled: 'Abgebrochen',
+  expired: 'Abgelaufen',
+}
+
+const SIGNER_ROLE_LABELS: Record<ContractSignerRole, string> = {
+  mediator: 'Vermittler:in',
+  adopter: 'Adoptant:in',
+}
+
+const ACTIVE_SIGNING_STATUSES: ContractSigningStatus[] = [
+  'awaiting_mediator_signature',
+  'awaiting_adopter_signature',
+]
+
 interface AdoptionEditContractPageProps {
   adoption: AdoptionDetailResource
   templates: ContractTemplate[]
@@ -64,6 +86,8 @@ export function AdoptionEditContractPage({
   breadcrumb,
 }: AdoptionEditContractPageProps) {
   const queryClient = useQueryClient()
+
+  const signingProcess = adoption.contract_signing_process
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [removeExistingFile, setRemoveExistingFile] = useState(false)
@@ -129,6 +153,20 @@ export function AdoptionEditContractPage({
     },
     onError: () => {
       toast.error('Fehler beim Generieren des Schutzvertrags')
+    },
+  })
+
+  const startSigningMutation = useMutation({
+    mutationFn: () => startContractSigning(adoption.id, selectedTemplate),
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: adoptionQueryKeys.list() })
+      queryClient.invalidateQueries({
+        queryKey: adoptionQueryKeys.detail(adoption.id),
+      })
+      toast.success(response.message)
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Fehler beim Starten des Signaturvorgangs')
     },
   })
 
@@ -215,6 +253,21 @@ export function AdoptionEditContractPage({
               >
                 <FileDown />
               </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                aria-label="Signaturvorgang starten"
+                disabled={
+                  !selectedTemplate ||
+                  startSigningMutation.isPending ||
+                  (signingProcess !== null &&
+                    ACTIVE_SIGNING_STATUSES.includes(signingProcess.status))
+                }
+                onClick={() => startSigningMutation.mutate()}
+              >
+                <Send />
+              </Button>
             </ButtonGroup>
             {templates.length === 0 && (
               <p className="text-sm text-muted-foreground">
@@ -222,6 +275,33 @@ export function AdoptionEditContractPage({
               </p>
             )}
           </div>
+
+          {signingProcess && (
+            <div className="space-y-2 rounded-md border p-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium">Signaturvorgang</p>
+                <Badge variant="secondary">
+                  {SIGNING_STATUS_LABELS[signingProcess.status]}
+                </Badge>
+              </div>
+              <ul className="space-y-1">
+                {signingProcess.signers.map((signer) => (
+                  <li
+                    key={signer.role}
+                    className="flex items-center gap-2 text-sm text-muted-foreground"
+                  >
+                    {signer.signed_at ? (
+                      <CheckCircle2 className="size-4 text-green-600" />
+                    ) : (
+                      <Circle className="size-4" />
+                    )}
+                    {SIGNER_ROLE_LABELS[signer.role]}
+                    {signer.full_name ? ` – ${signer.full_name}` : ''}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           <Switch
             name="contract_signed"
