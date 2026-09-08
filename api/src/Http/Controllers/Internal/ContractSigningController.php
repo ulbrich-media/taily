@@ -156,6 +156,8 @@ class ContractSigningController extends Controller
 
             if ($adopterSigner?->person?->email) {
                 try {
+                    $adoption->loadMissing('animal');
+
                     Mail::to($adopterSigner->person->email)->send(
                         new ContractSigningCancelledMail($adopterSigner, $adoption->animal->name)
                     );
