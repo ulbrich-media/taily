@@ -13,7 +13,7 @@ import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { format } from 'date-fns'
-import { FileDown, Send, X } from 'lucide-react'
+import { Ban, FileDown, Send, X } from 'lucide-react'
 import { adoptionQueryKeys } from '@/admin/module/adoptions/api/queries.ts'
 import {
   generateContract,
@@ -23,6 +23,7 @@ import {
 import { toast } from 'sonner'
 import { Button } from '@/shadcn/components/ui/button.tsx'
 import { ContractSigningStatus } from '@/admin/module/adoptions/components/ContractSigningStatus.tsx'
+import { AdoptionCancelContractSigningPage } from '@/admin/module/adoptions/pages/AdoptionCancelContractSigningPage.tsx'
 import { DateInput } from '@/components/field/DateInput.tsx'
 import { Switch } from '@/components/field/Switch.tsx'
 import { FieldGroup } from '@/shadcn/components/ui/field.tsx'
@@ -78,6 +79,11 @@ export function AdoptionEditContractPage({
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [removeExistingFile, setRemoveExistingFile] = useState(false)
   const [selectedTemplate, setSelectedTemplate] = useState('')
+  const [cancelSigningDialogOpen, setCancelSigningDialogOpen] = useState(false)
+
+  const hasActiveSigningProcess =
+    signingProcess !== null &&
+    ACTIVE_SIGNING_STATUSES.includes(signingProcess.status)
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -194,138 +200,158 @@ export function AdoptionEditContractPage({
       : null
 
   return (
-    <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Schutzvertrag bearbeiten</DialogTitle>
-          <DialogDescription>
-            Unterzeichnungsstatus und Schutzvertragsdatei verwalten.
-          </DialogDescription>
-        </DialogHeader>
-        <form
-          onSubmit={form.handleSubmit((data) => mutation.mutate(data))}
-          className="space-y-4"
-        >
-          <div className="space-y-2">
-            <p className="text-sm font-medium">Vertrag generieren</p>
+    <>
+      <Dialog open onOpenChange={(open) => !open && onClose()}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Schutzvertrag bearbeiten</DialogTitle>
+            <DialogDescription>
+              Unterzeichnungsstatus und Schutzvertragsdatei verwalten.
+            </DialogDescription>
+          </DialogHeader>
+          <form
+            onSubmit={form.handleSubmit((data) => mutation.mutate(data))}
+            className="space-y-4"
+          >
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Vertrag generieren</p>
 
-            <ButtonGroup className="w-full">
-              <Select
-                value={selectedTemplate}
-                onValueChange={setSelectedTemplate}
-              >
-                <SelectTrigger
-                  className="flex-1"
-                  aria-label="Vertragsvorlage auswählen"
-                  disabled={!templates.length}
+              <ButtonGroup className="w-full">
+                <Select
+                  value={selectedTemplate}
+                  onValueChange={setSelectedTemplate}
                 >
-                  <SelectValue placeholder="Vorlage auswählen" />
-                </SelectTrigger>
-                <SelectContent>
-                  {templates.map((template) => (
-                    <SelectItem key={template.key} value={template.key}>
-                      {template.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                aria-label="Vertrag generieren"
-                disabled={!selectedTemplate || generateMutation.isPending}
-                onClick={() => generateMutation.mutate()}
-              >
-                <FileDown />
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                aria-label="Signaturvorgang starten"
-                disabled={
-                  !selectedTemplate ||
-                  startSigningMutation.isPending ||
-                  (signingProcess !== null &&
-                    ACTIVE_SIGNING_STATUSES.includes(signingProcess.status))
-                }
-                onClick={() => startSigningMutation.mutate()}
-              >
-                <Send />
-              </Button>
-            </ButtonGroup>
-            {templates.length === 0 && (
-              <p className="text-sm text-muted-foreground">
-                Keine Vertragsvorlagen verfügbar.
-              </p>
-            )}
-          </div>
-
-          {signingProcess && <ContractSigningStatus process={signingProcess} />}
-
-          <Switch
-            name="contract_signed"
-            control={form.control}
-            label="Unterzeichnet"
-            switchLabel="Schutzvertrag wurde unterzeichnet"
-          />
-
-          <FieldGroup>
-            <DateInput
-              name="contract_signed_at"
-              control={form.control}
-              label="Unterzeichnet am"
-              disableFutureDates
-              disabled={!contractSigned}
-            />
-          </FieldGroup>
-
-          <div className="space-y-2">
-            <p className="text-sm font-medium">Schutzvertrag</p>
-
-            <ButtonGroup className="w-full">
-              {activeFile ? (
-                <Input value={activeFile} disabled className="flex-1" />
-              ) : (
-                <Input
-                  type="file"
-                  accept="application/pdf,image/jpeg,image/png,image/webp"
-                  onChange={handleFileChange}
-                  aria-label="Schutzvertrag auswählen"
-                  className="flex-1"
-                  disabled={!contractSigned}
-                />
+                  <SelectTrigger
+                    className="flex-1"
+                    aria-label="Vertragsvorlage auswählen"
+                    disabled={!templates.length}
+                  >
+                    <SelectValue placeholder="Vorlage auswählen" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {templates.map((template) => (
+                      <SelectItem key={template.key} value={template.key}>
+                        {template.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  aria-label="Vertrag generieren"
+                  disabled={!selectedTemplate || generateMutation.isPending}
+                  onClick={() => generateMutation.mutate()}
+                >
+                  <FileDown />
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  aria-label="Signaturvorgang starten"
+                  disabled={
+                    !selectedTemplate ||
+                    startSigningMutation.isPending ||
+                    hasActiveSigningProcess
+                  }
+                  onClick={() => startSigningMutation.mutate()}
+                >
+                  <Send />
+                </Button>
+                {hasActiveSigningProcess && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    aria-label="Signaturvorgang abbrechen"
+                    onClick={() => setCancelSigningDialogOpen(true)}
+                  >
+                    <Ban />
+                  </Button>
+                )}
+              </ButtonGroup>
+              {templates.length === 0 && (
+                <p className="text-sm text-muted-foreground">
+                  Keine Vertragsvorlagen verfügbar.
+                </p>
               )}
+            </div>
+
+            {signingProcess && (
+              <ContractSigningStatus process={signingProcess} />
+            )}
+
+            <Switch
+              name="contract_signed"
+              control={form.control}
+              label="Unterzeichnet"
+              switchLabel="Schutzvertrag wurde unterzeichnet"
+            />
+
+            <FieldGroup>
+              <DateInput
+                name="contract_signed_at"
+                control={form.control}
+                label="Unterzeichnet am"
+                disableFutureDates
+                disabled={!contractSigned}
+              />
+            </FieldGroup>
+
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Schutzvertrag</p>
+
+              <ButtonGroup className="w-full">
+                {activeFile ? (
+                  <Input value={activeFile} disabled className="flex-1" />
+                ) : (
+                  <Input
+                    type="file"
+                    accept="application/pdf,image/jpeg,image/png,image/webp"
+                    onChange={handleFileChange}
+                    aria-label="Schutzvertrag auswählen"
+                    className="flex-1"
+                    disabled={!contractSigned}
+                  />
+                )}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  aria-label="Schutzvertrag entfernen"
+                  onClick={handleClearFile}
+                  disabled={!activeFile || !contractSigned}
+                >
+                  <X />
+                </Button>
+              </ButtonGroup>
+            </div>
+
+            <DialogFooter>
               <Button
                 type="button"
                 variant="outline"
-                size="icon"
-                aria-label="Schutzvertrag entfernen"
-                onClick={handleClearFile}
-                disabled={!activeFile || !contractSigned}
+                onClick={onClose}
+                disabled={mutation.isPending}
               >
-                <X />
+                Abbrechen
               </Button>
-            </ButtonGroup>
-          </div>
-
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              disabled={mutation.isPending}
-            >
-              Abbrechen
-            </Button>
-            <Button type="submit" disabled={mutation.isPending}>
-              {mutation.isPending ? 'Speichern...' : 'Speichern'}
-            </Button>
-          </DialogFooter>
-          <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
-        </form>
-      </DialogContent>
-    </Dialog>
+              <Button type="submit" disabled={mutation.isPending}>
+                {mutation.isPending ? 'Speichern...' : 'Speichern'}
+              </Button>
+            </DialogFooter>
+            <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
+          </form>
+        </DialogContent>
+      </Dialog>
+      {cancelSigningDialogOpen && (
+        <AdoptionCancelContractSigningPage
+          adoption={adoption}
+          onClose={() => setCancelSigningDialogOpen(false)}
+        />
+      )}
+    </>
   )
 }

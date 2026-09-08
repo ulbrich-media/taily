@@ -94,3 +94,12 @@ export async function startContractSigning(
     body: JSON.stringify({ template }),
   })
 }
+
+export async function cancelContractSigning(
+  id: string
+): Promise<AdoptionResponse> {
+  return apiRequest<AdoptionResponse>(
+    `adoptions/${id}/contract/signing/cancel`,
+    { method: 'POST' }
+  )
+}

@@ -202,6 +202,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::put('/adoptions/{adoption}/contract', [AdoptionContractController::class, 'store']);
     Route::get('/adoptions/{adoption}/contract/generate', [AdoptionContractController::class, 'generate']);
     Route::post('/adoptions/{adoption}/contract/signing', [ContractSigningController::class, 'store']);
+    Route::post('/adoptions/{adoption}/contract/signing/cancel', [ContractSigningController::class, 'cancel']);
 
     // API Tokens
     Route::get('/api-tokens/abilities', [ApiTokenController::class, 'abilities']);
