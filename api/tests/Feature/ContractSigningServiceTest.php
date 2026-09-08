@@ -326,6 +326,80 @@ class ContractSigningServiceTest extends TestCase
         $this->assertCount(0, $this->service->signersPastExpiry());
     }
 
+    public function test_resend_replaces_the_pending_signers_token_and_resets_reminder_columns(): void
+    {
+        $adoption = $this->createAdoption();
+        $process = $this->service->start($adoption, 'default', '%PDF-bytes');
+        $signer = $process->signers->first();
+        $oldToken = $signer->activeToken();
+        $oldToken->update(['expires_at' => now()->addDays(6)]);
+        $signer->update(['week_reminder_sent_at' => now()]);
+
+        $resent = $this->service->resend($process);
+
+        $this->assertSame($signer->id, $resent->id);
+        $this->assertNotNull($resent->activeToken());
+        $this->assertNotSame($oldToken->id, $resent->activeToken()->id);
+        $this->assertNull($oldToken->fresh());
+        $this->assertNull($resent->fresh()->week_reminder_sent_at);
+        $this->assertNull($resent->fresh()->two_day_reminder_sent_at);
+    }
+
+    public function test_resend_writes_an_audit_event(): void
+    {
+        $adoption = $this->createAdoption();
+        $process = $this->service->start($adoption, 'default', '%PDF-bytes');
+        $signer = $process->signers->first();
+
+        $this->service->resend($process);
+
+        $event = $process->auditEvents()
+            ->where('event_type', ContractSigningEventType::EMAIL_SENT->value)
+            ->where('signer_id', $signer->id)
+            ->first();
+
+        $this->assertNotNull($event);
+        $this->assertSame(['type' => 'resend'], $event->metadata);
+    }
+
+    public function test_resend_targets_the_adopter_once_the_mediator_has_signed(): void
+    {
+        $adoption = $this->createAdoption();
+        $process = $this->service->start($adoption, 'default', '%PDF-bytes');
+        $this->signMediator($process);
+
+        $adopter = $process->signers->firstWhere('role', ContractSignerRole::ADOPTER);
+        $oldToken = $adopter->activeToken();
+
+        $resent = $this->service->resend($process);
+
+        $this->assertSame($adopter->id, $resent->id);
+        $this->assertNotSame($oldToken->id, $resent->activeToken()->id);
+    }
+
+    public function test_resend_rejects_a_completed_process(): void
+    {
+        $adoption = $this->createAdoption();
+        $process = $this->service->start($adoption, 'default', '%PDF-bytes');
+        $this->signMediator($process);
+        $this->signAdopter($process);
+
+        $this->expectException(ContractSigningStateException::class);
+
+        $this->service->resend($process);
+    }
+
+    public function test_resend_rejects_a_cancelled_process(): void
+    {
+        $adoption = $this->createAdoption();
+        $process = $this->service->start($adoption, 'default', '%PDF-bytes');
+        $this->service->cancel($process, $adoption->mediator, null);
+
+        $this->expectException(ContractSigningStateException::class);
+
+        $this->service->resend($process);
+    }
+
     public function test_cancelled_processes_are_excluded_from_reminder_and_expiry_queries(): void
     {
         $adoption = $this->createAdoption();

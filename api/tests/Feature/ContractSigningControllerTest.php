@@ -334,4 +334,102 @@ class ContractSigningControllerTest extends TestCase
 
         $response->assertStatus(401);
     }
+
+    public function test_resend_replaces_the_pending_signers_token_and_resends_mail(): void
+    {
+        Mail::fake();
+
+        $user = $this->createUser();
+        $adoption = $this->createAdoption();
+        $process = $this->startSigningProcess($user, $adoption);
+        $mediatorSigner = $process->signers->first();
+        $oldToken = $mediatorSigner->activeToken()->token;
+
+        Mail::fake();
+
+        $response = $this->actingAs($user)
+            ->withHeader('referer', 'http://localhost')
+            ->postJson("/internal/adoptions/{$adoption->id}/contract/signing/resend");
+
+        $response->assertOk();
+        $this->assertSame(
+            ContractSigningStatus::AWAITING_MEDIATOR_SIGNATURE->value,
+            $response->json('data.contract_signing_process.status')
+        );
+
+        $mediatorSigner->refresh();
+        $this->assertNotNull($mediatorSigner->activeToken());
+        $this->assertNotSame($oldToken, $mediatorSigner->activeToken()->token);
+
+        Mail::assertSent(ContractSignerInviteMail::class, fn (ContractSignerInviteMail $mail) => $mail->hasTo('maria@example.com'));
+    }
+
+    public function test_resend_invalidates_the_previous_token(): void
+    {
+        Mail::fake();
+
+        $user = $this->createUser();
+        $adoption = $this->createAdoption();
+        $process = $this->startSigningProcess($user, $adoption);
+        $mediatorSigner = $process->signers->first();
+        $oldToken = $mediatorSigner->activeToken()->token;
+
+        $this->actingAs($user)
+            ->withHeader('referer', 'http://localhost')
+            ->postJson("/internal/adoptions/{$adoption->id}/contract/signing/resend")
+            ->assertOk();
+
+        $this->assertNull(
+            $mediatorSigner->accessTokens()->where('token', $oldToken)->where('expires_at', '>', now())->first()
+        );
+    }
+
+    public function test_resend_rejects_a_terminal_process(): void
+    {
+        Mail::fake();
+
+        $user = $this->createUser();
+        $adoption = $this->createAdoption();
+        $process = $this->startSigningProcess($user, $adoption);
+
+        $this->actingAs($user)
+            ->withHeader('referer', 'http://localhost')
+            ->postJson("/internal/adoptions/{$adoption->id}/contract/signing/cancel")
+            ->assertOk();
+
+        Mail::fake();
+
+        $response = $this->actingAs($user)
+            ->withHeader('referer', 'http://localhost')
+            ->postJson("/internal/adoptions/{$adoption->id}/contract/signing/resend");
+
+        $response->assertStatus(422);
+        Mail::assertNothingSent();
+    }
+
+    public function test_resend_with_no_active_process_returns_an_error(): void
+    {
+        Mail::fake();
+
+        $user = $this->createUser();
+        $adoption = $this->createAdoption();
+
+        $response = $this->actingAs($user)
+            ->withHeader('referer', 'http://localhost')
+            ->postJson("/internal/adoptions/{$adoption->id}/contract/signing/resend");
+
+        $response->assertStatus(422);
+        Mail::assertNothingSent();
+    }
+
+    public function test_resend_returns_json_401_when_unauthenticated(): void
+    {
+        $adoption = $this->createAdoption();
+
+        $response = $this
+            ->withHeader('referer', 'http://localhost')
+            ->postJson("/internal/adoptions/{$adoption->id}/contract/signing/resend");
+
+        $response->assertStatus(401);
+    }
 }

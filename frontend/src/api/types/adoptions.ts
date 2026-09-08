@@ -72,6 +72,7 @@ export interface ContractSigningProcessSigner {
   role: ContractSignerRole
   signed_at: string | null
   full_name: string | null
+  expires_at: string | null
 }
 
 // Mirrors: api/src/Http/Resources/ContractSigningProcessResource.php

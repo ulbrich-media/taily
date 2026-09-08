@@ -180,4 +180,51 @@ class ContractSigningController extends Controller
             'data' => new AdoptionDetailResource($adoption),
         ]);
     }
+
+    /**
+     * Replaces the currently pending signer's access token and re-sends
+     * their invite email, for a link that never arrived or is about to
+     * expire.
+     */
+    public function resend(Adoption $adoption): JsonResponse
+    {
+        // Locking the adoption row matches store()'s and cancel()'s
+        // race-closing pattern.
+        $signer = DB::transaction(function () use ($adoption) {
+            Adoption::whereKey($adoption->id)->lockForUpdate()->firstOrFail();
+
+            $process = $adoption->latestContractSigningProcess()->first();
+
+            if (! $process || ! $process->status->isActive()) {
+                throw ValidationException::withMessages([
+                    'signing' => ['Für diese Vermittlung läuft aktuell kein Signaturvorgang.'],
+                ]);
+            }
+
+            return $this->signingService->resend($process);
+        });
+
+        $signer->load('person', 'signingProcess');
+
+        try {
+            Mail::to($signer->person->email)->send(
+                new ContractSignerInviteMail($signer, $signer->activeToken()->token)
+            );
+        } catch (Throwable $e) {
+            // The token replacement is already committed at this point, so a
+            // mail delivery failure must not turn into a 500 for the
+            // mediator who just triggered the resend.
+            Log::error('Failed to send contract signer invite on resend', [
+                'signing_process_id' => $signer->signing_process_id,
+                'exception' => $e,
+            ]);
+        }
+
+        $adoption->load(self::DETAIL_RELATIONS);
+
+        return response()->json([
+            'message' => 'Einladung erfolgreich erneut versendet.',
+            'data' => new AdoptionDetailResource($adoption),
+        ]);
+    }
 }

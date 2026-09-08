@@ -176,6 +176,44 @@ class ContractSigningService
     }
 
     /**
+     * Replaces the currently pending signer's access token and re-sends
+     * their invite, without touching the frozen unsigned PDF or the
+     * process's status. Reuses the already-generated document, per
+     * docs/features/contract.md's "no need to regenerate it" principle.
+     *
+     * @throws ContractSigningStateException if the process is no longer active.
+     */
+    public function resend(ContractSigningProcess $process): ContractSigner
+    {
+        return DB::transaction(function () use ($process) {
+            $locked = ContractSigningProcess::whereKey($process->id)->lockForUpdate()->first();
+
+            if (! $locked || ! $locked->status->isActive()) {
+                throw new ContractSigningStateException('Dieser Signaturvorgang befindet sich nicht im erwarteten Status.');
+            }
+
+            $pendingRole = $locked->status === ContractSigningStatus::AWAITING_MEDIATOR_SIGNATURE
+                ? ContractSignerRole::MEDIATOR
+                : ContractSignerRole::ADOPTER;
+
+            $signer = $locked->signers()->where('role', $pendingRole)->firstOrFail();
+
+            $signer->accessTokens()->delete();
+            $signer->issueToken(now()->addDays(self::SIGNER_TOKEN_LIFETIME_DAYS));
+            $signer->update([
+                'week_reminder_sent_at' => null,
+                'two_day_reminder_sent_at' => null,
+            ]);
+
+            $this->writeAuditEvent($locked, $signer, ContractSigningEventType::EMAIL_SENT, metadata: [
+                'type' => 'resend',
+            ]);
+
+            return $signer;
+        });
+    }
+
+    /**
      * Same shape as cancel(), triggered once a signing link's validity
      * window closes unused. The scheduled command that calls this is
      * explicitly out of scope here.
