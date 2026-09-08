@@ -7,7 +7,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
  * The status readout shown on the admin contract dialog. Deliberately thin —
- * the audit-trail viewer and resend/expiry are separate, later issues.
+ * the audit-trail viewer is a separate, later issue.
  */
 class ContractSigningProcessResource extends JsonResource
 {
@@ -23,6 +23,7 @@ class ContractSigningProcessResource extends JsonResource
                 'role' => $signer->role,
                 'signed_at' => $signer->signed_at,
                 'full_name' => $signer->relationLoaded('person') ? $signer->person->full_name : null,
+                'expires_at' => $signer->activeToken()?->expires_at,
             ])->values()),
         ];
     }

@@ -103,3 +103,12 @@ export async function cancelContractSigning(
     { method: 'POST' }
   )
 }
+
+export async function resendContractSigning(
+  id: string
+): Promise<AdoptionResponse> {
+  return apiRequest<AdoptionResponse>(
+    `adoptions/${id}/contract/signing/resend`,
+    { method: 'POST' }
+  )
+}

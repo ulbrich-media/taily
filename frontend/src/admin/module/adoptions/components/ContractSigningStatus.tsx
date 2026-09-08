@@ -1,4 +1,5 @@
 import { CheckCircle2, Circle } from 'lucide-react'
+import { format } from 'date-fns'
 import type {
   ContractSignerRole,
   ContractSigningProcess,
@@ -45,6 +46,9 @@ export function ContractSigningStatus({ process }: ContractSigningStatusProps) {
             )}
             {SIGNER_ROLE_LABELS[signer.role]}
             {signer.full_name ? ` – ${signer.full_name}` : ''}
+            {!signer.signed_at && signer.expires_at
+              ? ` (Läuft ab am ${format(new Date(signer.expires_at), 'dd.MM.yyyy')})`
+              : ''}
           </li>
         ))}
       </ul>

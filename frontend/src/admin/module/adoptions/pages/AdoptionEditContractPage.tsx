@@ -13,10 +13,11 @@ import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { format } from 'date-fns'
-import { Ban, FileDown, Send, X } from 'lucide-react'
+import { Ban, FileDown, RotateCw, Send, X } from 'lucide-react'
 import { adoptionQueryKeys } from '@/admin/module/adoptions/api/queries.ts'
 import {
   generateContract,
+  resendContractSigning,
   startContractSigning,
   updateContract,
 } from '@/admin/module/adoptions/api/requests.ts'
@@ -162,6 +163,22 @@ export function AdoptionEditContractPage({
     },
   })
 
+  const resendSigningMutation = useMutation({
+    mutationFn: () => resendContractSigning(adoption.id),
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: adoptionQueryKeys.list() })
+      queryClient.invalidateQueries({
+        queryKey: adoptionQueryKeys.detail(adoption.id),
+      })
+      toast.success(response.message)
+    },
+    onError: (error) => {
+      toast.error(
+        error.message || 'Fehler beim erneuten Versenden der Einladung'
+      )
+    },
+  })
+
   // Reset date and file when contract signed flag was disabled
   useEffect(() => {
     if (!contractSigned) {
@@ -260,6 +277,18 @@ export function AdoptionEditContractPage({
                 >
                   <Send />
                 </Button>
+                {hasActiveSigningProcess && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    aria-label="Einladung erneut versenden"
+                    disabled={resendSigningMutation.isPending}
+                    onClick={() => resendSigningMutation.mutate()}
+                  >
+                    <RotateCw />
+                  </Button>
+                )}
                 {hasActiveSigningProcess && (
                   <Button
                     type="button"
