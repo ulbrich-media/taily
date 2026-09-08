@@ -2,7 +2,9 @@
 
 namespace Taily\Support;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 use Taily\Enums\ContractSignerRole;
 use Taily\Enums\ContractSigningEventType;
 use Taily\Enums\ContractSigningStatus;
@@ -189,6 +191,83 @@ class ContractSigningService
         });
 
         $process->refresh();
+    }
+
+    /**
+     * Signers with exactly one week left on their active signing link who
+     * haven't been sent the week-out reminder yet.
+     *
+     * @return Collection<int, ContractSigner>
+     */
+    public function signersDueForWeekReminder(): Collection
+    {
+        return $this->signersDueForReminder('week_reminder_sent_at', 7);
+    }
+
+    /**
+     * Signers with exactly two days left on their active signing link who
+     * haven't been sent the two-day-out reminder yet.
+     *
+     * @return Collection<int, ContractSigner>
+     */
+    public function signersDueForTwoDayReminder(): Collection
+    {
+        return $this->signersDueForReminder('two_day_reminder_sent_at', 2);
+    }
+
+    /**
+     * @return Collection<int, ContractSigner>
+     */
+    private function signersDueForReminder(string $reminderColumn, int $daysRemaining): Collection
+    {
+        return ContractSigner::query()
+            ->whereNull('signed_at')
+            ->whereNull($reminderColumn)
+            ->whereHas('signingProcess', fn ($query) => $query->whereIn('status', ContractSigningStatus::activeStatuses()))
+            ->whereHas('accessTokens', fn ($query) => $query
+                ->where('expires_at', '>', now())
+                ->where('expires_at', '<=', now()->addDays($daysRemaining))
+            )
+            ->get();
+    }
+
+    /**
+     * Signers whose active signing process is still awaiting their
+     * signature but whose token has expired without one — mirrors
+     * HasAccessToken::activeToken()'s "no unexpired token remains" check
+     * rather than a raw expires_at filter, so a signer who never had a
+     * token issued is treated the same as one whose token expired.
+     *
+     * @return Collection<int, ContractSigner>
+     */
+    public function signersPastExpiry(): Collection
+    {
+        return ContractSigner::query()
+            ->whereNull('signed_at')
+            ->whereHas('signingProcess', fn ($query) => $query->whereIn('status', ContractSigningStatus::activeStatuses()))
+            ->whereDoesntHave('accessTokens', fn ($query) => $query->where('expires_at', '>', now()))
+            ->get();
+    }
+
+    /**
+     * Marks the given reminder threshold as sent for a signer and writes
+     * the matching audit event, so a command run twice between thresholds
+     * never sends the same reminder to the same signer more than once.
+     */
+    public function markReminderSent(ContractSigner $signer, string $threshold): void
+    {
+        $column = match ($threshold) {
+            'week' => 'week_reminder_sent_at',
+            'two_days' => 'two_day_reminder_sent_at',
+            default => throw new InvalidArgumentException("Unknown reminder threshold: {$threshold}"),
+        };
+
+        $signer->update([$column => now()]);
+
+        $this->writeAuditEvent($signer->signingProcess, $signer, ContractSigningEventType::EMAIL_SENT, metadata: [
+            'type' => 'reminder',
+            'threshold' => $threshold,
+        ]);
     }
 
     private function terminate(ContractSigningProcess $process, ContractSigningStatus $status, ?string $reason): ContractSigningProcess
