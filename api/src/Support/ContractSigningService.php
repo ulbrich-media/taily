@@ -194,18 +194,22 @@ class ContractSigningService
     }
 
     /**
-     * Signers with exactly one week left on their active signing link who
-     * haven't been sent the week-out reminder yet.
+     * Signers with between two and seven days left on their active signing
+     * link who haven't been sent the week-out reminder yet. Floored at two
+     * days so this window never overlaps signersDueForTwoDayReminder()'s —
+     * without that floor, a signer inside both windows would get both
+     * emails in the same run, since markReminderSent() only stamps the
+     * threshold it was called for.
      *
      * @return Collection<int, ContractSigner>
      */
     public function signersDueForWeekReminder(): Collection
     {
-        return $this->signersDueForReminder('week_reminder_sent_at', 7);
+        return $this->signersDueForReminder('week_reminder_sent_at', 7, 2);
     }
 
     /**
-     * Signers with exactly two days left on their active signing link who
+     * Signers with two days or less left on their active signing link who
      * haven't been sent the two-day-out reminder yet.
      *
      * @return Collection<int, ContractSigner>
@@ -218,14 +222,14 @@ class ContractSigningService
     /**
      * @return Collection<int, ContractSigner>
      */
-    private function signersDueForReminder(string $reminderColumn, int $daysRemaining): Collection
+    private function signersDueForReminder(string $reminderColumn, int $daysRemaining, int $daysRemainingFloor = 0): Collection
     {
         return ContractSigner::query()
             ->whereNull('signed_at')
             ->whereNull($reminderColumn)
             ->whereHas('signingProcess', fn ($query) => $query->whereIn('status', ContractSigningStatus::activeStatuses()))
             ->whereHas('accessTokens', fn ($query) => $query
-                ->where('expires_at', '>', now())
+                ->where('expires_at', '>', now()->addDays($daysRemainingFloor))
                 ->where('expires_at', '<=', now()->addDays($daysRemaining))
             )
             ->get();

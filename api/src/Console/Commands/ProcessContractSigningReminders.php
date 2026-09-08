@@ -65,7 +65,7 @@ class ProcessContractSigningReminders extends Command
      */
     private function expireSigners(Collection $signers): void
     {
-        foreach ($signers as $signer) {
+        foreach ($signers->unique('signing_process_id') as $signer) {
             try {
                 $process = $signer->signingProcess;
                 $expiredRole = $signer->role;

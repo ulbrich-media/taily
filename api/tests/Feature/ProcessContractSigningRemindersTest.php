@@ -4,9 +4,11 @@ namespace Taily\Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
+use Taily\Enums\ContractSignerRole;
 use Taily\Enums\ContractSigningStatus;
 use Taily\Mail\ContractExpiredMail;
 use Taily\Mail\ContractSignerReminderMail;
@@ -113,6 +115,26 @@ class ProcessContractSigningRemindersTest extends TestCase
 
         $this->assertSame(ContractSigningStatus::EXPIRED, $process->fresh()->status);
         Mail::assertSent(ContractExpiredMail::class, fn (ContractExpiredMail $mail) => $mail->hasTo('maria@example.com'));
+    }
+
+    public function test_a_process_with_multiple_unsigned_signers_is_expired_and_notified_only_once(): void
+    {
+        Mail::fake();
+        Log::spy();
+
+        $process = $this->startProcessWithMediatorTokenExpiringIn(-1);
+        $secondSigner = $process->signers()->create([
+            'person_id' => $process->adoption->applicant_id,
+            'role' => ContractSignerRole::ADOPTER,
+        ]);
+        $secondSigner->issueToken(now()->subDay());
+
+        $exitCode = Artisan::call('contracts:process-reminders');
+
+        $this->assertSame(0, $exitCode);
+        $this->assertSame(ContractSigningStatus::EXPIRED, $process->fresh()->status);
+        Mail::assertSentCount(1);
+        Log::shouldNotHaveReceived('error');
     }
 
     public function test_cancelled_processes_are_left_untouched(): void

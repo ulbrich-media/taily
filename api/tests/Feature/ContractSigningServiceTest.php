@@ -254,6 +254,15 @@ class ContractSigningServiceTest extends TestCase
         $this->assertCount(0, $this->service->signersDueForWeekReminder());
     }
 
+    public function test_signers_due_for_week_reminder_excludes_signers_inside_the_two_day_window(): void
+    {
+        $adoption = $this->createAdoption();
+        $process = $this->service->start($adoption, 'default', '%PDF-bytes');
+        $process->signers->first()->activeToken()->update(['expires_at' => now()->addDays(1)]);
+
+        $this->assertCount(0, $this->service->signersDueForWeekReminder());
+    }
+
     public function test_signers_due_for_two_day_reminder_returns_signers_within_the_two_day_window(): void
     {
         $adoption = $this->createAdoption();

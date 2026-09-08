@@ -3,6 +3,7 @@
 namespace Taily\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Str;
 use Taily\Enums\ContractSignerRole;
 use Taily\Mail\ContractCompletionMail;
 use Taily\Mail\ContractExpiredMail;
@@ -107,6 +108,7 @@ class SmokeTestMailViews extends Command
     private function makeSmokeTestAdoption(): Adoption
     {
         $adoption = new Adoption;
+        $adoption->id = (string) Str::uuid();
         $adoption->setRelation('animal', new Animal(['name' => 'Bello']));
 
         return $adoption;
