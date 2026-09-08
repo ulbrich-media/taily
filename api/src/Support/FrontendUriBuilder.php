@@ -25,6 +25,17 @@ class FrontendUriBuilder
     }
 
     /**
+     * Direct link into the authenticated admin SPA, not a token callback —
+     * the recipient (a Mediator) already has a Taily login.
+     */
+    public static function adoptionDetail(string $adoptionId): string
+    {
+        $base = rtrim(config('taily.frontend_url'), '/');
+
+        return "{$base}/admin/adoptions/{$adoptionId}";
+    }
+
+    /**
      * @param  array<string, string>  $extraParams
      */
     private static function callback(string $action, string $token, array $extraParams = []): string

@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -19,6 +20,13 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
+    // Requires an operator-configured cron entry invoking `schedule:run`
+    // every minute — see docs/release-architecture.md. Daily is enough
+    // slack for the 2-day-out reminder window; no queue worker involved,
+    // per ADR-012 Constraint 1 (no background worker infrastructure).
+    ->withSchedule(function (Schedule $schedule): void {
+        $schedule->command('contracts:process-reminders')->daily();
+    })
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'ability' => CheckAbilities::class,

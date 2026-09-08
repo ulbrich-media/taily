@@ -21,6 +21,8 @@ class ContractSigner extends Model
         'contract_content_accepted',
         'privacy_policy_accepted',
         'information_confirmed',
+        'week_reminder_sent_at',
+        'two_day_reminder_sent_at',
     ];
 
     protected function casts(): array
@@ -31,6 +33,8 @@ class ContractSigner extends Model
             'contract_content_accepted' => 'boolean',
             'privacy_policy_accepted' => 'boolean',
             'information_confirmed' => 'boolean',
+            'week_reminder_sent_at' => 'datetime',
+            'two_day_reminder_sent_at' => 'datetime',
         ];
     }
 

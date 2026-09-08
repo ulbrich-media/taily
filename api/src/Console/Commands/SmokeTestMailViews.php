@@ -3,9 +3,12 @@
 namespace Taily\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Str;
 use Taily\Enums\ContractSignerRole;
 use Taily\Mail\ContractCompletionMail;
+use Taily\Mail\ContractExpiredMail;
 use Taily\Mail\ContractSignerInviteMail;
+use Taily\Mail\ContractSignerReminderMail;
 use Taily\Mail\PasswordResetMail;
 use Taily\Mail\SecurityNotificationMail;
 use Taily\Mail\UserInvitationMail;
@@ -56,6 +59,19 @@ class SmokeTestMailViews extends Command
                 'https://example.com/download/smoke-test',
                 'Max Mustermann',
             ),
+            'ContractSignerReminderMail' => fn () => new ContractSignerReminderMail(
+                $this->makeSmokeTestSigner(),
+                'smoke-test-token',
+                2,
+            ),
+            'ContractExpiredMail' => fn () => new ContractExpiredMail(
+                tap(new ContractSigningProcess, function (ContractSigningProcess $process) {
+                    $process->setRelation('adoption', tap($this->makeSmokeTestAdoption(), function (Adoption $adoption) {
+                        $adoption->setRelation('mediator', new Person(['first_name' => 'Maria', 'last_name' => 'Vermittlerin']));
+                    }));
+                }),
+                ContractSignerRole::ADOPTER,
+            ),
         ];
 
         $failures = [];
@@ -92,6 +108,7 @@ class SmokeTestMailViews extends Command
     private function makeSmokeTestAdoption(): Adoption
     {
         $adoption = new Adoption;
+        $adoption->id = (string) Str::uuid();
         $adoption->setRelation('animal', new Animal(['name' => 'Bello']));
 
         return $adoption;

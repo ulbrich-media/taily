@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
+use Taily\Console\Commands\ProcessContractSigningReminders;
 use Taily\Console\Commands\SeedDatabase;
 use Taily\Console\Commands\SmokeTestAuthConfig;
 use Taily\Console\Commands\SmokeTestMailViews;
@@ -106,6 +107,7 @@ class TailyServiceProvider extends ServiceProvider
                 SeedDatabase::class,
                 SmokeTestMailViews::class,
                 SmokeTestAuthConfig::class,
+                ProcessContractSigningReminders::class,
             ]);
         }
     }

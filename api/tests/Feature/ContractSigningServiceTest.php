@@ -231,4 +231,112 @@ class ContractSigningServiceTest extends TestCase
             'signature_submitted',
         ], $types);
     }
+
+    public function test_signers_due_for_week_reminder_returns_signers_within_the_week_window(): void
+    {
+        $adoption = $this->createAdoption();
+        $process = $this->service->start($adoption, 'default', '%PDF-bytes');
+        $signer = $process->signers->first();
+        $signer->activeToken()->update(['expires_at' => now()->addDays(6)]);
+
+        $due = $this->service->signersDueForWeekReminder();
+
+        $this->assertCount(1, $due);
+        $this->assertSame($signer->id, $due->first()->id);
+    }
+
+    public function test_signers_due_for_week_reminder_excludes_signers_outside_the_window(): void
+    {
+        $adoption = $this->createAdoption();
+        $process = $this->service->start($adoption, 'default', '%PDF-bytes');
+        $process->signers->first()->activeToken()->update(['expires_at' => now()->addDays(10)]);
+
+        $this->assertCount(0, $this->service->signersDueForWeekReminder());
+    }
+
+    public function test_signers_due_for_week_reminder_excludes_signers_inside_the_two_day_window(): void
+    {
+        $adoption = $this->createAdoption();
+        $process = $this->service->start($adoption, 'default', '%PDF-bytes');
+        $process->signers->first()->activeToken()->update(['expires_at' => now()->addDays(1)]);
+
+        $this->assertCount(0, $this->service->signersDueForWeekReminder());
+    }
+
+    public function test_signers_due_for_two_day_reminder_returns_signers_within_the_two_day_window(): void
+    {
+        $adoption = $this->createAdoption();
+        $process = $this->service->start($adoption, 'default', '%PDF-bytes');
+        $signer = $process->signers->first();
+        $signer->activeToken()->update(['expires_at' => now()->addDays(1)]);
+
+        $due = $this->service->signersDueForTwoDayReminder();
+
+        $this->assertCount(1, $due);
+        $this->assertSame($signer->id, $due->first()->id);
+    }
+
+    public function test_mark_reminder_sent_is_not_due_again_for_the_same_threshold(): void
+    {
+        $adoption = $this->createAdoption();
+        $process = $this->service->start($adoption, 'default', '%PDF-bytes');
+        $signer = $process->signers->first();
+        $signer->activeToken()->update(['expires_at' => now()->addDays(6)]);
+
+        $this->assertCount(1, $this->service->signersDueForWeekReminder());
+
+        $this->service->markReminderSent($signer, 'week');
+
+        $this->assertCount(0, $this->service->signersDueForWeekReminder());
+        $this->assertNotNull($signer->fresh()->week_reminder_sent_at);
+
+        $event = $process->auditEvents()->where('event_type', ContractSigningEventType::EMAIL_SENT->value)->first();
+        $this->assertSame(['type' => 'reminder', 'threshold' => 'week'], $event->metadata);
+    }
+
+    public function test_signed_signers_are_excluded_from_reminder_queries(): void
+    {
+        $adoption = $this->createAdoption();
+        $process = $this->service->start($adoption, 'default', '%PDF-bytes');
+        $process->signers->first()->activeToken()->update(['expires_at' => now()->addDays(6)]);
+
+        $this->signMediator($process);
+
+        $this->assertCount(0, $this->service->signersDueForWeekReminder());
+    }
+
+    public function test_signers_past_expiry_returns_a_signer_whose_token_has_expired(): void
+    {
+        $adoption = $this->createAdoption();
+        $process = $this->service->start($adoption, 'default', '%PDF-bytes');
+        $signer = $process->signers->first();
+        $signer->accessTokens()->update(['expires_at' => now()->subDay()]);
+
+        $pastExpiry = $this->service->signersPastExpiry();
+
+        $this->assertCount(1, $pastExpiry);
+        $this->assertSame($signer->id, $pastExpiry->first()->id);
+    }
+
+    public function test_signers_past_expiry_excludes_signers_with_a_still_valid_token(): void
+    {
+        $adoption = $this->createAdoption();
+        $process = $this->service->start($adoption, 'default', '%PDF-bytes');
+
+        $this->assertCount(0, $this->service->signersPastExpiry());
+    }
+
+    public function test_cancelled_processes_are_excluded_from_reminder_and_expiry_queries(): void
+    {
+        $adoption = $this->createAdoption();
+        $process = $this->service->start($adoption, 'default', '%PDF-bytes');
+        $signer = $process->signers->first();
+        $signer->accessTokens()->update(['expires_at' => now()->subDay()]);
+
+        $this->service->cancel($process, $adoption->mediator, null);
+
+        $this->assertCount(0, $this->service->signersDueForWeekReminder());
+        $this->assertCount(0, $this->service->signersDueForTwoDayReminder());
+        $this->assertCount(0, $this->service->signersPastExpiry());
+    }
 }
