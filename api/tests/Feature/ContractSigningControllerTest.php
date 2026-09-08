@@ -7,11 +7,14 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Taily\Enums\ContractSigningStatus;
 use Taily\Mail\ContractSignerInviteMail;
+use Taily\Mail\ContractSigningCancelledMail;
 use Taily\Models\Adoption;
 use Taily\Models\Animal;
 use Taily\Models\AnimalType;
+use Taily\Models\ContractSigningProcess;
 use Taily\Models\Person;
 use Taily\Models\User;
+use Taily\Support\ContractSigningService;
 use Taily\Tests\TestCase;
 
 class ContractSigningControllerTest extends TestCase
@@ -210,6 +213,124 @@ class ContractSigningControllerTest extends TestCase
         $response = $this
             ->withHeader('referer', 'http://localhost')
             ->postJson("/internal/adoptions/{$adoption->id}/contract/signing", ['template' => 'default']);
+
+        $response->assertStatus(401);
+    }
+
+    private function startSigningProcess(User $user, Adoption $adoption): ContractSigningProcess
+    {
+        $this->actingAs($user)
+            ->withHeader('referer', 'http://localhost')
+            ->postJson("/internal/adoptions/{$adoption->id}/contract/signing", ['template' => 'default'])
+            ->assertCreated();
+
+        return $adoption->latestContractSigningProcess()->firstOrFail();
+    }
+
+    private function advanceToAwaitingAdopterSignature(ContractSigningProcess $process): void
+    {
+        app(ContractSigningService::class)->recordMediatorSignature(
+            $process,
+            typedName: 'Maria Vermittlerin',
+            contractContentAccepted: true,
+            privacyPolicyAccepted: true,
+            informationConfirmed: true,
+        );
+    }
+
+    public function test_cancel_from_awaiting_mediator_signature_sends_no_email(): void
+    {
+        Mail::fake();
+
+        $user = $this->createUser();
+        $adoption = $this->createAdoption();
+        $process = $this->startSigningProcess($user, $adoption);
+        $mediatorSigner = $process->signers->first();
+
+        Mail::fake();
+
+        $response = $this->actingAs($user)
+            ->withHeader('referer', 'http://localhost')
+            ->postJson("/internal/adoptions/{$adoption->id}/contract/signing/cancel");
+
+        $response->assertOk();
+        $this->assertSame(
+            ContractSigningStatus::CANCELLED->value,
+            $response->json('data.contract_signing_process.status')
+        );
+        $this->assertNull($mediatorSigner->fresh()->activeToken());
+        Mail::assertNothingSent();
+    }
+
+    public function test_cancel_from_awaiting_adopter_signature_emails_the_adopter(): void
+    {
+        Mail::fake();
+
+        $user = $this->createUser();
+        $adoption = $this->createAdoption();
+        $process = $this->startSigningProcess($user, $adoption);
+        $this->advanceToAwaitingAdopterSignature($process);
+
+        Mail::fake();
+
+        $response = $this->actingAs($user)
+            ->withHeader('referer', 'http://localhost')
+            ->postJson("/internal/adoptions/{$adoption->id}/contract/signing/cancel");
+
+        $response->assertOk();
+        $this->assertSame(
+            ContractSigningStatus::CANCELLED->value,
+            $response->json('data.contract_signing_process.status')
+        );
+        Mail::assertSent(ContractSigningCancelledMail::class, fn (ContractSigningCancelledMail $mail) => $mail->hasTo('anna@example.com'));
+    }
+
+    public function test_cancel_on_an_already_terminal_process_does_not_mutate_state(): void
+    {
+        Mail::fake();
+
+        $user = $this->createUser();
+        $adoption = $this->createAdoption();
+        $process = $this->startSigningProcess($user, $adoption);
+
+        $this->actingAs($user)
+            ->withHeader('referer', 'http://localhost')
+            ->postJson("/internal/adoptions/{$adoption->id}/contract/signing/cancel")
+            ->assertOk();
+
+        Mail::fake();
+
+        $response = $this->actingAs($user)
+            ->withHeader('referer', 'http://localhost')
+            ->postJson("/internal/adoptions/{$adoption->id}/contract/signing/cancel");
+
+        $response->assertStatus(422);
+        $this->assertSame(ContractSigningStatus::CANCELLED, $process->fresh()->status);
+        Mail::assertNothingSent();
+    }
+
+    public function test_cancel_with_no_active_process_returns_an_error(): void
+    {
+        Mail::fake();
+
+        $user = $this->createUser();
+        $adoption = $this->createAdoption();
+
+        $response = $this->actingAs($user)
+            ->withHeader('referer', 'http://localhost')
+            ->postJson("/internal/adoptions/{$adoption->id}/contract/signing/cancel");
+
+        $response->assertStatus(422);
+        Mail::assertNothingSent();
+    }
+
+    public function test_cancel_returns_json_401_when_unauthenticated(): void
+    {
+        $adoption = $this->createAdoption();
+
+        $response = $this
+            ->withHeader('referer', 'http://localhost')
+            ->postJson("/internal/adoptions/{$adoption->id}/contract/signing/cancel");
 
         $response->assertStatus(401);
     }

@@ -7,8 +7,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
  * The status readout shown on the admin contract dialog. Deliberately thin —
- * cancellation UI, the audit-trail viewer, and resend/expiry are separate,
- * later issues.
+ * the audit-trail viewer and resend/expiry are separate, later issues.
  */
 class ContractSigningProcessResource extends JsonResource
 {

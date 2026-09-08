@@ -14,6 +14,7 @@ use Taily\Enums\ContractSigningStatus;
 use Taily\Http\Controllers\Controller;
 use Taily\Http\Resources\AdoptionDetailResource;
 use Taily\Mail\ContractSignerInviteMail;
+use Taily\Mail\ContractSigningCancelledMail;
 use Taily\Models\Adoption;
 use Taily\Support\ContractPdfService;
 use Taily\Support\ContractSigningService;
@@ -116,5 +117,65 @@ class ContractSigningController extends Controller
             'message' => 'Signaturvorgang erfolgreich gestartet.',
             'data' => new AdoptionDetailResource($adoption),
         ], 201);
+    }
+
+    /**
+     * Cancels the adoption's active signing process: invalidates every
+     * outstanding signer token and, if the adopter was the one holding the
+     * pending signature, emails them a cancellation notice.
+     */
+    public function cancel(Adoption $adoption): JsonResponse
+    {
+        // Locking the adoption row (not just the process) matches store()'s
+        // race-closing pattern: a concurrent cancel for the same adoption
+        // re-reads latestContractSigningProcess only after the first cancel
+        // has committed and released the lock.
+        [$process, $pendingRole] = DB::transaction(function () use ($adoption) {
+            Adoption::whereKey($adoption->id)->lockForUpdate()->firstOrFail();
+
+            $process = $adoption->latestContractSigningProcess()->first();
+
+            if (! $process || ! $process->status->isActive()) {
+                throw ValidationException::withMessages([
+                    'signing' => ['Für diese Vermittlung läuft aktuell kein Signaturvorgang.'],
+                ]);
+            }
+
+            $pendingRole = $process->status === ContractSigningStatus::AWAITING_MEDIATOR_SIGNATURE
+                ? ContractSignerRole::MEDIATOR
+                : ContractSignerRole::ADOPTER;
+
+            $this->signingService->cancel($process, $adoption->mediator);
+
+            return [$process, $pendingRole];
+        });
+
+        if ($pendingRole === ContractSignerRole::ADOPTER) {
+            $process->load('signers.person');
+            $adopterSigner = $process->signers->firstWhere('role', ContractSignerRole::ADOPTER);
+
+            if ($adopterSigner?->person?->email) {
+                try {
+                    Mail::to($adopterSigner->person->email)->send(
+                        new ContractSigningCancelledMail($adopterSigner, $adoption->animal->name)
+                    );
+                } catch (Throwable $e) {
+                    // The cancellation is already committed at this point, so
+                    // a mail delivery failure must not turn into a 500 for
+                    // the mediator who just triggered the cancellation.
+                    Log::error('Failed to send contract signing cancellation notice to adopter', [
+                        'signing_process_id' => $process->id,
+                        'exception' => $e,
+                    ]);
+                }
+            }
+        }
+
+        $adoption->load(self::DETAIL_RELATIONS);
+
+        return response()->json([
+            'message' => 'Signaturvorgang erfolgreich abgebrochen.',
+            'data' => new AdoptionDetailResource($adoption),
+        ]);
     }
 }
