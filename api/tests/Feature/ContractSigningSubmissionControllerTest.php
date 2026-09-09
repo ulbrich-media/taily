@@ -163,7 +163,15 @@ class ContractSigningSubmissionControllerTest extends TestCase
         $process->refresh();
         $this->assertSame('completed', $process->status->value);
         $this->assertNotNull($process->final_document_hash);
-        $this->assertNotNull($process->getFirstMedia('final'));
+
+        $finalMedia = $process->getFirstMedia('final');
+        $this->assertNotNull($finalMedia);
+        $storedBytes = Storage::disk($finalMedia->disk)->get($finalMedia->getPathRelativeToRoot());
+        $this->assertSame($process->final_document_hash, hash('sha256', $storedBytes));
+
+        $tamperedBytes = $storedBytes;
+        $tamperedBytes[0] = $tamperedBytes[0] === 'A' ? 'B' : 'A';
+        $this->assertNotSame($process->final_document_hash, hash('sha256', $tamperedBytes));
 
         Mail::assertSent(ContractCompletionMail::class, fn (ContractCompletionMail $mail) => $mail->hasTo('maria@example.com'));
         Mail::assertSent(ContractCompletionMail::class, fn (ContractCompletionMail $mail) => $mail->hasTo('anna@example.com'));
