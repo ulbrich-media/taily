@@ -165,6 +165,15 @@ class TailyServiceProvider extends ServiceProvider
                 Limit::perMinute(60)->by('contract-sign-ip:'.$request->ip()),
             ];
         });
+
+        // Same dual-bucket shape as contract-sign, for the pre-inspection
+        // submission endpoints, which previously had no throttle at all.
+        RateLimiter::for('inspect', function (Request $request) {
+            return [
+                Limit::perMinute(20)->by('inspect-token:'.$request->route('token')),
+                Limit::perMinute(60)->by('inspect-ip:'.$request->ip()),
+            ];
+        });
     }
 
     protected function configureMediaLibrary(): void
