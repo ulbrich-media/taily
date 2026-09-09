@@ -55,7 +55,7 @@ No canvas-drawn signature. Both mediator and adopter sign by typing their full n
 Every step of the native flow is recorded, not just the final "signed" state:
 
 - Link generated (which token, issued to whom — mediator or adopter — and when)
-- Email sent (timestamp) — only written once the send has actually succeeded, never beforehand, so the trail can't claim a delivery that didn't happen
+- Email submitted to the mail transport (timestamp) — only written once the send has actually succeeded, never beforehand, so the trail can't claim a submission that didn't happen; this confirms handoff to the configured mail transport, not that the message reached the recipient's mailbox
 - Link opened (first-view timestamp, IP address, user agent) — tracked separately from signing, since "had the opportunity to review" and "actually signed" are distinct evidentiary facts
 - Signature submitted (timestamp, IP address, user agent, typed name entered, which checkboxes were checked, and a hash of the exact document being signed)
 - Cancellation, if it happens (who cancelled and when)

@@ -76,7 +76,7 @@ class ContractSigningService
             ContractSigningEventType::EMAIL_SENT,
             $ipAddress,
             $userAgent,
-            array_merge(['person_email' => $sentToEmail], $metadata ?? []),
+            array_merge($metadata ?? [], ['person_email' => $sentToEmail]),
             $actor,
         );
     }
@@ -405,7 +405,10 @@ class ContractSigningService
      * into metadata, so the trail keeps showing who it actually went to even
      * if that Person's name or email changes later. Caller-supplied
      * $metadata keys (e.g. recordEmailSent()'s literal sent-to address) win
-     * over the snapshot's defaults.
+     * over the snapshot's defaults. Likewise, when $actor is present, its
+     * name/email are snapshotted too: actor_user_id is nullOnDelete, so
+     * deleting that User account must not erase who performed the action
+     * from an already-written audit event.
      */
     private function writeAuditEvent(
         ContractSigningProcess $process,
@@ -421,6 +424,13 @@ class ContractSigningService
             $metadata = array_merge([
                 'person_name' => $signer->person->full_name,
                 'person_email' => $signer->person->email,
+            ], $metadata ?? []);
+        }
+
+        if ($actor) {
+            $metadata = array_merge([
+                'actor_name' => $actor->name,
+                'actor_email' => $actor->email,
             ], $metadata ?? []);
         }
 

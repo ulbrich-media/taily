@@ -278,6 +278,24 @@ class ContractSigningServiceTest extends TestCase
         $this->assertSame('maria-original@example.com', $linkGeneratedEvent->metadata['person_email']);
     }
 
+    public function test_actor_identity_snapshot_survives_the_acting_users_deletion(): void
+    {
+        $user = User::factory()->create(['name' => 'Admin User', 'email' => 'admin@example.com']);
+        $adoption = $this->createAdoption();
+        $process = $this->service->start($adoption, 'default', '%PDF-bytes', $user);
+
+        $event = $process->auditEvents()->where('event_type', ContractSigningEventType::LINK_GENERATED->value)->first();
+        $this->assertSame('Admin User', $event->metadata['actor_name']);
+        $this->assertSame('admin@example.com', $event->metadata['actor_email']);
+
+        $user->delete();
+
+        $event->refresh();
+        $this->assertNull($event->actor_user_id);
+        $this->assertSame('Admin User', $event->metadata['actor_name']);
+        $this->assertSame('admin@example.com', $event->metadata['actor_email']);
+    }
+
     public function test_signers_due_for_week_reminder_returns_signers_within_the_week_window(): void
     {
         $adoption = $this->createAdoption();
@@ -341,6 +359,18 @@ class ContractSigningServiceTest extends TestCase
         $this->assertSame('week', $event->metadata['threshold']);
         $this->assertSame($signer->person->full_name, $event->metadata['person_name']);
         $this->assertSame($signer->person->email, $event->metadata['person_email']);
+    }
+
+    public function test_record_email_sent_keeps_sent_to_email_authoritative_over_caller_metadata(): void
+    {
+        $adoption = $this->createAdoption();
+        $process = $this->service->start($adoption, 'default', '%PDF-bytes');
+        $signer = $process->signers->first();
+
+        $this->service->recordEmailSent($signer, 'actually-sent-to@example.com', ['person_email' => 'spoofed@example.com']);
+
+        $event = $process->auditEvents()->where('event_type', ContractSigningEventType::EMAIL_SENT->value)->first();
+        $this->assertSame('actually-sent-to@example.com', $event->metadata['person_email']);
     }
 
     public function test_signed_signers_are_excluded_from_reminder_queries(): void
