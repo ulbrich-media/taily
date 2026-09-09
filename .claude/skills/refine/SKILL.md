@@ -117,3 +117,15 @@ Pass the plan body inline via a quoted heredoc (`<<'PLAN_EOF'`) so shell/markdow
   ```
 
 Keep the plan concise — it's for a human to review and an agent to later implement, not the implementation itself.
+
+## Step 4 — Post a short conversational reply (refinement mode only)
+
+**Initial mode: skip this step.** The plan comment you just posted is already the first reply in the thread — there's nothing to summarize yet, and an extra comment right below it would just be noise.
+
+**Refinement mode:** after Step 3's PATCH, post one more short, plain (unmarked) comment — 1-3 sentences, written like a reply to the thread, not a changelog entry. This is what keeps the issue feeling like a conversation instead of a silent edit, which is otherwise all refinement mode produces (the PATCH leaves nothing new in the thread). Briefly say what changed, based on the feedback you incorporated in Step 1 and whatever moved in the plan, e.g. "Addressed the naming feedback and dropped the auth question — should be ready to implement now." If Status still isn't Ready, say in one clause what's still missing rather than leaving the reader to infer it from Confidence/Complexity alone.
+
+```
+gh issue comment {issue_number} --body "<short note>"
+```
+
+Post this after Step 3's PATCH, not before — the plan itself should already be updated when this note references it.
