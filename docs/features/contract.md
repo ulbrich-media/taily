@@ -68,16 +68,14 @@ This area is still light on detail and needs more research before implementation
 
 Same token pattern as the [pre-inspection public link](./pre-inspection.md), hardened further given what a contract token grants access to: legally binding, highly personal data, not just a read-only view. This means stronger entropy, an expiry window (see [Reminders and expiry](#reminders-and-expiry)), brute-force protection (rate limiting and/or lockout), explicit revocation (covered by [Cancellation](#cancellation)), and single-use enforcement so a token can't sign twice or be replayed after the contract is already complete.
 
-This checklist was worked through as a dedicated hardening pass (see [issue #159](https://github.com/ulbrich-media/taily/issues/159)), rather than left to be resolved inline during the initial build:
+- **Token storage and comparison** — `AccessToken` (shared by the contract and pre-inspection flows via `HasAccessToken`) stores a SHA-256 `token_hash` for indexed, no-table-scan lookup, plus a `token_ciphertext` (Laravel `Crypt::encryptString`) rather than the raw token. A one-way hash alone isn't enough: `ProcessContractSigningReminders` resends the same link days later, and the pre-inspection admin UI exposes a persistent "copy link" action — both need the plaintext recoverable well after issuance, which only encryption (not hashing) allows.
+- **Leakage via the channel, not just the endpoint** — no third-party resources are loaded by the signing/inspection pages, and a `Referrer-Policy: strict-origin-when-cross-origin` header is set globally so a token can't leak via `Referer`.
+- **IDOR-style checks** — the token is the sole lookup key for both flows, with no separate ID parameter.
+- **Rate limiting on both reads and writes** — both `/contracts/{token}*` and `/inspect/{token}*` are throttled per-token and per-IP.
+- **Error responses must not leak information** — invalid, expired, and already-used tokens return the same generic response for both flows.
+- **CSRF protection without a session** — the public signing/inspection pages sit behind Sanctum's `EnsureFrontendRequestsAreStateful` (the same mechanism the authenticated SPA uses), so the same double-submit-cookie CSRF check the SPA relies on applies to the submit routes too.
 
-- **Token storage and comparison** — `AccessToken` (shared by the contract and pre-inspection flows via `HasAccessToken`) stores a SHA-256 `token_hash` for indexed, no-table-scan lookup, plus a `token_ciphertext` (Laravel `Crypt::encryptString`) rather than the raw token. A one-way hash alone wasn't enough: `ProcessContractSigningReminders` resends the same link days later, and the pre-inspection admin UI exposes a persistent "copy link" action — both need the plaintext recoverable well after issuance, which only encryption (not hashing) allows.
-- **Leakage via the channel, not just the endpoint** — no third-party resources are loaded by the signing/inspection pages, and a `Referrer-Policy: strict-origin-when-cross-origin` header is now set globally so a future regression can't leak a token via `Referer`.
-- **IDOR-style checks** — already correct: the token is the sole lookup key for both flows, with no separate ID parameter.
-- **Rate limiting on both reads and writes** — both `/contracts/{token}*` and `/inspect/{token}*` are throttled per-token and per-IP; `/inspect/{token}*` previously had no throttle at all.
-- **Error responses must not leak information** — already correct: invalid, expired, and already-used tokens return the same generic response for both flows.
-- **CSRF protection without a session** — the public signing/inspection pages do sit behind Sanctum's `EnsureFrontendRequestsAreStateful` (the same mechanism the authenticated SPA uses), so the existing double-submit-cookie CSRF check now also applies to the submit routes instead of being exempted from it.
-
-This was an internal hardening pass against a known checklist, not a substitute for an external security audit.
+This was worked through against a known checklist as an internal hardening pass (see [issue #159](https://github.com/ulbrich-media/taily/issues/159)), not a substitute for an external security audit.
 
 #### Cancellation
 

@@ -19,11 +19,16 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('access_tokens', function (Blueprint $table) {
-            $table->string('token_hash', 64)->nullable()->unique()->after('token');
-            $table->text('token_ciphertext')->nullable()->after('token_hash');
+            if (! Schema::hasColumn('access_tokens', 'token_hash')) {
+                $table->string('token_hash', 64)->nullable()->unique()->after('token');
+            }
+
+            if (! Schema::hasColumn('access_tokens', 'token_ciphertext')) {
+                $table->text('token_ciphertext')->nullable()->after('token_hash');
+            }
         });
 
-        foreach (DB::table('access_tokens')->select('id', 'token')->cursor() as $accessToken) {
+        foreach (DB::table('access_tokens')->whereNull('token_hash')->select('id', 'token')->cursor() as $accessToken) {
             DB::table('access_tokens')
                 ->where('id', $accessToken->id)
                 ->update([
