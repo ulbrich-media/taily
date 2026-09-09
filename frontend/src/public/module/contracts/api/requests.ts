@@ -2,9 +2,7 @@ import { apiRequest, API_URL } from '@/lib/api'
 import type { PublicContract, SubmitContractSignatureRequest } from './types'
 
 export function getPublicContract(token: string): Promise<PublicContract> {
-  return apiRequest<PublicContract>(`contracts/${token}`, {
-    requiresAuth: false,
-  })
+  return apiRequest<PublicContract>(`contracts/${token}`)
 }
 
 export function submitPublicContractSignature(
@@ -13,7 +11,6 @@ export function submitPublicContractSignature(
 ): Promise<{ message: string }> {
   return apiRequest<{ message: string }>(`contracts/${token}/submit`, {
     method: 'POST',
-    requiresAuth: false,
     body: JSON.stringify(data),
   })
 }
