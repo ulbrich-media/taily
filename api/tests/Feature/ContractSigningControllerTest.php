@@ -2,9 +2,12 @@
 
 namespace Taily\Tests\Feature;
 
+use Exception;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Mail\PendingMail;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
+use Taily\Enums\ContractSigningEventType;
 use Taily\Enums\ContractSigningStatus;
 use Taily\Mail\ContractSignerInviteMail;
 use Taily\Mail\ContractSigningCancelledMail;
@@ -91,6 +94,13 @@ class ContractSigningControllerTest extends TestCase
         );
 
         Mail::assertSent(ContractSignerInviteMail::class, fn (ContractSignerInviteMail $mail) => $mail->hasTo('maria@example.com'));
+
+        $process = $adoption->latestContractSigningProcess()->firstOrFail();
+        $linkGeneratedEvent = $process->auditEvents()->where('event_type', ContractSigningEventType::LINK_GENERATED->value)->first();
+        $emailSentEvent = $process->auditEvents()->where('event_type', ContractSigningEventType::EMAIL_SENT->value)->first();
+        $this->assertSame($user->id, $linkGeneratedEvent->actor_user_id);
+        $this->assertSame($user->id, $emailSentEvent->actor_user_id);
+        $this->assertSame('maria@example.com', $emailSentEvent->metadata['person_email']);
     }
 
     public function test_store_marks_the_adoptions_contract_status_as_pending(): void
@@ -260,6 +270,10 @@ class ContractSigningControllerTest extends TestCase
         );
         $this->assertNull($mediatorSigner->fresh()->activeToken());
         Mail::assertNothingSent();
+
+        $cancelledEvent = $process->auditEvents()->where('event_type', ContractSigningEventType::CANCELLED->value)->first();
+        $this->assertSame($user->id, $cancelledEvent->actor_user_id);
+        $this->assertSame($adoption->mediator->id, $cancelledEvent->metadata['authorized_by_person_id']);
     }
 
     public function test_cancel_from_awaiting_adopter_signature_emails_the_adopter(): void
@@ -362,6 +376,40 @@ class ContractSigningControllerTest extends TestCase
         $this->assertNotSame($oldToken, $mediatorSigner->activeToken()->token);
 
         Mail::assertSent(ContractSignerInviteMail::class, fn (ContractSignerInviteMail $mail) => $mail->hasTo('maria@example.com'));
+
+        $emailSentEvent = $process->auditEvents()
+            ->where('event_type', ContractSigningEventType::EMAIL_SENT->value)
+            ->where('signer_id', $mediatorSigner->id)
+            ->get()
+            ->last();
+        $this->assertSame($user->id, $emailSentEvent->actor_user_id);
+        $this->assertSame('resend', $emailSentEvent->metadata['type']);
+        $this->assertSame('maria@example.com', $emailSentEvent->metadata['person_email']);
+    }
+
+    public function test_resend_does_not_write_an_audit_event_when_the_invite_email_fails_to_send(): void
+    {
+        Mail::fake();
+
+        $user = $this->createUser();
+        $adoption = $this->createAdoption();
+        $process = $this->startSigningProcess($user, $adoption);
+
+        $pendingMail = $this->createMock(PendingMail::class);
+        $pendingMail->method('send')->willThrowException(new Exception('smtp down'));
+        Mail::shouldReceive('to')->andReturn($pendingMail);
+
+        $countBefore = $process->auditEvents()->where('event_type', ContractSigningEventType::EMAIL_SENT->value)->count();
+
+        $response = $this->actingAs($user)
+            ->withHeader('referer', 'http://localhost')
+            ->postJson("/internal/adoptions/{$adoption->id}/contract/signing/resend");
+
+        $response->assertOk();
+        $this->assertSame(
+            $countBefore,
+            $process->auditEvents()->where('event_type', ContractSigningEventType::EMAIL_SENT->value)->count()
+        );
     }
 
     public function test_resend_invalidates_the_previous_token(): void

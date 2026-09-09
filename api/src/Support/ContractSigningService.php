@@ -13,6 +13,7 @@ use Taily\Models\Adoption;
 use Taily\Models\ContractSigner;
 use Taily\Models\ContractSigningProcess;
 use Taily\Models\Person;
+use Taily\Models\User;
 
 /**
  * Owns every state transition of the native contract-signing flow. Every
@@ -28,9 +29,15 @@ class ContractSigningService
      * Start a brand-new signing process for the given adoption: freezes the
      * unsigned PDF, stores its hash, and issues the mediator's signing link.
      */
-    public function start(Adoption $adoption, string $templateKey, string $unsignedPdfBytes): ContractSigningProcess
-    {
-        return DB::transaction(function () use ($adoption, $templateKey, $unsignedPdfBytes) {
+    public function start(
+        Adoption $adoption,
+        string $templateKey,
+        string $unsignedPdfBytes,
+        ?User $actor = null,
+        ?string $ipAddress = null,
+        ?string $userAgent = null,
+    ): ContractSigningProcess {
+        return DB::transaction(function () use ($adoption, $templateKey, $unsignedPdfBytes, $actor, $ipAddress, $userAgent) {
             $process = ContractSigningProcess::create([
                 'adoption_id' => $adoption->id,
                 'template_key' => $templateKey,
@@ -43,19 +50,35 @@ class ContractSigningService
                 ->toMediaCollection('document');
 
             $mediator = $this->createSigner($process, $adoption->mediator, ContractSignerRole::MEDIATOR);
-            $this->writeAuditEvent($process, $mediator, ContractSigningEventType::LINK_GENERATED);
+            $this->writeAuditEvent($process, $mediator, ContractSigningEventType::LINK_GENERATED, $ipAddress, $userAgent, actor: $actor);
 
             return $process;
         });
     }
 
     /**
-     * Audit-log write only, for a future mailable to call once the signing
-     * link email has actually been sent.
+     * Audit-log write only, for a mailable to call once the signing link
+     * email has actually been sent. $sentToEmail is the literal address the
+     * mail was sent to, not re-derived from the signer's current person
+     * record, so the trail can't drift from what was actually sent.
      */
-    public function recordEmailSent(ContractSigner $signer): void
-    {
-        $this->writeAuditEvent($signer->signingProcess, $signer, ContractSigningEventType::EMAIL_SENT);
+    public function recordEmailSent(
+        ContractSigner $signer,
+        string $sentToEmail,
+        ?array $metadata = null,
+        ?User $actor = null,
+        ?string $ipAddress = null,
+        ?string $userAgent = null,
+    ): void {
+        $this->writeAuditEvent(
+            $signer->signingProcess,
+            $signer,
+            ContractSigningEventType::EMAIL_SENT,
+            $ipAddress,
+            $userAgent,
+            array_merge($metadata ?? [], ['person_email' => $sentToEmail]),
+            $actor,
+        );
     }
 
     public function recordLinkOpened(ContractSigner $signer, string $ipAddress, string $userAgent): void
@@ -158,18 +181,26 @@ class ContractSigningService
      * @throws ContractSigningStateException if the process is already terminal or completed, or if
      *                                       $canceledBy isn't the adoption's mediator.
      */
-    public function cancel(ContractSigningProcess $process, Person $canceledBy, ?string $reason = null): void
-    {
+    public function cancel(
+        ContractSigningProcess $process,
+        Person $canceledBy,
+        ?string $reason = null,
+        ?User $actor = null,
+        ?string $ipAddress = null,
+        ?string $userAgent = null,
+    ): void {
         if ($process->adoption->mediator_id !== $canceledBy->id) {
             throw new ContractSigningStateException('Nur der Vermittler kann diesen Signaturvorgang abbrechen.');
         }
 
-        DB::transaction(function () use ($process, $canceledBy, $reason) {
+        DB::transaction(function () use ($process, $canceledBy, $reason, $actor, $ipAddress, $userAgent) {
             $locked = $this->terminate($process, ContractSigningStatus::CANCELLED, $reason);
 
-            $this->writeAuditEvent($locked, null, ContractSigningEventType::CANCELLED, metadata: [
-                'canceled_by' => $canceledBy->id,
-            ]);
+            $this->writeAuditEvent($locked, null, ContractSigningEventType::CANCELLED, $ipAddress, $userAgent, [
+                // "On whose authority" (the mediator, per the check above), as
+                // distinct from actor_user_id ("who clicked the button").
+                'authorized_by_person_id' => $canceledBy->id,
+            ], $actor);
         });
 
         $process->refresh();
@@ -180,6 +211,8 @@ class ContractSigningService
      * their invite, without touching the frozen unsigned PDF or the
      * process's status. Reuses the already-generated document, per
      * docs/features/contract.md's "no need to regenerate it" principle.
+     * Does not itself write an EMAIL_SENT audit event — the caller does that
+     * via recordEmailSent() only once the invite has actually been sent.
      *
      * @throws ContractSigningStateException if the process is no longer active.
      */
@@ -203,10 +236,6 @@ class ContractSigningService
             $signer->update([
                 'week_reminder_sent_at' => null,
                 'two_day_reminder_sent_at' => null,
-            ]);
-
-            $this->writeAuditEvent($locked, $signer, ContractSigningEventType::EMAIL_SENT, metadata: [
-                'type' => 'resend',
             ]);
 
             return $signer;
@@ -371,6 +400,16 @@ class ContractSigningService
         return $signer;
     }
 
+    /**
+     * When $signer is present, always snapshots their current name/email
+     * into metadata, so the trail keeps showing who it actually went to even
+     * if that Person's name or email changes later. Caller-supplied
+     * $metadata keys (e.g. recordEmailSent()'s literal sent-to address) win
+     * over the snapshot's defaults. Likewise, when $actor is present, its
+     * name/email are snapshotted too: actor_user_id is nullOnDelete, so
+     * deleting that User account must not erase who performed the action
+     * from an already-written audit event.
+     */
     private function writeAuditEvent(
         ContractSigningProcess $process,
         ?ContractSigner $signer,
@@ -378,9 +417,26 @@ class ContractSigningService
         ?string $ipAddress = null,
         ?string $userAgent = null,
         ?array $metadata = null,
+        ?User $actor = null,
     ): void {
+        if ($signer) {
+            $signer->loadMissing('person');
+            $metadata = array_merge([
+                'person_name' => $signer->person->full_name,
+                'person_email' => $signer->person->email,
+            ], $metadata ?? []);
+        }
+
+        if ($actor) {
+            $metadata = array_merge([
+                'actor_name' => $actor->name,
+                'actor_email' => $actor->email,
+            ], $metadata ?? []);
+        }
+
         $process->auditEvents()->create([
             'signer_id' => $signer?->id,
+            'actor_user_id' => $actor?->id,
             'event_type' => $eventType,
             'occurred_at' => now(),
             'ip_address' => $ipAddress,

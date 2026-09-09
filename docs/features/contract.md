@@ -55,14 +55,16 @@ No canvas-drawn signature. Both mediator and adopter sign by typing their full n
 Every step of the native flow is recorded, not just the final "signed" state:
 
 - Link generated (which token, issued to whom — mediator or adopter — and when)
-- Email sent (timestamp)
+- Email submitted to the mail transport (timestamp) — only written once the send has actually succeeded, never beforehand, so the trail can't claim a submission that didn't happen; this confirms handoff to the configured mail transport, not that the message reached the recipient's mailbox
 - Link opened (first-view timestamp, IP address, user agent) — tracked separately from signing, since "had the opportunity to review" and "actually signed" are distinct evidentiary facts
 - Signature submitted (timestamp, IP address, user agent, typed name entered, which checkboxes were checked, and a hash of the exact document being signed)
 - Cancellation, if it happens (who cancelled and when)
 
+Every signer-tied event snapshots that signer's name and email at the moment the event is written, rather than resolving them live from the current `Person` record when the trail is later displayed. If an applicant's or mediator's name or email changes after their contract was sent, the trail keeps showing what was actually true at the time of each event instead of silently rewriting history; older rows written before this snapshot existed simply fall back to a live lookup. Internally-triggered events — starting a process, cancelling, resending an invite — also record which authenticated `User` performed the action plus their IP and user agent, the same evidentiary detail already captured for the public token-link events (link opened, signature submitted); a cancellation additionally records the Person on whose authority it was authorized (the adoption's mediator), which is distinct from the acting `User`.
+
 The raw log is the source of truth, but it isn't the artifact a mediator or adopter should have to read to understand what happened — a human-readable "certificate of completion" (both signers, their timestamps, origin details) is rendered as its own page(s) *inside* the final signed PDF itself, appended after the signature block, rather than as a separate file — matching the pattern most established e-signature tools (DocuSign, Yousign, DocuSeal) already use, just folded into one document instead of two. This should be visible to Taily admins, and is also sent to the adopter — they reasonably expect a copy of what they legally committed to, not just the mediator.
 
-This area is still light on detail and needs more research before implementation: exactly which fields are legally load-bearing versus nice-to-have, how long link-open events should be retained, and whether every open (not just the first) is worth logging.
+Hash-chaining the audit log rows themselves (each row committing to the previous one, so a tampered or deleted row would be detectable) was considered and ruled out as unnecessary for now — the existing document-hash tamper-evidence on the final PDF (see [Document integrity](#document-integrity)) is sufficient. How long `link_opened` events should be retained, and whether every open (not just the first) is worth logging, stays out of scope here — orthogonal to what's captured.
 
 #### Access and security
 

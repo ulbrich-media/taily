@@ -69,7 +69,7 @@ class ContractSigningController extends Controller
         // takes. This closes two races: two concurrent requests both passing
         // the active-process check, and a request starting a new process for
         // an adoption whose completion is concurrently in flight.
-        $process = DB::transaction(function () use ($adoption, $validated) {
+        $process = DB::transaction(function () use ($adoption, $validated, $request) {
             $lockedAdoption = Adoption::whereKey($adoption->id)->lockForUpdate()->firstOrFail();
 
             if ($lockedAdoption->contract_signed) {
@@ -90,17 +90,31 @@ class ContractSigningController extends Controller
 
             $unsignedPdf = $this->pdfService->generate($adoption, $validated['template']);
 
-            return $this->signingService->start($adoption, $validated['template'], $unsignedPdf);
+            return $this->signingService->start(
+                $adoption,
+                $validated['template'],
+                $unsignedPdf,
+                $request->user(),
+                (string) $request->ip(),
+                (string) $request->userAgent(),
+            );
         });
 
         $process->load('signers.person');
         $mediatorSigner = $process->signers->firstWhere('role', ContractSignerRole::MEDIATOR);
+        $mediatorEmail = $mediatorSigner->person->email;
 
         try {
-            Mail::to($mediatorSigner->person->email)->send(
+            Mail::to($mediatorEmail)->send(
                 new ContractSignerInviteMail($mediatorSigner, $mediatorSigner->activeToken()->token)
             );
-            $this->signingService->recordEmailSent($mediatorSigner);
+            $this->signingService->recordEmailSent(
+                $mediatorSigner,
+                $mediatorEmail,
+                actor: $request->user(),
+                ipAddress: (string) $request->ip(),
+                userAgent: (string) $request->userAgent(),
+            );
         } catch (Throwable $e) {
             // The process is already committed at this point, so a mail
             // delivery failure must not turn into a 500 for the mediator
@@ -124,13 +138,13 @@ class ContractSigningController extends Controller
      * outstanding signer token and, if the adopter was the one holding the
      * pending signature, emails them a cancellation notice.
      */
-    public function cancel(Adoption $adoption): JsonResponse
+    public function cancel(Request $request, Adoption $adoption): JsonResponse
     {
         // Locking the adoption row (not just the process) matches store()'s
         // race-closing pattern: a concurrent cancel for the same adoption
         // re-reads latestContractSigningProcess only after the first cancel
         // has committed and released the lock.
-        [$process, $pendingRole] = DB::transaction(function () use ($adoption) {
+        [$process, $pendingRole] = DB::transaction(function () use ($adoption, $request) {
             Adoption::whereKey($adoption->id)->lockForUpdate()->firstOrFail();
 
             $process = $adoption->latestContractSigningProcess()->first();
@@ -145,7 +159,13 @@ class ContractSigningController extends Controller
                 ? ContractSignerRole::MEDIATOR
                 : ContractSignerRole::ADOPTER;
 
-            $this->signingService->cancel($process, $adoption->mediator);
+            $this->signingService->cancel(
+                $process,
+                $adoption->mediator,
+                actor: $request->user(),
+                ipAddress: (string) $request->ip(),
+                userAgent: (string) $request->userAgent(),
+            );
 
             return [$process, $pendingRole];
         });
@@ -186,7 +206,7 @@ class ContractSigningController extends Controller
      * their invite email, for a link that never arrived or is about to
      * expire.
      */
-    public function resend(Adoption $adoption): JsonResponse
+    public function resend(Request $request, Adoption $adoption): JsonResponse
     {
         // Locking the adoption row matches store()'s and cancel()'s
         // race-closing pattern.
@@ -205,10 +225,19 @@ class ContractSigningController extends Controller
         });
 
         $signer->load('person', 'signingProcess');
+        $email = $signer->person->email;
 
         try {
-            Mail::to($signer->person->email)->send(
+            Mail::to($email)->send(
                 new ContractSignerInviteMail($signer, $signer->activeToken()->token)
+            );
+            $this->signingService->recordEmailSent(
+                $signer,
+                $email,
+                ['type' => 'resend'],
+                actor: $request->user(),
+                ipAddress: (string) $request->ip(),
+                userAgent: (string) $request->userAgent(),
             );
         } catch (Throwable $e) {
             // The token replacement is already committed at this point, so a
