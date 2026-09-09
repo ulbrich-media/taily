@@ -159,11 +159,13 @@ class ContractSigningSubmissionController extends Controller
             return;
         }
 
+        $email = $adopterSigner->person->email;
+
         try {
-            Mail::to($adopterSigner->person->email)->send(
+            Mail::to($email)->send(
                 new ContractSignerInviteMail($adopterSigner, $adopterSigner->activeToken()->token)
             );
-            $this->signingService->recordEmailSent($adopterSigner);
+            $this->signingService->recordEmailSent($adopterSigner, $email);
         } catch (Throwable $e) {
             // The mediator's signature is already committed at this point,
             // so a mail delivery failure must not turn into a 500 here.

@@ -16,6 +16,7 @@ class ContractSigningAuditEvent extends Model
     protected $fillable = [
         'signing_process_id',
         'signer_id',
+        'actor_user_id',
         'event_type',
         'occurred_at',
         'ip_address',
@@ -40,5 +41,10 @@ class ContractSigningAuditEvent extends Model
     public function signer(): BelongsTo
     {
         return $this->belongsTo(ContractSigner::class, 'signer_id');
+    }
+
+    public function actor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'actor_user_id');
     }
 }

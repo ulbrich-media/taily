@@ -13,6 +13,7 @@ use Taily\Models\Animal;
 use Taily\Models\AnimalType;
 use Taily\Models\ContractSigningProcess;
 use Taily\Models\Person;
+use Taily\Models\User;
 use Taily\Support\ContractSigningService;
 use Taily\Tests\TestCase;
 
@@ -179,7 +180,8 @@ class ContractSigningServiceTest extends TestCase
             ->where('event_type', ContractSigningEventType::CANCELLED->value)
             ->first();
         $this->assertNotNull($cancelledEvent);
-        $this->assertSame($adoption->mediator->id, $cancelledEvent->metadata['canceled_by']);
+        $this->assertSame($adoption->mediator->id, $cancelledEvent->metadata['authorized_by_person_id']);
+        $this->assertNull($cancelledEvent->actor_user_id);
     }
 
     public function test_cancel_rejects_an_already_cancelled_process(): void
@@ -214,7 +216,7 @@ class ContractSigningServiceTest extends TestCase
         $process = $this->service->start($adoption, 'default', '%PDF-bytes');
 
         $mediatorSigner = $process->signers->first();
-        $this->service->recordEmailSent($mediatorSigner);
+        $this->service->recordEmailSent($mediatorSigner, $mediatorSigner->person->email);
         $this->service->recordLinkOpened($mediatorSigner, '10.0.0.1', 'PHPUnit');
 
         $this->signMediator($process);
@@ -230,6 +232,50 @@ class ContractSigningServiceTest extends TestCase
             'link_generated',
             'signature_submitted',
         ], $types);
+    }
+
+    public function test_start_records_the_acting_user_and_ip_on_the_link_generated_event(): void
+    {
+        $user = User::factory()->create(['name' => 'Admin User', 'email' => 'admin@example.com']);
+        $adoption = $this->createAdoption();
+
+        $process = $this->service->start($adoption, 'default', '%PDF-bytes', $user, '10.0.0.5', 'PHPUnit');
+
+        $event = $process->auditEvents()->where('event_type', ContractSigningEventType::LINK_GENERATED->value)->first();
+        $this->assertSame($user->id, $event->actor_user_id);
+        $this->assertSame('10.0.0.5', $event->ip_address);
+        $this->assertSame('PHPUnit', $event->user_agent);
+    }
+
+    public function test_cancel_records_the_acting_user_and_ip_alongside_who_authorized_it(): void
+    {
+        $user = User::factory()->create(['name' => 'Admin User', 'email' => 'admin@example.com']);
+        $adoption = $this->createAdoption();
+        $process = $this->service->start($adoption, 'default', '%PDF-bytes');
+
+        $this->service->cancel($process, $adoption->mediator, null, $user, '10.0.0.6', 'PHPUnit');
+
+        $event = $process->auditEvents()->where('event_type', ContractSigningEventType::CANCELLED->value)->first();
+        $this->assertSame($user->id, $event->actor_user_id);
+        $this->assertSame('10.0.0.6', $event->ip_address);
+        $this->assertSame($adoption->mediator->id, $event->metadata['authorized_by_person_id']);
+    }
+
+    public function test_signer_identity_snapshot_survives_a_later_person_mutation(): void
+    {
+        $adoption = $this->createAdoption();
+        $adoption->mediator->update(['email' => 'maria-original@example.com']);
+        $process = $this->service->start($adoption, 'default', '%PDF-bytes');
+
+        $linkGeneratedEvent = $process->auditEvents()->where('event_type', ContractSigningEventType::LINK_GENERATED->value)->first();
+        $this->assertSame('Maria Vermittlerin', $linkGeneratedEvent->metadata['person_name']);
+        $this->assertSame('maria-original@example.com', $linkGeneratedEvent->metadata['person_email']);
+
+        $adoption->mediator->update(['first_name' => 'Marianne', 'email' => 'marianne-new@example.com']);
+
+        $linkGeneratedEvent->refresh();
+        $this->assertSame('Maria Vermittlerin', $linkGeneratedEvent->metadata['person_name']);
+        $this->assertSame('maria-original@example.com', $linkGeneratedEvent->metadata['person_email']);
     }
 
     public function test_signers_due_for_week_reminder_returns_signers_within_the_week_window(): void
@@ -291,7 +337,10 @@ class ContractSigningServiceTest extends TestCase
         $this->assertNotNull($signer->fresh()->week_reminder_sent_at);
 
         $event = $process->auditEvents()->where('event_type', ContractSigningEventType::EMAIL_SENT->value)->first();
-        $this->assertSame(['type' => 'reminder', 'threshold' => 'week'], $event->metadata);
+        $this->assertSame('reminder', $event->metadata['type']);
+        $this->assertSame('week', $event->metadata['threshold']);
+        $this->assertSame($signer->person->full_name, $event->metadata['person_name']);
+        $this->assertSame($signer->person->email, $event->metadata['person_email']);
     }
 
     public function test_signed_signers_are_excluded_from_reminder_queries(): void
@@ -345,13 +394,25 @@ class ContractSigningServiceTest extends TestCase
         $this->assertNull($resent->fresh()->two_day_reminder_sent_at);
     }
 
-    public function test_resend_writes_an_audit_event(): void
+    public function test_resend_itself_writes_no_audit_event(): void
+    {
+        $adoption = $this->createAdoption();
+        $process = $this->service->start($adoption, 'default', '%PDF-bytes');
+        $countBefore = $process->auditEvents()->count();
+
+        $this->service->resend($process);
+
+        $this->assertSame($countBefore, $process->auditEvents()->count());
+    }
+
+    public function test_record_email_sent_after_resend_writes_an_audit_event(): void
     {
         $adoption = $this->createAdoption();
         $process = $this->service->start($adoption, 'default', '%PDF-bytes');
         $signer = $process->signers->first();
 
-        $this->service->resend($process);
+        $resent = $this->service->resend($process);
+        $this->service->recordEmailSent($resent, $signer->person->email, ['type' => 'resend']);
 
         $event = $process->auditEvents()
             ->where('event_type', ContractSigningEventType::EMAIL_SENT->value)
@@ -359,7 +420,8 @@ class ContractSigningServiceTest extends TestCase
             ->first();
 
         $this->assertNotNull($event);
-        $this->assertSame(['type' => 'resend'], $event->metadata);
+        $this->assertSame('resend', $event->metadata['type']);
+        $this->assertSame($signer->person->email, $event->metadata['person_email']);
     }
 
     public function test_resend_targets_the_adopter_once_the_mediator_has_signed(): void
