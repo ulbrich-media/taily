@@ -5,6 +5,7 @@ namespace Taily\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Support\Facades\Crypt;
 
 class AccessToken extends Model
 {
@@ -13,8 +14,14 @@ class AccessToken extends Model
     const UPDATED_AT = null;
 
     protected $fillable = [
-        'token',
+        'token_hash',
+        'token_ciphertext',
         'expires_at',
+    ];
+
+    protected $hidden = [
+        'token_hash',
+        'token_ciphertext',
     ];
 
     protected $casts = [
@@ -31,10 +38,13 @@ class AccessToken extends Model
         return $this->expires_at->isPast();
     }
 
-    public static function findValid(string $token): ?self
+    /**
+     * The plaintext token, recovered from token_ciphertext on demand. Needed
+     * well after issuance by ProcessContractSigningReminders and the
+     * pre-inspection "copy link" action, so it can't be a one-way hash.
+     */
+    public function getTokenAttribute(): string
     {
-        return self::where('token', $token)
-            ->where('expires_at', '>', now())
-            ->first();
+        return Crypt::decryptString($this->token_ciphertext);
     }
 }

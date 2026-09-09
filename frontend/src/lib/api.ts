@@ -26,33 +26,30 @@ function getCSRFToken(): string {
   return token ? decodeURIComponent(token) : ''
 }
 
-interface ApiRequestOptions extends RequestInit {
-  requiresAuth?: boolean
-}
-
 export async function apiRequest<T = unknown>(
   endpoint: string,
-  options: ApiRequestOptions = {}
+  options: RequestInit = {}
 ): Promise<T> {
-  const { requiresAuth = true, ...fetchOptions } = options
-
-  const isFormData = fetchOptions.body instanceof FormData
+  const isFormData = options.body instanceof FormData
   const headers: HeadersInit = {
     ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
     Accept: 'application/json',
-    ...fetchOptions.headers,
+    ...options.headers,
   }
 
-  if (requiresAuth) {
-    const csrfToken = getCSRFToken()
-    if (csrfToken) {
-      // @ts-expect-error custom header not respected by type; this is ok for now
-      headers['X-XSRF-TOKEN'] = csrfToken
-    }
+  // Sent whenever the cookie is present, regardless of whether this request
+  // is authenticated: the public signing/inspection pages have no login
+  // session, but they do sit behind EnsureFrontendRequestsAreStateful (see
+  // bootstrap/app.php), so their GET show request already sets this cookie
+  // for the submit that follows.
+  const csrfToken = getCSRFToken()
+  if (csrfToken) {
+    // @ts-expect-error custom header not respected by type; this is ok for now
+    headers['X-XSRF-TOKEN'] = csrfToken
   }
 
   const response = await fetch(`${API_URL}/${endpoint}`, {
-    ...fetchOptions,
+    ...options,
     credentials: 'include',
     headers,
   })

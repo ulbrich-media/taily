@@ -223,9 +223,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::put('/pre-inspections/{preInspection}/inspector', [PreInspectionController::class, 'updateInspector']);
 });
 
-// Public pre-inspection submission routes (token-protected, no auth required)
-Route::get('/inspect/{token}', [PreInspectionSubmissionController::class, 'show']);
-Route::post('/inspect/{token}/submit', [PreInspectionSubmissionController::class, 'submit']);
+// Public pre-inspection submission routes (token-protected, no auth required).
+// Rate limited per token (not IP) — see TailyServiceProvider::registerRateLimiters.
+Route::get('/inspect/{token}', [PreInspectionSubmissionController::class, 'show'])
+    ->middleware('throttle:inspect');
+Route::post('/inspect/{token}/submit', [PreInspectionSubmissionController::class, 'submit'])
+    ->middleware('throttle:inspect');
 
 // Public contract signing routes (token-protected, no auth required). Rate
 // limited per token (not IP) — see TailyServiceProvider::registerRateLimiters.

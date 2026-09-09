@@ -380,7 +380,7 @@ class ContractSigningControllerTest extends TestCase
             ->assertOk();
 
         $this->assertNull(
-            $mediatorSigner->accessTokens()->where('token', $oldToken)->where('expires_at', '>', now())->first()
+            $mediatorSigner->accessTokens()->where('token_hash', hash('sha256', $oldToken))->where('expires_at', '>', now())->first()
         );
     }
 

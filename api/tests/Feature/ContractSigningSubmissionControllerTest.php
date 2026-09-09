@@ -14,11 +14,12 @@ use Taily\Models\ContractSigner;
 use Taily\Models\Person;
 use Taily\Support\ContractPdfService;
 use Taily\Support\ContractSigningService;
+use Taily\Tests\Concerns\EnforcesCsrfProtection;
 use Taily\Tests\TestCase;
 
 class ContractSigningSubmissionControllerTest extends TestCase
 {
-    use RefreshDatabase;
+    use EnforcesCsrfProtection, RefreshDatabase;
 
     protected function setUp(): void
     {
@@ -225,5 +226,38 @@ class ContractSigningSubmissionControllerTest extends TestCase
         }
 
         $this->getJson("/internal/contracts/{$token}")->assertStatus(429);
+    }
+
+    public function test_submit_rejects_a_request_from_the_spa_session_without_a_csrf_token(): void
+    {
+        $this->enableCsrfEnforcement();
+
+        $adoption = $this->createAdoption();
+        $mediatorSigner = $this->startProcess($adoption);
+        $token = $mediatorSigner->activeToken()->token;
+
+        // Matches config('sanctum.stateful') (see .env's SANCTUM_STATEFUL_DOMAINS)
+        // so the request is treated as coming from the SPA, which is what
+        // pulls the session/CSRF middleware into the pipeline at all.
+        $response = $this->withHeader('referer', 'http://taily.ddev.site:5544')
+            ->postJson("/internal/contracts/{$token}/submit", [
+                'typed_name' => 'Maria Vermittlerin',
+                'contract_content_accepted' => true,
+                'privacy_policy_accepted' => true,
+                'information_confirmed' => true,
+            ]);
+
+        $response->assertStatus(419);
+    }
+
+    public function test_show_sets_a_referrer_policy_header(): void
+    {
+        $adoption = $this->createAdoption();
+        $mediatorSigner = $this->startProcess($adoption);
+        $token = $mediatorSigner->activeToken()->token;
+
+        $response = $this->getJson("/internal/contracts/{$token}");
+
+        $response->assertHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
     }
 }
