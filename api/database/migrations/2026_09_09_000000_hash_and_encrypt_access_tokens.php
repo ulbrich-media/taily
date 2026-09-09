@@ -37,9 +37,19 @@ return new class extends Migration
                 ]);
         }
 
-        Schema::table('access_tokens', function (Blueprint $table) {
-            $table->dropColumn('token');
-        });
+        if (Schema::hasColumn('access_tokens', 'token')) {
+            Schema::table('access_tokens', function (Blueprint $table) {
+                $hasUniqueIndex = collect(Schema::getIndexes('access_tokens'))
+                    ->contains('name', 'access_tokens_token_unique');
+
+                if ($hasUniqueIndex) {
+                    // SQLite refuses to drop a column that a unique index still covers.
+                    $table->dropUnique('access_tokens_token_unique');
+                }
+
+                $table->dropColumn('token');
+            });
+        }
     }
 
     public function down(): void
