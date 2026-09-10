@@ -105,7 +105,14 @@ class ContractSigningService
 
             $mediator = $locked->signers()->where('role', ContractSignerRole::MEDIATOR)->firstOrFail();
             $this->applySignature($mediator, $typedName, $contractContentAccepted, $privacyPolicyAccepted, $informationConfirmed);
-            $this->writeAuditEvent($locked, $mediator, ContractSigningEventType::SIGNATURE_SUBMITTED, $ipAddress, $userAgent);
+            $this->writeAuditEvent(
+                $locked,
+                $mediator,
+                ContractSigningEventType::SIGNATURE_SUBMITTED,
+                $ipAddress,
+                $userAgent,
+                $this->signatureMetadata($locked, $typedName, $contractContentAccepted, $privacyPolicyAccepted, $informationConfirmed),
+            );
 
             $locked->status = ContractSigningStatus::AWAITING_ADOPTER_SIGNATURE;
             $locked->save();
@@ -120,7 +127,8 @@ class ContractSigningService
     /**
      * Record the adopter's signature, completing the signing process.
      * Does not touch `final_document_hash` — assembling the final artifact
-     * is PDF work for a follow-up issue; see finalize().
+     * is ContractCompletionService's job, which calls finalize() once the
+     * document exists.
      *
      * @throws ContractSigningStateException if the process is no longer awaiting the adopter's signature.
      */
@@ -138,7 +146,14 @@ class ContractSigningService
 
             $adopter = $locked->signers()->where('role', ContractSignerRole::ADOPTER)->firstOrFail();
             $this->applySignature($adopter, $typedName, $contractContentAccepted, $privacyPolicyAccepted, $informationConfirmed);
-            $this->writeAuditEvent($locked, $adopter, ContractSigningEventType::SIGNATURE_SUBMITTED, $ipAddress, $userAgent);
+            $this->writeAuditEvent(
+                $locked,
+                $adopter,
+                ContractSigningEventType::SIGNATURE_SUBMITTED,
+                $ipAddress,
+                $userAgent,
+                $this->signatureMetadata($locked, $typedName, $contractContentAccepted, $privacyPolicyAccepted, $informationConfirmed),
+            );
 
             $locked->status = ContractSigningStatus::COMPLETED;
             $locked->completed_at = now();
@@ -149,8 +164,8 @@ class ContractSigningService
     }
 
     /**
-     * Narrow hook for a follow-up issue's controller to set the final,
-     * assembled artifact's hash once it has been generated.
+     * Narrow hook for ContractCompletionService to set the final, assembled
+     * artifact's hash once the document has been built.
      *
      * @throws ContractSigningStateException if the process isn't completed, or already finalized.
      */
@@ -370,6 +385,32 @@ class ContractSigningService
         }
 
         return $locked;
+    }
+
+    /**
+     * What the signer actually committed to, captured on the audit event
+     * itself rather than only on the mutable signer row: the typed name, the
+     * consent boxes as submitted, and — the load-bearing part — the hash of
+     * the exact document that was presented for review. Without the hash a
+     * signature event identifies no particular document, which is the one
+     * claim the whole SES design rests on (see docs/features/contract.md).
+     *
+     * @return array<string, mixed>
+     */
+    private function signatureMetadata(
+        ContractSigningProcess $process,
+        string $typedName,
+        bool $contractContentAccepted,
+        bool $privacyPolicyAccepted,
+        bool $informationConfirmed,
+    ): array {
+        return [
+            'document_hash' => $process->unsigned_document_hash,
+            'typed_name' => $typedName,
+            'contract_content_accepted' => $contractContentAccepted,
+            'privacy_policy_accepted' => $privacyPolicyAccepted,
+            'information_confirmed' => $informationConfirmed,
+        ];
     }
 
     private function applySignature(

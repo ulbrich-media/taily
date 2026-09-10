@@ -51,13 +51,6 @@
             border-top: 1px solid #1a1a1a;
             padding-top: 4px;
         }
-        .signature-name {
-            font-family: 'DejaVu Serif', serif;
-            font-style: italic;
-            font-size: 18px;
-            border-bottom: 1px solid #1a1a1a;
-            padding-bottom: 4px;
-        }
     </style>
 </head>
 <body>
@@ -140,34 +133,24 @@
     <table class="signatures">
         <tr>
             <td>
-                @if(($mediatorSigner ?? null)?->isSigned())
-                    <div class="signature-name">{{ $mediatorSigner->typed_name }}</div>
-                    <div class="signature-line">
-                        Elektronisch unterschrieben am {{ $mediatorSigner->signed_at->format('d.m.Y, H:i') }} Uhr
-                    </div>
-                @else
-                    <div class="signature-line">
-                        Ort, Datum, Unterschrift Vermittler:in
-                    </div>
-                @endif
+                <div class="signature-line">
+                    Ort, Datum, Unterschrift Vermittler:in
+                </div>
             </td>
             <td>
-                @if(($adopterSigner ?? null)?->isSigned())
-                    <div class="signature-name">{{ $adopterSigner->typed_name }}</div>
-                    <div class="signature-line">
-                        Elektronisch unterschrieben am {{ $adopterSigner->signed_at->format('d.m.Y, H:i') }} Uhr
-                    </div>
-                @else
-                    <div class="signature-line">
-                        Ort, Datum, Unterschrift Adoptant:in
-                    </div>
-                @endif
+                <div class="signature-line">
+                    Ort, Datum, Unterschrift Adoptant:in
+                </div>
             </td>
         </tr>
     </table>
 
-    @if($includeAuditTrail ?? false)
-        @include('taily::contracts.partials.audit-trail', ['auditEvents' => $auditEvents])
-    @endif
+    {{--
+        Nothing signature- or audit-related is rendered here. This document is
+        generated once, before anyone has signed, and its pages are carried
+        into the final artifact unchanged; the typed signatures and the audit
+        trail are appended afterwards as their own pages by
+        ContractPdfService::appendSignaturePages(). See ADR-013.
+    --}}
 </body>
 </html>

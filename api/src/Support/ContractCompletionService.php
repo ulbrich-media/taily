@@ -5,17 +5,23 @@ namespace Taily\Support;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Taily\Enums\ContractSignerRole;
+use Taily\Exceptions\ContractDocumentIntegrityException;
 use Taily\Mail\ContractCompletionMail;
 use Taily\Models\Adoption;
 use Taily\Models\ContractSigningProcess;
 use Throwable;
 
 /**
- * Assembles the final artifact once both signatures are in: a single
- * re-rendered PDF (contract + signatures + audit trail, see
- * ContractPdfService::generateFinal()), stored on the signing process and
- * copied onto the adoption itself, then notifies both signers.
+ * Assembles the final artifact once both signatures are in: the frozen
+ * unsigned PDF with a signature-and-audit-trail appendix appended to it (see
+ * ContractPdfService::appendSignaturePages()), stored on the signing process
+ * and copied onto the adoption itself, then notifies both signers.
+ *
+ * The contract body is never re-rendered here. Completion reads the frozen
+ * document and nothing else, so neither a later template edit nor a change to
+ * the adoption's data can alter what the signers agreed to. See ADR-013.
  */
 class ContractCompletionService
 {
@@ -34,7 +40,7 @@ class ContractCompletionService
             'auditEvents.signer.person',
         ]);
 
-        $finalBytes = $this->pdfService->generateFinal($process);
+        $finalBytes = $this->pdfService->appendSignaturePages($this->frozenDocument($process), $process);
         $hash = hash('sha256', $finalBytes);
 
         // The adoption row is locked here under the same lock that
@@ -91,5 +97,38 @@ class ContractCompletionService
                 ]);
             }
         }
+    }
+
+    /**
+     * The frozen unsigned PDF, verified against the hash recorded when the
+     * process started.
+     *
+     * This is the one point where `unsigned_document_hash` is actually
+     * checked rather than merely stored. Every signature event commits to
+     * this hash, so if the bytes on disk no longer match it, the document
+     * about to be wrapped in a signature appendix is not the document anyone
+     * agreed to — refusing is the only honest outcome.
+     *
+     * @throws ContractDocumentIntegrityException if the document is missing or altered.
+     */
+    private function frozenDocument(ContractSigningProcess $process): string
+    {
+        $media = $process->getFirstMedia('document');
+
+        if (! $media) {
+            throw new ContractDocumentIntegrityException(
+                "Signing process {$process->id} has no frozen contract document to complete."
+            );
+        }
+
+        $bytes = Storage::disk($media->disk)->get($media->getPathRelativeToRoot());
+
+        if (! is_string($bytes) || ! hash_equals($process->unsigned_document_hash, hash('sha256', $bytes))) {
+            throw new ContractDocumentIntegrityException(
+                "Frozen contract document for signing process {$process->id} no longer matches its recorded hash."
+            );
+        }
+
+        return $bytes;
     }
 }
