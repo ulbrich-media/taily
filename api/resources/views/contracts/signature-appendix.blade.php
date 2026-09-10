@@ -101,6 +101,12 @@
             <td class="hash">{{ $process->unsigned_document_hash }}</td>
         </tr>
     </table>
+    <p class="muted">
+        Das ist der Prüfwert der vorstehenden Vertragsseiten, wie sie von den Vertragspartnern
+        gesehen und unterzeichnet wurden. Nach Unterzeichnung wurden nur die Unterschriften und
+        das Prüfprotokoll angehangen. Das Gesamtdokument hat einen anderen Prüfwert, welcher zum
+        Zeitpunkt der Erstellung noch nicht bekannt war.
+    </p>
 
     @include('taily::contracts.partials.audit-trail', ['auditEvents' => $auditEvents])
 </body>
