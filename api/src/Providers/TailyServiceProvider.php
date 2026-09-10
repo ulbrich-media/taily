@@ -15,6 +15,7 @@ use Taily\Console\Commands\ProcessContractSigningReminders;
 use Taily\Console\Commands\SeedDatabase;
 use Taily\Console\Commands\SmokeTestAuthConfig;
 use Taily\Console\Commands\SmokeTestMailViews;
+use Taily\Http\Controllers\Dev\ContractPreviewController;
 use Taily\Http\Middleware\EnsureUserIsAdmin;
 use Taily\Http\Middleware\ForceJsonResponse;
 use Taily\Http\Middleware\PublicApiCors;
@@ -89,6 +90,17 @@ class TailyServiceProvider extends ServiceProvider
         Route::prefix('internal')
             ->middleware(['api', ForceJsonResponse::class, EnsureFrontendRequestsAreStateful::class])
             ->group(__DIR__.'/../../routes/internal.php');
+
+        // Development tooling, never registered in a served environment.
+        // ContractPreviewController repeats this check at request time, and
+        // requires a logged-in user on top of it — see the class docblock.
+        // The `web` group (not `api`) is what gives these routes a session
+        // to authenticate against when opened directly in a browser.
+        if ($this->app->environment(ContractPreviewController::ENVIRONMENTS)) {
+            Route::prefix('dev')
+                ->middleware('web')
+                ->group(__DIR__.'/../../routes/dev.php');
+        }
     }
 
     /**
