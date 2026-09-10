@@ -126,6 +126,57 @@ class ContractSigningServiceTest extends TestCase
         $this->assertSame(hash('sha256', 'final-artifact-bytes'), $finalizedEvent->metadata['final_document_hash']);
     }
 
+    public function test_signature_event_commits_to_the_document_that_was_signed(): void
+    {
+        $adoption = $this->createAdoption();
+        $process = $this->service->start($adoption, 'default', 'PDF-BYTES');
+
+        $this->signMediator($process);
+
+        $event = $process->auditEvents()
+            ->where('event_type', ContractSigningEventType::SIGNATURE_SUBMITTED)
+            ->firstOrFail();
+
+        // Without this the trail records that someone signed, but not what.
+        $this->assertSame(hash('sha256', 'PDF-BYTES'), $event->metadata['document_hash']);
+        $this->assertSame($process->unsigned_document_hash, $event->metadata['document_hash']);
+    }
+
+    public function test_signature_event_records_the_typed_name_and_consent_boxes(): void
+    {
+        $adoption = $this->createAdoption();
+        $process = $this->service->start($adoption, 'default', 'PDF-BYTES');
+
+        $this->signMediator($process);
+
+        $event = $process->auditEvents()
+            ->where('event_type', ContractSigningEventType::SIGNATURE_SUBMITTED)
+            ->firstOrFail();
+
+        $this->assertSame('Maria Vermittlerin', $event->metadata['typed_name']);
+        $this->assertTrue($event->metadata['contract_content_accepted']);
+        $this->assertTrue($event->metadata['privacy_policy_accepted']);
+        $this->assertTrue($event->metadata['information_confirmed']);
+    }
+
+    public function test_both_signature_events_commit_to_the_same_document_hash(): void
+    {
+        $adoption = $this->createAdoption();
+        $process = $this->service->start($adoption, 'default', 'PDF-BYTES');
+
+        $this->signMediator($process);
+        $this->signAdopter($process);
+
+        $hashes = $process->auditEvents()
+            ->where('event_type', ContractSigningEventType::SIGNATURE_SUBMITTED)
+            ->get()
+            ->map(fn ($event) => $event->metadata['document_hash'])
+            ->all();
+
+        $this->assertCount(2, $hashes);
+        $this->assertSame([$hashes[0]], array_unique($hashes));
+    }
+
     public function test_recording_mediator_signature_rejects_a_cancelled_process(): void
     {
         $adoption = $this->createAdoption();
