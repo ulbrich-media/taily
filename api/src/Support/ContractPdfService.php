@@ -25,9 +25,24 @@ class ContractPdfService
      */
     public function generate(Adoption $adoption, string $templateKey): string
     {
+        return $this->assemble([Pdf::loadHtml($this->renderBody($adoption, $templateKey))->output()]);
+    }
+
+    /**
+     * The contract body's HTML, exactly as dompdf receives it in generate().
+     *
+     * Split out so it can be inspected on its own — see the
+     * `taily:preview-contract` command, which writes it to a file for
+     * template debugging in a browser, where the edit-reload loop is a
+     * fraction of a PDF render.
+     *
+     * @throws NotFoundHttpException if the template key is unknown.
+     */
+    public function renderBody(Adoption $adoption, string $templateKey): string
+    {
         [$view, $data] = $this->resolveViewAndData($adoption, $templateKey);
 
-        return $this->assemble([Pdf::loadView($view, $data)->output()]);
+        return view($view, $data)->render();
     }
 
     /**
@@ -41,16 +56,26 @@ class ContractPdfService
      */
     public function appendSignaturePages(string $unsignedPdfBytes, ContractSigningProcess $process): string
     {
+        $appendix = Pdf::loadHtml($this->renderAppendix($process))->output();
+
+        return $this->assemble([$unsignedPdfBytes, $appendix]);
+    }
+
+    /**
+     * The signature-and-audit-trail appendix's HTML, exactly as dompdf
+     * receives it in appendSignaturePages(). Split out for the same reason
+     * as renderBody().
+     */
+    public function renderAppendix(ContractSigningProcess $process): string
+    {
         $process->loadMissing(['signers.person', 'auditEvents.signer.person']);
 
-        $appendix = Pdf::loadView('taily::contracts.signature-appendix', [
+        return view('taily::contracts.signature-appendix', [
             'process' => $process,
             'mediatorSigner' => $process->signers->firstWhere('role', ContractSignerRole::MEDIATOR),
             'adopterSigner' => $process->signers->firstWhere('role', ContractSignerRole::ADOPTER),
             'auditEvents' => $process->auditEvents,
-        ])->output();
-
-        return $this->assemble([$unsignedPdfBytes, $appendix]);
+        ])->render();
     }
 
     /**
