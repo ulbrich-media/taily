@@ -4,10 +4,14 @@
     <meta charset="utf-8">
     <title>Schutzvertrag</title>
     <style>
+        @page {
+            margin: 95px 40px 90px 40px;
+        }
         body {
             font-family: Helvetica, Arial, sans-serif;
             font-size: 12px;
             color: #1a1a1a;
+            margin: 0;
         }
         h1 {
             font-size: 20px;
@@ -38,22 +42,59 @@
             font-weight: bold;
             background: #f5f5f5;
         }
-        .signatures {
-            margin-top: 48px;
-            width: 100%;
+        .page-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 65px;
+            padding: 18px 40px 0 40px;
+            background: #fabf37;
+            color: #2b2a22;
         }
-        .signatures td {
-            border: none;
-            padding-top: 48px;
-            width: 50%;
+        .page-header .brand {
+            font-size: 18px;
+            font-weight: bold;
         }
-        .signature-line {
-            border-top: 1px solid #1a1a1a;
-            padding-top: 4px;
+        .page-header .doc-title {
+            float: right;
+            font-size: 13px;
+            margin-top: 3px;
+        }
+        .page-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 75px;
+            padding: 10px 40px 0 40px;
+            border-top: 1px solid #e8e8e3;
+            color: #7c7c67;
+            font-size: 9px;
+            line-height: 1.5;
+        }
+        .animal-photo {
+            float: right;
+            max-width: 140px;
+            max-height: 140px;
+            margin-left: 12px;
         }
     </style>
 </head>
 <body>
+    <div class="page-header">
+        <span class="brand">Taily</span>
+        <span class="doc-title">Schutzvertrag</span>
+    </div>
+
+    @if($organization)
+        <div class="page-footer">
+            {{ $organization->name }}<br>
+            {{ $organization->street_line }}{{ $organization->street_line_additional ? ', '.$organization->street_line_additional : '' }}, {{ $organization->postal_code }} {{ $organization->city }}<br>
+            {{ $organization->email }}{{ $organization->email && ($organization->phone || $organization->mobile) ? ' · ' : '' }}{{ $organization->phone ?: $organization->mobile }}
+        </div>
+    @endif
+
     <h1>Schutzvertrag</h1>
     <p style="color: #b91c1c; font-style: italic;">
         Hinweis: Dies ist eine Beispielvorlage zu Demonstrationszwecken und kein
@@ -67,6 +108,9 @@
     </p>
 
     <h2>Tier</h2>
+    @if($animalPhoto)
+        <img class="animal-photo" src="{{ $animalPhoto }}" alt="Foto von {{ $animal->name }}">
+    @endif
     <table>
         <tr>
             <td class="label">Name</td>
@@ -81,6 +125,14 @@
             <td>{{ $animal->breed }}</td>
         </tr>
         <tr>
+            <td class="label">Farbe</td>
+            <td>{{ $animal->color }}</td>
+        </tr>
+        <tr>
+            <td class="label">Geburtsdatum</td>
+            <td>{{ $animal->date_of_birth?->format('d.m.Y') }}</td>
+        </tr>
+        <tr>
             <td class="label">Tiernummer</td>
             <td>{{ $animal->animal_number }}</td>
         </tr>
@@ -91,6 +143,10 @@
         <tr>
             <td class="label">Name</td>
             <td>{{ $applicant->full_name }}</td>
+        </tr>
+        <tr>
+            <td class="label">Geburtsdatum</td>
+            <td>{{ $applicant->date_of_birth?->format('d.m.Y') }}</td>
         </tr>
         <tr>
             <td class="label">Anschrift</td>
@@ -129,28 +185,5 @@
         Organisation untersagt. Bei Zuwiderhandlung gegen diesen Vertrag behält sich die
         vermittelnde Organisation das Recht vor, das Tier zurückzufordern.
     </p>
-
-    <table class="signatures">
-        <tr>
-            <td>
-                <div class="signature-line">
-                    Ort, Datum, Unterschrift Vermittler:in
-                </div>
-            </td>
-            <td>
-                <div class="signature-line">
-                    Ort, Datum, Unterschrift Adoptant:in
-                </div>
-            </td>
-        </tr>
-    </table>
-
-    {{--
-        Nothing signature- or audit-related is rendered here. This document is
-        generated once, before anyone has signed, and its pages are carried
-        into the final artifact unchanged; the typed signatures and the audit
-        trail are appended afterwards as their own pages by
-        ContractPdfService::appendSignaturePages(). See ADR-013.
-    --}}
 </body>
 </html>
