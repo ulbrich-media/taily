@@ -5,7 +5,7 @@
     <title>Schutzvertrag</title>
     <style>
         @page {
-            margin: 95px 40px 90px 40px;
+            margin: 70px 40px 65px 40px;
         }
         body {
             font-family: Helvetica, Arial, sans-serif;
@@ -47,31 +47,38 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 65px;
-            padding: 18px 40px 0 40px;
-            background: #fabf37;
+            height: 40px;
+            padding: 0 40px;
+            border-bottom: 1px solid #e0dcc9;
             color: #2b2a22;
         }
         .page-header .brand {
-            font-size: 18px;
+            font-size: 15px;
             font-weight: bold;
+            line-height: 40px;
         }
         .page-header .doc-title {
             float: right;
-            font-size: 13px;
-            margin-top: 3px;
+            font-size: 11px;
+            line-height: 40px;
+            color: #7c7c67;
         }
         .page-footer {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
-            height: 75px;
-            padding: 10px 40px 0 40px;
-            border-top: 1px solid #e8e8e3;
+            height: 50px;
+            padding: 8px 40px 0 40px;
+            border-top: 1px solid #e0dcc9;
             color: #7c7c67;
             font-size: 9px;
-            line-height: 1.5;
+            line-height: 1.4;
+        }
+        .page-footer .org-info {
+            /* Leaves room on the right for the page number stamped by
+               ContractPdfService::stampPageNumbers() so the two never overlap. */
+            max-width: 380px;
         }
         .animal-photo {
             float: right;
@@ -89,9 +96,11 @@
 
     @if($organization)
         <div class="page-footer">
-            {{ $organization->name }}<br>
-            {{ $organization->street_line }}{{ $organization->street_line_additional ? ', '.$organization->street_line_additional : '' }}, {{ $organization->postal_code }} {{ $organization->city }}<br>
-            {{ $organization->email }}{{ $organization->email && ($organization->phone || $organization->mobile) ? ' · ' : '' }}{{ $organization->phone ?: $organization->mobile }}
+            <div class="org-info">
+                {{ $organization->name }}<br>
+                {{ $organization->street_line }}{{ $organization->street_line_additional ? ', '.$organization->street_line_additional : '' }}, {{ $organization->postal_code }} {{ $organization->city }}<br>
+                {{ $organization->email }}{{ $organization->email && ($organization->phone || $organization->mobile) ? ' · ' : '' }}{{ $organization->phone ?: $organization->mobile }}
+            </div>
         </div>
     @endif
 

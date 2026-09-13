@@ -7,7 +7,6 @@ use Dompdf\Dompdf;
 use Illuminate\Support\Facades\Storage;
 use setasign\Fpdi\Fpdi;
 use setasign\Fpdi\PdfParser\StreamReader;
-use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Taily\Enums\ContractSignerRole;
 use Taily\Models\Adoption;
@@ -172,8 +171,7 @@ class ContractPdfService
      */
     private function animalPhotoDataUri(Animal $animal): ?string
     {
-        $media = $animal->getMedia('pictures')
-            ->first(fn (Media $item) => str_starts_with($item->mime_type ?? '', 'image/'));
+        $media = $animal->getProfilePictureMedia();
 
         if ($media === null) {
             return null;
@@ -199,26 +197,37 @@ class ContractPdfService
      * Stamp "Seite X von Y" into the footer of every page of the body.
      *
      * dompdf has no CSS-only way to know the total page count while a page
-     * is being laid out, so the template itself can't render this. The
-     * canvas-level page_text() API is the documented way to do it: it
-     * defers drawing until every page exists, then substitutes {PAGE_NUM} /
-     * {PAGE_COUNT} into the given text per page. This works without
-     * enabling isPhpEnabled, which would otherwise broaden dompdf's
-     * execution surface for a template that has no other reason to run
-     * embedded PHP.
+     * is being laid out (its {PAGE_NUM}/{PAGE_COUNT} placeholders only work
+     * through the PHP-eval mode or this canvas API), so the template itself
+     * can't render this. The canvas-level page_text() API is the documented
+     * way to do it without enabling isPhpEnabled, which would otherwise
+     * broaden dompdf's execution surface for a template that has no other
+     * reason to run embedded PHP: it defers drawing until every page
+     * exists, then substitutes the placeholders per page.
+     *
+     * Positioned to line up with the footer band rendered by the template
+     * itself (see the `.page-footer` rule in default.blade.php) — same
+     * right margin, right-aligned on its own line above the organisation's
+     * contact details — so it reads as one footer rather than two
+     * independently-placed pieces of text.
      */
     private function stampPageNumbers(Dompdf $dompdf): void
     {
         $canvas = $dompdf->getCanvas();
-        $font = $dompdf->getFontMetrics()->getFont('Helvetica');
+        $fontMetrics = $dompdf->getFontMetrics();
+        $font = $fontMetrics->getFont('Helvetica');
+        $fontSize = 9.0;
+        $margin = 40.0;
 
-        $canvas->page_text(
-            $canvas->get_width() - 150,
-            $canvas->get_height() - 45,
-            'Seite {PAGE_NUM} von {PAGE_COUNT}',
-            $font,
-            9,
-            [0.169, 0.165, 0.133],
-        );
+        $text = 'Seite {PAGE_NUM} von {PAGE_COUNT}';
+        // {PAGE_NUM}/{PAGE_COUNT} are only substituted with the real
+        // numbers once every page exists, so the width is measured against
+        // a same-length placeholder to right-align consistently.
+        $textWidth = (float) $fontMetrics->getTextWidth('Seite 00 von 00', $font, $fontSize);
+
+        $x = (float) $canvas->get_width() - $margin - $textWidth;
+        $y = (float) $canvas->get_height() - 33.0;
+
+        $canvas->page_text($x, $y, $text, $font, $fontSize, [0.169, 0.165, 0.133]);
     }
 }
