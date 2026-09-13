@@ -214,7 +214,7 @@ class ContractPdfServiceTest extends TestCase
         return [$adoption, $organization];
     }
 
-    public function test_generate_renders_the_new_fields_branding_and_page_count(): void
+    public function test_generate_renders_the_contract_fields_the_frame_and_the_page_count(): void
     {
         [$adoption] = $this->createAdoptionWithFullDetails();
 
@@ -224,10 +224,35 @@ class ContractPdfServiceTest extends TestCase
         $this->assertStringContainsString('Braun-Wei', $text); // "ß" is dropped by the core-font-only extraction regex
         $this->assertStringContainsString('01.05.2020', $text);
         $this->assertStringContainsString('15.03.1990', $text);
+        $this->assertStringContainsString('Tierheim Musterstadt', $text);
+
+        // What the layout draws around the document rather than the
+        // template: the brand, this document's own title, the installation's
+        // footer, and the page number stamped into that footer's band.
         $this->assertStringContainsString('Taily', $text);
-        $this->assertStringContainsString('tierheim-musterstadt.de', $text);
-        $this->assertStringContainsString('1234567', $text);
+        $this->assertStringContainsString('Schutzvertrag', $text);
+        $this->assertStringContainsString('taily.example', $text);
         $this->assertStringContainsString('Seite', $text);
+    }
+
+    public function test_the_contract_and_the_appendix_share_one_frame_under_their_own_titles(): void
+    {
+        [$process] = $this->completedProcessWithFrozenPdf();
+        $service = new ContractPdfService;
+
+        $body = $service->renderBody($process->adoption, 'default');
+        $appendix = $service->renderAppendix($process);
+
+        // Both documents extend contracts/layout.blade.php, which is what
+        // makes a logo or footer change in that one file reach all of them.
+        // Only the title each document names itself by differs.
+        $this->assertStringContainsString('<span class="doc-title">Schutzvertrag</span>', $body);
+        $this->assertStringContainsString('<span class="doc-title">Unterschriften</span>', $appendix);
+
+        foreach (['<span class="brand">', 'class="page-footer"', 'class="org-info"'] as $frame) {
+            $this->assertStringContainsString($frame, $body);
+            $this->assertStringContainsString($frame, $appendix);
+        }
     }
 
     public function test_generate_no_longer_renders_a_signature_line(): void

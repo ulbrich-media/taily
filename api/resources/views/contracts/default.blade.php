@@ -1,92 +1,8 @@
-<!DOCTYPE html>
-<html lang="de">
-<head>
-    <meta charset="utf-8">
-    <title>Schutzvertrag</title>
-    <style>
-        @page {
-            /* Deep enough top and bottom margins for the fixed header and
-               footer bands to sit inside them with ~5mm of clearance to the
-               sheet edge, which is more than any common printer trims. */
-            margin: 76px 40px 80px 40px;
-        }
-        body {
-            font-family: Helvetica, Arial, sans-serif;
-            font-size: 12px;
-            color: #1a1a1a;
-            margin: 0;
-        }
-        h1 {
-            font-size: 20px;
-            margin-bottom: 4px;
-        }
-        h2 {
-            font-size: 14px;
-            margin-top: 24px;
-            margin-bottom: 8px;
-            border-bottom: 1px solid #ccc;
-            padding-bottom: 4px;
-        }
-        p {
-            line-height: 1.5;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 16px;
-        }
-        table td {
-            padding: 4px 8px;
-            border: 1px solid #ccc;
-            vertical-align: top;
-        }
-        table td.label {
-            width: 35%;
-            font-weight: bold;
-            background: #f5f5f5;
-        }
-        /* dompdf positions fixed boxes against the page's content area, not
-           the sheet, so top/bottom 0 would drop the band into the flow's
-           first line. The negative offsets lift each band into the @page
-           margin it is supposed to live in; left/right 0 already sit on the
-           content edges, which is why neither band carries a side padding. */
-        .page-header {
-            position: fixed;
-            top: -58px;
-            left: 0;
-            right: 0;
-            height: 40px;
-            border-bottom: 1px solid #e0dcc9;
-            color: #2b2a22;
-        }
-        .page-header .brand {
-            font-size: 15px;
-            font-weight: bold;
-            line-height: 40px;
-        }
-        .page-header .doc-title {
-            float: right;
-            font-size: 11px;
-            line-height: 40px;
-            color: #7c7c67;
-        }
-        .page-footer {
-            position: fixed;
-            bottom: -62px;
-            left: 0;
-            right: 0;
-            height: 42px;
-            padding-top: 8px;
-            border-top: 1px solid #e0dcc9;
-            color: #7c7c67;
-            font-size: 9px;
-            line-height: 1.4;
-        }
-        .page-footer .org-info {
-            /* Leaves room on the right for the page number stamped by
-               ContractPdfService::stampPageNumbers() so the two never overlap. */
-            max-width: 380px;
-        }
+@extends('taily::contracts.layout')
+
+@section('title', 'Schutzvertrag')
+
+@push('styles')
         /* A float would not do here: dompdf lays a width:100% table out
            across the full containing block regardless of floats, so the
            photo would be painted on top of the animal table's last column.
@@ -109,25 +25,9 @@
         .animal-photo {
             width: 140px;
         }
-    </style>
-</head>
-<body>
-    <div class="page-header">
-        <span class="brand">Taily</span>
-        <span class="doc-title">Schutzvertrag</span>
-    </div>
+@endpush
 
-    @if($organization)
-        <div class="page-footer">
-            <div class="org-info">
-                {{ $organization->name }}<br>
-                {{ $organization->street_line }}{{ $organization->street_line_additional ? ', '.$organization->street_line_additional : '' }}, {{ $organization->postal_code }} {{ $organization->city }}<br>
-                {{ $organization->email }}{{ $organization->email && ($organization->phone || $organization->mobile) ? ' · ' : '' }}{{ $organization->phone ?: $organization->mobile }}
-            </div>
-        </div>
-    @endif
-
-    <h1>Schutzvertrag</h1>
+@section('content')
     <p style="color: #b91c1c; font-style: italic;">
         Hinweis: Dies ist eine Beispielvorlage zu Demonstrationszwecken und kein
         rechtssicherer, produktionsreifer Vertrag. Vor dem Einsatz muss sie durch
@@ -225,5 +125,4 @@
         Organisation untersagt. Bei Zuwiderhandlung gegen diesen Vertrag behält sich die
         vermittelnde Organisation das Recht vor, das Tier zurückzufordern.
     </p>
-</body>
-</html>
+@endsection

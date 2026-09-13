@@ -206,7 +206,7 @@ class ContractPdfService
      * exists, then substitutes the placeholders per page.
      *
      * Positioned to line up with the footer band rendered by the template
-     * itself (see the `.page-footer` rule in default.blade.php) — same
+     * itself (see the `.page-footer` rule in contracts/layout.blade.php) — same
      * right margin, same type size, sitting on the band's first line to the
      * right of the organisation's contact details — so it reads as one
      * footer rather than two independently-placed pieces of text.
