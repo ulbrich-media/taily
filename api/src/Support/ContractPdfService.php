@@ -207,17 +207,26 @@ class ContractPdfService
      *
      * Positioned to line up with the footer band rendered by the template
      * itself (see the `.page-footer` rule in default.blade.php) — same
-     * right margin, right-aligned on its own line above the organisation's
-     * contact details — so it reads as one footer rather than two
-     * independently-placed pieces of text.
+     * right margin, same type size, sitting on the band's first line to the
+     * right of the organisation's contact details — so it reads as one
+     * footer rather than two independently-placed pieces of text.
      */
     private function stampPageNumbers(Dompdf $dompdf): void
     {
         $canvas = $dompdf->getCanvas();
         $fontMetrics = $dompdf->getFontMetrics();
         $font = $fontMetrics->getFont('Helvetica');
-        $fontSize = 9.0;
-        $margin = 40.0;
+
+        // The template's own footer measurements, converted from CSS px to
+        // the points this canvas works in (dompdf converts at 0.75): the
+        // 40px side margin and the 9px font size. $topOffset is measured
+        // from the sheet's top edge down to the text's top rather than its
+        // baseline, which is why it exceeds by about one ascent the 37.3pt
+        // above the bottom edge where the band's first line sits. Move the
+        // band in the template and these three have to move with it.
+        $fontSize = 6.75;
+        $margin = 30.0;
+        $topOffset = 43.5;
 
         $text = 'Seite {PAGE_NUM} von {PAGE_COUNT}';
         // {PAGE_NUM}/{PAGE_COUNT} are only substituted with the real
@@ -226,7 +235,7 @@ class ContractPdfService
         $textWidth = (float) $fontMetrics->getTextWidth('Seite 00 von 00', $font, $fontSize);
 
         $x = (float) $canvas->get_width() - $margin - $textWidth;
-        $y = (float) $canvas->get_height() - 33.0;
+        $y = (float) $canvas->get_height() - $topOffset;
 
         $canvas->page_text($x, $y, $text, $font, $fontSize, [0.169, 0.165, 0.133]);
     }

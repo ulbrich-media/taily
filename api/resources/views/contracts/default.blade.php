@@ -5,7 +5,10 @@
     <title>Schutzvertrag</title>
     <style>
         @page {
-            margin: 70px 40px 65px 40px;
+            /* Deep enough top and bottom margins for the fixed header and
+               footer bands to sit inside them with ~5mm of clearance to the
+               sheet edge, which is more than any common printer trims. */
+            margin: 76px 40px 80px 40px;
         }
         body {
             font-family: Helvetica, Arial, sans-serif;
@@ -42,13 +45,17 @@
             font-weight: bold;
             background: #f5f5f5;
         }
+        /* dompdf positions fixed boxes against the page's content area, not
+           the sheet, so top/bottom 0 would drop the band into the flow's
+           first line. The negative offsets lift each band into the @page
+           margin it is supposed to live in; left/right 0 already sit on the
+           content edges, which is why neither band carries a side padding. */
         .page-header {
             position: fixed;
-            top: 0;
+            top: -58px;
             left: 0;
             right: 0;
             height: 40px;
-            padding: 0 40px;
             border-bottom: 1px solid #e0dcc9;
             color: #2b2a22;
         }
@@ -65,11 +72,11 @@
         }
         .page-footer {
             position: fixed;
-            bottom: 0;
+            bottom: -62px;
             left: 0;
             right: 0;
-            height: 50px;
-            padding: 8px 40px 0 40px;
+            height: 42px;
+            padding-top: 8px;
             border-top: 1px solid #e0dcc9;
             color: #7c7c67;
             font-size: 9px;
@@ -80,11 +87,27 @@
                ContractPdfService::stampPageNumbers() so the two never overlap. */
             max-width: 380px;
         }
+        /* A float would not do here: dompdf lays a width:100% table out
+           across the full containing block regardless of floats, so the
+           photo would be painted on top of the animal table's last column.
+           A two-cell layout table is what actually reserves the column, and
+           it keeps the table's right border a clean, unbroken edge. */
+        td.media-main,
+        td.media-aside {
+            border: 0;
+            padding: 0;
+            background: none;
+            vertical-align: top;
+        }
+        td.media-aside {
+            width: 156px;
+            padding-left: 16px;
+        }
+        td.media-main table {
+            margin-bottom: 0;
+        }
         .animal-photo {
-            float: right;
-            max-width: 140px;
-            max-height: 140px;
-            margin-left: 12px;
+            width: 140px;
         }
     </style>
 </head>
@@ -117,33 +140,41 @@
     </p>
 
     <h2>Tier</h2>
-    @if($animalPhoto)
-        <img class="animal-photo" src="{{ $animalPhoto }}" alt="Foto von {{ $animal->name }}">
-    @endif
-    <table>
+    <table class="media-layout">
         <tr>
-            <td class="label">Name</td>
-            <td>{{ $animal->name }}</td>
-        </tr>
-        <tr>
-            <td class="label">Tierart</td>
-            <td>{{ $animal->animalType->title ?? '' }}</td>
-        </tr>
-        <tr>
-            <td class="label">Rasse</td>
-            <td>{{ $animal->breed }}</td>
-        </tr>
-        <tr>
-            <td class="label">Farbe</td>
-            <td>{{ $animal->color }}</td>
-        </tr>
-        <tr>
-            <td class="label">Geburtsdatum</td>
-            <td>{{ $animal->date_of_birth?->format('d.m.Y') }}</td>
-        </tr>
-        <tr>
-            <td class="label">Tiernummer</td>
-            <td>{{ $animal->animal_number }}</td>
+            <td class="media-main">
+                <table>
+                    <tr>
+                        <td class="label">Name</td>
+                        <td>{{ $animal->name }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Tierart</td>
+                        <td>{{ $animal->animalType->title ?? '' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Rasse</td>
+                        <td>{{ $animal->breed }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Farbe</td>
+                        <td>{{ $animal->color }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Geburtsdatum</td>
+                        <td>{{ $animal->date_of_birth?->format('d.m.Y') }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Tiernummer</td>
+                        <td>{{ $animal->animal_number }}</td>
+                    </tr>
+                </table>
+            </td>
+            @if($animalPhoto)
+                <td class="media-aside">
+                    <img class="animal-photo" src="{{ $animalPhoto }}" alt="Foto von {{ $animal->name }}">
+                </td>
+            @endif
         </tr>
     </table>
 
