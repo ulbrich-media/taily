@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
@@ -72,6 +73,16 @@ class Adoption extends Model implements HasMedia
         return $this->hasMany(PreInspection::class, 'person_id', 'applicant_id');
     }
 
+    public function contractSigningProcesses(): HasMany
+    {
+        return $this->hasMany(ContractSigningProcess::class);
+    }
+
+    public function latestContractSigningProcess(): HasOne
+    {
+        return $this->hasOne(ContractSigningProcess::class)->latestOfMany('created_at');
+    }
+
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('contract')->singleFile()->useDisk('adoption-contract');
@@ -79,7 +90,17 @@ class Adoption extends Model implements HasMedia
 
     public function getContractStatusAttribute(): string
     {
-        return $this->contract_signed ? 'finished' : 'not_started';
+        if ($this->contract_signed) {
+            return 'finished';
+        }
+
+        $signingProcess = $this->getRelationValue('latestContractSigningProcess');
+
+        if ($signingProcess?->status->isActive()) {
+            return 'pending';
+        }
+
+        return 'not_started';
     }
 
     public function getTransportStatusAttribute(): string

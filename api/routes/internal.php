@@ -21,6 +21,8 @@ use Taily\Http\Controllers\Internal\AnimalController;
 use Taily\Http\Controllers\Internal\AnimalPictureController;
 use Taily\Http\Controllers\Internal\AnimalTypeController;
 use Taily\Http\Controllers\Internal\ApiTokenController;
+use Taily\Http\Controllers\Internal\ContractSigningController;
+use Taily\Http\Controllers\Internal\ContractSigningSubmissionController;
 use Taily\Http\Controllers\Internal\FormTemplateController;
 use Taily\Http\Controllers\Internal\InvitationController;
 use Taily\Http\Controllers\Internal\MediaController;
@@ -50,6 +52,13 @@ use Taily\Http\Controllers\Internal\VaccinationController;
 
 // Media serve route (signed URL is the auth mechanism)
 Route::get('/media/{mediaUuid}', [MediaController::class, 'serve'])->name('media.serve');
+
+// Contract PDF download (signed URL is the auth mechanism; see AdoptionContractController::generate).
+// Rate-limited per signature (see TailyServiceProvider::registerRateLimiters)
+// so a leaked link can't be replayed to force unlimited PDF renders.
+Route::get('/adoptions/{adoption}/contract/download', [AdoptionContractController::class, 'download'])
+    ->middleware('throttle:contract-download')
+    ->name('adoptions.contract.download');
 
 // Authentication routes (Laravel Fortify controllers, see ADR-008)
 Route::post('/login', [AuthenticatedSessionController::class, 'store']);
@@ -186,8 +195,15 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // Adoptions
     Route::get('/adoptions/options', [AdoptionController::class, 'options']);
+    // Registered before the apiResource below so "contract-templates" isn't
+    // swallowed by the resource's /adoptions/{adoption} show route.
+    Route::get('/adoptions/contract-templates', [AdoptionContractController::class, 'templates']);
     Route::apiResource('adoptions', AdoptionController::class);
     Route::put('/adoptions/{adoption}/contract', [AdoptionContractController::class, 'store']);
+    Route::get('/adoptions/{adoption}/contract/generate', [AdoptionContractController::class, 'generate']);
+    Route::post('/adoptions/{adoption}/contract/signing', [ContractSigningController::class, 'store']);
+    Route::post('/adoptions/{adoption}/contract/signing/cancel', [ContractSigningController::class, 'cancel']);
+    Route::post('/adoptions/{adoption}/contract/signing/resend', [ContractSigningController::class, 'resend']);
 
     // API Tokens
     Route::get('/api-tokens/abilities', [ApiTokenController::class, 'abilities']);
@@ -207,6 +223,18 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::put('/pre-inspections/{preInspection}/inspector', [PreInspectionController::class, 'updateInspector']);
 });
 
-// Public pre-inspection submission routes (token-protected, no auth required)
-Route::get('/inspect/{token}', [PreInspectionSubmissionController::class, 'show']);
-Route::post('/inspect/{token}/submit', [PreInspectionSubmissionController::class, 'submit']);
+// Public pre-inspection submission routes (token-protected, no auth required).
+// Rate limited per token (not IP) — see TailyServiceProvider::registerRateLimiters.
+Route::get('/inspect/{token}', [PreInspectionSubmissionController::class, 'show'])
+    ->middleware('throttle:inspect');
+Route::post('/inspect/{token}/submit', [PreInspectionSubmissionController::class, 'submit'])
+    ->middleware('throttle:inspect');
+
+// Public contract signing routes (token-protected, no auth required). Rate
+// limited per token (not IP) — see TailyServiceProvider::registerRateLimiters.
+Route::get('/contracts/{token}', [ContractSigningSubmissionController::class, 'show'])
+    ->middleware('throttle:contract-sign');
+Route::get('/contracts/{token}/document', [ContractSigningSubmissionController::class, 'document'])
+    ->middleware('throttle:contract-sign');
+Route::post('/contracts/{token}/submit', [ContractSigningSubmissionController::class, 'submit'])
+    ->middleware('throttle:contract-sign');

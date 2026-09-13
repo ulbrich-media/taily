@@ -54,11 +54,43 @@ export interface ContractFile {
   url: string
 }
 
+// Returned by GET /adoptions/contract-templates.
+export interface ContractTemplate {
+  key: string
+  label: string
+}
+
+export type ContractSignerRole = 'mediator' | 'adopter'
+export type ContractSigningStatus =
+  | 'awaiting_mediator_signature'
+  | 'awaiting_adopter_signature'
+  | 'completed'
+  | 'cancelled'
+  | 'expired'
+
+export interface ContractSigningProcessSigner {
+  role: ContractSignerRole
+  signed_at: string | null
+  full_name: string | null
+  expires_at: string | null
+}
+
+// Mirrors: api/src/Http/Resources/ContractSigningProcessResource.php
+export interface ContractSigningProcess {
+  id: string
+  status: ContractSigningStatus
+  created_at: string
+  completed_at: string | null
+  terminated_at: string | null
+  signers: ContractSigningProcessSigner[]
+}
+
 // Returned by GET /adoptions/:id (show), POST /adoptions (store), PATCH /adoptions/:id (update).
 export interface AdoptionDetailResource extends AdoptionBaseResource {
   animal: AnimalDetailResource
   mediator: PersonListResource | null
   applicant: PersonDetailResource
   contract_file: ContractFile | null
+  contract_signing_process: ContractSigningProcess | null
   transport: TransportListResource | null
 }

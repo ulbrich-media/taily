@@ -3,9 +3,20 @@
 namespace Taily\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Str;
+use Taily\Enums\ContractSignerRole;
+use Taily\Mail\ContractCompletionMail;
+use Taily\Mail\ContractExpiredMail;
+use Taily\Mail\ContractSignerInviteMail;
+use Taily\Mail\ContractSignerReminderMail;
 use Taily\Mail\PasswordResetMail;
 use Taily\Mail\SecurityNotificationMail;
 use Taily\Mail\UserInvitationMail;
+use Taily\Models\Adoption;
+use Taily\Models\Animal;
+use Taily\Models\ContractSigner;
+use Taily\Models\ContractSigningProcess;
+use Taily\Models\Person;
 use Taily\Models\User;
 use Taily\Models\UserInvitation;
 use Throwable;
@@ -39,6 +50,28 @@ class SmokeTestMailViews extends Command
                 'Smoke test heading',
                 'Smoke test description',
             ),
+            'ContractSignerInviteMail' => fn () => new ContractSignerInviteMail(
+                $this->makeSmokeTestSigner(),
+                'smoke-test-token',
+            ),
+            'ContractCompletionMail' => fn () => new ContractCompletionMail(
+                $this->makeSmokeTestAdoption(),
+                'https://example.com/download/smoke-test',
+                'Max Mustermann',
+            ),
+            'ContractSignerReminderMail' => fn () => new ContractSignerReminderMail(
+                $this->makeSmokeTestSigner(),
+                'smoke-test-token',
+                2,
+            ),
+            'ContractExpiredMail' => fn () => new ContractExpiredMail(
+                tap(new ContractSigningProcess, function (ContractSigningProcess $process) {
+                    $process->setRelation('adoption', tap($this->makeSmokeTestAdoption(), function (Adoption $adoption) {
+                        $adoption->setRelation('mediator', new Person(['first_name' => 'Maria', 'last_name' => 'Vermittlerin']));
+                    }));
+                }),
+                ContractSignerRole::ADOPTER,
+            ),
         ];
 
         $failures = [];
@@ -54,5 +87,30 @@ class SmokeTestMailViews extends Command
         }
 
         return $failures === [] ? self::SUCCESS : self::FAILURE;
+    }
+
+    /**
+     * Builds an in-memory (never persisted) signer with all relations the
+     * mailable's content() needs already set, so loadMissing() doesn't try
+     * to query the database for an unsaved model.
+     */
+    private function makeSmokeTestSigner(): ContractSigner
+    {
+        $signer = new ContractSigner(['role' => ContractSignerRole::MEDIATOR]);
+        $signer->setRelation('person', new Person(['first_name' => 'Max', 'last_name' => 'Mustermann']));
+        $signer->setRelation('signingProcess', tap(new ContractSigningProcess, function (ContractSigningProcess $process) {
+            $process->setRelation('adoption', $this->makeSmokeTestAdoption());
+        }));
+
+        return $signer;
+    }
+
+    private function makeSmokeTestAdoption(): Adoption
+    {
+        $adoption = new Adoption;
+        $adoption->id = (string) Str::uuid();
+        $adoption->setRelation('animal', new Animal(['name' => 'Bello']));
+
+        return $adoption;
     }
 }

@@ -1,9 +1,11 @@
 import { apiRequest } from '@/lib/api'
+import type { ContractTemplate } from '@/api/types/adoptions'
 import type {
   Adoption,
   AdoptionResponse,
   AdoptionsResponse,
   CreateAdoptionRequest,
+  GenerateContractResponse,
   UpdateAdoptionRequest,
   UpdateContractRequest,
 } from './types'
@@ -68,4 +70,45 @@ export async function updateContract(
     method: 'POST',
     body: formData,
   })
+}
+
+export async function getContractTemplates(): Promise<ContractTemplate[]> {
+  return apiRequest<ContractTemplate[]>('adoptions/contract-templates')
+}
+
+export async function generateContract(
+  id: string,
+  template: string
+): Promise<GenerateContractResponse> {
+  return apiRequest<GenerateContractResponse>(
+    `adoptions/${id}/contract/generate?template=${encodeURIComponent(template)}`
+  )
+}
+
+export async function startContractSigning(
+  id: string,
+  template: string
+): Promise<AdoptionResponse> {
+  return apiRequest<AdoptionResponse>(`adoptions/${id}/contract/signing`, {
+    method: 'POST',
+    body: JSON.stringify({ template }),
+  })
+}
+
+export async function cancelContractSigning(
+  id: string
+): Promise<AdoptionResponse> {
+  return apiRequest<AdoptionResponse>(
+    `adoptions/${id}/contract/signing/cancel`,
+    { method: 'POST' }
+  )
+}
+
+export async function resendContractSigning(
+  id: string
+): Promise<AdoptionResponse> {
+  return apiRequest<AdoptionResponse>(
+    `adoptions/${id}/contract/signing/resend`,
+    { method: 'POST' }
+  )
 }

@@ -59,6 +59,13 @@ return [
             'report' => false,
         ],
 
+        'contract-signing-document' => [
+            'driver' => 'local',
+            'root' => storage_path('app/contract-signing-document'),
+            'throw' => false,
+            'report' => false,
+        ],
+
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),
