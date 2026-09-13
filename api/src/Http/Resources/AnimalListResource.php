@@ -3,7 +3,6 @@
 namespace Taily\Http\Resources;
 
 use Illuminate\Http\Request;
-use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class AnimalListResource extends AnimalBaseResource
 {
@@ -11,10 +10,7 @@ class AnimalListResource extends AnimalBaseResource
     {
         return array_merge(parent::toArray($request), [
             'profile_picture_url' => $this->resource->relationLoaded('media')
-                ? $this->resource->getMedia('pictures')
-                    ->sortBy('order_column')
-                    ->first(fn (Media $media) => str_starts_with($media->mime_type ?? '', 'image/'))
-                    ?->getTemporaryUrl(now()->addHour(), 'thumbnail')
+                ? $this->resource->getProfilePictureMedia()?->getTemporaryUrl(now()->addHour(), 'thumbnail')
                 : null,
         ]);
     }

@@ -3,6 +3,7 @@
 namespace Taily\Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use setasign\Fpdi\Fpdi;
 use setasign\Fpdi\PdfParser\StreamReader;
@@ -116,6 +117,127 @@ class ContractPdfServiceTest extends TestCase
         $filename = (new ContractPdfService)->filename($adoption);
 
         $this->assertSame("schutzvertrag-bello-{$adoption->id}.pdf", $filename);
+    }
+
+    public function test_generate_renders_a_pdf_when_the_animal_has_no_picture(): void
+    {
+        $adoption = $this->createAdoption();
+
+        $pdf = (new ContractPdfService)->generate($adoption, 'default');
+
+        $this->assertStringStartsWith('%PDF', $pdf);
+    }
+
+    public function test_generate_embeds_the_animals_first_picture(): void
+    {
+        $adoption = $this->createAdoption();
+        $adoption->animal->addMedia(UploadedFile::fake()->image('bello.jpg', 400, 300))->toMediaCollection('pictures');
+
+        $pdf = (new ContractPdfService)->generate($adoption->fresh(), 'default');
+
+        $this->assertStringStartsWith('%PDF', $pdf);
+        $this->assertStringContainsString('/Subtype /Image', $pdf);
+    }
+
+    public function test_generate_does_not_pick_a_video_from_the_pictures_collection_as_the_photo(): void
+    {
+        $adoption = $this->createAdoption();
+        $adoption->animal->addMedia(UploadedFile::fake()->create('bello.mp4', 10, 'video/mp4'))->toMediaCollection('pictures');
+
+        $pdf = (new ContractPdfService)->generate($adoption->fresh(), 'default');
+
+        $this->assertStringStartsWith('%PDF', $pdf);
+        $this->assertStringNotContainsString('/Subtype /Image', $pdf);
+    }
+
+    public function test_generate_embeds_or_gracefully_skips_a_webp_picture(): void
+    {
+        if (! function_exists('imagewebp') || ! function_exists('imagecreatefromwebp')) {
+            $this->markTestSkipped('GD in this environment has no webp support, not even to prepare the test fixture.');
+        }
+
+        $adoption = $this->createAdoption();
+        $adoption->animal->addMedia(UploadedFile::fake()->image('bello.webp', 400, 300))->toMediaCollection('pictures');
+
+        $pdf = (new ContractPdfService)->generate($adoption->fresh(), 'default');
+
+        // Whether the environment's GD build can decode webp or not, this
+        // must never throw — no photo (missing GD webp support) is an
+        // acceptable outcome here, a broken generation is not.
+        $this->assertStringStartsWith('%PDF', $pdf);
+    }
+
+    /**
+     * @return array{0: Adoption, 1: Organization}
+     */
+    private function createAdoptionWithFullDetails(): array
+    {
+        $animalType = AnimalType::create(['title' => 'Hund']);
+
+        $organization = Organization::create([
+            'name' => 'Tierheim Musterstadt',
+            'email' => 'info@tierheim-musterstadt.de',
+            'phone' => '030 1234567',
+            'street_line' => 'Tierheimweg',
+            'street_line_additional' => '1',
+            'postal_code' => '12345',
+            'city' => 'Musterstadt',
+        ]);
+
+        $mediator = Person::create([
+            'first_name' => 'Maria',
+            'last_name' => 'Vermittlerin',
+            'organization_id' => $organization->id,
+        ]);
+
+        $animal = Animal::create([
+            'animal_type_id' => $animalType->id,
+            'name' => 'Bello',
+            'gender' => 'male',
+            'color' => 'Braun-Weiß',
+            'date_of_birth' => '2020-05-01',
+        ]);
+
+        $applicant = Person::create([
+            'first_name' => 'Anna',
+            'last_name' => 'Übernehmerin',
+            'date_of_birth' => '1990-03-15',
+        ]);
+
+        $adoption = Adoption::create([
+            'animal_id' => $animal->id,
+            'mediator_id' => $mediator->id,
+            'applicant_id' => $applicant->id,
+            'contract_signed' => false,
+        ]);
+
+        return [$adoption, $organization];
+    }
+
+    public function test_generate_renders_the_new_fields_branding_and_page_count(): void
+    {
+        [$adoption] = $this->createAdoptionWithFullDetails();
+
+        $pdf = (new ContractPdfService)->generate($adoption, 'default');
+        $text = $this->extractText($pdf);
+
+        $this->assertStringContainsString('Braun-Wei', $text); // "ß" is dropped by the core-font-only extraction regex
+        $this->assertStringContainsString('01.05.2020', $text);
+        $this->assertStringContainsString('15.03.1990', $text);
+        $this->assertStringContainsString('Taily', $text);
+        $this->assertStringContainsString('tierheim-musterstadt.de', $text);
+        $this->assertStringContainsString('1234567', $text);
+        $this->assertStringContainsString('Seite', $text);
+    }
+
+    public function test_generate_no_longer_renders_a_signature_line(): void
+    {
+        [$adoption] = $this->createAdoptionWithFullDetails();
+
+        $pdf = (new ContractPdfService)->generate($adoption, 'default');
+        $text = $this->extractText($pdf);
+
+        $this->assertStringNotContainsString('Unterschrift', $text);
     }
 
     /**

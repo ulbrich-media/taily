@@ -3,11 +3,14 @@
 namespace Taily\Support;
 
 use Barryvdh\DomPDF\Facade\Pdf;
+use Dompdf\Dompdf;
+use Illuminate\Support\Facades\Storage;
 use setasign\Fpdi\Fpdi;
 use setasign\Fpdi\PdfParser\StreamReader;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Taily\Enums\ContractSignerRole;
 use Taily\Models\Adoption;
+use Taily\Models\Animal;
 use Taily\Models\ContractSigningProcess;
 
 class ContractPdfService
@@ -25,7 +28,11 @@ class ContractPdfService
      */
     public function generate(Adoption $adoption, string $templateKey): string
     {
-        return $this->assemble([Pdf::loadHtml($this->renderBody($adoption, $templateKey))->output()]);
+        $pdf = Pdf::loadHtml($this->renderBody($adoption, $templateKey));
+        $pdf->render();
+        $this->stampPageNumbers($pdf->getDomPDF());
+
+        return $this->assemble([$pdf->output()]);
     }
 
     /**
@@ -140,14 +147,87 @@ class ContractPdfService
 
         abort_if($template === null, 404, 'Unbekannte Vertragsvorlage.');
 
-        $adoption->load(['animal.animalType', 'mediator.organization', 'applicant']);
+        $adoption->load(['animal.animalType', 'animal.media', 'mediator.organization', 'applicant']);
 
         return ["taily::{$template['view']}", [
             'adoption' => $adoption,
             'animal' => $adoption->animal,
+            'animalPhoto' => $this->animalPhotoDataUri($adoption->animal),
             'applicant' => $adoption->applicant,
             'mediator' => $adoption->mediator,
             'organization' => $adoption->mediator?->organization,
         ]];
+    }
+
+    /**
+     * The animal's first uploaded picture, embedded as a data URI so dompdf
+     * can render it without hitting its remote-fetch/chroot restrictions.
+     *
+     * Returns null if there is no picture (the `pictures` collection can
+     * also hold videos, which are skipped here) or if the format can't be
+     * rendered in this environment — e.g. a webp upload without GD's webp
+     * support compiled in. The template treats null exactly like "no
+     * photo", never a broken-image icon.
+     */
+    private function animalPhotoDataUri(Animal $animal): ?string
+    {
+        $media = $animal->getProfilePictureMedia();
+
+        if ($media === null) {
+            return null;
+        }
+
+        if ($media->mime_type === 'image/webp' && ! function_exists('imagecreatefromwebp')) {
+            return null;
+        }
+
+        $conversion = $media->hasGeneratedConversion('preview') ? 'preview' : '';
+        $disk = $conversion !== '' ? ($media->conversions_disk ?? $media->disk) : $media->disk;
+
+        $bytes = Storage::disk($disk)->get($media->getPathRelativeToRoot($conversion));
+
+        if ($bytes === null) {
+            return null;
+        }
+
+        return "data:{$media->mime_type};base64,".base64_encode($bytes);
+    }
+
+    /**
+     * Stamp "Seite X von Y" into the footer of every page of the body.
+     *
+     * dompdf has no CSS-only way to know the total page count while a page
+     * is being laid out (its {PAGE_NUM}/{PAGE_COUNT} placeholders only work
+     * through the PHP-eval mode or this canvas API), so the template itself
+     * can't render this. The canvas-level page_text() API is the documented
+     * way to do it without enabling isPhpEnabled, which would otherwise
+     * broaden dompdf's execution surface for a template that has no other
+     * reason to run embedded PHP: it defers drawing until every page
+     * exists, then substitutes the placeholders per page.
+     *
+     * Positioned to line up with the footer band rendered by the template
+     * itself (see the `.page-footer` rule in default.blade.php) — same
+     * right margin, right-aligned on its own line above the organisation's
+     * contact details — so it reads as one footer rather than two
+     * independently-placed pieces of text.
+     */
+    private function stampPageNumbers(Dompdf $dompdf): void
+    {
+        $canvas = $dompdf->getCanvas();
+        $fontMetrics = $dompdf->getFontMetrics();
+        $font = $fontMetrics->getFont('Helvetica');
+        $fontSize = 9.0;
+        $margin = 40.0;
+
+        $text = 'Seite {PAGE_NUM} von {PAGE_COUNT}';
+        // {PAGE_NUM}/{PAGE_COUNT} are only substituted with the real
+        // numbers once every page exists, so the width is measured against
+        // a same-length placeholder to right-align consistently.
+        $textWidth = (float) $fontMetrics->getTextWidth('Seite 00 von 00', $font, $fontSize);
+
+        $x = (float) $canvas->get_width() - $margin - $textWidth;
+        $y = (float) $canvas->get_height() - 33.0;
+
+        $canvas->page_text($x, $y, $text, $font, $fontSize, [0.169, 0.165, 0.133]);
     }
 }
