@@ -6,24 +6,17 @@
         /* A float would not do here: dompdf lays a width:100% table out
            across the full containing block regardless of floats, so the
            photo would be painted on top of the animal table's last column.
-           A two-cell layout table is what actually reserves the column, and
-           it keeps the table's right border a clean, unbroken edge. */
-        td.media-main,
-        td.media-aside {
-            border: 0;
-            padding: 0;
-            background: none;
-            vertical-align: top;
-        }
-        td.media-aside {
-            width: 156px;
+           The layout table is what actually reserves the column for it. */
+        .layout-table td.layout-aside {
+            width: 140px;
             padding-left: 16px;
         }
-        td.media-main table {
+        .layout-table .data-table {
             margin-bottom: 0;
         }
         .animal-photo {
             width: 140px;
+            border-radius: 4px;
         }
 @endpush
 
@@ -40,10 +33,10 @@
     </p>
 
     <h2>Tier</h2>
-    <table class="media-layout">
+    <table class="layout-table">
         <tr>
-            <td class="media-main">
-                <table>
+            <td class="layout-main">
+                <table class="data-table">
                     <tr>
                         <td class="label">Name</td>
                         <td>{{ $animal->name }}</td>
@@ -71,7 +64,7 @@
                 </table>
             </td>
             @if($animalPhoto)
-                <td class="media-aside">
+                <td class="layout-aside">
                     <img class="animal-photo" src="{{ $animalPhoto }}" alt="Foto von {{ $animal->name }}">
                 </td>
             @endif
@@ -79,7 +72,7 @@
     </table>
 
     <h2>Adoptant:in</h2>
-    <table>
+    <table class="data-table">
         <tr>
             <td class="label">Name</td>
             <td>{{ $applicant->full_name }}</td>
@@ -106,7 +99,7 @@
     </table>
 
     <h2>Vermittler:in</h2>
-    <table>
+    <table class="data-table">
         <tr>
             <td class="label">Name</td>
             <td>{{ $mediator->full_name ?? '' }}</td>

@@ -83,6 +83,16 @@ class ContractPreviewController extends Controller
     public const ENVIRONMENTS = ['local', 'testing'];
 
     /**
+     * The `User-Agent` headers the synthesized signatures are recorded
+     * with: a desktop and a phone, the two shapes the audit trail's browser
+     * column has to lay out.
+     */
+    private const DEMO_USER_AGENTS = [
+        'mediator' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36',
+        'adopter' => 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6 Mobile/15E148 Safari/604.1',
+    ];
+
+    /**
      * The adoption named by ?adoption=, or the newest one in the database.
      */
     private function resolveAdoption(Request $request): Adoption
@@ -171,8 +181,12 @@ class ContractPreviewController extends Controller
         try {
             $process = $signingService->start($adoption, $templateKey, $body);
 
-            $signingService->recordMediatorSignature($process, $adoption->mediator->full_name, true, true, true, '192.0.2.10', 'ContractPreview');
-            $signingService->recordAdopterSignature($process, $adoption->applicant->full_name, true, true, true, '192.0.2.20', 'ContractPreview');
+            // Real headers rather than a marker string, so the trail's
+            // browser column shows in the preview what it will show in a
+            // signed contract — an unparseable marker would print as a dash
+            // and hide the column's real width from the layout loop.
+            $signingService->recordMediatorSignature($process, $adoption->mediator->full_name, true, true, true, '192.0.2.10', self::DEMO_USER_AGENTS['mediator']);
+            $signingService->recordAdopterSignature($process, $adoption->applicant->full_name, true, true, true, '192.0.2.20', self::DEMO_USER_AGENTS['adopter']);
             $signingService->finalize($process, str_repeat('0', 64));
 
             return $callback($process->fresh(), $body);

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Taily\Enums\ContractSigningEventType;
+use Taily\Support\UserAgentSummary;
 
 class ContractSigningAuditEvent extends Model
 {
@@ -46,5 +47,16 @@ class ContractSigningAuditEvent extends Model
     public function actor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'actor_user_id');
+    }
+
+    /**
+     * The browser and operating system behind this event, short enough to
+     * print, or null for the events no browser triggered. The raw header
+     * stays in `user_agent` — see UserAgentSummary for why the trail shows
+     * the short form rather than that.
+     */
+    public function deviceSummary(): ?string
+    {
+        return UserAgentSummary::summarize($this->user_agent);
     }
 }

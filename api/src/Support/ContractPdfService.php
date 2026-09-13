@@ -3,7 +3,9 @@
 namespace Taily\Support;
 
 use Barryvdh\DomPDF\Facade\Pdf;
+use Barryvdh\DomPDF\PDF as PdfWrapper;
 use Dompdf\Dompdf;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use setasign\Fpdi\Fpdi;
 use setasign\Fpdi\PdfParser\StreamReader;
@@ -15,6 +17,19 @@ use Taily\Models\ContractSigningProcess;
 
 class ContractPdfService
 {
+    /**
+     * dompdf caches the metrics of every `@font-face` the contract layout
+     * registers as a file in its font directory, and aborts the render if it
+     * cannot write them. No Laravel installation ships that directory, so
+     * creating it is part of being able to render at all — cheap enough to
+     * do on construction, since this service is only built to produce a
+     * contract in the first place.
+     */
+    public function __construct()
+    {
+        File::ensureDirectoryExists(config('dompdf.options.font_dir', storage_path('fonts')));
+    }
+
     /**
      * Render the given adoption's contract template to unsigned PDF bytes.
      *
@@ -28,7 +43,7 @@ class ContractPdfService
      */
     public function generate(Adoption $adoption, string $templateKey): string
     {
-        $pdf = Pdf::loadHtml($this->renderBody($adoption, $templateKey));
+        $pdf = $this->render($this->renderBody($adoption, $templateKey));
         $pdf->render();
         $this->stampPageNumbers($pdf->getDomPDF());
 
@@ -63,7 +78,7 @@ class ContractPdfService
      */
     public function appendSignaturePages(string $unsignedPdfBytes, ContractSigningProcess $process): string
     {
-        $appendix = Pdf::loadHtml($this->renderAppendix($process))->output();
+        $appendix = $this->render($this->renderAppendix($process))->output();
 
         return $this->assemble([$unsignedPdfBytes, $appendix]);
     }
@@ -83,6 +98,22 @@ class ContractPdfService
             'adopterSigner' => $process->signers->firstWhere('role', ContractSignerRole::ADOPTER),
             'auditEvents' => $process->auditEvents,
         ])->render();
+    }
+
+    /**
+     * Hand $html to dompdf, subsetting the fonts the layout embeds.
+     *
+     * laravel-dompdf ships with font subsetting off, which writes a complete
+     * copy of every embedded face into every document — several hundred KB
+     * around a contract whose own content is a few KB, stored once per
+     * contract and again per frozen and final artifact. Subsetting carries
+     * only the glyphs a document actually uses. It is set per render rather
+     * than in a published dompdf config, so nothing here depends on an
+     * installation's own PDF settings.
+     */
+    private function render(string $html): PdfWrapper
+    {
+        return Pdf::setOption('enable_font_subsetting', true)->loadHtml($html);
     }
 
     /**
@@ -215,7 +246,12 @@ class ContractPdfService
     {
         $canvas = $dompdf->getCanvas();
         $fontMetrics = $dompdf->getFontMetrics();
-        $font = $fontMetrics->getFont('Helvetica');
+
+        // The body font the layout registers, so the stamp is set in the
+        // same type as the footer lines it sits beside. A layout that drops
+        // the @font-face rules falls back to the core font rather than to
+        // dompdf's default, which is what this text used to be set in.
+        $font = $fontMetrics->getFont('Public Sans') ?? $fontMetrics->getFont('Helvetica');
 
         // The template's own footer measurements, converted from CSS px to
         // the points this canvas works in (dompdf converts at 0.75): the

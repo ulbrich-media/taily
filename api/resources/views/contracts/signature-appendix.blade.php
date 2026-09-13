@@ -4,7 +4,9 @@
 
 @push('styles')
         .signature-name {
-            font-family: 'DejaVu Serif', serif;
+            /* The heading face in italic, the closest thing to a hand in a
+               document that has no handwriting in it. */
+            font-family: 'Fraunces', Georgia, serif;
             font-style: italic;
         }
         .hash {
@@ -18,13 +20,13 @@
     <p class="muted">
         Dieser Anhang gehört untrennbar zu dem vorstehenden Schutzvertrag. Er dokumentiert die
         elektronischen Unterschriften beider Parteien sowie den vollständigen Verlauf des
-        Signaturvorgangs. Alle Zeitangaben sind in UTC angegeben.
+        Signaturvorgangs.
     </p>
 
     @foreach([$mediatorSigner, $adopterSigner] as $signer)
         @if($signer?->isSigned())
             <h2>{{ $signer->role->label() }}</h2>
-            <table>
+            <table class="data-table">
                 <tr>
                     <td class="label">Eingegebener Name</td>
                     <td class="signature-name">{{ $signer->typed_name }}</td>
@@ -50,12 +52,7 @@
     @endforeach
 
     <h2>Unterzeichnetes Dokument</h2>
-    <p class="muted">
-        Die vorstehenden Vertragsseiten wurden einmalig erzeugt und beiden Parteien unverändert zur
-        Prüfung vorgelegt. Der folgende Prüfwert identifiziert genau dieses Dokument; er wurde bei
-        jeder Unterschrift mitprotokolliert.
-    </p>
-    <table>
+    <table class="data-table">
         <tr>
             <td class="label">SHA-256 des Vertragsdokuments</td>
             <td class="hash">{{ $process->unsigned_document_hash }}</td>

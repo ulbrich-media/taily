@@ -19,55 +19,177 @@
     by placing a copy at resources/views/vendor/taily/contracts/layout.blade.php
     (see ADR-013); Laravel resolves that path ahead of the package's own.
 --}}
+@use('Taily\Support\ContractFonts')
 <!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="utf-8">
     <title>@yield('title')</title>
     <style>
+        /* The application's own typefaces (see frontend/src/index.css):
+           Fraunces for headings, Public Sans for everything else. The
+           frontend loads them as variable .woff2 from npm, which dompdf can
+           read neither of — it takes TrueType from a local path only — so
+           static instances of the same families ship in resources/fonts.
+
+           Every weight and style has to be registered explicitly: dompdf
+           picks the registered face that matches and never synthesises a
+           bold or an italic it has no file for. Keep a stock fallback on
+           every font-family below, so a document still renders if a face
+           fails to load. */
+        @font-face {
+            font-family: 'Public Sans';
+            font-weight: normal;
+            font-style: normal;
+            src: url("{{ ContractFonts::path('PublicSans-Regular.ttf') }}") format('truetype');
+        }
+        @font-face {
+            font-family: 'Public Sans';
+            font-weight: bold;
+            font-style: normal;
+            src: url("{{ ContractFonts::path('PublicSans-Bold.ttf') }}") format('truetype');
+        }
+        @font-face {
+            font-family: 'Public Sans';
+            font-weight: normal;
+            font-style: italic;
+            src: url("{{ ContractFonts::path('PublicSans-Italic.ttf') }}") format('truetype');
+        }
+        @font-face {
+            font-family: 'Fraunces';
+            font-weight: normal;
+            font-style: normal;
+            src: url("{{ ContractFonts::path('Fraunces9pt-Regular.ttf') }}") format('truetype');
+        }
+        @font-face {
+            /* The semibold instance carries the bold slot: at heading sizes
+               this document works in, Fraunces' actual Bold prints heavy. */
+            font-family: 'Fraunces';
+            font-weight: bold;
+            font-style: normal;
+            src: url("{{ ContractFonts::path('Fraunces9pt-SemiBold.ttf') }}") format('truetype');
+        }
+        @font-face {
+            font-family: 'Fraunces';
+            font-weight: normal;
+            font-style: italic;
+            src: url("{{ ContractFonts::path('Fraunces9pt-Italic.ttf') }}") format('truetype');
+        }
         @page {
             /* Deep enough top and bottom margins for the fixed header and
                footer bands to sit inside them with ~5mm of clearance to the
                sheet edge, which is more than any common printer trims. */
-            margin: 76px 40px 80px 40px;
+            margin: 80px 40px;
         }
         body {
-            font-family: Helvetica, Arial, sans-serif;
+            font-family: 'Public Sans', Helvetica, Arial, sans-serif;
             font-size: 12px;
-            color: #1a1a1a;
+            color: #1d1d16;
             margin: 0;
         }
         h1 {
-            font-size: 20px;
-            margin-bottom: 4px;
+            font-family: 'Fraunces', Georgia, serif;
+            font-weight: bold;
+            font-size: 28px;
+            margin: 0 0 8px;
         }
         h2 {
-            font-size: 14px;
-            margin-top: 24px;
-            margin-bottom: 8px;
-            border-bottom: 1px solid #ccc;
+            font-weight: bold;
+            font-size: 16px;
+            margin-top: 16px;
+            margin-bottom: 6px;
+            border-bottom: 1px solid #e8e8e3;
             padding-bottom: 4px;
         }
         p {
-            line-height: 1.5;
+            /* Print spacing, not the browser default's 1em above and below:
+               a contract is a dense document and both families set wider
+               than the core font this was first drawn in. */
+            margin: 0 0 10px 0;
+            line-height: 1.3;
         }
         .muted {
             color: #555;
         }
-        table {
+        /* Tables come in kinds, and every rule below hangs off the kind's
+           own class — never off `table` or `td` alone. Tables nest here (the
+           animal table sits inside the layout table that reserves the
+           photo's column), and a bare `table td` rule would reach straight
+           through the outer table into the inner one, which is why each kind
+           has to leave the others alone rather than undo what they set.
+
+           For the same reason no rule below uses a descendant selector on
+           `td`: cells that need styling carry a class of their own. */
+
+        /* Key and value, one pair per row. */
+        .data-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 16px;
+            margin-bottom: 12px;
         }
-        table td {
+        /* One record per row, under a heading row naming the columns. */
+        .list-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 12px;
+        }
+        .data-table td,
+        .list-table td {
             padding: 4px 8px;
-            border: 1px solid #ccc;
+            border-top: 1px solid #e8e8e3;
             vertical-align: top;
+            /* Both families carry more built-in leading than the core font
+               this document used to be set in, which on a dense table adds
+               up to a page. Stating the line height keeps rows compact. */
+            line-height: 1.3;
         }
-        table td.label {
-            width: 35%;
+        /* The rules separate rows from each other and nothing more: the
+           first row carries no line above it and the last none below, so a
+           table reads as part of the page instead of a box drawn on it. */
+        .data-table tr:first-child td,
+        .list-table tr:first-child td {
+            border-top: 0;
+        }
+        /* `label` is the key cell of a key/value table and claims the width
+           that shape needs; `head` names a column in a list table and has to
+           keep sizing itself from its content. Both look the same. */
+        .data-table td.label,
+        .list-table td.head {
             font-weight: bold;
-            background: #f5f5f5;
+            background: #f4f4f0;
+        }
+        .data-table td.label {
+            width: 220px;
+        }
+        td.nowrap {
+            white-space: nowrap;
+        }
+
+        /* Tiny border radius for the colored cells */
+        .data-table tr:first-child td.label:first-child {
+            border-top-left-radius: 4px;
+        }
+        .data-table tr:last-child td.label:first-child {
+            border-bottom-left-radius: 4px;
+        }
+        .list-table tr:first-child td.head:first-child {
+            border-top-left-radius: 4px;
+        }
+        .list-table tr:first-child td.head:last-child {
+            border-top-right-radius: 4px;
+        }
+
+        /* Scaffolding: columns to lay content out side by side, with no
+           lines, padding or background of its own. */
+        .layout-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 12px;
+        }
+        td.layout-main,
+        td.layout-aside {
+            padding: 0;
+            vertical-align: top;
         }
         /* dompdf positions fixed boxes against the page's content area, not
            the sheet, so top/bottom 0 would drop the band into the flow's
@@ -76,17 +198,17 @@
            content edges, which is why neither band carries a side padding. */
         .page-header {
             position: fixed;
-            top: -58px;
+            top: -48px;
             left: 0;
             right: 0;
-            height: 40px;
-            border-bottom: 1px solid #e0dcc9;
-            color: #2b2a22;
+            height: 20px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e8e8e3;
         }
         .page-header .brand {
-            font-size: 15px;
+            font-size: 14px;
             font-weight: bold;
-            line-height: 40px;
+            line-height: 14px;
         }
         .page-header .brand-logo {
             max-height: 28px;
@@ -94,8 +216,9 @@
         }
         .page-header .doc-title {
             float: right;
+            padding-top: 3px;
             font-size: 11px;
-            line-height: 40px;
+            line-height: 11px;
             color: #7c7c67;
         }
         .page-footer {
@@ -105,10 +228,10 @@
             right: 0;
             height: 42px;
             padding-top: 8px;
-            border-top: 1px solid #e0dcc9;
+            border-top: 1px solid #e8e8e3;
             color: #7c7c67;
             font-size: 9px;
-            line-height: 1.4;
+            line-height: 1.3;
         }
         .page-footer .org-info {
             /* Leaves room on the right for the page number stamped by

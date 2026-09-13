@@ -235,6 +235,21 @@ class ContractPdfServiceTest extends TestCase
         $this->assertStringContainsString('Seite', $text);
     }
 
+    public function test_generate_embeds_the_applications_own_typefaces(): void
+    {
+        $adoption = $this->createAdoption();
+
+        $pdf = (new ContractPdfService)->generate($adoption, 'default');
+
+        // dompdf falls back to its default font without a word when a
+        // registered face cannot be read — a wrong path, an unreadable font
+        // cache directory — so the only way to know the documents are set in
+        // the app's own families is to look for them in the output.
+        $this->assertStringContainsString('PublicSans-Regular', $pdf);
+        $this->assertStringContainsString('PublicSans-Bold', $pdf);
+        $this->assertStringContainsString('Fraunces', $pdf);
+    }
+
     public function test_the_contract_and_the_appendix_share_one_frame_under_their_own_titles(): void
     {
         [$process] = $this->completedProcessWithFrozenPdf();
