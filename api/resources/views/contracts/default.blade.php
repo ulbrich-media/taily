@@ -15,7 +15,7 @@
             margin-bottom: 0;
         }
         .animal-photo {
-            width: 140px;
+            width: 150px;
             border-radius: 4px;
         }
 @endpush

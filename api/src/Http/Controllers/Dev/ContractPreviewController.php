@@ -7,6 +7,7 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Taily\Enums\ContractSignerRole;
 use Taily\Enums\ContractSigningStatus;
 use Taily\Http\Controllers\Controller;
 use Taily\Models\Adoption;
@@ -68,7 +69,7 @@ class ContractPreviewController extends Controller
         $html = $request->has('html');
 
         if ($signed) {
-            return $this->withProcess($adoption, $signingService, $pdfService, $templateKey, $html);
+            return $this->withProcess($request, $adoption, $signingService, $pdfService, $templateKey, $html);
         }
 
         return $html
@@ -115,6 +116,7 @@ class ContractPreviewController extends Controller
      * own completed one where there is one.
      */
     private function withProcess(
+        Request $request,
         Adoption $adoption,
         ContractSigningService $signingService,
         ContractPdfService $pdfService,
@@ -133,6 +135,7 @@ class ContractPreviewController extends Controller
         }
 
         return $this->withDemoProcess(
+            $request,
             $adoption,
             $signingService,
             $pdfService,
@@ -160,6 +163,7 @@ class ContractPreviewController extends Controller
      * shown in the appendix is that body's real hash.
      */
     private function withDemoProcess(
+        Request $request,
         Adoption $adoption,
         ContractSigningService $signingService,
         ContractPdfService $pdfService,
@@ -179,14 +183,34 @@ class ContractPreviewController extends Controller
         DB::beginTransaction();
 
         try {
-            $process = $signingService->start($adoption, $templateKey, $body);
+            // Every step a real two-party signature goes through, in the
+            // order the service writes them, so the preview shows each row
+            // shape the trail has: the administrator who started it, an
+            // invite naming its recipient with no origin of its own, and a
+            // signer opening and signing from their own device.
+            //
+            // The IPs and headers are real-looking rather than markers: an
+            // unparseable header would print as a dash and hide the browser
+            // column's true width from the layout loop.
+            $process = $signingService->start(
+                $adoption,
+                $templateKey,
+                $body,
+                $request->user(),
+                (string) $request->ip(),
+                (string) $request->userAgent(),
+            );
 
-            // Real headers rather than a marker string, so the trail's
-            // browser column shows in the preview what it will show in a
-            // signed contract — an unparseable marker would print as a dash
-            // and hide the column's real width from the layout loop.
+            $mediator = $process->signers()->where('role', ContractSignerRole::MEDIATOR)->firstOrFail();
+            $signingService->recordEmailSent($mediator, $mediator->person->email);
+            $signingService->recordLinkOpened($mediator, '192.0.2.10', self::DEMO_USER_AGENTS['mediator']);
             $signingService->recordMediatorSignature($process, $adoption->mediator->full_name, true, true, true, '192.0.2.10', self::DEMO_USER_AGENTS['mediator']);
+
+            $adopter = $process->signers()->where('role', ContractSignerRole::ADOPTER)->firstOrFail();
+            $signingService->recordEmailSent($adopter, $adopter->person->email);
+            $signingService->recordLinkOpened($adopter, '192.0.2.20', self::DEMO_USER_AGENTS['adopter']);
             $signingService->recordAdopterSignature($process, $adoption->applicant->full_name, true, true, true, '192.0.2.20', self::DEMO_USER_AGENTS['adopter']);
+
             $signingService->finalize($process, str_repeat('0', 64));
 
             return $callback($process->fresh(), $body);

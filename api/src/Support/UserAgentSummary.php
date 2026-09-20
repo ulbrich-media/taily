@@ -12,9 +12,9 @@ namespace Taily\Support;
  *
  *  - A modern header runs to well over a hundred characters of version
  *    tokens that exist to satisfy other sites' sniffing, and pasting one
- *    into a six-column table on A4 would push every other column off the
- *    page. Browser and OS are the part a reader of the certificate can
- *    actually use.
+ *    into a table on A4 would push every other column off the page.
+ *    Browser and OS are the part a reader of the certificate can actually
+ *    use.
  *  - The finished PDF goes to the adopter and is kept for years. A major
  *    version and an OS name make the same evidentiary point as the full
  *    header — this signature came from this kind of device — while carrying

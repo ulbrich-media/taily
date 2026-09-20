@@ -111,6 +111,9 @@
         .muted {
             color: #555;
         }
+        .break {
+            word-wrap: break-word;
+        }
         /* Tables come in kinds, and every rule below hangs off the kind's
            own class — never off `table` or `td` alone. Tables nest here (the
            animal table sits inside the layout table that reserves the
@@ -163,6 +166,10 @@
         }
         td.nowrap {
             white-space: nowrap;
+        }
+        td .sub {
+            font-size: 10px;
+            color: #555;
         }
 
         /* Tiny border radius for the colored cells */
