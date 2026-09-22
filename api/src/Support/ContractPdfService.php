@@ -5,6 +5,8 @@ namespace Taily\Support;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Barryvdh\DomPDF\PDF as PdfWrapper;
 use Dompdf\Dompdf;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use setasign\Fpdi\Fpdi;
@@ -13,6 +15,8 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Taily\Enums\ContractSignerRole;
 use Taily\Models\Adoption;
 use Taily\Models\Animal;
+use Taily\Models\ContractSigner;
+use Taily\Models\ContractSigningAuditEvent;
 use Taily\Models\ContractSigningProcess;
 
 class ContractPdfService
@@ -90,14 +94,43 @@ class ContractPdfService
      */
     public function renderAppendix(ContractSigningProcess $process): string
     {
-        $process->loadMissing(['signers.person', 'auditEvents.signer.person']);
+        $process->loadMissing(['signers.person', 'auditEvents.signer.person', 'auditEvents.actor']);
 
         return view('taily::contracts.signature-appendix', [
             'process' => $process,
-            'mediatorSigner' => $process->signers->firstWhere('role', ContractSignerRole::MEDIATOR),
-            'adopterSigner' => $process->signers->firstWhere('role', ContractSignerRole::ADOPTER),
-            'auditEvents' => $process->auditEvents,
+            'signerSections' => $this->signerSections($process),
+            'processEvents' => $process->processAuditEvents(),
         ])->render();
+    }
+
+    /**
+     * One section per signer, in signing order, each carrying the signer,
+     * the identity to head it with, and that signer's own events.
+     *
+     * The heading's name and email are taken from the first event recorded
+     * for the signer rather than from their Person record as it reads now:
+     * the appendix is evidence of what was true while the contract was
+     * being signed, and a later correction to someone's name must not
+     * rewrite the document they already hold. The live record is the
+     * fallback for a signer whose events predate those snapshots.
+     *
+     * @return Collection<int, array{signer: ContractSigner, name: string|null, email: string|null, events: EloquentCollection<int, ContractSigningAuditEvent>}>
+     */
+    private function signerSections(ContractSigningProcess $process): Collection
+    {
+        return $process->signers
+            ->sortBy(fn (ContractSigner $signer) => $signer->role === ContractSignerRole::MEDIATOR ? 0 : 1)
+            ->map(function (ContractSigner $signer) use ($process) {
+                $events = $process->auditEventsFor($signer);
+
+                return [
+                    'signer' => $signer,
+                    'name' => $events->first()?->subjectName() ?? $signer->person->full_name,
+                    'email' => $events->first()?->subjectEmail() ?? $signer->person->email,
+                    'events' => $events,
+                ];
+            })
+            ->values();
     }
 
     /**

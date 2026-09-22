@@ -80,6 +80,29 @@ class ContractSigningAuditEvent extends Model
     }
 
     /**
+     * The name of the signed-in user who performed this event, for the
+     * process-level table's "Ausgelöst von" column.
+     *
+     * Answered from the actor alone rather than from subject(): that column
+     * makes a narrower claim than the signer sections' heading does, and an
+     * event with no acting user behind it — the process finalizing itself —
+     * must answer it with nothing rather than with whoever else the row
+     * mentions.
+     */
+    public function triggeredByName(): ?string
+    {
+        return self::present($this->metadata['actor_name'] ?? $this->actor?->name);
+    }
+
+    /**
+     * The email of that user, under the same rule as triggeredByName().
+     */
+    public function triggeredByEmail(): ?string
+    {
+        return self::present($this->metadata['actor_email'] ?? $this->actor?->email);
+    }
+
+    /**
      * The IP the event came from, or null where no browser was involved.
      *
      * The column is read as the subject's own origin, so it is answered

@@ -102,7 +102,7 @@ class ContractPreviewControllerTest extends TestCase
 
         $this->preview('?signed&html')
             ->assertOk()
-            ->assertSee('Prüfprotokoll', false);
+            ->assertSee('Vorgangsereignisse', false);
     }
 
     public function test_the_audit_trail_names_the_browser_without_printing_the_header(): void

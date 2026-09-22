@@ -402,7 +402,7 @@ class ContractPdfServiceTest extends TestCase
         $this->assertStringContainsString('Unterschriften', $text);
         $this->assertStringContainsString('Vermittlerin', $text);
         $this->assertStringContainsString('bernehmerin', $text);
-        $this->assertStringContainsString('fprotokoll', $text);
+        $this->assertStringContainsString('Vorgangsereignisse', $text);
         $this->assertStringContainsString(substr($process->unsigned_document_hash, 0, 16), $text);
     }
 

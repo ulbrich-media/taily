@@ -461,6 +461,61 @@ class ContractSigningServiceTest extends TestCase
         $this->assertNull($event->originDevice());
     }
 
+    public function test_the_trail_splits_into_one_section_per_signer_plus_the_process(): void
+    {
+        $user = User::factory()->create(['name' => 'Admin User', 'email' => 'admin@example.com']);
+        $adoption = $this->createAdoption();
+        $process = $this->service->start($adoption, 'default', '%PDF-bytes', $user, '10.0.0.5', 'PHPUnit');
+
+        $mediator = $process->signers->first();
+        $this->service->recordEmailSent($mediator, $mediator->person->email);
+        $this->service->recordLinkOpened($mediator, '10.0.0.1', 'PHPUnit');
+        $this->signMediator($process);
+        $this->signAdopter($process);
+        $this->service->finalize($process, str_repeat('a', 64));
+
+        $process->load('signers', 'auditEvents');
+        $adopter = $process->signers->firstWhere('role', ContractSignerRole::ADOPTER);
+
+        // A signer's section holds their own events and nobody else's.
+        $this->assertSame(
+            ['email_sent', 'link_opened', 'signature_submitted'],
+            $process->auditEventsFor($mediator)->pluck('event_type')->map(fn ($type) => $type->value)->all()
+        );
+        $this->assertSame(
+            ['signature_submitted'],
+            $process->auditEventsFor($adopter)->pluck('event_type')->map(fn ($type) => $type->value)->all()
+        );
+
+        // What is left over is about the process itself.
+        $this->assertSame(
+            ['process_started', 'finalized'],
+            $process->processAuditEvents()->pluck('event_type')->map(fn ($type) => $type->value)->all()
+        );
+    }
+
+    public function test_every_audit_event_is_printed_in_exactly_one_section(): void
+    {
+        $adoption = $this->createAdoption();
+        $process = $this->service->start($adoption, 'default', '%PDF-bytes');
+        $this->service->recordEmailSent($process->signers->first(), 'maria@example.com');
+        $this->signMediator($process);
+        $this->signAdopter($process);
+        $this->service->finalize($process, str_repeat('a', 64));
+
+        $process->load('signers', 'auditEvents');
+
+        // The sections partition the trail: an event dropped by both would
+        // be a row of an audit log that the certificate never shows.
+        $sectioned = $process->signers
+            ->flatMap(fn ($signer) => $process->auditEventsFor($signer))
+            ->merge($process->processAuditEvents())
+            ->pluck('id');
+
+        $this->assertEqualsCanonicalizing($process->auditEvents->pluck('id')->all(), $sectioned->all());
+        $this->assertSame($process->auditEvents->count(), $sectioned->unique()->count());
+    }
+
     public function test_closing_events_name_nobody(): void
     {
         $adoption = $this->createAdoption();
