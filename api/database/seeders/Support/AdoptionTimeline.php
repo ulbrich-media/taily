@@ -117,10 +117,10 @@ class AdoptionTimeline
      * Splits the window into one slice per step and picks a moment in each,
      * which keeps the dates both ordered and spread out.
      *
-     * Each moment is pulled into office hours: a shelter signs contracts and
-     * hands animals over during the day, and it keeps the seeder clear of the
-     * hour that vanishes when the clocks go forward — a timestamp column
-     * rejects a local time that never happened.
+     * Each moment is pulled into office hours, because a shelter signs
+     * contracts and hands animals over during the day. It also keeps the
+     * seeder clear of the hour that vanishes when the clocks go forward, which
+     * a timestamp column refuses on a connection running in local time.
      *
      * @return list<CarbonImmutable>
      */
