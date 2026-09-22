@@ -88,7 +88,7 @@ class AnimalSeeder extends Seeder
             'animal_number' => $species['number_prefix'].'-'.str_pad((string) $index, 5, '0', STR_PAD_LEFT),
             'name' => $faker->randomElement($species['names']),
             'old_name' => $faker->boolean(30) ? $faker->randomElement($species['names']) : '',
-            'breed' => $faker->randomElement($species['breeds']),
+            'breed' => SpeciesCatalog::pickBreed($species['breeds'], $faker),
             'gender' => $faker->randomElement(['male', 'female']),
             'color' => $faker->randomElement(SpeciesCatalog::colors()),
             'weight_grams' => $faker->boolean(75) ? $faker->numberBetween(...$species['weight_grams']) : null,
@@ -144,7 +144,8 @@ class AnimalSeeder extends Seeder
         foreach (SeedRandom::pickMany($medicalTests, $faker->numberBetween(0, $medicalTests->count())) as $medicalTest) {
             $animal->medicalTests()->attach($medicalTest->id, [
                 'tested_at' => $faker->dateTimeBetween($animal->intake_date ?? '-2 years', 'now'),
-                'result' => $faker->randomElement(['positive', 'negative']),
+                // Most tests come back clear; a positive is the exception.
+                'result' => $faker->boolean(85) ? 'negative' : 'positive',
             ]);
         }
     }

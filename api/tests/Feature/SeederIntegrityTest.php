@@ -200,11 +200,16 @@ class SeederIntegrityTest extends TestCase
 
     public function test_an_open_inspection_can_actually_be_opened(): void
     {
-        foreach (PreInspection::whereNull('submitted_at')->get() as $inspection) {
-            $this->assertNotNull(
-                $inspection->activeToken(),
-                "inspection {$inspection->id}: still open but has no access token"
-            );
-        }
+        $open = PreInspection::whereNull('submitted_at')->get();
+
+        $reachable = $open->filter(fn (PreInspection $inspection) => $inspection->activeToken() !== null);
+
+        // Counted rather than looped, so a run that happens to leave no
+        // inspection open still makes the claim explicitly.
+        $this->assertCount(
+            $open->count(),
+            $reachable,
+            'an inspection is still open but has no access token to reach it'
+        );
     }
 }
