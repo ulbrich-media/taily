@@ -143,7 +143,7 @@ class TransportPool
             'name' => $name,
             'planned_at' => $plannedAt->toDateString(),
             'notes' => $notes,
-            'responsible_id' => $this->responsibles->isNotEmpty() ? $this->responsibles->random()->id : null,
+            'responsible_id' => SeedRandom::pick($this->responsibles)?->id,
             'transporter' => $this->faker->boolean(70) ? $this->faker->randomElement(self::TRANSPORTERS) : '',
         ]);
     }

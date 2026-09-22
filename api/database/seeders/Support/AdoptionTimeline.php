@@ -114,8 +114,13 @@ class AdoptionTimeline
     }
 
     /**
-     * Splits the window into one slice per step and picks a random point in
-     * each, which keeps the dates both ordered and spread out.
+     * Splits the window into one slice per step and picks a moment in each,
+     * which keeps the dates both ordered and spread out.
+     *
+     * Each moment is pulled into office hours: a shelter signs contracts and
+     * hands animals over during the day, and it keeps the seeder clear of the
+     * hour that vanishes when the clocks go forward — a timestamp column
+     * rejects a local time that never happened.
      *
      * @return list<CarbonImmutable>
      */
@@ -125,9 +130,21 @@ class AdoptionTimeline
         $slice = max(1, intdiv($span, $count));
 
         $slots = [];
+        $previous = null;
 
         for ($i = 0; $i < $count; $i++) {
-            $slots[] = $from->addSeconds($i * $slice + $faker->numberBetween(0, $slice - 1));
+            $moment = $from
+                ->addSeconds($i * $slice + $faker->numberBetween(0, $slice - 1))
+                ->setTime($faker->numberBetween(8, 17), $faker->numberBetween(0, 59), $faker->numberBetween(0, 59));
+
+            // Moving to office hours can pull a moment back behind the one
+            // before it; give it the next free slot on the same day instead.
+            if ($previous !== null && $moment->lessThanOrEqualTo($previous)) {
+                $moment = $previous->addMinutes($faker->numberBetween(5, 90));
+            }
+
+            $previous = $moment->min($to)->max($from);
+            $slots[] = $previous;
         }
 
         return $slots;

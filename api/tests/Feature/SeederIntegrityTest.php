@@ -189,6 +189,12 @@ class SeederIntegrityTest extends TestCase
                 $inspection->inspector->inspectorAnimalTypes->contains('id', $inspection->animal_type_id),
                 "inspection {$inspection->id}: inspector does not handle this animal type"
             );
+
+            $this->assertNotSame(
+                $inspection->person_id,
+                $inspection->inspector_id,
+                "inspection {$inspection->id}: the applicant inspected their own home"
+            );
         }
     }
 

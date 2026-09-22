@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Database\Seeders\Support\SeedImages;
 use Database\Seeders\Support\SeedMail;
+use Database\Seeders\Support\SeedRandom;
 use Faker\Factory as Faker;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
@@ -22,6 +23,8 @@ use Taily\Models\Person;
  */
 class PersonSeeder extends Seeder
 {
+    private const MINIMUM_PEOPLE_PER_ROLE = 2;
+
     private const ADDRESS_ADDITIONS = [
         'Hinterhaus',
         'c/o Schmidt',
@@ -49,7 +52,7 @@ class PersonSeeder extends Seeder
             $person = Person::create([
                 'first_name' => $firstName,
                 'last_name' => $lastName,
-                'organization_id' => $hasOrganization ? $organizations->random()->id : null,
+                'organization_id' => $hasOrganization ? SeedRandom::pick($organizations)->id : null,
                 'email' => $faker->boolean(80) ? $mail->forPerson($firstName, $lastName) : '',
                 'street_line' => $hasAddress ? $faker->streetAddress() : '',
                 'street_line_additional' => $hasAddress && $faker->boolean(30) ? $faker->randomElement(self::ADDRESS_ADDITIONS) : '',
@@ -80,7 +83,7 @@ class PersonSeeder extends Seeder
                 }
 
                 $person->{$relation}()->sync(
-                    $animalTypes->random($faker->numberBetween(1, $animalTypes->count()))->pluck('id')
+                    SeedRandom::pickMany($animalTypes, $faker->numberBetween(1, $animalTypes->count()))->pluck('id')
                 );
             }
         }
@@ -98,6 +101,10 @@ class PersonSeeder extends Seeder
      * adoption of that type ends up with an inspection nobody carried out.
      * Fill those gaps.
      *
+     * Two people, not one: nobody inspects their own home, so a type whose
+     * only inspector is the applicant would leave the inspection unassigned
+     * all the same.
+     *
      * @param  Collection<int, AnimalType>  $animalTypes
      */
     private function ensureEveryRoleIsCovered(Collection $animalTypes): void
@@ -106,18 +113,21 @@ class PersonSeeder extends Seeder
 
         foreach ($animalTypes as $animalType) {
             foreach ($relations as $relation) {
-                $covered = Person::whereHas(
-                    $relation,
-                    fn ($query) => $query->where('animal_types.id', $animalType->id)
-                )->exists();
+                $holds = fn ($query) => $query->where('animal_types.id', $animalType->id);
 
-                if ($covered) {
+                $missing = self::MINIMUM_PEOPLE_PER_ROLE - Person::whereHas($relation, $holds)->count();
+
+                if ($missing < 1) {
                     continue;
                 }
 
-                $person = Person::inRandomOrder()->first();
+                $candidates = SeedRandom::shuffle(
+                    Person::whereDoesntHave($relation, $holds)->get()
+                )->take($missing);
 
-                $person?->{$relation}()->syncWithoutDetaching([$animalType->id]);
+                foreach ($candidates as $person) {
+                    $person->{$relation}()->syncWithoutDetaching([$animalType->id]);
+                }
             }
         }
     }

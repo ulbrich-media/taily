@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use Database\Seeders\Support\SeedImages;
+use Database\Seeders\Support\SeedRandom;
 use Database\Seeders\Support\SpeciesCatalog;
 use Faker\Factory as Faker;
 use Faker\Generator;
@@ -106,15 +107,15 @@ class AnimalSeeder extends Seeder
             'findefix_id' => $faker->boolean(40) ? $faker->numerify('###.###.###') : '',
             'trace_id' => $faker->boolean(50) ? 'TR'.$faker->numerify('########') : '',
             // Tab 3: Placement, Contract & Costs
-            'assigned_agent_id' => $faker->boolean(70) && $persons->isNotEmpty() ? $persons->random()->id : null,
+            'assigned_agent_id' => $faker->boolean(70) && $persons->isNotEmpty() ? SeedRandom::pick($persons)->id : null,
             'origin_organization' => $faker->boolean(80) ? $faker->randomElement(SpeciesCatalog::originOrganizations()) : '',
             // A boarding animal is housed on behalf of someone who already owns it;
             // an adoptable animal only gets an owner once it has been handed over.
-            'owner_id' => $isBoardingAnimal && $persons->isNotEmpty() ? $persons->random()->id : null,
+            'owner_id' => $isBoardingAnimal && $persons->isNotEmpty() ? SeedRandom::pick($persons)->id : null,
             'adoption_fee' => $faker->boolean(90) ? $faker->randomFloat(2, ...$species['adoption_fee']) : null,
             'monthly_boarding_cost' => $isBoardingAnimal ? $faker->randomFloat(2, ...$species['boarding_cost']) : null,
             'monthly_sponsorship' => $faker->boolean(20) ? $faker->randomFloat(2, ...$species['sponsorship']) : null,
-            'sponsor_id' => $faker->boolean(15) && $persons->isNotEmpty() ? $persons->random()->id : null,
+            'sponsor_id' => $faker->boolean(15) && $persons->isNotEmpty() ? SeedRandom::pick($persons)->id : null,
             'sponsor_external' => $faker->boolean(10) ? $faker->name() : '',
             // Tab 4: Organization, Marketing & Status
             'current_location' => $faker->randomElement(SpeciesCatalog::locations()),
@@ -134,13 +135,13 @@ class AnimalSeeder extends Seeder
      */
     private function attachHealthRecords(Generator $faker, Animal $animal, $vaccinations, $medicalTests): void
     {
-        foreach ($vaccinations->random($faker->numberBetween(0, $vaccinations->count())) as $vaccination) {
+        foreach (SeedRandom::pickMany($vaccinations, $faker->numberBetween(0, $vaccinations->count())) as $vaccination) {
             $animal->vaccinations()->attach($vaccination->id, [
                 'vaccinated_at' => $faker->dateTimeBetween($animal->intake_date ?? '-2 years', 'now'),
             ]);
         }
 
-        foreach ($medicalTests->random($faker->numberBetween(0, $medicalTests->count())) as $medicalTest) {
+        foreach (SeedRandom::pickMany($medicalTests, $faker->numberBetween(0, $medicalTests->count())) as $medicalTest) {
             $animal->medicalTests()->attach($medicalTest->id, [
                 'tested_at' => $faker->dateTimeBetween($animal->intake_date ?? '-2 years', 'now'),
                 'result' => $faker->randomElement(['positive', 'negative']),

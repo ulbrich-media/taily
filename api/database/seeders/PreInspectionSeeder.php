@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use Carbon\Carbon;
+use Database\Seeders\Support\SeedRandom;
 use Faker\Factory as Faker;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
@@ -41,8 +42,8 @@ class PreInspectionSeeder extends Seeder
         }
 
         for ($i = 0; $i < $count; $i++) {
-            $animalType = $animalTypes->random();
-            $person = $people->random();
+            $animalType = SeedRandom::pick($animalTypes);
+            $person = SeedRandom::pick($people);
 
             // Two thirds are still out with the inspector, so the list shows
             // both open and finished work.
@@ -58,7 +59,7 @@ class PreInspectionSeeder extends Seeder
                 'notes' => $isSubmitted ? $faker->paragraph(2) : '',
             ]);
 
-            $inspection->inspector_id = $this->inspectorFor($inspectors, $animalType->id)?->id;
+            $inspection->inspector_id = $this->inspectorFor($inspectors, $animalType->id, $person)?->id;
             $inspection->verdict = $isSubmitted ? $faker->randomElement(['approved', 'rejected']) : 'pending';
             $inspection->submitted_at = $submittedAt;
             $inspection->created_at = $createdAt;
@@ -74,12 +75,14 @@ class PreInspectionSeeder extends Seeder
     /**
      * @param  Collection<int, Person>  $inspectors
      */
-    private function inspectorFor(Collection $inspectors, string $animalTypeId): ?Person
+    private function inspectorFor(Collection $inspectors, string $animalTypeId, Person $subject): ?Person
     {
+        // Nobody inspects their own home.
         $eligible = $inspectors->filter(
-            fn (Person $person) => $person->inspectorAnimalTypes->contains('id', $animalTypeId)
+            fn (Person $person) => $person->id !== $subject->id
+                && $person->inspectorAnimalTypes->contains('id', $animalTypeId)
         );
 
-        return $eligible->isNotEmpty() ? $eligible->random() : null;
+        return SeedRandom::pick($eligible);
     }
 }

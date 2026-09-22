@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use Database\Seeders\Support\AdoptionStage;
 use Database\Seeders\Support\AdoptionTimeline;
+use Database\Seeders\Support\SeedRandom;
 use Database\Seeders\Support\TransportPool;
 use Database\Seeders\Support\TransportState;
 use Faker\Factory as Faker;
@@ -51,6 +52,9 @@ class AdoptionSeeder extends Seeder
     /** @var Collection<int, Person> */
     private Collection $mediators;
 
+    /** @var Collection<string, Collection<int, Person>> mediators keyed by animal type id */
+    private Collection $mediatorsByAnimalType;
+
     /** @var Collection<string, Collection<int, Person>> inspectors keyed by animal type id */
     private Collection $inspectorsByAnimalType;
 
@@ -92,20 +96,18 @@ class AdoptionSeeder extends Seeder
 
         $this->applicants = Person::all();
         $this->mediators = Person::with('mediatorAnimalTypes')->whereHas('mediatorAnimalTypes')->get();
-        $this->inspectorsByAnimalType = Person::with('inspectorAnimalTypes')
-            ->whereHas('inspectorAnimalTypes')
-            ->get()
-            ->flatMap(fn (Person $person) => $person->inspectorAnimalTypes->map(
-                fn ($animalType) => ['animal_type_id' => $animalType->id, 'person' => $person]
-            ))
-            ->groupBy('animal_type_id')
-            ->map(fn (Collection $rows) => $rows->pluck('person'));
+        $this->mediatorsByAnimalType = $this->groupByAnimalType($this->mediators, 'mediatorAnimalTypes');
+        $this->inspectorsByAnimalType = $this->groupByAnimalType(
+            Person::with('inspectorAnimalTypes')->whereHas('inspectorAnimalTypes')->get(),
+            'inspectorAnimalTypes'
+        );
 
         // Boarding animals are housed on behalf of their owner, not placed.
         $available = Animal::where('is_deceased', false)
             ->where('is_boarding_animal', false)
-            ->get()
-            ->shuffle();
+            ->get();
+
+        $available = SeedRandom::shuffle($available);
 
         if ($available->isEmpty() || $this->applicants->isEmpty()) {
             return;
@@ -127,7 +129,7 @@ class AdoptionSeeder extends Seeder
                     break;
                 }
 
-                $available = $returned->shuffle();
+                $available = SeedRandom::shuffle($returned);
                 $returned = collect();
             }
 
@@ -236,7 +238,10 @@ class AdoptionSeeder extends Seeder
         AdoptionStage $stage,
         AdoptionTimeline $timeline,
     ): void {
-        $eligible = $this->inspectorsByAnimalType->get($animal->animal_type_id);
+        // Nobody inspects their own home.
+        $eligible = $this->inspectorsByAnimalType->get($animal->animal_type_id)
+            ?->reject(fn (Person $person) => $person->id === $applicant->id);
+
         $verdict = $stage->preInspectionVerdict();
 
         $inspection = new PreInspection([
@@ -245,7 +250,7 @@ class AdoptionSeeder extends Seeder
             'notes' => $verdict !== null ? $this->faker->paragraph(2) : '',
         ]);
 
-        $inspection->inspector_id = $eligible?->isNotEmpty() ? $eligible->random()->id : null;
+        $inspection->inspector_id = $eligible !== null ? SeedRandom::pick($eligible)?->id : null;
         $inspection->verdict = $verdict ?? 'pending';
         $inspection->submitted_at = $timeline->inspectionSubmittedAt;
         $inspection->created_at = $timeline->inspectionCreatedAt;
@@ -256,6 +261,10 @@ class AdoptionSeeder extends Seeder
             'at' => $timeline->inspectionSubmittedAt ?? $timeline->inspectionCreatedAt,
             'submitted' => $verdict !== null,
         ];
+
+        if ($verdict !== null) {
+            $this->inspectedByType[$animal->animal_type_id][] = $applicant;
+        }
 
         // An inspection still out with the inspector needs a link they can open.
         if ($verdict === null) {
@@ -318,11 +327,9 @@ class AdoptionSeeder extends Seeder
             return null;
         }
 
-        $qualified = $this->mediators->filter(
-            fn (Person $person) => $person->mediatorAnimalTypes->contains('id', $animal->animal_type_id)
-        );
+        $qualified = $this->mediatorsByAnimalType->get($animal->animal_type_id);
 
-        return $qualified->isNotEmpty() ? $qualified->random() : $this->mediators->random();
+        return SeedRandom::pick($qualified?->isNotEmpty() ? $qualified : $this->mediators);
     }
 
     /**
@@ -332,27 +339,69 @@ class AdoptionSeeder extends Seeder
      */
     private function applicantFor(?Person $mediator, string $animalTypeId): Person
     {
-        $candidates = $mediator === null
-            ? $this->applicants
-            : $this->applicants->where('id', '!=', $mediator->id);
+        $this->unseenByType[$animalTypeId] ??= SeedRandom::shuffle($this->applicants)->all();
 
-        $unseen = $candidates->reject(fn (Person $person) => isset($this->inspections[$person->id][$animalTypeId]));
+        $passedOver = [];
 
-        if ($unseen->isNotEmpty()) {
-            return $unseen->random();
+        while ($this->unseenByType[$animalTypeId] !== []) {
+            $person = array_pop($this->unseenByType[$animalTypeId]);
+
+            if ($mediator !== null && $person->id === $mediator->id) {
+                $passedOver[] = $person;
+
+                continue;
+            }
+
+            array_push($this->unseenByType[$animalTypeId], ...$passedOver);
+
+            return $person;
         }
+
+        array_push($this->unseenByType[$animalTypeId], ...$passedOver);
 
         // Everyone has applied for this type before. Prefer someone whose
         // inspection is finished, since that one fits any later step.
-        $inspected = $candidates->filter(
-            fn (Person $person) => ($this->inspections[$person->id][$animalTypeId]['submitted'] ?? false) === true
-        );
+        return $this->pickExcept($this->inspectedByType[$animalTypeId] ?? [], $mediator)
+            ?? $this->pickExcept($this->applicants->all(), $mediator)
+            ?? $this->applicants->first();
+    }
 
-        if ($inspected->isNotEmpty()) {
-            return $inspected->random();
+    /**
+     * @param  list<Person>  $people
+     */
+    private function pickExcept(array $people, ?Person $mediator): ?Person
+    {
+        if ($people === []) {
+            return null;
         }
 
-        return $candidates->isNotEmpty() ? $candidates->random() : $this->applicants->random();
+        $person = $people[mt_rand(0, count($people) - 1)];
+
+        if ($mediator !== null && $person->id === $mediator->id) {
+            return count($people) > 1 ? $this->pickExcept(
+                array_values(array_filter($people, fn (Person $other) => $other->id !== $mediator->id)),
+                $mediator
+            ) : null;
+        }
+
+        return $person;
+    }
+
+    /**
+     * Indexes people by the animal types they hold a role for, so picking a
+     * qualified one is a lookup rather than a scan of everybody.
+     *
+     * @param  Collection<int, Person>  $people
+     * @return Collection<string, Collection<int, Person>>
+     */
+    private function groupByAnimalType(Collection $people, string $relation): Collection
+    {
+        return $people
+            ->flatMap(fn (Person $person) => $person->{$relation}->map(
+                fn ($animalType) => ['animal_type_id' => $animalType->id, 'person' => $person]
+            ))
+            ->groupBy('animal_type_id')
+            ->map(fn (Collection $rows) => $rows->pluck('person'));
     }
 
     /**
