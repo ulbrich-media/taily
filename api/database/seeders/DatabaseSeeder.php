@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use Database\Seeders\Support\SeedMail;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -14,14 +15,21 @@ class DatabaseSeeder extends Seeder
 
     /**
      * Seed the application's database.
+     *
+     * Order matters: animal types come first because people are assigned roles
+     * per animal type, and adoptions need both before they can pick a
+     * qualified mediator and inspector.
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // One instance for the whole run, so derived addresses stay unique
+        // across people and organizations.
+        app()->singleton(SeedMail::class, fn () => new SeedMail);
 
         $password = Hash::make(config('seeder.password', 'Test!234'));
 
-        // Create admin user
+        // The two login accounts keep fixed addresses so the documented
+        // development credentials survive a reseed.
         User::factory()->create([
             'name' => 'Jane Doe',
             'email' => 'admin@local.local',
@@ -29,7 +37,6 @@ class DatabaseSeeder extends Seeder
             'role' => UserRole::ADMIN,
         ]);
 
-        // Create regular user
         User::factory()->create([
             'name' => 'John Smith',
             'email' => 'user@local.local',
@@ -38,6 +45,7 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $this->call([
+            AnimalTypeSeeder::class,
             OrganizationSeeder::class,
             PersonSeeder::class,
             AnimalSeeder::class,
