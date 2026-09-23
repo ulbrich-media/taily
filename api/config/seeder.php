@@ -54,9 +54,10 @@ return [
     |   adoptions                   how many adoptions to generate
     |   adoption_stages             relative weight of each AdoptionStage
     |   adoptions_per_transport     [min, max] animals sharing one completed
-    |                               transport; a run is never left with fewer
-    |                               than the minimum unless there are not that
-    |                               many adoptions to put on one at all
+    |                               transport. Every run stays inside those
+    |                               bounds; the one exception is having fewer
+    |                               adoptions in total than a run holds, which
+    |                               leaves a single smaller run
     |   empty_transports            upcoming runs with nothing booked on them
     |   standalone_pre_inspections  inspections without an adoption behind them
     |   media                       percentage of records that get a picture —
@@ -75,7 +76,7 @@ return [
             'animals' => ['dogs' => 6, 'cats' => 4],
             'adoptions' => 6,
             'adoption_stages' => AdoptionSeeder::DEFAULT_STAGE_WEIGHTS,
-            'adoptions_per_transport' => [4, 6],
+            'adoptions_per_transport' => [4, 15],
             'empty_transports' => 1,
             'standalone_pre_inspections' => 1,
             'media' => ['people' => 20, 'animals' => 80],
@@ -88,7 +89,7 @@ return [
             'animals' => ['dogs' => 25, 'cats' => 10],
             'adoptions' => 20,
             'adoption_stages' => AdoptionSeeder::DEFAULT_STAGE_WEIGHTS,
-            'adoptions_per_transport' => [4, 8],
+            'adoptions_per_transport' => [4, 15],
             'empty_transports' => 2,
             'standalone_pre_inspections' => 4,
             'media' => ['people' => 20, 'animals' => 80],
@@ -101,7 +102,7 @@ return [
             'animals' => ['dogs' => 3500, 'cats' => 1500],
             'adoptions' => 4000,
             'adoption_stages' => AdoptionSeeder::DEFAULT_STAGE_WEIGHTS,
-            'adoptions_per_transport' => [8, 40],
+            'adoptions_per_transport' => [4, 15],
             'empty_transports' => 20,
             'standalone_pre_inspections' => 200,
             'media' => ['people' => 0, 'animals' => 0],

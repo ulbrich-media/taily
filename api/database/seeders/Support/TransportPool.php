@@ -83,25 +83,58 @@ class TransportPool
             return;
         }
 
-        [$minimum, $maximum] = $this->capacityRange;
-
-        $seats = [];
-        $left = $adoptions;
-
-        while ($left > 0) {
-            $take = min($left, $this->faker->numberBetween($minimum, $maximum));
-
-            if ($left - $take < $minimum) {
-                $take = $left;
-            }
-
-            $seats[] = $take;
-            $left -= $take;
-        }
+        $seats = $this->runSizes($adoptions);
 
         foreach ($this->spreadOverHistory(count($seats)) as $index => $at) {
             $this->completedRuns[] = ['at' => $at, 'seats' => $seats[$index], 'taken' => 0, 'transport' => null];
         }
+    }
+
+    /**
+     * How the given adoptions divide into runs.
+     *
+     * Every run holds between the range's two bounds. What makes that awkward
+     * is the end of the list: taking the largest run possible each time can
+     * leave a remainder too small to be a run at all. So a run only takes as
+     * much as it can while still leaving a full run's worth behind, and the
+     * last one takes what is left.
+     *
+     * Two cases cannot honour both bounds, and both end in a single run that
+     * breaks one of them: fewer adoptions than a run holds, and a range so
+     * narrow that what is left over fits neither into this run nor into one
+     * of its own. Where they conflict the minimum wins, since a run carrying
+     * one animal is the thing worth avoiding.
+     *
+     * @return list<int>
+     */
+    public function runSizes(int $adoptions): array
+    {
+        [$minimum, $maximum] = $this->capacityRange;
+
+        $sizes = [];
+        $left = $adoptions;
+
+        while ($left > 0) {
+            if ($left <= $maximum) {
+                $sizes[] = $left;
+
+                break;
+            }
+
+            // Take as much as possible while still leaving a full run behind.
+            $ceiling = min($maximum, $left - $minimum);
+
+            if ($ceiling < $minimum) {
+                $sizes[] = $left;
+
+                break;
+            }
+
+            $sizes[] = $this->faker->numberBetween($minimum, $ceiling);
+            $left -= end($sizes);
+        }
+
+        return $sizes;
     }
 
     /**

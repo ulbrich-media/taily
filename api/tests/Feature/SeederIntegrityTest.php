@@ -132,17 +132,24 @@ class SeederIntegrityTest extends TestCase
 
     /**
      * A transport is only worth organising once enough animals are ready for
-     * it, so a completed run carries a load rather than a single animal.
+     * it, and only so many fit on one — a run carrying a single animal makes
+     * as little sense as one carrying forty.
      */
-    public function test_a_completed_transport_carries_a_worthwhile_load(): void
+    public function test_a_completed_transport_carries_a_plausible_load(): void
     {
-        [$minimum] = $this->profile->range('adoptions_per_transport', [4, 8]);
+        [$minimum, $maximum] = $this->profile->range('adoptions_per_transport', [4, 15]);
 
         $runs = Transport::whereNotNull('done_at')->withCount('adoptions')->get();
 
         $this->assertNotEmpty($runs, 'expected the profile to produce completed transports');
 
         foreach ($runs as $run) {
+            $this->assertLessThanOrEqual(
+                $maximum,
+                $run->adoptions_count,
+                "transport {$run->id}: carries {$run->adoptions_count} animals, more than fits on one run"
+            );
+
             // Fewer adoptions than fill one run leaves a single smaller run;
             // beyond that every run is filled to the minimum.
             if ($runs->count() === 1) {
