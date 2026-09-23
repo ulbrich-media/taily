@@ -7,6 +7,7 @@ use Database\Seeders\Support\SeedRandom;
 use Faker\Factory as Faker;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
+use Taily\Models\Adoption;
 use Taily\Models\AnimalType;
 use Taily\Models\Person;
 use Taily\Models\PreInspection;
@@ -31,19 +32,32 @@ class PreInspectionSeeder extends Seeder
 
         $animalTypes = AnimalType::all();
         $inspectors = Person::with('inspectorAnimalTypes')->whereHas('inspectorAnimalTypes')->get();
-
-        // People with an adoption already carry the inspection that adoption
-        // needs — a second one for the same type would only muddy the status
-        // the adoption derives from it.
-        $people = Person::whereDoesntHave('adoptionsAsApplicant')->get();
+        $people = Person::all();
 
         if ($animalTypes->isEmpty() || $people->isEmpty()) {
             return;
         }
 
+        $taken = $this->inspectionsAlreadyHeld();
+        $placed = 0;
+
         for ($i = 0; $i < $count; $i++) {
             $animalType = SeedRandom::pick($animalTypes);
-            $person = SeedRandom::pick($people);
+
+            // An inspection belongs to a person and an animal type, so a
+            // second one for the same pair would only muddy the status an
+            // adoption derives from it. Other types are fair game.
+            $candidates = $people->reject(
+                fn (Person $candidate) => isset($taken[$candidate->id.'|'.$animalType->id])
+            );
+
+            if ($candidates->isEmpty()) {
+                continue;
+            }
+
+            $person = SeedRandom::pick($candidates);
+            $taken[$person->id.'|'.$animalType->id] = true;
+            $placed++;
 
             // Two thirds are still out with the inspector, so the list shows
             // both open and finished work.
@@ -70,6 +84,35 @@ class PreInspectionSeeder extends Seeder
                 $inspection->issueToken(Carbon::now()->addDays(30));
             }
         }
+
+        if ($placed < $count) {
+            $this->command?->warn(
+                "Only {$placed} of {$count} standalone pre-inspections could be seeded — everyone has already been inspected for the animal types on offer."
+            );
+        }
+    }
+
+    /**
+     * Every person and animal type that already has an inspection between
+     * them, whether it was seeded here or belongs to an adoption.
+     *
+     * @return array<string, true>
+     */
+    private function inspectionsAlreadyHeld(): array
+    {
+        $taken = [];
+
+        foreach (PreInspection::all(['person_id', 'animal_type_id']) as $inspection) {
+            $taken[$inspection->person_id.'|'.$inspection->animal_type_id] = true;
+        }
+
+        foreach (Adoption::with('animal:id,animal_type_id')->get(['applicant_id', 'animal_id']) as $adoption) {
+            if ($adoption->animal !== null) {
+                $taken[$adoption->applicant_id.'|'.$adoption->animal->animal_type_id] = true;
+            }
+        }
+
+        return $taken;
     }
 
     /**

@@ -90,7 +90,8 @@ class AnimalSeeder extends Seeder
             'color' => $faker->randomElement(SpeciesCatalog::colors()),
             'weight_grams' => $faker->boolean(75) ? $faker->numberBetween(...$species['weight_grams']) : null,
             'size_cm' => $faker->boolean(75) ? $faker->numberBetween(...$species['size_cm']) : null,
-            'date_of_birth' => $faker->dateTimeBetween('-12 years', '-3 months'),
+            // Bounded by the intake: an animal cannot arrive before it was born.
+            'date_of_birth' => $faker->dateTimeBetween('-12 years', $intakeDate),
             'origin_country' => $faker->randomElement(SpeciesCatalog::originCountries()),
             'is_boarding_animal' => $isBoardingAnimal,
             'intake_date' => $intakeDate,

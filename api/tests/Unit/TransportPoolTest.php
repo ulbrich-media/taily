@@ -89,6 +89,18 @@ class TransportPoolTest extends TestCase
     }
 
     /**
+     * A profile is free to carry nonsense — --set writes straight into it — so
+     * a range that cannot be honoured has to settle into one that can rather
+     * than leave the seeder handing out empty runs forever.
+     */
+    public function test_an_impossible_range_is_settled_rather_than_looped_on(): void
+    {
+        $this->assertSame([1, 1, 1], $this->pool([0, 0])->runSizes(3));
+        $this->assertSame(7, array_sum($this->pool([0, 3])->runSizes(7)));
+        $this->assertSame([9], $this->pool([9, 2])->runSizes(9));
+    }
+
+    /**
      * @param  array{int, int}  $capacityRange
      */
     private function pool(array $capacityRange): TransportPool

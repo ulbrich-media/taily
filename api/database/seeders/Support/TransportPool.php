@@ -56,6 +56,9 @@ class TransportPool
     /** @var array{transport: Transport, capacity: int, taken: int}|null */
     private ?array $openRun = null;
 
+    /** @var array{int, int} */
+    private readonly array $capacityRange;
+
     /**
      * @param  Collection<int, Person>  $responsibles  mediators who can organise a run
      * @param  array{int, int}  $capacityRange  how many adoptions share one run
@@ -63,8 +66,17 @@ class TransportPool
     public function __construct(
         private readonly Generator $faker,
         private readonly Collection $responsibles,
-        private readonly array $capacityRange = [4, 8],
-    ) {}
+        array $capacityRange = [4, 15],
+    ) {
+        // A run has to carry at least one animal — a minimum of zero would
+        // let runSizes() hand out empty runs forever — and a maximum below
+        // the minimum is not a range at all. The bounds come from a profile
+        // that --set can write anything into, so settle them here, once, for
+        // everything that reads them.
+        $minimum = max(1, $capacityRange[0] ?? 1);
+
+        $this->capacityRange = [$minimum, max($minimum, $capacityRange[1] ?? $minimum)];
+    }
 
     /**
      * Works out the runs the given number of adoptions need, before any of
@@ -230,6 +242,38 @@ class TransportPool
         $transport->save();
 
         return $transport;
+    }
+
+    /**
+     * Clears out the runs that never filled up.
+     *
+     * The schedule is drawn from the stages before any adoption is written,
+     * and some of them do not make it that far: an applicant whose inspection
+     * is still open, or an animal the shelter did not have yet, steps the
+     * adoption back to the contract and leaves its seat unused. A run left
+     * below its minimum is not a run worth showing, so it is dropped and the
+     * few adoptions on it simply have no transport — an adopter collecting
+     * the animal themselves is a perfectly ordinary adoption.
+     *
+     * A single run is kept whatever its size: with fewer adoptions than fill
+     * one, a smaller run is the best there is.
+     */
+    public function dropUnderfilledRuns(): void
+    {
+        $created = array_filter(array_column($this->completedRuns, 'transport'));
+
+        if (count($created) < 2) {
+            return;
+        }
+
+        foreach ($created as $transport) {
+            if ($transport->adoptions()->count() >= $this->capacityRange[0]) {
+                continue;
+            }
+
+            $transport->adoptions()->update(['transport_id' => null]);
+            $transport->delete();
+        }
     }
 
     /**

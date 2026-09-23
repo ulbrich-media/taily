@@ -5,6 +5,7 @@ namespace Taily\Tests\Feature;
 use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\Support\SeedMail;
 use Database\Seeders\Support\SeedProfile;
+use Database\Seeders\Support\SeedRandom;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Taily\Models\Adoption;
@@ -14,6 +15,7 @@ use Taily\Models\Person;
 use Taily\Models\PreInspection;
 use Taily\Models\Transport;
 use Taily\Tests\TestCase;
+use Throwable;
 
 /**
  * The seeder is a development tool, but the data it produces is what every
@@ -25,6 +27,14 @@ class SeederIntegrityTest extends TestCase
 {
     use RefreshDatabase;
 
+    /**
+     * The data set these checks run over changes every run, because an
+     * invariant that only holds for one draw is not an invariant. The seed is
+     * reported when something fails, so the draw that broke can be replayed
+     * with SEEDER_TEST_SEED=<seed>.
+     */
+    private int $seed = 0;
+
     private SeedProfile $profile;
 
     protected function setUp(): void
@@ -33,15 +43,40 @@ class SeederIntegrityTest extends TestCase
 
         // The real seeder, through the profile the command would use — only
         // without pictures, since attaching media runs the image conversions
-        // inline and has nothing to do with what these tests check.
+        // inline and has nothing to do with what these tests check, and with
+        // enough adoptions that every step of the process is reached on any
+        // draw. Twenty of them leave the transport steps empty now and then.
         $this->profile = SeedProfile::resolve('dev', [
             'media.people' => 0,
             'media.animals' => 0,
+            'adoptions' => 60,
+            'animals.dogs' => 60,
+            'animals.cats' => 30,
         ]);
 
         $this->app->instance(SeedProfile::class, $this->profile);
 
+        $this->seed = (int) (getenv('SEEDER_TEST_SEED') ?: random_int(1, PHP_INT_MAX));
+
+        SeedRandom::seed($this->seed);
+
         $this->seed(DatabaseSeeder::class);
+    }
+
+    /**
+     * Says which draw failed, so it can be looked at rather than guessed at.
+     */
+    protected function onNotSuccessfulTest(Throwable $t): never
+    {
+        // PHPUnit has already recorded the failure by the time this runs, so
+        // the hint goes to the output rather than into the message.
+        fwrite(STDERR, sprintf(
+            "\n[%s] replay this data set with SEEDER_TEST_SEED=%d\n",
+            $this->name(),
+            $this->seed,
+        ));
+
+        throw $t;
     }
 
     public function test_the_profile_decides_how_much_gets_seeded(): void

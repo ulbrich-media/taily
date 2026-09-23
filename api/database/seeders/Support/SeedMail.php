@@ -62,7 +62,10 @@ class SeedMail
         $candidate = $localPart;
 
         while (isset($this->issued[$candidate])) {
-            $candidate = $localPart.random_int(1000, 9999);
+            // mt_rand, not random_int: the suffix has to come from the same
+            // seeded stream as the rest, or `app:seed --seed=` would hand the
+            // same person a different address on every run.
+            $candidate = $localPart.mt_rand(1000, 9999);
         }
 
         $this->issued[$candidate] = true;

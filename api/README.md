@@ -32,14 +32,18 @@ How much of what gets seeded comes from a profile in `config/seeder.php`.
 | `large`   | Load and performance testing              | 2000   | 5000    | 4000      | no       |
 
 ```bash
-ddev artisan app:seed --list                            # show the profiles
-ddev artisan app:seed --fresh                           # the default profile (dev)
-ddev artisan app:seed --profile=large --fresh           # load-test set, ~15s
-ddev artisan app:seed --set=adoptions=500               # one value changed
-ddev artisan app:seed --set=media.animals=0             # nested values work too
-ddev artisan app:seed --seed=1234 --fresh               # reproducible run
-ddev artisan app:seed --password=<some-password>        # password for the demo users
+ddev artisan app:seed --list                              # show the profiles
+ddev artisan app:seed --fresh                             # the default profile (dev)
+ddev artisan app:seed --profile=large --fresh             # load-test set, ~20s
+ddev artisan app:seed --fresh --set=adoptions=500         # one value changed
+ddev artisan app:seed --fresh --set=media.animals=0       # nested values work too
+ddev artisan app:seed --fresh --seed=1234                 # reproducible run
+ddev artisan app:seed --fresh --password=<some-password>  # password for the demo users
 ```
+
+The seeder is not additive: it always creates the same two login accounts, so
+every run needs `--fresh` to reset the database first. Without it the command
+stops and says so rather than failing halfway through on a duplicate address.
 
 Log in as `admin@local.local` or `user@local.local`; the password defaults to
 `Test!234`. Every other seeded address is derived from the name it belongs to

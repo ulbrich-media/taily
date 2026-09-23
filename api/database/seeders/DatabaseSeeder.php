@@ -77,7 +77,7 @@ class DatabaseSeeder extends Seeder
         $this->call(AdoptionSeeder::class, false, [
             'count' => $profile->int('adoptions'),
             'stageWeights' => $profile->counts('adoption_stages'),
-            'transportCapacity' => $profile->range('adoptions_per_transport', [2, 5]),
+            'transportCapacity' => $profile->range('adoptions_per_transport', [4, 15]),
         ]);
 
         $this->call(TransportSeeder::class, false, [

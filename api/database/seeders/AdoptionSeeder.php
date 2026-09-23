@@ -78,9 +78,27 @@ class AdoptionSeeder extends Seeder
      * adoption for the same type reuses the inspection they already have
      * instead of collecting a contradictory second one.
      *
-     * @var array<string, array<string, array{at: CarbonImmutable, submitted: bool}>>
+     * @var array<string, array<string, array{at: CarbonImmutable, submitted: bool, verdict: string|null}>>
      */
     private array $inspections = [];
+
+    /**
+     * Applicants who have not applied for a given animal type yet, as a queue
+     * per type. Picking from a queue keeps choosing an applicant independent
+     * of how many people there are, which matters once a data set is sized
+     * for load testing.
+     *
+     * @var array<string, list<Person>>
+     */
+    private array $unseenByType = [];
+
+    /**
+     * Applicants whose inspection for a given type came back approved, and who
+     * can therefore be given another adoption of that type at any step.
+     *
+     * @var array<string, list<Person>>
+     */
+    private array $inspectedByType = [];
 
     /**
      * @param  array<string, int>  $stageWeights
@@ -89,7 +107,7 @@ class AdoptionSeeder extends Seeder
     public function run(
         int $count = 20,
         array $stageWeights = self::DEFAULT_STAGE_WEIGHTS,
-        array $transportCapacity = [2, 5],
+        array $transportCapacity = [4, 15],
     ): void {
         $this->faker = Faker::create('de_DE');
         $this->faker->setDefaultTimezone('UTC');
@@ -143,10 +161,17 @@ class AdoptionSeeder extends Seeder
             }
 
             // An animal that travels has to have been at the shelter before
-            // its run set off.
+            // its run set off. When none of the animals on offer was, the
+            // adoption stops at the contract instead of joining a run it
+            // could not have been on.
             $animal = $stage->transport() === TransportState::Done
                 ? $this->takeAnimalReadyBy($available, $transports->nextCompletedRunAt())
                 : $available->shift();
+
+            if ($animal === null) {
+                $stage = AdoptionStage::ContractSigned;
+                $animal = $available->shift();
+            }
 
             $stage = $this->createAdoption($animal, $stage, $transports);
             $created++;
@@ -160,6 +185,8 @@ class AdoptionSeeder extends Seeder
                 default => null,
             };
         }
+
+        $transports->dropUnderfilledRuns();
 
         if ($created < $count) {
             $this->command?->warn(
@@ -186,12 +213,30 @@ class AdoptionSeeder extends Seeder
             $stage = AdoptionStage::InReview;
         }
 
+        // Their inspection for this animal type came back rejected, so this
+        // adoption cannot reach a contract on the back of it. It ends where
+        // the inspection did.
+        if (($existing['verdict'] ?? null) === 'rejected' && $stage->preInspectionVerdict() === 'approved') {
+            $stage = AdoptionStage::Canceled;
+        }
+
         // Nothing may predate the animal's intake, the end of its previous
         // adoption, or an inspection this applicant already went through.
         $notBefore = $this->latest(
             $this->readyFrom($animal),
             $existing['at'] ?? null,
         );
+
+        // The applicant's own history can reach past the run as well — they
+        // may have been inspected after it left. Checked before the seat is
+        // taken, so a run this adoption cannot use keeps it for one that can.
+        if ($stage->transport() === TransportState::Done) {
+            $runAt = $transports->nextCompletedRunAt();
+
+            if ($runAt === null || $runAt->lessThan($notBefore)) {
+                $stage = AdoptionStage::ContractSigned;
+            }
+        }
 
         $transport = $this->transportFor($stage, $transports);
 
@@ -271,9 +316,12 @@ class AdoptionSeeder extends Seeder
         $this->inspections[$applicant->id][$animal->animal_type_id] = [
             'at' => $timeline->inspectionSubmittedAt ?? $timeline->inspectionCreatedAt,
             'submitted' => $verdict !== null,
+            'verdict' => $verdict,
         ];
 
-        if ($verdict !== null) {
+        // Only an approved inspection lets this applicant take on another
+        // adoption of the same type later.
+        if ($verdict === 'approved') {
             $this->inspectedByType[$animal->animal_type_id][] = $applicant;
         }
 
@@ -339,11 +387,12 @@ class AdoptionSeeder extends Seeder
     /**
      * Takes the first animal off the queue that the shelter already had a few
      * weeks before the given date, so it could plausibly have been on that
-     * run. Falls back to the next animal in line when none qualifies.
+     * run. Returns null when none of them was — the caller then leaves the
+     * run alone rather than putting an animal on it that had not arrived.
      *
      * @param  Collection<int, Animal>  $available
      */
-    private function takeAnimalReadyBy(Collection $available, ?CarbonImmutable $travellingAt): Animal
+    private function takeAnimalReadyBy(Collection $available, ?CarbonImmutable $travellingAt): ?Animal
     {
         if ($travellingAt === null) {
             return $available->shift();
@@ -358,7 +407,7 @@ class AdoptionSeeder extends Seeder
             }
         }
 
-        return $available->shift();
+        return null;
     }
 
     /**

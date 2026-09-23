@@ -3,11 +3,11 @@
 namespace Taily\Console\Commands;
 
 use Database\Seeders\Support\SeedProfile;
+use Database\Seeders\Support\SeedRandom;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Schema;
 use InvalidArgumentException;
-use Ramsey\Uuid\Uuid;
 use Taily\Models\Adoption;
 use Taily\Models\Animal;
 use Taily\Models\Organization;
@@ -24,7 +24,8 @@ class SeedDatabase extends Command
                             {--fresh : Drop all tables and migrate before seeding}
                             {--seed= : Random seed, so the same run produces the same data}
                             {--list : Show the available profiles and what they contain}
-                            {--password= : Password for the demo users (defaults to Test!234)}';
+                            {--password= : Password for the demo users (defaults to Test!234)}
+                            {--force : Skip the confirmation this would ask for in production}';
 
     protected $description = 'Seed the database with demo data';
 
@@ -45,7 +46,7 @@ class SeedDatabase extends Command
         }
 
         if ($seed = $this->option('seed')) {
-            $this->makeRunReproducible((int) $seed);
+            SeedRandom::seed((int) $seed);
 
             if (array_sum($profile->counts('media')) > 0) {
                 $this->warn(
@@ -56,17 +57,28 @@ class SeedDatabase extends Command
             }
         }
 
+        if (! $this->option('fresh') && $this->alreadySeeded()) {
+            $this->error('The database already holds seeded data. Seeding again would collide with it — pass --fresh to reset the database first.');
+
+            return self::FAILURE;
+        }
+
         Config::set('seeder.password', $this->option('password') ?? config('seeder.password', 'Test!234'));
 
         $this->laravel->instance(SeedProfile::class, $profile);
 
+        // Both child commands ask before touching a production database, and
+        // --force is passed on rather than assumed, so `app:seed --fresh`
+        // cannot drop the tables of a production database unattended.
+        $confirmation = array_filter(['--force' => (bool) $this->option('force')]);
+
         if ($this->option('fresh')) {
-            $this->call('migrate:fresh', ['--force' => true]);
+            $this->call('migrate:fresh', $confirmation);
         }
 
         $startedAt = microtime(true);
 
-        $this->call('db:seed', ['--force' => true]);
+        $this->call('db:seed', $confirmation);
 
         $this->summarise($profile, microtime(true) - $startedAt);
 
@@ -74,49 +86,12 @@ class SeedDatabase extends Command
     }
 
     /**
-     * Pins every source of randomness the seeders draw from.
-     *
-     * Faker and the seeders' own picks come from mt_rand, so seeding that
-     * covers the values. The model keys do not: Str::uuid7() mixes in fresh
-     * entropy, and because rows come back ordered by their key, two runs would
-     * otherwise hand the seeders their animals and people in a different
-     * order. A counter-based factory keeps the keys both ordered and
-     * predictable.
-     *
-     * One thing stays outside this: generating image conversions draws from
-     * sources the seeder cannot reach, so a run that attaches pictures drifts
-     * from the seeded stream. Turn the pictures off for an identical run —
-     * which is what the large profile does anyway.
+     * The seeder is not additive — it always creates the same two login
+     * accounts — so a second run over the same database collides on them.
      */
-    private function makeRunReproducible(int $seed): void
+    private function alreadySeeded(): bool
     {
-        mt_srand($seed);
-
-        $counter = 0;
-
-        Str::createUuidsUsing(function () use (&$counter) {
-            $bytes = substr(pack('J', ++$counter), 2);
-
-            for ($i = 0; $i < 10; $i++) {
-                $bytes .= chr(mt_rand(0, 255));
-            }
-
-            $bytes[6] = chr((ord($bytes[6]) & 0x0F) | 0x70);
-            $bytes[8] = chr((ord($bytes[8]) & 0x3F) | 0x80);
-
-            return Uuid::fromBytes($bytes);
-        });
-
-        Str::createRandomStringsUsing(function (int $length = 16) {
-            $alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-            $string = '';
-
-            for ($i = 0; $i < $length; $i++) {
-                $string .= $alphabet[mt_rand(0, strlen($alphabet) - 1)];
-            }
-
-            return $string;
-        });
+        return Schema::hasTable('users') && User::query()->exists();
     }
 
     /**
