@@ -114,7 +114,16 @@ class AdoptionSeeder extends Seeder
         }
 
         $transports = new TransportPool($this->faker, $this->mediators, $transportCapacity);
-        $stages = $this->stageBag($stageWeights);
+
+        // Drawn up front so the transports can be scheduled before the first
+        // adoption is built — a run's arrival date is what the adoptions on it
+        // are laid out around.
+        $stages = $this->drawStages($count, $stageWeights);
+
+        $transports->scheduleCompletedRuns(count(array_filter(
+            $stages,
+            fn (AdoptionStage $stage) => $stage->transport() === TransportState::Done
+        )));
 
         // Animals whose adoption has ended. They are only taken up again once
         // the shelter has nothing else on offer — an animal that comes back is
@@ -123,7 +132,7 @@ class AdoptionSeeder extends Seeder
         $returned = collect();
         $created = 0;
 
-        for ($i = 0; $i < $count; $i++) {
+        foreach ($stages as $stage) {
             if ($available->isEmpty()) {
                 if ($returned->isEmpty()) {
                     break;
@@ -133,8 +142,11 @@ class AdoptionSeeder extends Seeder
                 $returned = collect();
             }
 
-            $stage = $this->faker->randomElement($stages);
-            $animal = $available->shift();
+            // An animal that travels has to have been at the shelter before
+            // its run set off.
+            $animal = $stage->transport() === TransportState::Done
+                ? $this->takeAnimalReadyBy($available, $transports->nextCompletedRunAt())
+                : $available->shift();
 
             $stage = $this->createAdoption($animal, $stage, $transports);
             $created++;
@@ -177,14 +189,13 @@ class AdoptionSeeder extends Seeder
         // Nothing may predate the animal's intake, the end of its previous
         // adoption, or an inspection this applicant already went through.
         $notBefore = $this->latest(
-            CarbonImmutable::instance($animal->intake_date ?? Carbon::now()->subYear()),
-            $this->availableFrom[$animal->id] ?? null,
+            $this->readyFrom($animal),
             $existing['at'] ?? null,
         );
 
-        $timeline = AdoptionTimeline::build($stage, $notBefore, $this->faker);
+        $transport = $this->transportFor($stage, $transports);
 
-        $transport = $this->transportFor($stage, $timeline, $transports);
+        $timeline = AdoptionTimeline::build($stage, $notBefore, $this->faker, $transport?->done_at);
 
         $adoption = new Adoption([
             'animal_id' => $animal->id,
@@ -304,13 +315,50 @@ class AdoptionSeeder extends Seeder
         }
     }
 
-    private function transportFor(AdoptionStage $stage, AdoptionTimeline $timeline, TransportPool $transports): ?Transport
+    private function transportFor(AdoptionStage $stage, TransportPool $transports): ?Transport
     {
         return match ($stage->transport()) {
             TransportState::Open => $transports->openRun(),
-            TransportState::Done => $transports->completedRunFor(...$timeline->transportWindow()),
+            TransportState::Done => $transports->takeCompletedRun(),
             TransportState::None => null,
         };
+    }
+
+    /**
+     * The earliest moment an adoption for this animal could start: not before
+     * the shelter had it, and not before its previous adoption ended.
+     */
+    private function readyFrom(Animal $animal): CarbonImmutable
+    {
+        return $this->latest(
+            CarbonImmutable::instance($animal->intake_date ?? Carbon::now()->subYear()),
+            $this->availableFrom[$animal->id] ?? null,
+        );
+    }
+
+    /**
+     * Takes the first animal off the queue that the shelter already had a few
+     * weeks before the given date, so it could plausibly have been on that
+     * run. Falls back to the next animal in line when none qualifies.
+     *
+     * @param  Collection<int, Animal>  $available
+     */
+    private function takeAnimalReadyBy(Collection $available, ?CarbonImmutable $travellingAt): Animal
+    {
+        if ($travellingAt === null) {
+            return $available->shift();
+        }
+
+        // Enough room for the application, the inspection and the contract.
+        foreach ([$travellingAt->subWeeks(3), $travellingAt] as $deadline) {
+            foreach ($available as $position => $candidate) {
+                if ($this->readyFrom($candidate)->lessThanOrEqualTo($deadline)) {
+                    return $available->pull($position);
+                }
+            }
+        }
+
+        return $available->shift();
     }
 
     /**
@@ -405,7 +453,27 @@ class AdoptionSeeder extends Seeder
     }
 
     /**
-     * Expands the weights into a flat list the faker can draw from.
+     * Draws the stage of every adoption up front, so what the run needs is
+     * known before anything is written.
+     *
+     * @param  array<string, int>  $weights
+     * @return list<AdoptionStage>
+     */
+    private function drawStages(int $count, array $weights): array
+    {
+        $bag = $this->stageBag($weights);
+
+        $stages = [];
+
+        for ($i = 0; $i < $count; $i++) {
+            $stages[] = $this->faker->randomElement($bag);
+        }
+
+        return $stages;
+    }
+
+    /**
+     * Expands the weights into a flat list to draw from.
      *
      * @param  array<string, int>  $weights
      * @return list<AdoptionStage>

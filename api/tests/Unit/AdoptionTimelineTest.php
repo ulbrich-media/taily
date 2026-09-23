@@ -93,24 +93,78 @@ class AdoptionTimelineTest extends TestCase
         $this->assertNull($handedOver->canceledAt);
     }
 
-    public function test_the_transport_window_sits_between_contract_and_handover(): void
+    /**
+     * A transport run is scheduled before the adoptions on it are built, so
+     * the steps have to arrange themselves around the arrival date.
+     */
+    public function test_a_booked_transport_anchors_the_steps_around_it(): void
     {
-        $timeline = AdoptionTimeline::build(AdoptionStage::HandedOver, CarbonImmutable::now()->subYear(), $this->faker);
+        $arrival = CarbonImmutable::now()->subMonths(4);
 
-        [$earliest, $latest] = $timeline->transportWindow();
+        for ($i = 0; $i < 50; $i++) {
+            $timeline = AdoptionTimeline::build(
+                AdoptionStage::HandedOver,
+                $arrival->subYear(),
+                $this->faker,
+                $arrival,
+            );
 
-        $this->assertEquals($timeline->contractSignedAt, $earliest);
-        $this->assertEquals($timeline->handedOverAt, $latest);
-        $this->assertTrue($earliest->lessThanOrEqualTo($latest));
+            $this->assertEquals($arrival, $timeline->transportedAt);
+
+            $this->assertTrue(
+                $timeline->contractSignedAt->lessThanOrEqualTo($arrival),
+                'the contract should be signed before the animal travels'
+            );
+            $this->assertTrue(
+                $timeline->inspectionSubmittedAt->lessThanOrEqualTo($timeline->contractSignedAt),
+                'the inspection should come back before the contract is signed'
+            );
+            $this->assertTrue(
+                $timeline->handedOverAt->greaterThanOrEqualTo($arrival),
+                'the handover should follow the arrival'
+            );
+            $this->assertTrue(
+                $timeline->handedOverAt->lessThanOrEqualTo(CarbonImmutable::now()),
+                'the handover should not be in the future'
+            );
+        }
     }
 
-    public function test_a_still_running_adoption_can_be_transported_up_to_now(): void
+    public function test_an_adoption_still_waiting_for_its_handover_stops_at_the_arrival(): void
     {
-        $timeline = AdoptionTimeline::build(AdoptionStage::TransportDone, CarbonImmutable::now()->subYear(), $this->faker);
+        $arrival = CarbonImmutable::now()->subMonths(2);
 
-        [$earliest, $latest] = $timeline->transportWindow();
+        $timeline = AdoptionTimeline::build(
+            AdoptionStage::TransportDone,
+            $arrival->subYear(),
+            $this->faker,
+            $arrival,
+        );
 
-        $this->assertEquals($timeline->contractSignedAt, $earliest);
-        $this->assertTrue($latest->greaterThanOrEqualTo($earliest));
+        $this->assertEquals($arrival, $timeline->transportedAt);
+        $this->assertNull($timeline->handedOverAt);
+        $this->assertEquals($arrival, $timeline->lastEventAt());
+    }
+
+    /**
+     * An animal taken in only days before its run leaves no room to spread the
+     * paperwork out, but the order still has to hold.
+     */
+    public function test_a_late_arrival_still_comes_out_in_order(): void
+    {
+        $arrival = CarbonImmutable::now()->subDays(10);
+
+        for ($i = 0; $i < 25; $i++) {
+            $timeline = AdoptionTimeline::build(
+                AdoptionStage::HandedOver,
+                $arrival->subDay(),
+                $this->faker,
+                $arrival,
+            );
+
+            $this->assertTrue($timeline->appliedAt->lessThanOrEqualTo($timeline->contractSignedAt));
+            $this->assertTrue($timeline->contractSignedAt->lessThanOrEqualTo($arrival));
+            $this->assertTrue($timeline->handedOverAt->greaterThanOrEqualTo($arrival));
+        }
     }
 }

@@ -23,6 +23,7 @@ class AdoptionTimeline
         public readonly ?CarbonImmutable $inspectionCreatedAt,
         public readonly ?CarbonImmutable $inspectionSubmittedAt,
         public readonly ?CarbonImmutable $contractSignedAt,
+        public readonly ?CarbonImmutable $transportedAt,
         public readonly ?CarbonImmutable $handedOverAt,
         public readonly ?CarbonImmutable $canceledAt,
     ) {}
@@ -31,72 +32,113 @@ class AdoptionTimeline
      * @param  CarbonInterface|null  $notBefore  the earliest moment anything may happen — the
      *                                           animal's intake date, or the end of its previous
      *                                           adoption when it was listed again
+     * @param  CarbonInterface|null  $transportedAt  when the animal's transport arrived, for the
+     *                                               stages that have one. The run is scheduled
+     *                                               before the adoption is built, so the steps are
+     *                                               laid out around it: the caller is responsible
+     *                                               for handing over a run the animal could
+     *                                               actually have been on.
      */
-    public static function build(AdoptionStage $stage, ?CarbonInterface $notBefore, Generator $faker): self
-    {
+    public static function build(
+        AdoptionStage $stage,
+        ?CarbonInterface $notBefore,
+        Generator $faker,
+        ?CarbonInterface $transportedAt = null,
+    ): self {
         $now = CarbonImmutable::now();
+        $earliest = CarbonImmutable::instance($notBefore ?? $now->subMonths(18))->min($now);
 
-        // Steps, in order. A transport gets a slot of its own so the handover
-        // does not land right on top of the signed contract; the exact instant
-        // is chosen later by the TransportPool, within the window these leave.
-        $steps = ['applied'];
+        // Everything that has to have happened by the time the animal travels.
+        $leadingUp = ['applied'];
 
         if ($stage->hasPreInspection()) {
-            $steps[] = 'inspection_created';
+            $leadingUp[] = 'inspection_created';
         }
 
         if ($stage->preInspectionVerdict() !== null) {
-            $steps[] = 'inspection_submitted';
+            $leadingUp[] = 'inspection_submitted';
         }
 
         if ($stage->hasContract()) {
-            $steps[] = 'contract_signed';
+            $leadingUp[] = 'contract_signed';
         }
 
-        if ($stage->transport() === TransportState::Done) {
-            $steps[] = 'transport';
-        }
+        // And what follows it.
+        $following = [];
 
         if ($stage->isHandedOver()) {
-            $steps[] = 'handed_over';
+            $following[] = 'handed_over';
         }
 
         if ($stage->adoptionStatus() === 'canceled') {
-            $steps[] = 'canceled';
+            $following[] = 'canceled';
         }
 
-        // An adoption runs for weeks or months, not for the animal's whole stay,
-        // so the chain gets its own window somewhere between $notBefore and now.
-        $earliest = CarbonImmutable::instance($notBefore ?? $now->subMonths(18))->min($now);
-        $available = max(1, (int) abs($now->diffInSeconds($earliest)));
-        $duration = min($available, $faker->numberBetween(14, 180) * self::SECONDS_PER_DAY);
-
-        $start = $earliest->addSeconds($faker->numberBetween(0, $available - $duration));
-
-        $dates = array_combine($steps, self::slots($start, $start->addSeconds($duration), count($steps), $faker));
+        $dates = $transportedAt !== null
+            ? self::around(CarbonImmutable::instance($transportedAt), $earliest, $now, $leadingUp, $following, $faker)
+            : self::spanning($earliest, $now, [...$leadingUp, ...$following], $faker);
 
         return new self(
             appliedAt: $dates['applied'],
             inspectionCreatedAt: $dates['inspection_created'] ?? null,
             inspectionSubmittedAt: $dates['inspection_submitted'] ?? null,
             contractSignedAt: $dates['contract_signed'] ?? null,
+            transportedAt: $transportedAt !== null ? CarbonImmutable::instance($transportedAt) : null,
             handedOverAt: $dates['handed_over'] ?? null,
             canceledAt: $dates['canceled'] ?? null,
         );
     }
 
     /**
-     * The window a completed transport has to land in: after the contract was
-     * signed, before the adopter received the animal.
+     * Lays the steps out on either side of a transport that is already booked:
+     * the paperwork in the weeks before it, the handover in the days after.
      *
-     * @return array{CarbonImmutable, CarbonImmutable}
+     * @param  list<string>  $leadingUp
+     * @param  list<string>  $following
+     * @return array<string, CarbonImmutable>
      */
-    public function transportWindow(): array
-    {
-        return [
-            $this->contractSignedAt ?? $this->appliedAt,
-            $this->handedOverAt ?? CarbonImmutable::now(),
-        ];
+    private static function around(
+        CarbonImmutable $arrival,
+        CarbonImmutable $earliest,
+        CarbonImmutable $now,
+        array $leadingUp,
+        array $following,
+        Generator $faker,
+    ): array {
+        $from = $arrival->subDays($faker->numberBetween(21, 120))->max($earliest)->min($arrival);
+
+        $dates = array_combine($leadingUp, self::slots($from, $arrival, count($leadingUp), $faker));
+
+        if ($following !== []) {
+            $until = $arrival->addDays($faker->numberBetween(1, 45))->min($now)->max($arrival);
+
+            $dates += array_combine($following, self::slots($arrival, $until, count($following), $faker));
+        }
+
+        return $dates;
+    }
+
+    /**
+     * Lays the steps out over a window of their own, for an adoption with no
+     * transport to anchor them.
+     *
+     * @param  list<string>  $steps
+     * @return array<string, CarbonImmutable>
+     */
+    private static function spanning(
+        CarbonImmutable $earliest,
+        CarbonImmutable $now,
+        array $steps,
+        Generator $faker,
+    ): array {
+        // An adoption runs for weeks or months, not for the animal's whole
+        // stay, so the chain gets its own window between $earliest and now.
+        $available = max(1, (int) abs($now->diffInSeconds($earliest)));
+        $duration = min($available, $faker->numberBetween(14, 180) * self::SECONDS_PER_DAY);
+
+        $start = $earliest->addSeconds($faker->numberBetween(0, $available - $duration));
+
+        return array_combine($steps, self::slots($start, $start->addSeconds($duration), count($steps), $faker));
     }
 
     /**
@@ -107,6 +149,7 @@ class AdoptionTimeline
     {
         return $this->canceledAt
             ?? $this->handedOverAt
+            ?? $this->transportedAt
             ?? $this->contractSignedAt
             ?? $this->inspectionSubmittedAt
             ?? $this->inspectionCreatedAt

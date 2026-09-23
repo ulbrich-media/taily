@@ -2,15 +2,11 @@
 
 namespace Taily\Tests\Feature;
 
-use Database\Seeders\AdoptionSeeder;
-use Database\Seeders\AnimalSeeder;
-use Database\Seeders\AnimalTypeSeeder;
-use Database\Seeders\OrganizationSeeder;
-use Database\Seeders\PersonSeeder;
-use Database\Seeders\PreInspectionSeeder;
+use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\Support\SeedMail;
-use Database\Seeders\TransportSeeder;
+use Database\Seeders\Support\SeedProfile;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Taily\Models\Adoption;
 use Taily\Models\Animal;
 use Taily\Models\Organization;
@@ -29,29 +25,36 @@ class SeederIntegrityTest extends TestCase
 {
     use RefreshDatabase;
 
+    private SeedProfile $profile;
+
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->app->singleton(SeedMail::class, fn () => new SeedMail);
+        // The real seeder, through the profile the command would use — only
+        // without pictures, since attaching media runs the image conversions
+        // inline and has nothing to do with what these tests check.
+        $this->profile = SeedProfile::resolve('dev', [
+            'media.people' => 0,
+            'media.animals' => 0,
+        ]);
 
-        // No pictures: attaching media runs the image conversions inline and
-        // has nothing to do with what these tests check.
-        (new AnimalTypeSeeder)->run();
-        (new OrganizationSeeder)->run(3);
-        (new PersonSeeder)->run(20, 0);
-        (new AnimalSeeder)->run(['dogs' => 20, 'cats' => 10], 0);
-        (new AdoptionSeeder)->run(14);
-        (new TransportSeeder)->run(2);
-        (new PreInspectionSeeder)->run(3);
+        $this->app->instance(SeedProfile::class, $this->profile);
+
+        $this->seed(DatabaseSeeder::class);
     }
 
-    public function test_it_seeds_the_requested_amount_of_data(): void
+    public function test_the_profile_decides_how_much_gets_seeded(): void
     {
-        $this->assertSame(3, Organization::count());
-        $this->assertSame(20, Person::count());
-        $this->assertSame(30, Animal::count());
-        $this->assertSame(14, Adoption::count());
+        $this->assertSame($this->profile->int('organizations'), Organization::count());
+        $this->assertSame($this->profile->int('people'), Person::count());
+        $this->assertSame(array_sum($this->profile->counts('animals')), Animal::count());
+        $this->assertSame($this->profile->int('adoptions'), Adoption::count());
+    }
+
+    public function test_it_seeds_no_pictures_when_the_profile_asks_for_none(): void
+    {
+        $this->assertSame(0, Media::count());
     }
 
     public function test_no_seeded_address_can_receive_mail(): void
@@ -124,6 +127,49 @@ class SeederIntegrityTest extends TestCase
                     "adoption {$adoption->id}: transport arrived before the contract was signed"
                 );
             }
+        }
+    }
+
+    /**
+     * A transport is only worth organising once enough animals are ready for
+     * it, so a completed run carries a load rather than a single animal.
+     */
+    public function test_a_completed_transport_carries_a_worthwhile_load(): void
+    {
+        [$minimum] = $this->profile->range('adoptions_per_transport', [4, 8]);
+
+        $runs = Transport::whereNotNull('done_at')->withCount('adoptions')->get();
+
+        $this->assertNotEmpty($runs, 'expected the profile to produce completed transports');
+
+        foreach ($runs as $run) {
+            // Fewer adoptions than fill one run leaves a single smaller run;
+            // beyond that every run is filled to the minimum.
+            if ($runs->count() === 1) {
+                continue;
+            }
+
+            $this->assertGreaterThanOrEqual(
+                $minimum,
+                $run->adoptions_count,
+                "transport {$run->id}: carries {$run->adoptions_count} animals, fewer than a run is worth"
+            );
+        }
+    }
+
+    public function test_every_animal_on_a_completed_run_was_already_at_the_shelter(): void
+    {
+        $adoptions = Adoption::with(['animal', 'transport'])
+            ->whereHas('transport', fn ($query) => $query->whereNotNull('done_at'))
+            ->get();
+
+        $this->assertNotEmpty($adoptions);
+
+        foreach ($adoptions as $adoption) {
+            $this->assertTrue(
+                $adoption->transport->done_at->greaterThanOrEqualTo($adoption->animal->intake_date),
+                "adoption {$adoption->id}: travelled before the shelter had the animal"
+            );
         }
     }
 

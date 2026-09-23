@@ -11,11 +11,14 @@ use Taily\Models\Transport;
 /**
  * Hands out transport runs while adoptions are being generated.
  *
- * A run carries several animals, so the pool reuses one until it is full.
- * A completed run is only reused for an adoption whose own window it fits —
- * the animal cannot arrive before its contract was signed, nor after it was
- * handed over — which is why transports are built together with the adoptions
- * instead of being assigned to them afterwards.
+ * A transport is only worth organising once enough animals are ready for it,
+ * so completed runs are scheduled before any adoption is built: the pool works
+ * out how many runs the adoptions need, when each one arrived and how many
+ * animals it carries, and the adoptions are then laid out around those dates.
+ *
+ * Doing it the other way round — letting each adoption pick its own dates and
+ * looking for a run that fits them — gives every adoption a run of its own,
+ * because two adoptions rarely leave room for the same arrival date.
  */
 class TransportPool
 {
@@ -37,7 +40,17 @@ class TransportPool
         'Ehrenamtliche Fahrgemeinschaft',
     ];
 
-    /** @var list<array{transport: Transport, done_at: CarbonImmutable, capacity: int, taken: int}> */
+    /**
+     * How far back the completed runs are spread.
+     */
+    private const HISTORY_MONTHS = 18;
+
+    /**
+     * The schedule of completed runs. The Transport row is only created once
+     * the first adoption actually joins the run.
+     *
+     * @var list<array{at: CarbonImmutable, seats: int, taken: int, transport: ?Transport}>
+     */
     private array $completedRuns = [];
 
     /** @var array{transport: Transport, capacity: int, taken: int}|null */
@@ -50,30 +63,127 @@ class TransportPool
     public function __construct(
         private readonly Generator $faker,
         private readonly Collection $responsibles,
-        private readonly array $capacityRange = [2, 5],
+        private readonly array $capacityRange = [4, 8],
     ) {}
 
     /**
-     * A run that already arrived, somewhere inside the given window.
+     * Works out the runs the given number of adoptions need, before any of
+     * them is built.
+     *
+     * A run never ends up with fewer animals than the range's lower bound: a
+     * remainder too small to be a run of its own is folded into the one before
+     * it. The only exception is having fewer adoptions in total than that —
+     * then there is a single, smaller run.
      */
-    public function completedRunFor(CarbonImmutable $earliest, CarbonImmutable $latest): Transport
+    public function scheduleCompletedRuns(int $adoptions): void
     {
-        foreach ($this->completedRuns as $index => $run) {
-            if ($run['taken'] >= $run['capacity']) {
-                continue;
+        $this->completedRuns = [];
+
+        if ($adoptions < 1) {
+            return;
+        }
+
+        [$minimum, $maximum] = $this->capacityRange;
+
+        $seats = [];
+        $left = $adoptions;
+
+        while ($left > 0) {
+            $take = min($left, $this->faker->numberBetween($minimum, $maximum));
+
+            if ($left - $take < $minimum) {
+                $take = $left;
             }
 
-            if ($run['done_at']->betweenIncluded($earliest, $latest)) {
-                $this->completedRuns[$index]['taken']++;
+            $seats[] = $take;
+            $left -= $take;
+        }
 
-                return $run['transport'];
+        foreach ($this->spreadOverHistory(count($seats)) as $index => $at) {
+            $this->completedRuns[] = ['at' => $at, 'seats' => $seats[$index], 'taken' => 0, 'transport' => null];
+        }
+    }
+
+    /**
+     * When the run the next adoption would join arrived, so the caller can
+     * pick an animal the shelter already had by then.
+     */
+    public function nextCompletedRunAt(): ?CarbonImmutable
+    {
+        $index = $this->nextCompletedRunIndex();
+
+        return $index === null ? null : $this->completedRuns[$index]['at'];
+    }
+
+    /**
+     * Puts one adoption on that run, creating it on first use.
+     */
+    public function takeCompletedRun(): ?Transport
+    {
+        $index = $this->nextCompletedRunIndex();
+
+        if ($index === null) {
+            return null;
+        }
+
+        $this->completedRuns[$index]['transport'] ??= $this->createCompletedRun($this->completedRuns[$index]['at']);
+        $this->completedRuns[$index]['taken']++;
+
+        return $this->completedRuns[$index]['transport'];
+    }
+
+    /**
+     * The first run with a seat left. More adoptions can turn up than were
+     * scheduled, so the schedule grows a run rather than turning them away.
+     */
+    private function nextCompletedRunIndex(): ?int
+    {
+        foreach ($this->completedRuns as $index => $run) {
+            if ($run['taken'] < $run['seats']) {
+                return $index;
             }
         }
 
-        $doneAt = $earliest->addSeconds($this->faker->numberBetween(0, max(0, (int) abs($latest->diffInSeconds($earliest)))));
+        if ($this->completedRuns === []) {
+            return null;
+        }
 
+        $this->completedRuns[] = [
+            'at' => $this->spreadOverHistory(1)[0],
+            'seats' => $this->capacityRange[0],
+            'taken' => 0,
+            'transport' => null,
+        ];
+
+        return array_key_last($this->completedRuns);
+    }
+
+    /**
+     * Arrival dates spread over the months the adoptions cover, oldest first.
+     * The newest stops short of today so a handover still has room after it.
+     *
+     * @return list<CarbonImmutable>
+     */
+    private function spreadOverHistory(int $runs): array
+    {
+        $until = CarbonImmutable::now()->subWeek();
+        $from = $until->subMonths(self::HISTORY_MONTHS);
+
+        $slice = max(1, intdiv((int) abs($until->diffInSeconds($from)), max(1, $runs)));
+
+        $dates = [];
+
+        for ($index = 0; $index < $runs; $index++) {
+            $dates[] = $from->addSeconds($index * $slice + $this->faker->numberBetween(0, $slice - 1));
+        }
+
+        return $dates;
+    }
+
+    private function createCompletedRun(CarbonImmutable $arrivedAt): Transport
+    {
         $transport = $this->create(
-            plannedAt: $doneAt,
+            plannedAt: $arrivedAt,
             name: $this->faker->randomElement(self::TOUR_NAMES),
             notes: $this->faker->randomElement([
                 'Transport verlief reibungslos. Alle Tiere gut angekommen.',
@@ -83,15 +193,8 @@ class TransportPool
             ]),
         );
 
-        $transport->done_at = $doneAt;
+        $transport->done_at = $arrivedAt;
         $transport->save();
-
-        $this->completedRuns[] = [
-            'transport' => $transport,
-            'done_at' => $doneAt,
-            'capacity' => $this->faker->numberBetween(...$this->capacityRange),
-            'taken' => 1,
-        ];
 
         return $transport;
     }
