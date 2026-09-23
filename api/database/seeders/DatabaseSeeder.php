@@ -54,7 +54,7 @@ class DatabaseSeeder extends Seeder
             'role' => UserRole::USER,
         ]);
 
-        $media = $profile->counts('media');
+        $imageShare = $profile->counts('media');
 
         // Seeders are invoked through the container, so the parameters have
         // to be named rather than positional.
@@ -66,12 +66,12 @@ class DatabaseSeeder extends Seeder
 
         $this->call(PersonSeeder::class, false, [
             'count' => $profile->int('people'),
-            'imageLimit' => $media['people'] ?? null,
+            'imageShare' => $imageShare['people'] ?? 0,
         ]);
 
         $this->call(AnimalSeeder::class, false, [
             'counts' => $profile->counts('animals'),
-            'imageLimit' => $this->animalMedia($profile, $media['animals'] ?? null),
+            'imageShare' => $imageShare['animals'] ?? 0,
         ]);
 
         $this->call(AdoptionSeeder::class, false, [
@@ -89,26 +89,5 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $this->call(FormTemplateSeeder::class);
-    }
-
-    /**
-     * Spreads the picture budget over the species, proportional to how many
-     * animals of each there are.
-     *
-     * @return array<string, int>
-     */
-    private function animalMedia(SeedProfile $profile, ?int $budget): array
-    {
-        $counts = $profile->counts('animals');
-        $total = array_sum($counts);
-
-        if ($budget === null || $total < 1) {
-            return [];
-        }
-
-        return array_map(
-            fn (int $count) => (int) round($budget * $count / $total),
-            $counts
-        );
     }
 }

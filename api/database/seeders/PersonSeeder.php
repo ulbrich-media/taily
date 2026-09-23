@@ -33,11 +33,14 @@ class PersonSeeder extends Seeder
         '',
     ];
 
-    public function run(int $count = 30, ?int $imageLimit = null): void
+    /**
+     * @param  int  $imageShare  percentage of people who get a profile picture
+     */
+    public function run(int $count = 30, int $imageShare = 100): void
     {
         $faker = Faker::create('de_DE');
         $mail = app(SeedMail::class);
-        $images = new SeedImages('people', $imageLimit);
+        $images = new SeedImages('people', $imageShare);
 
         $organizations = Organization::all();
         $animalTypes = AnimalType::all();

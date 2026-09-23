@@ -29,9 +29,9 @@ class AnimalSeeder extends Seeder
 {
     /**
      * @param  array<string, int>  $counts  how many animals per species key
-     * @param  array<string, int>|int|null  $imageLimit  how many animals get a picture
+     * @param  int  $imageShare  percentage of animals that get a picture
      */
-    public function run(array $counts = ['dogs' => 25, 'cats' => 10], array|int|null $imageLimit = null): void
+    public function run(array $counts = ['dogs' => 25, 'cats' => 10], int $imageShare = 100): void
     {
         $faker = Faker::create('de_DE');
         $persons = Person::all();
@@ -49,10 +49,7 @@ class AnimalSeeder extends Seeder
                 continue;
             }
 
-            $images = new SeedImages(
-                $species['image_directory'],
-                is_array($imageLimit) ? ($imageLimit[$key] ?? null) : $imageLimit,
-            );
+            $images = new SeedImages($species['image_directory'], $imageShare);
 
             $vaccinations = $animalType->vaccinations()->get();
             $medicalTests = $animalType->medicalTests()->get();

@@ -45,6 +45,12 @@ Log in as `admin@local.local` or `user@local.local`; the password defaults to
 `Test!234`. Every other seeded address is derived from the name it belongs to
 (`lena.mueller@local.local`) and sits on a domain that cannot receive mail.
 
+`media` in a profile is the percentage of records that get a picture — 20% of
+people and 80% of animals by default, since a shelter photographs nearly every
+animal it lists while most people in the directory are just contact details.
+Raise it with `--set=media.animals=100`, and note that attaching pictures is
+the slowest part of a run.
+
 `--seed` pins the random source so a run can be repeated. Attaching pictures
 draws randomness from the image conversions, which the seeder does not control,
 so add `--set=media.people=0 --set=media.animals=0` for an identical run — the

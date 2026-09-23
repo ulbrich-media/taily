@@ -5,35 +5,64 @@ namespace Database\Seeders\Support;
 use Spatie\MediaLibrary\HasMedia;
 
 /**
- * Hands out the images in seeder-assets/, up to a limit.
+ * Hands out the images in seeder-assets/ to a share of the records.
  *
- * Attaching media is by far the most expensive thing the seeder does — the
- * conversions run inline — so the number of records that get a picture is
- * capped rather than tied to the number of records generated. Files are
- * reused in turn once the set has been handed out, so a larger data set still
- * shows pictures throughout.
+ * Not everything has a picture in practice — a shelter photographs nearly
+ * every animal it lists, but a new arrival can sit there without one for a
+ * while, and most people in the directory are just contact details. The share
+ * says how likely a record is to get one, so coverage is a decision rather
+ * than a side effect of how many files happen to sit in the folder.
+ *
+ * Files are handed out in a shuffled order and the order is reshuffled each
+ * time the set runs out, so every picture is used before any is used twice.
+ *
+ * Attaching media is by far the most expensive thing the seeder does, since
+ * the conversions run inline — a large data set turns the share down to zero.
  */
 class SeedImages
 {
     /** @var list<string> */
-    private array $files;
+    private array $files = [];
 
-    private int $handedOut = 0;
+    /** @var list<string> */
+    private array $remaining = [];
 
-    public function __construct(string $directory, private readonly ?int $limit = null)
+    /**
+     * @param  int  $sharePercent  how many records out of a hundred get a picture
+     */
+    public function __construct(string $directory, private readonly int $sharePercent = 100)
     {
-        $files = glob(base_path('seeder-assets/'.$directory.'/*.jpg')) ?: [];
-        shuffle($files);
-
-        $this->files = array_values($files);
+        $this->files = array_values(glob(base_path('seeder-assets/'.$directory.'/*.jpg')) ?: []);
     }
 
     /**
-     * Attaches one picture to the model, unless the limit is exhausted.
+     * The picture the next record gets, or null when it is one of those
+     * without one.
+     *
+     * The draw comes from mt_rand like everything else in the seeder, so
+     * `app:seed --seed=` still reproduces which records ended up with a
+     * picture and which file each of them got.
+     */
+    public function pick(): ?string
+    {
+        if ($this->files === [] || ! $this->isPictured()) {
+            return null;
+        }
+
+        if ($this->remaining === []) {
+            $this->remaining = $this->files;
+            shuffle($this->remaining);
+        }
+
+        return array_pop($this->remaining);
+    }
+
+    /**
+     * Gives the model a picture, if this one is among the share that gets one.
      */
     public function attachTo(HasMedia $model, string $collection = 'pictures'): void
     {
-        $file = $this->next();
+        $file = $this->pick();
 
         if ($file === null) {
             return;
@@ -44,18 +73,12 @@ class SeedImages
             ->toMediaCollection($collection);
     }
 
-    private function next(): ?string
+    private function isPictured(): bool
     {
-        if ($this->files === []) {
-            return null;
+        if ($this->sharePercent >= 100) {
+            return true;
         }
 
-        $limit = $this->limit ?? count($this->files);
-
-        if ($this->handedOut >= $limit) {
-            return null;
-        }
-
-        return $this->files[$this->handedOut++ % count($this->files)];
+        return $this->sharePercent > 0 && mt_rand(1, 100) <= $this->sharePercent;
     }
 }

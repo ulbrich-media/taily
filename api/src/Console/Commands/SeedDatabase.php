@@ -156,11 +156,26 @@ class SeedDatabase extends Command
                 $profile->int('people'),
                 array_sum($profile->counts('animals')),
                 $profile->int('adoptions'),
-                array_sum($profile->counts('media')) > 0 ? 'yes' : 'no',
+                self::picturesColumn($profile),
             ];
         }
 
         $this->table(['Profile', 'Purpose', 'People', 'Animals', 'Adoptions', 'Pictures'], $rows);
+    }
+
+    /**
+     * The share of animals and people carrying a picture, which is what makes
+     * one profile slow and another quick.
+     */
+    private static function picturesColumn(SeedProfile $profile): string
+    {
+        $media = $profile->counts('media');
+
+        if (array_sum($media) < 1) {
+            return 'none';
+        }
+
+        return sprintf('%d%% animals, %d%% people', $media['animals'] ?? 0, $media['people'] ?? 0);
     }
 
     private function summarise(SeedProfile $profile, float $seconds): void

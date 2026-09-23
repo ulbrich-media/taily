@@ -56,9 +56,10 @@ return [
     |   adoptions_per_transport     [min, max] animals sharing one transport
     |   empty_transports            upcoming runs with nothing booked on them
     |   standalone_pre_inspections  inspections without an adoption behind them
-    |   media                       how many records get a picture; attaching
-    |                               media runs the image conversions inline and
-    |                               is by far the slowest part of a seed run
+    |   media                       percentage of records that get a picture —
+    |                               not everything has one in practice, and
+    |                               attaching media runs the image conversions
+    |                               inline, by far the slowest part of a run
     |
     */
 
@@ -74,7 +75,7 @@ return [
             'adoptions_per_transport' => [1, 2],
             'empty_transports' => 1,
             'standalone_pre_inspections' => 1,
-            'media' => ['people' => 5, 'animals' => 10],
+            'media' => ['people' => 20, 'animals' => 80],
         ],
 
         'dev' => [
@@ -87,7 +88,7 @@ return [
             'adoptions_per_transport' => [2, 5],
             'empty_transports' => 2,
             'standalone_pre_inspections' => 4,
-            'media' => ['people' => 30, 'animals' => 35],
+            'media' => ['people' => 20, 'animals' => 80],
         ],
 
         'large' => [
