@@ -96,9 +96,9 @@ class ContractSigningControllerTest extends TestCase
         Mail::assertSent(ContractSignerInviteMail::class, fn (ContractSignerInviteMail $mail) => $mail->hasTo('maria@example.com'));
 
         $process = $adoption->latestContractSigningProcess()->firstOrFail();
-        $linkGeneratedEvent = $process->auditEvents()->where('event_type', ContractSigningEventType::LINK_GENERATED->value)->first();
+        $startedEvent = $process->auditEvents()->where('event_type', ContractSigningEventType::PROCESS_STARTED->value)->first();
         $emailSentEvent = $process->auditEvents()->where('event_type', ContractSigningEventType::EMAIL_SENT->value)->first();
-        $this->assertSame($user->id, $linkGeneratedEvent->actor_user_id);
+        $this->assertSame($user->id, $startedEvent->actor_user_id);
         $this->assertSame($user->id, $emailSentEvent->actor_user_id);
         $this->assertSame('maria@example.com', $emailSentEvent->metadata['person_email']);
     }

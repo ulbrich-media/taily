@@ -115,9 +115,8 @@ class ContractSigningServiceTest extends TestCase
 
         $eventTypes = $process->auditEvents()->get()->pluck('event_type')->map(fn ($type) => $type->value)->all();
         $this->assertSame([
-            'link_generated',
+            'process_started',
             'signature_submitted',
-            'link_generated',
             'signature_submitted',
             'finalized',
         ], $eventTypes);
@@ -276,26 +275,41 @@ class ContractSigningServiceTest extends TestCase
         $types = $process->auditEvents()->get()->pluck('event_type')->map(fn ($type) => $type->value)->all();
 
         $this->assertSame([
-            'link_generated',
+            'process_started',
             'email_sent',
             'link_opened',
             'signature_submitted',
-            'link_generated',
             'signature_submitted',
         ], $types);
     }
 
-    public function test_start_records_the_acting_user_and_ip_on_the_link_generated_event(): void
+    public function test_start_records_the_acting_user_and_ip_on_the_process_started_event(): void
     {
         $user = User::factory()->create(['name' => 'Admin User', 'email' => 'admin@example.com']);
         $adoption = $this->createAdoption();
 
         $process = $this->service->start($adoption, 'default', '%PDF-bytes', $user, '10.0.0.5', 'PHPUnit');
 
-        $event = $process->auditEvents()->where('event_type', ContractSigningEventType::LINK_GENERATED->value)->first();
+        $event = $process->auditEvents()->where('event_type', ContractSigningEventType::PROCESS_STARTED->value)->first();
         $this->assertSame($user->id, $event->actor_user_id);
         $this->assertSame('10.0.0.5', $event->ip_address);
         $this->assertSame('PHPUnit', $event->user_agent);
+    }
+
+    public function test_the_process_started_event_is_about_the_acting_user_not_the_mediator(): void
+    {
+        $user = User::factory()->create(['name' => 'Admin User', 'email' => 'admin@example.com']);
+        $adoption = $this->createAdoption();
+
+        // Whoever starts the process need not be the mediator, so the row
+        // must not borrow the mediator's identity for the actor's IP.
+        $process = $this->service->start($adoption, 'default', '%PDF-bytes', $user, '10.0.0.5', 'PHPUnit');
+
+        $event = $process->auditEvents()->where('event_type', ContractSigningEventType::PROCESS_STARTED->value)->first();
+        $this->assertNull($event->signer_id);
+        $this->assertSame('Admin User', $event->subjectName());
+        $this->assertSame('admin@example.com', $event->subjectEmail());
+        $this->assertSame('10.0.0.5', $event->originIpAddress());
     }
 
     public function test_cancel_records_the_acting_user_and_ip_alongside_who_authorized_it(): void
@@ -318,15 +332,18 @@ class ContractSigningServiceTest extends TestCase
         $adoption->mediator->update(['email' => 'maria-original@example.com']);
         $process = $this->service->start($adoption, 'default', '%PDF-bytes');
 
-        $linkGeneratedEvent = $process->auditEvents()->where('event_type', ContractSigningEventType::LINK_GENERATED->value)->first();
-        $this->assertSame('Maria Vermittlerin', $linkGeneratedEvent->metadata['person_name']);
-        $this->assertSame('maria-original@example.com', $linkGeneratedEvent->metadata['person_email']);
+        $mediatorSigner = $process->signers->first();
+        $this->service->recordLinkOpened($mediatorSigner, '10.0.0.1', 'PHPUnit');
+
+        $openedEvent = $process->auditEvents()->where('event_type', ContractSigningEventType::LINK_OPENED->value)->first();
+        $this->assertSame('Maria Vermittlerin', $openedEvent->metadata['person_name']);
+        $this->assertSame('maria-original@example.com', $openedEvent->metadata['person_email']);
 
         $adoption->mediator->update(['first_name' => 'Marianne', 'email' => 'marianne-new@example.com']);
 
-        $linkGeneratedEvent->refresh();
-        $this->assertSame('Maria Vermittlerin', $linkGeneratedEvent->metadata['person_name']);
-        $this->assertSame('maria-original@example.com', $linkGeneratedEvent->metadata['person_email']);
+        $openedEvent->refresh();
+        $this->assertSame('Maria Vermittlerin', $openedEvent->subjectName());
+        $this->assertSame('maria-original@example.com', $openedEvent->subjectEmail());
     }
 
     public function test_actor_identity_snapshot_survives_the_acting_users_deletion(): void
@@ -335,7 +352,7 @@ class ContractSigningServiceTest extends TestCase
         $adoption = $this->createAdoption();
         $process = $this->service->start($adoption, 'default', '%PDF-bytes', $user);
 
-        $event = $process->auditEvents()->where('event_type', ContractSigningEventType::LINK_GENERATED->value)->first();
+        $event = $process->auditEvents()->where('event_type', ContractSigningEventType::PROCESS_STARTED->value)->first();
         $this->assertSame('Admin User', $event->metadata['actor_name']);
         $this->assertSame('admin@example.com', $event->metadata['actor_email']);
 
@@ -410,6 +427,54 @@ class ContractSigningServiceTest extends TestCase
         $this->assertSame('week', $event->metadata['threshold']);
         $this->assertSame($signer->person->full_name, $event->metadata['person_name']);
         $this->assertSame($signer->person->email, $event->metadata['person_email']);
+    }
+
+    public function test_an_invite_names_its_recipient_and_shows_no_origin_of_its_own(): void
+    {
+        $user = User::factory()->create(['name' => 'Admin User', 'email' => 'admin@example.com']);
+        $adoption = $this->createAdoption();
+        $adoption->mediator->update(['email' => 'maria@example.com']);
+        $process = $this->service->start($adoption, 'default', '%PDF-bytes');
+        $signer = $process->signers->first();
+
+        // The send is triggered from an administrator's session, so the
+        // event carries that session's origin...
+        $this->service->recordEmailSent(
+            $signer,
+            $signer->person->email,
+            actor: $user,
+            ipAddress: '10.0.0.9',
+            userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36',
+        );
+
+        $event = $process->auditEvents()->where('event_type', ContractSigningEventType::EMAIL_SENT->value)->first();
+
+        // ...which stays in the log as evidence of who triggered it,
+        $this->assertSame($user->id, $event->actor_user_id);
+        $this->assertSame('10.0.0.9', $event->ip_address);
+
+        // but never prints against the recipient's name, which would read
+        // as the recipient having done something.
+        $this->assertSame($signer->person->full_name, $event->subjectName());
+        $this->assertSame($signer->person->email, $event->subjectEmail());
+        $this->assertNull($event->originIpAddress());
+        $this->assertNull($event->originDevice());
+    }
+
+    public function test_closing_events_name_nobody(): void
+    {
+        $adoption = $this->createAdoption();
+        $process = $this->service->start($adoption, 'default', '%PDF-bytes');
+        $this->signMediator($process);
+        $this->signAdopter($process);
+        $this->service->finalize($process, str_repeat('a', 64));
+
+        $event = $process->auditEvents()->where('event_type', ContractSigningEventType::FINALIZED->value)->first();
+
+        $this->assertNull($event->subjectName());
+        $this->assertNull($event->subjectEmail());
+        $this->assertNull($event->originIpAddress());
+        $this->assertNull($event->originDevice());
     }
 
     public function test_record_email_sent_keeps_sent_to_email_authoritative_over_caller_metadata(): void

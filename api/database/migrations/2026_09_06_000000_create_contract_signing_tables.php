@@ -45,7 +45,7 @@ return new class extends Migration
             $table->foreignUuid('signing_process_id')->constrained('contract_signing_processes')->onDelete('cascade');
             $table->foreignUuid('signer_id')->nullable()->constrained('contract_signers')->nullOnDelete();
             $table->enum('event_type', [
-                'link_generated',
+                'process_started',
                 'email_sent',
                 'link_opened',
                 'signature_submitted',
