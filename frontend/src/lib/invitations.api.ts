@@ -19,9 +19,7 @@ export interface AcceptInvitationResponse {
 export async function getInvitationDetails(
   token: string
 ): Promise<InvitationDetails> {
-  return apiRequest<InvitationDetails>(`invitations/${token}`, {
-    requiresAuth: false,
-  })
+  return apiRequest<InvitationDetails>(`invitations/${token}`)
 }
 
 export async function acceptInvitation(
@@ -31,6 +29,5 @@ export async function acceptInvitation(
   return apiRequest<AcceptInvitationResponse>(`invitations/${token}/accept`, {
     method: 'POST',
     body: JSON.stringify(data),
-    requiresAuth: false,
   })
 }

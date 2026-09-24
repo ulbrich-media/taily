@@ -15,8 +15,9 @@ Basic setup, user management, and core data management (animals, people).
 **Phase 1 — Adoption Process** `in progress`
 - Application
 - Inspection `in progress`
-- Contract
-- Transport management
+- Contract `in progress`
+- Transport management `in progress`
+- Public API for websites `released`
 
 **Phase 2 — Ecosystem** `planned`  
 Tasso export, public APIs, and the production v1 release.

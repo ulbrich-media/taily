@@ -59,6 +59,11 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
+            // The application runs on UTC (see config/app.php). Without this the
+            // connection inherits the database server's own zone, and MySQL then
+            // reads every TIMESTAMP column as a local time — which shifts stored
+            // values and makes the hour lost to daylight saving unwritable.
+            'timezone' => env('DB_TIMEZONE', '+00:00'),
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 (PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
@@ -79,6 +84,11 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
+            // The application runs on UTC (see config/app.php). Without this the
+            // connection inherits the database server's own zone, and MySQL then
+            // reads every TIMESTAMP column as a local time — which shifts stored
+            // values and makes the hour lost to daylight saving unwritable.
+            'timezone' => env('DB_TIMEZONE', '+00:00'),
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 (PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],

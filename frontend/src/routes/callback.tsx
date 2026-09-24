@@ -4,6 +4,7 @@ import { z } from 'zod'
 const CallbackAction = {
   UserInviteAccepted: 'user_invite_accepted',
   Inspect: 'inspect',
+  ContractSign: 'contract_sign',
   PasswordReset: 'password_reset',
 } as const
 
@@ -54,6 +55,21 @@ function CallbackPage() {
         )
       }
       return <Navigate to="/inspect/$token" params={{ token }} replace />
+
+    case CallbackAction.ContractSign:
+      if (!token) {
+        return (
+          <div className="min-h-screen flex items-center justify-center">
+            <div className="text-center">
+              <h1 className="text-2xl font-bold mb-2">Ungültige Anfrage</h1>
+              <p className="text-muted-foreground">
+                Das Token wurde nicht angegeben.
+              </p>
+            </div>
+          </div>
+        )
+      }
+      return <Navigate to="/contracts/$token" params={{ token }} replace />
 
     case CallbackAction.PasswordReset:
       return (

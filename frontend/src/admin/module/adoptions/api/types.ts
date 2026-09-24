@@ -23,6 +23,10 @@ export interface UpdateContractRequest {
   remove_file?: boolean
 }
 
+export interface GenerateContractResponse {
+  url: string
+}
+
 // ---------------------------------------------------------------------------
 // Request / input types (sent to the API — not resource shapes)
 // ---------------------------------------------------------------------------

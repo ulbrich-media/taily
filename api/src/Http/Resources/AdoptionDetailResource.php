@@ -20,6 +20,12 @@ class AdoptionDetailResource extends AdoptionBaseResource
                 'name' => $contractMedia->file_name,
                 'url' => $contractMedia->getTemporaryUrl(now()->addHour()),
             ] : null,
+            'contract_signing_process' => $this->whenLoaded(
+                'latestContractSigningProcess',
+                fn () => $this->resource->latestContractSigningProcess
+                    ? new ContractSigningProcessResource($this->resource->latestContractSigningProcess)
+                    : null
+            ),
         ]);
     }
 }

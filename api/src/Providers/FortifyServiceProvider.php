@@ -105,13 +105,15 @@ class FortifyServiceProvider extends ServiceProvider
         // passkeys.allowed_origins from `app.url`, but WebAuthn ceremonies run
         // in the browser at the SPA's origin, not the API's — so the relying
         // party must be derived from the frontend URL instead. The allowed
-        // origins are widened to the full CORS allow-list (config/cors.php) so
-        // every environment the SPA is actually served from can complete a
-        // ceremony, matching what already talks to the API with credentials.
+        // origins are widened with Taily's own `taily.cors_allowed_origins`
+        // (config/taily.php) — not the generic `cors.*` namespace, which
+        // Taily doesn't own and which silently falls back to Laravel's stock
+        // `['*']` default in hosts with no config/cors.php, leaking a
+        // meaningless literal '*' into the WebAuthn origin allow-list.
         config([
             'passkeys.relying_party_id' => parse_url(config('taily.frontend_url'), PHP_URL_HOST),
             'passkeys.allowed_origins' => array_values(array_unique([
-                ...config('cors.allowed_origins', []),
+                ...config('taily.cors_allowed_origins', []),
                 config('taily.frontend_url'),
             ])),
         ]);
