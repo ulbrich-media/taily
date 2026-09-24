@@ -45,7 +45,17 @@ class SeedDatabase extends Command
             return self::FAILURE;
         }
 
-        if ($seed = $this->option('seed')) {
+        $seed = $this->option('seed');
+
+        // Checked for presence, not truthiness: --seed=0 is a seed like any
+        // other, and "0" is falsy.
+        if ($seed !== null) {
+            if (! is_numeric($seed)) {
+                $this->error("The seed has to be a number, [{$seed}] is not.");
+
+                return self::FAILURE;
+            }
+
             SeedRandom::seed((int) $seed);
 
             if (array_sum($profile->counts('media')) > 0) {
@@ -72,13 +82,18 @@ class SeedDatabase extends Command
         // cannot drop the tables of a production database unattended.
         $confirmation = array_filter(['--force' => (bool) $this->option('force')]);
 
-        if ($this->option('fresh')) {
-            $this->call('migrate:fresh', $confirmation);
+        // Neither step is worth continuing past: a migrate:fresh the operator
+        // declined leaves the old data in place, and seeding on top of it is
+        // exactly what the guard above is there to prevent.
+        if ($this->option('fresh') && $this->call('migrate:fresh', $confirmation) !== self::SUCCESS) {
+            return self::FAILURE;
         }
 
         $startedAt = microtime(true);
 
-        $this->call('db:seed', $confirmation);
+        if ($this->call('db:seed', $confirmation) !== self::SUCCESS) {
+            return self::FAILURE;
+        }
 
         $this->summarise($profile, microtime(true) - $startedAt);
 
