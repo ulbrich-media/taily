@@ -1,3 +1,4 @@
+import { CardTable } from '@/components/card/CardTable'
 import type { ReactNode } from 'react'
 import { SlashSquareIcon } from 'lucide-react'
 import type { AnimalTypeResource } from '@/api/types/animal-types'
@@ -45,38 +46,40 @@ export function AnimalTypeListPage({
       {animalTypes.length > 0 ? (
         <Card>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Formular Vorkontrolle</TableHead>
-                  {renderRowActions && (
-                    <TableHead aria-label="Aktionen"></TableHead>
-                  )}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {animalTypes.map((animalType) => (
-                  <TableRow key={animalType.id}>
-                    <TableCell className="font-medium">
-                      {animalType.title}
-                    </TableCell>
-                    {animalType.pre_inspection_form_template?.name ? (
-                      <TableCell>
-                        {animalType.pre_inspection_form_template.name}
-                      </TableCell>
-                    ) : (
-                      <TableCellEmpty />
-                    )}
+            <CardTable>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Formular Vorkontrolle</TableHead>
                     {renderRowActions && (
-                      <TableCell className="text-right">
-                        {renderRowActions(animalType)}
-                      </TableCell>
+                      <TableHead aria-label="Aktionen"></TableHead>
                     )}
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {animalTypes.map((animalType) => (
+                    <TableRow key={animalType.id}>
+                      <TableCell className="font-medium">
+                        {animalType.title}
+                      </TableCell>
+                      {animalType.pre_inspection_form_template?.name ? (
+                        <TableCell>
+                          {animalType.pre_inspection_form_template.name}
+                        </TableCell>
+                      ) : (
+                        <TableCellEmpty />
+                      )}
+                      {renderRowActions && (
+                        <TableCell className="text-right">
+                          {renderRowActions(animalType)}
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardTable>
           </CardContent>
         </Card>
       ) : (

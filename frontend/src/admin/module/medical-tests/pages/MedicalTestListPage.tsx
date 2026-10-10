@@ -1,3 +1,4 @@
+import { CardTable } from '@/components/card/CardTable'
 import { useMemo, type ReactNode } from 'react'
 import { SlashSquareIcon } from 'lucide-react'
 import {
@@ -79,32 +80,34 @@ export function MedicalTestListPage({
                 <CardTitle>{group.title}</CardTitle>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Titel</TableHead>
-                      <TableHead>Beschreibung</TableHead>
-                      {renderRowActions && <TableHead></TableHead>}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {group.tests.map((test) => (
-                      <TableRow key={test.id}>
-                        <TableCell className="font-medium">
-                          {test.title}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {test.description || '–'}
-                        </TableCell>
-                        {renderRowActions && (
-                          <TableCell className="text-right">
-                            {renderRowActions(test)}
-                          </TableCell>
-                        )}
+                <CardTable>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Titel</TableHead>
+                        <TableHead>Beschreibung</TableHead>
+                        {renderRowActions && <TableHead></TableHead>}
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {group.tests.map((test) => (
+                        <TableRow key={test.id}>
+                          <TableCell className="font-medium">
+                            {test.title}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {test.description || '–'}
+                          </TableCell>
+                          {renderRowActions && (
+                            <TableCell className="text-right">
+                              {renderRowActions(test)}
+                            </TableCell>
+                          )}
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardTable>
               </CardContent>
             </Card>
           ))}
