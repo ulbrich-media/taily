@@ -1,17 +1,7 @@
 import type { ReactNode } from 'react'
-import {
-  Circle,
-  Clock,
-  CheckCircle2,
-  XCircle,
-  User,
-  PawPrint,
-} from 'lucide-react'
-import type {
-  AdoptionListResource,
-  AdoptionStatus,
-  AdoptionStepStatus,
-} from '@/api/types/adoptions'
+import { User, PawPrint } from 'lucide-react'
+import type { AdoptionListResource } from '@/api/types/adoptions'
+import { AdoptionStatusIndicator } from './AdoptionStatusIndicator'
 import { Button } from '@/shadcn/components/ui/button'
 import {
   Table,
@@ -26,30 +16,6 @@ import {
   AvatarFallback,
   AvatarImage,
 } from '@/shadcn/components/ui/avatar.tsx'
-
-function StepStatusIcon({ status }: { status: AdoptionStepStatus }) {
-  if (status === 'finished') {
-    return <CheckCircle2 className="size-5 text-green-500" />
-  }
-  if (status === 'pending') {
-    return <Clock className="size-5 text-blumine-600" />
-  }
-  // Delayed status not implemented, yet
-  // if (status === 'delayed') {
-  //   return <CircleAlert className="size-5 text-amber-500" />
-  // }
-  return <Circle className="size-5 text-muted-foreground/40" />
-}
-
-function OverallStatusIcon({ status }: { status: AdoptionStatus }) {
-  if (status === 'done') {
-    return <CheckCircle2 className="size-5 text-green-500" />
-  }
-  if (status === 'canceled') {
-    return <XCircle className="size-5 text-destructive" />
-  }
-  return <Clock className="size-5 text-blumine-600" />
-}
 
 interface AdoptionListProps {
   adoptions: AdoptionListResource[]
@@ -73,11 +39,7 @@ export function AdoptionList({
           {showAnimal && <TableHead>Tier</TableHead>}
           {showApplicant && <TableHead>Interessent</TableHead>}
           {showMediator && <TableHead>Vermittler</TableHead>}
-          <TableHead className="text-center th-contain">Vorkontrolle</TableHead>
-          <TableHead className="text-center th-contain">Vertrag</TableHead>
-          <TableHead className="text-center th-contain">Transport</TableHead>
-          <TableHead className="text-center th-contain">Übergabe</TableHead>
-          <TableHead className="text-center th-contain">Status</TableHead>
+          <TableHead>Status</TableHead>
           <TableHead className="th-contain"></TableHead>
         </TableRow>
       </TableHeader>
@@ -153,30 +115,8 @@ export function AdoptionList({
                 )}
               </TableCell>
             )}
-            <TableCell className="text-center">
-              <div className="flex justify-center">
-                <StepStatusIcon status={adoption.pre_inspection_status} />
-              </div>
-            </TableCell>
-            <TableCell className="text-center">
-              <div className="flex justify-center">
-                <StepStatusIcon status={adoption.contract_status} />
-              </div>
-            </TableCell>
-            <TableCell className="text-center">
-              <div className="flex justify-center">
-                <StepStatusIcon status={adoption.transport_status} />
-              </div>
-            </TableCell>
-            <TableCell className="text-center">
-              <div className="flex justify-center">
-                <StepStatusIcon status={adoption.handover_status} />
-              </div>
-            </TableCell>
-            <TableCell className="text-center">
-              <div className="flex justify-center">
-                <OverallStatusIcon status={adoption.status} />
-              </div>
+            <TableCell>
+              <AdoptionStatusIndicator adoption={adoption} />
             </TableCell>
             <TableCell className="text-right">
               {renderDetailLink && (
