@@ -134,6 +134,40 @@ class AdoptionContractUpdateTest extends TestCase
         $this->assertNotNull($adoption->getFirstMedia('contract'));
     }
 
+    public function test_manual_save_stores_and_replaces_the_uploaded_file(): void
+    {
+        $adoption = $this->createAdoption();
+
+        $this->actingAs($this->createUser())
+            ->withHeader('referer', 'http://localhost')
+            ->put("/internal/adoptions/{$adoption->id}/contract", [
+                'contract_signed' => '1',
+                'file' => UploadedFile::fake()->create('signed.pdf', 10, 'application/pdf'),
+            ], ['Accept' => 'application/json'])
+            ->assertOk();
+
+        $this->assertSame('signed.pdf', $adoption->fresh()->getFirstMedia('contract')->file_name);
+    }
+
+    public function test_generic_update_cannot_change_the_contract_state(): void
+    {
+        $adoption = $this->createAdoption(contractSigned: true);
+        $this->createProcess($adoption, ContractSigningStatus::COMPLETED);
+
+        $this->actingAs($this->createUser())
+            ->withHeader('referer', 'http://localhost')
+            ->patchJson("/internal/adoptions/{$adoption->id}", [
+                'contract_signed' => false,
+                'contract_signed_at' => null,
+                'notes' => 'Notiz',
+            ])
+            ->assertOk();
+
+        $adoption = $adoption->fresh();
+        $this->assertTrue($adoption->contract_signed);
+        $this->assertSame('Notiz', $adoption->notes);
+    }
+
     public function test_manual_save_is_allowed_after_a_cancelled_or_expired_process(): void
     {
         foreach ([ContractSigningStatus::CANCELLED, ContractSigningStatus::EXPIRED] as $status) {

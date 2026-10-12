@@ -67,14 +67,17 @@ class AdoptionContractController extends Controller
             }
 
             $adoption->save();
-        });
 
-        if ($request->hasFile('file')) {
-            $adoption->clearMediaCollection('contract');
-            $adoption->addMedia($request->file('file'))->toMediaCollection('contract');
-        } elseif ($request->boolean('remove_file')) {
-            $adoption->clearMediaCollection('contract');
-        }
+            // The file changes stay under the same lock: once it is released,
+            // a signing process can complete and write its signed PDF to this
+            // collection, which a delayed manual save must not clear or replace.
+            if ($request->hasFile('file')) {
+                $adoption->clearMediaCollection('contract');
+                $adoption->addMedia($request->file('file'))->toMediaCollection('contract');
+            } elseif ($request->boolean('remove_file')) {
+                $adoption->clearMediaCollection('contract');
+            }
+        });
 
         $adoption->load(self::DETAIL_RELATIONS);
 

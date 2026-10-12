@@ -73,15 +73,9 @@ class AdoptionController extends Controller
             'canceled_reason' => 'sometimes',
             'notes' => 'sometimes|string',
             'pre_inspection_notes' => 'sometimes|string',
-            'contract_signed' => 'sometimes|boolean',
-            'contract_signed_at' => 'sometimes|nullable|date',
             'transport_id' => 'sometimes|nullable|exists:transports,id',
             'handed_over_at' => 'sometimes|nullable|date',
         ]);
-
-        if ($request->has('contract_signed')) {
-            $validated['contract_signed'] = $request->boolean('contract_signed');
-        }
 
         // Server manages canceled_at: set it on cancel, clear it on reopen.
         $incomingStatus = $validated['status'] ?? null;

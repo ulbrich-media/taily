@@ -232,6 +232,7 @@ export function AdoptionStartContractSigningPage({
                   type="button"
                   variant="outline"
                   size="icon"
+                  aria-label="Vertragsvorschau als PDF öffnen"
                   disabled={!selectedTemplate || previewMutation.isPending}
                   onClick={() => previewMutation.mutate(selectedTemplate)}
                 >
