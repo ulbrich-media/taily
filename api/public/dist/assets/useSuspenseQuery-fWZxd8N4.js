@@ -1,0 +1,1 @@
+import{Ei as e,Ti as t,wi as n}from"./index-Wnxq0U5g.js";function r(r,i){return n({...r,enabled:!0,suspense:!0,throwOnError:t,placeholderData:void 0},e,i)}export{r as t};

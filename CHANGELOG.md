@@ -2,6 +2,31 @@
 
 All notable changes to Taily are documented here.
 
+# [0.11.0](https://github.com/ulbrich-media/taily/compare/v0.10.1...v0.11.0) (2026-10-12)
+
+
+### Bug Fixes
+
+* auth config structure improved ([#141](https://github.com/ulbrich-media/taily/issues/141)) ([132fe2b](https://github.com/ulbrich-media/taily/commit/132fe2bfc7fdbf6b2d16593a381cfadf6398d602))
+* **contract:** harden audit trail with identity snapshots and actor tracking ([#176](https://github.com/ulbrich-media/taily/issues/176)) ([14a8d3a](https://github.com/ulbrich-media/taily/commit/14a8d3a180366c09804af0a7d6f6b479d8cc93f0))
+* **contract:** security hardening pass for public signing/inspection endpoints ([#173](https://github.com/ulbrich-media/taily/issues/173)) ([fbb4872](https://github.com/ulbrich-media/taily/commit/fbb48727b1b911ea3357efb11d43df39fb0cdb0f)), closes [docs/features/contract.md#access-and-security](https://github.com/docs/features/contract.md/issues/access-and-security)
+
+
+### Features
+
+* **contract:** add scheduled reminder emails and expiry for signing links ([#171](https://github.com/ulbrich-media/taily/issues/171)) ([d6eccf5](https://github.com/ulbrich-media/taily/commit/d6eccf5f2ee3ae48c4ab6be1a76666158edcb6a6))
+* **contract:** adoption with digital contract locked from manual edits and UI improved  ([#196](https://github.com/ulbrich-media/taily/issues/196)) ([2df58aa](https://github.com/ulbrich-media/taily/commit/2df58aa49ce87d3c5b543b93c6de8bca4346f424))
+* **contract:** enrich default template with photo, branding, and more data ([#181](https://github.com/ulbrich-media/taily/issues/181)) ([584452f](https://github.com/ulbrich-media/taily/commit/584452f51de8483c67c4b5c6697b85a2e0ed96e2))
+* **contract:** implement native contract signing flow (start, sign, complete) ([#168](https://github.com/ulbrich-media/taily/issues/168)) ([6b2a819](https://github.com/ulbrich-media/taily/commit/6b2a8192178502d434b04a78de8bc1befe10a9c6)), closes [#156](https://github.com/ulbrich-media/taily/issues/156) [#156](https://github.com/ulbrich-media/taily/issues/156)
+* **contract:** lay backend groundwork for native contract signing ([#167](https://github.com/ulbrich-media/taily/issues/167)) ([ccc8d9d](https://github.com/ulbrich-media/taily/commit/ccc8d9d4fb242c5bcf12c0a0495726d9b00001ae)), closes [#155](https://github.com/ulbrich-media/taily/issues/155)
+* **contract:** let a mediator cancel an in-progress native signing process ([#170](https://github.com/ulbrich-media/taily/issues/170)) ([4835455](https://github.com/ulbrich-media/taily/commit/4835455e576123c5c9ddb73f5dc751d18a767ea3)), closes [#167](https://github.com/ulbrich-media/taily/issues/167) [#157](https://github.com/ulbrich-media/taily/issues/157)
+* **contract:** let a mediator resend a native signing invite ([#172](https://github.com/ulbrich-media/taily/issues/172)) ([446e144](https://github.com/ulbrich-media/taily/commit/446e1444fccc696db27eebb0b1ae67274c4218e8)), closes [#160](https://github.com/ulbrich-media/taily/issues/160)
+* **contract:** preview endpoint for contract added ([#179](https://github.com/ulbrich-media/taily/issues/179)) ([8a9810c](https://github.com/ulbrich-media/taily/commit/8a9810cf36683ccbbd91487ac36eec922a1210b8))
+* **contract:** preview endpoint for contract added ([#182](https://github.com/ulbrich-media/taily/issues/182)) ([76da3e8](https://github.com/ulbrich-media/taily/commit/76da3e819f19e9092b4d6dfd8bbab33db5e93992))
+* **contracts:** generate a pre-filled Schutzvertrag PDF from a template ([#166](https://github.com/ulbrich-media/taily/issues/166)) ([a8acf36](https://github.com/ulbrich-media/taily/commit/a8acf363cb6c6b6f607704e50971ae3afba6ba65))
+* signatures and audit trail moved to their own page ([#178](https://github.com/ulbrich-media/taily/issues/178)) ([6be14f7](https://github.com/ulbrich-media/taily/commit/6be14f75fcdfcc96ed76642da9d5344f1740cf90))
+* **ui:** adoption status and tables improved ([#193](https://github.com/ulbrich-media/taily/issues/193)) ([d8753aa](https://github.com/ulbrich-media/taily/commit/d8753aab1321f19d12b1eb1702fcf4c2976e34b2))
+
 ## [0.10.1](https://github.com/ulbrich-media/taily/compare/v0.10.0...v0.10.1) (2026-08-09)
 
 
