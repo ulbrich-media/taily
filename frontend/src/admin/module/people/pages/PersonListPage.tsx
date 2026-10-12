@@ -51,7 +51,7 @@ export function PersonListPage({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead></TableHead>
+                <TableHead className="th-contain"></TableHead>
                 <TableHead>Name, E-Mail</TableHead>
                 <TableHead>Organisation</TableHead>
                 <TableHead>Herkunft</TableHead>
