@@ -5,8 +5,11 @@ namespace Taily\Http\Controllers\Internal;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
+use Taily\Enums\ContractSigningStatus;
 use Taily\Http\Controllers\Controller;
 use Taily\Http\Resources\AdoptionDetailResource;
 use Taily\Models\Adoption;
@@ -20,6 +23,7 @@ class AdoptionContractController extends Controller
         'applicant', 'applicant.media',
         'media',
         'latestContractSigningProcess.signers.person',
+        'latestContractSigningProcess.signers.latestInviteEvent',
     ];
 
     public function store(Request $request, Adoption $adoption): JsonResponse
@@ -36,20 +40,44 @@ class AdoptionContractController extends Controller
             'remove_file' => 'sometimes|boolean',
         ]);
 
-        $adoption->contract_signed = $request->boolean('contract_signed');
+        // Manual edits and the native signing flow are mutually exclusive.
+        // The check and the save share one adoption lock, the same one
+        // ContractSigningController::store() and ContractCompletionService
+        // take, so a signing process cannot start or complete in between.
+        DB::transaction(function () use ($adoption, $request, $validated) {
+            $locked = Adoption::whereKey($adoption->id)->lockForUpdate()->firstOrFail();
+            $process = $locked->latestContractSigningProcess()->first();
 
-        if ($request->has('contract_signed_at')) {
-            $adoption->contract_signed_at = $validated['contract_signed_at'];
-        }
+            if ($process?->status->isActive()) {
+                throw ValidationException::withMessages([
+                    'contract_signed' => ['Es läuft ein Signaturvorgang. Bitte brich ihn ab, bevor du den Vertrag manuell bearbeitest.'],
+                ]);
+            }
 
-        $adoption->save();
+            if ($process?->status === ContractSigningStatus::COMPLETED) {
+                throw ValidationException::withMessages([
+                    'contract_signed' => ['Der Vertrag wurde digital unterschrieben und kann nicht manuell geändert werden.'],
+                ]);
+            }
 
-        if ($request->hasFile('file')) {
-            $adoption->clearMediaCollection('contract');
-            $adoption->addMedia($request->file('file'))->toMediaCollection('contract');
-        } elseif ($request->boolean('remove_file')) {
-            $adoption->clearMediaCollection('contract');
-        }
+            $adoption->contract_signed = $request->boolean('contract_signed');
+
+            if ($request->has('contract_signed_at')) {
+                $adoption->contract_signed_at = $validated['contract_signed_at'];
+            }
+
+            $adoption->save();
+
+            // The file changes stay under the same lock: once it is released,
+            // a signing process can complete and write its signed PDF to this
+            // collection, which a delayed manual save must not clear or replace.
+            if ($request->hasFile('file')) {
+                $adoption->clearMediaCollection('contract');
+                $adoption->addMedia($request->file('file'))->toMediaCollection('contract');
+            } elseif ($request->boolean('remove_file')) {
+                $adoption->clearMediaCollection('contract');
+            }
+        });
 
         $adoption->load(self::DETAIL_RELATIONS);
 

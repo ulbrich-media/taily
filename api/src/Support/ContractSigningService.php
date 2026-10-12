@@ -2,6 +2,7 @@
 
 namespace Taily\Support;
 
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
@@ -28,6 +29,11 @@ class ContractSigningService
     /**
      * Start a brand-new signing process for the given adoption: freezes the
      * unsigned PDF, stores its hash, and issues the mediator's signing link.
+     *
+     * The audit event this writes is about $actor, the signed-in user who
+     * started the process — which need not be the mediator, any user with
+     * access to the adoption can start one. The mediator enters the trail
+     * with their invite, not here.
      */
     public function start(
         Adoption $adoption,
@@ -49,8 +55,8 @@ class ContractSigningService
                 ->usingFileName('unsigned.pdf')
                 ->toMediaCollection('document');
 
-            $mediator = $this->createSigner($process, $adoption->mediator, ContractSignerRole::MEDIATOR);
-            $this->writeAuditEvent($process, $mediator, ContractSigningEventType::LINK_GENERATED, $ipAddress, $userAgent, actor: $actor);
+            $this->createSigner($process, $adoption->mediator, ContractSignerRole::MEDIATOR);
+            $this->writeAuditEvent($process, null, ContractSigningEventType::PROCESS_STARTED, $ipAddress, $userAgent, actor: $actor);
 
             return $process;
         });
@@ -117,8 +123,11 @@ class ContractSigningService
             $locked->status = ContractSigningStatus::AWAITING_ADOPTER_SIGNATURE;
             $locked->save();
 
-            $adopter = $this->createSigner($locked, $locked->adoption->applicant, ContractSignerRole::ADOPTER);
-            $this->writeAuditEvent($locked, $adopter, ContractSigningEventType::LINK_GENERATED);
+            // Issuing the adopter's link writes no event of its own: it is
+            // an automatic consequence of the signature above, and the
+            // invite that follows records the same moment against the
+            // person it actually concerns.
+            $this->createSigner($locked, $locked->adoption->applicant, ContractSignerRole::ADOPTER);
         });
 
         $process->refresh();
@@ -167,11 +176,14 @@ class ContractSigningService
      * Narrow hook for ContractCompletionService to set the final, assembled
      * artifact's hash once the document has been built.
      *
+     * $finalizedAt lets the caller fix the event's timestamp up front, so the
+     * row the final document already lists matches the one stored here.
+     *
      * @throws ContractSigningStateException if the process isn't completed, or already finalized.
      */
-    public function finalize(ContractSigningProcess $process, string $finalDocumentHash): void
+    public function finalize(ContractSigningProcess $process, string $finalDocumentHash, ?CarbonInterface $finalizedAt = null): void
     {
-        DB::transaction(function () use ($process, $finalDocumentHash) {
+        DB::transaction(function () use ($process, $finalDocumentHash, $finalizedAt) {
             $locked = ContractSigningProcess::whereKey($process->id)->lockForUpdate()->first();
 
             if (! $locked || $locked->status !== ContractSigningStatus::COMPLETED || $locked->final_document_hash !== null) {
@@ -183,7 +195,7 @@ class ContractSigningService
 
             $this->writeAuditEvent($locked, null, ContractSigningEventType::FINALIZED, metadata: [
                 'final_document_hash' => $finalDocumentHash,
-            ]);
+            ], occurredAt: $finalizedAt);
         });
 
         $process->refresh();
@@ -459,6 +471,7 @@ class ContractSigningService
         ?string $userAgent = null,
         ?array $metadata = null,
         ?User $actor = null,
+        ?CarbonInterface $occurredAt = null,
     ): void {
         if ($signer) {
             $signer->loadMissing('person');
@@ -479,7 +492,7 @@ class ContractSigningService
             'signer_id' => $signer?->id,
             'actor_user_id' => $actor?->id,
             'event_type' => $eventType,
-            'occurred_at' => now(),
+            'occurred_at' => $occurredAt ?? now(),
             'ip_address' => $ipAddress,
             'user_agent' => $userAgent,
             'metadata' => $metadata,

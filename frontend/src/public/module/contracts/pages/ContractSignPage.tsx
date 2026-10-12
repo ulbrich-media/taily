@@ -34,7 +34,7 @@ import {
   AlertDialogMedia,
   AlertDialogTitle,
 } from '@/shadcn/components/ui/alert-dialog'
-import { CheckCircle, FileSignature } from 'lucide-react'
+import { CheckCircle, ExternalLink, FileSignature } from 'lucide-react'
 import { getPublicContractQuery } from '@/public/module/contracts/api/queries'
 import {
   contractDocumentUrl,
@@ -43,6 +43,7 @@ import {
 import { InfoRow, InfoRowValue } from '@/shadcn/components/common/info-row.tsx'
 import {
   Field,
+  FieldContent,
   FieldError,
   FieldGroup,
   FieldLabel,
@@ -79,16 +80,18 @@ function ConsentCheckbox({ name, control, label }: ConsentCheckboxProps) {
       name={name}
       control={control}
       render={({ field, fieldState }) => (
-        <Field data-invalid={fieldState.invalid}>
-          <Field orientation="horizontal">
+        <Field>
+          <Field data-invalid={fieldState.invalid} orientation="horizontal">
             <Checkbox
               id={field.name}
               checked={field.value as boolean}
               onCheckedChange={field.onChange}
             />
-            <FieldLabel htmlFor={field.name}>{label}</FieldLabel>
+            <FieldContent>
+              <FieldLabel htmlFor={field.name}>{label}</FieldLabel>
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </FieldContent>
           </Field>
-          {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
         </Field>
       )}
     />
@@ -200,6 +203,13 @@ export function ContractSignPage({ token }: ContractSignPageProps) {
                 title="Schutzvertrag"
                 className="w-full h-[70vh] rounded-md border"
               />
+              <div className="mt-2">
+                <Button variant="ghost" asChild>
+                  <a href={contractDocumentUrl(token)} target="_blank">
+                    In neuem Tab öffnen <ExternalLink />
+                  </a>
+                </Button>
+              </div>
             </CardContent>
           </Card>
 

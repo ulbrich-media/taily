@@ -40,6 +40,11 @@ return [
     | template means publishing the `taily-views` tag and editing the file at
     | the corresponding `resources/views/vendor/taily/...` path. See ADR-013.
     |
+    | Every template extends `contracts/layout.blade.php`, which holds the
+    | header and footer bands and the shared styling — override that one file
+    | to put an installation's own logo and organisation details on all of
+    | them at once.
+    |
     */
 
     'contracts' => [

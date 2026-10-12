@@ -1,57 +1,146 @@
-import { CheckCircle2, Circle } from 'lucide-react'
-import { format } from 'date-fns'
+import { CheckCircle2, Circle, Clock, XCircle } from 'lucide-react'
 import type {
   ContractSignerRole,
   ContractSigningProcess,
-  ContractSigningStatus as ContractSigningStatusType,
+  ContractSigningProcessSigner,
 } from '@/api/types/adoptions'
-import { Badge } from '@/shadcn/components/ui/badge.tsx'
-
-const SIGNING_STATUS_LABELS: Record<ContractSigningStatusType, string> = {
-  awaiting_mediator_signature: 'Wartet auf Unterschrift des Vermittlers',
-  awaiting_adopter_signature: 'Wartet auf Unterschrift des Adoptanten',
-  completed: 'Abgeschlossen',
-  cancelled: 'Abgebrochen',
-  expired: 'Abgelaufen',
-}
+import { formatApiDateTime } from '@/lib/dates.utils.ts'
+import { cn } from '@/shadcn/lib/utils'
+import {
+  describeExpiry,
+  getSignerState,
+  isExpiryUrgent,
+  type SignerState,
+} from '@/admin/module/adoptions/contract.utils.ts'
 
 const SIGNER_ROLE_LABELS: Record<ContractSignerRole, string> = {
   mediator: 'Vermittler:in',
   adopter: 'Adoptant:in',
 }
 
+const SIGNER_ICONS: Record<SignerState, typeof Circle> = {
+  signed: CheckCircle2,
+  pending: Clock,
+  expired: XCircle,
+  cancelled: XCircle,
+  queued: Circle,
+}
+
+const SIGNER_ICON_CLASSES: Record<SignerState, string> = {
+  signed: 'text-green-600',
+  pending: 'text-blumine-700',
+  expired: 'text-red-600',
+  cancelled: 'text-muted-foreground',
+  queued: 'text-muted-foreground',
+}
+
+interface SignerRowProps {
+  process: ContractSigningProcess
+  signer: ContractSigningProcessSigner
+}
+
+function SignerRow({ process, signer }: SignerRowProps) {
+  const state = getSignerState(process, signer)
+  const Icon = SIGNER_ICONS[state]
+  const processEnded =
+    process.status !== 'awaiting_mediator_signature' &&
+    process.status !== 'awaiting_adopter_signature'
+
+  const details: { text: string; urgent?: boolean }[] = []
+
+  switch (state) {
+    case 'signed':
+      details.push({
+        text: `Unterschrieben am ${formatApiDateTime(signer.signed_at)}`,
+      })
+      break
+    case 'pending':
+      details.push({ text: 'Warten auf Unterschrift' })
+      if (signer.invited_at) {
+        details.push({
+          text: `Einladung gesendet am ${formatApiDateTime(signer.invited_at)}`,
+        })
+      } else {
+        details.push({ text: 'Einladung wurde nicht versendet', urgent: true })
+      }
+      if (signer.expires_at) {
+        details.push({
+          text: `${describeExpiry(signer.expires_at)} (${formatApiDateTime(signer.expires_at)})`,
+          urgent: isExpiryUrgent(signer.expires_at),
+        })
+      }
+      break
+    case 'expired':
+      details.push({
+        text: `Link abgelaufen${
+          process.terminated_at
+            ? ` am ${formatApiDateTime(process.terminated_at)}`
+            : ''
+        }`,
+        urgent: true,
+      })
+      break
+    case 'cancelled':
+      details.push({
+        text: `Vorgang abgebrochen${
+          process.terminated_at
+            ? ` am ${formatApiDateTime(process.terminated_at)}`
+            : ''
+        }`,
+      })
+      break
+    case 'queued':
+      details.push({
+        text: processEnded
+          ? 'Nicht eingeladen'
+          : 'Wird nach der vorherigen Unterschrift eingeladen',
+      })
+      break
+  }
+
+  return (
+    <li className="flex items-start gap-3">
+      <Icon
+        className={cn('mt-0.5 size-4 shrink-0', SIGNER_ICON_CLASSES[state])}
+      />
+      <div className="min-w-0 space-y-0.5 text-sm">
+        <p className="font-medium">
+          {SIGNER_ROLE_LABELS[signer.role]}
+          {signer.full_name ? ` ${signer.full_name}` : ''}
+        </p>
+        {details.map((detail) => (
+          <p
+            key={detail.text}
+            className={cn(
+              'text-muted-foreground',
+              detail.urgent && 'text-red-700 dark:text-red-400'
+            )}
+          >
+            {detail.text}
+          </p>
+        ))}
+      </div>
+    </li>
+  )
+}
+
 interface ContractSigningStatusProps {
   process: ContractSigningProcess
 }
 
+/**
+ * Both signers with their current state, timestamps and remaining time.
+ * Which signer is up next is derived from the signatures, not the status.
+ */
 export function ContractSigningStatus({ process }: ContractSigningStatusProps) {
   return (
-    <div className="space-y-2 rounded-md border p-3">
-      <div className="flex items-center justify-between">
-        <p className="text-sm font-medium">Signaturvorgang</p>
-        <Badge variant="secondary">
-          {SIGNING_STATUS_LABELS[process.status]}
-        </Badge>
-      </div>
-      <ul className="space-y-1">
-        {process.signers.map((signer) => (
-          <li
-            key={signer.role}
-            className="flex items-center gap-2 text-sm text-muted-foreground"
-          >
-            {signer.signed_at ? (
-              <CheckCircle2 className="size-4 text-green-600" />
-            ) : (
-              <Circle className="size-4" />
-            )}
-            {SIGNER_ROLE_LABELS[signer.role]}
-            {signer.full_name ? ` – ${signer.full_name}` : ''}
-            {!signer.signed_at && signer.expires_at
-              ? ` (Läuft ab am ${format(new Date(signer.expires_at), 'dd.MM.yyyy')})`
-              : ''}
-          </li>
-        ))}
-      </ul>
-    </div>
+    <ol
+      aria-label="Fortschritt der Unterschriften"
+      className="space-y-3 rounded-md border p-3"
+    >
+      {process.signers.map((signer) => (
+        <SignerRow key={signer.role} process={process} signer={signer} />
+      ))}
+    </ol>
   )
 }

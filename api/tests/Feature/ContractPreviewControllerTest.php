@@ -102,7 +102,20 @@ class ContractPreviewControllerTest extends TestCase
 
         $this->preview('?signed&html')
             ->assertOk()
-            ->assertSee('Prüfprotokoll', false);
+            ->assertSee('Verlauf des Vertrags', false);
+    }
+
+    public function test_the_audit_trail_names_the_browser_without_printing_the_header(): void
+    {
+        $this->createAdoption();
+
+        $this->preview('?signed&html')
+            ->assertOk()
+            // The two devices the preview signs with, as the trail shows
+            // them: browser and OS, not the header they were parsed out of.
+            ->assertSee('Chrome 141, macOS', false)
+            ->assertSee('Safari 18, iOS', false)
+            ->assertDontSee('AppleWebKit', false);
     }
 
     public function test_the_synthesized_signing_process_is_rolled_back(): void
