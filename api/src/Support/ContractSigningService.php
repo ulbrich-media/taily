@@ -2,6 +2,7 @@
 
 namespace Taily\Support;
 
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
@@ -175,11 +176,14 @@ class ContractSigningService
      * Narrow hook for ContractCompletionService to set the final, assembled
      * artifact's hash once the document has been built.
      *
+     * $finalizedAt lets the caller fix the event's timestamp up front, so the
+     * row the final document already lists matches the one stored here.
+     *
      * @throws ContractSigningStateException if the process isn't completed, or already finalized.
      */
-    public function finalize(ContractSigningProcess $process, string $finalDocumentHash): void
+    public function finalize(ContractSigningProcess $process, string $finalDocumentHash, ?CarbonInterface $finalizedAt = null): void
     {
-        DB::transaction(function () use ($process, $finalDocumentHash) {
+        DB::transaction(function () use ($process, $finalDocumentHash, $finalizedAt) {
             $locked = ContractSigningProcess::whereKey($process->id)->lockForUpdate()->first();
 
             if (! $locked || $locked->status !== ContractSigningStatus::COMPLETED || $locked->final_document_hash !== null) {
@@ -191,7 +195,7 @@ class ContractSigningService
 
             $this->writeAuditEvent($locked, null, ContractSigningEventType::FINALIZED, metadata: [
                 'final_document_hash' => $finalDocumentHash,
-            ]);
+            ], occurredAt: $finalizedAt);
         });
 
         $process->refresh();
@@ -467,6 +471,7 @@ class ContractSigningService
         ?string $userAgent = null,
         ?array $metadata = null,
         ?User $actor = null,
+        ?CarbonInterface $occurredAt = null,
     ): void {
         if ($signer) {
             $signer->loadMissing('person');
@@ -487,7 +492,7 @@ class ContractSigningService
             'signer_id' => $signer?->id,
             'actor_user_id' => $actor?->id,
             'event_type' => $eventType,
-            'occurred_at' => now(),
+            'occurred_at' => $occurredAt ?? now(),
             'ip_address' => $ipAddress,
             'user_agent' => $userAgent,
             'metadata' => $metadata,
