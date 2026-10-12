@@ -28,6 +28,7 @@ class ContractSigningController extends Controller
         'applicant', 'applicant.media',
         'media',
         'latestContractSigningProcess.signers.person',
+        'latestContractSigningProcess.signers.latestInviteEvent',
     ];
 
     public function __construct(

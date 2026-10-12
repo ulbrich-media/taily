@@ -60,6 +60,8 @@ export interface ContractTemplate {
   label: string
 }
 
+export type ContractSource = 'manual' | 'digital'
+
 export type ContractSignerRole = 'mediator' | 'adopter'
 export type ContractSigningStatus =
   | 'awaiting_mediator_signature'
@@ -70,6 +72,8 @@ export type ContractSigningStatus =
 
 export interface ContractSigningProcessSigner {
   role: ContractSignerRole
+  // When the latest invite mail went out; null if none was recorded.
+  invited_at: string | null
   signed_at: string | null
   full_name: string | null
   expires_at: string | null
@@ -91,6 +95,9 @@ export interface AdoptionDetailResource extends AdoptionBaseResource {
   mediator: PersonListResource | null
   applicant: PersonDetailResource
   contract_file: ContractFile | null
+  // 'digital' = completed native signing flow (locked against manual edits),
+  // 'manual' = confirmed by hand, null = no signed contract yet.
+  contract_source: ContractSource | null
   contract_signing_process: ContractSigningProcess | null
   transport: TransportListResource | null
 }

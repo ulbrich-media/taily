@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use setasign\Fpdi\Fpdi;
 use setasign\Fpdi\PdfParser\StreamReader;
+use Taily\Enums\ContractSigningEventType;
 use Taily\Exceptions\ContractDocumentIntegrityException;
 use Taily\Models\Adoption;
 use Taily\Models\Animal;
@@ -103,6 +104,36 @@ class ContractCompletionServiceTest extends TestCase
 
         $this->assertGreaterThan($pages($frozen), $pages($finalBytes));
         $this->assertSame($process->final_document_hash, hash('sha256', $finalBytes));
+    }
+
+    public function test_the_appendix_lists_the_closing_event_with_the_stored_timestamp(): void
+    {
+        $process = $this->signedProcess();
+
+        $pdfService = new class extends ContractPdfService
+        {
+            public string $appendixHtml = '';
+
+            public function renderAppendix(ContractSigningProcess $process): string
+            {
+                return $this->appendixHtml = parent::renderAppendix($process);
+            }
+        };
+
+        (new ContractCompletionService($pdfService, new ContractSigningService))->complete($process);
+
+        $event = $process->auditEvents()
+            ->where('event_type', ContractSigningEventType::FINALIZED->value)
+            ->firstOrFail();
+
+        $this->assertStringContainsString('Unterzeichnung abgeschlossen', $pdfService->appendixHtml);
+        $this->assertStringContainsString(
+            $event->occurred_at->format('d.m.Y, H:i:s'),
+            $pdfService->appendixHtml
+        );
+        // The hash is what a document cannot contain, so it only lives on the event.
+        $this->assertSame($process->fresh()->final_document_hash, $event->metadata['final_document_hash']);
+        $this->assertStringNotContainsString($event->metadata['final_document_hash'], $pdfService->appendixHtml);
     }
 
     public function test_complete_marks_the_adoption_signed_and_stores_the_contract(): void

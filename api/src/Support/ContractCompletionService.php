@@ -7,9 +7,11 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Taily\Enums\ContractSignerRole;
+use Taily\Enums\ContractSigningEventType;
 use Taily\Exceptions\ContractDocumentIntegrityException;
 use Taily\Mail\ContractCompletionMail;
 use Taily\Models\Adoption;
+use Taily\Models\ContractSigningAuditEvent;
 use Taily\Models\ContractSigningProcess;
 use Throwable;
 
@@ -40,6 +42,18 @@ class ContractCompletionService
             'auditEvents.signer.person',
         ]);
 
+        // The closing event is only persisted by finalize(), because it
+        // carries the hash of the document built below and a document cannot
+        // contain its own hash. The audit trail it ends is still part of that
+        // document, so the row is added in memory here, with the timestamp
+        // finalize() will store, and the hash stays out of the PDF.
+        $finalizedAt = now();
+        $process->auditEvents->push(new ContractSigningAuditEvent([
+            'signing_process_id' => $process->id,
+            'event_type' => ContractSigningEventType::FINALIZED,
+            'occurred_at' => $finalizedAt,
+        ]));
+
         $finalBytes = $this->pdfService->appendSignaturePages($this->frozenDocument($process), $process);
         $hash = hash('sha256', $finalBytes);
 
@@ -51,7 +65,7 @@ class ContractCompletionService
         // transaction: leaving the adoption marked as signed without a
         // matching final_document_hash on the process (or media written
         // without either) would be an inconsistent, half-completed state.
-        $adoption = DB::transaction(function () use ($process, $finalBytes, $hash) {
+        $adoption = DB::transaction(function () use ($process, $finalBytes, $hash, $finalizedAt) {
             $adoption = Adoption::whereKey($process->adoption_id)->with('animal')->lockForUpdate()->firstOrFail();
 
             $process->addMediaFromString($finalBytes)
@@ -67,7 +81,7 @@ class ContractCompletionService
             $adoption->contract_signed_at = now();
             $adoption->save();
 
-            $this->signingService->finalize($process, $hash);
+            $this->signingService->finalize($process, $hash, $finalizedAt);
 
             return $adoption;
         });

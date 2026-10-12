@@ -45,8 +45,6 @@ export interface UpdateAdoptionRequest {
   canceled_reason?: string
   notes?: string
   pre_inspection_notes?: string
-  contract_signed?: boolean
-  contract_signed_at?: string | null
   transport_id?: string | null
   handed_over_at?: string | null
 }

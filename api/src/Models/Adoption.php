@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Taily\Enums\ContractSigningStatus;
 
 class Adoption extends Model implements HasMedia
 {
@@ -101,6 +102,20 @@ class Adoption extends Model implements HasMedia
         }
 
         return 'not_started';
+    }
+
+    /**
+     * How the signed contract came to be: 'digital' when the native signing
+     * flow completed, 'manual' when it was confirmed by hand, null while
+     * there is no signed contract.
+     */
+    public function getContractSourceAttribute(): ?string
+    {
+        if ($this->getRelationValue('latestContractSigningProcess')?->status === ContractSigningStatus::COMPLETED) {
+            return 'digital';
+        }
+
+        return $this->contract_signed ? 'manual' : null;
     }
 
     public function getTransportStatusAttribute(): string
