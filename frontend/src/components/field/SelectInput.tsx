@@ -10,6 +10,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/shadcn/components/ui/select'
+import { ButtonGroup } from '@/shadcn/components/ui/button-group.tsx'
+import type { ReactNode } from 'react'
 
 export interface SelectOption {
   value: string
@@ -27,6 +29,7 @@ export type SelectInputProps<
   options: SelectOption[]
   placeholder?: string
   disabled?: boolean
+  additionalAction?: ReactNode
 }
 
 export function SelectInput<
@@ -37,28 +40,36 @@ export function SelectInput<
   options,
   placeholder = 'Bitte wählen...',
   disabled,
+  additionalAction,
   ...props
 }: SelectInputProps<TFieldValues, TName, TTransformedValues>) {
   return (
     <FormFieldWrapper
       {...props}
       render={({ field, fieldState }) => (
-        <Select
-          value={field.value}
-          onValueChange={field.onChange}
-          disabled={disabled ?? field.disabled}
-        >
-          <SelectTrigger id={field.name} aria-invalid={fieldState.invalid}>
-            <SelectValue placeholder={placeholder} />
-          </SelectTrigger>
-          <SelectContent>
-            {options.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <ButtonGroup className="w-full">
+          <Select
+            value={field.value}
+            onValueChange={field.onChange}
+            disabled={disabled ?? field.disabled}
+          >
+            <SelectTrigger
+              id={field.name}
+              aria-invalid={fieldState.invalid}
+              className="flex-1"
+            >
+              <SelectValue placeholder={placeholder} />
+            </SelectTrigger>
+            <SelectContent>
+              {options.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {additionalAction}
+        </ButtonGroup>
       )}
     />
   )
