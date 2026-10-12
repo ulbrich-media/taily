@@ -14,6 +14,8 @@
 }
 
 @custom-variant dark (&:is(.dark *));
+/* Table inside CardTable (touches the card border) */
+@custom-variant card-edge ([data-slot=card-table] &);
 
 @theme inline {
   --font-sans: 'Public Sans Variable', sans-serif;
@@ -94,7 +96,7 @@
   --destructive: #d6402b;
   --destructive-text: #d6402b;
   --border: oklch(0.93 0.007 106.5);
-  --input: oklch(0.976 0.003 106.448);
+  --input: oklch(0.93 0.007 106.5);
   --ring: oklch(0.737 0.021 106.9);
   --chart-1: oklch(0.88 0.011 106.6);
   --chart-2: oklch(0.58 0.031 107.3);
@@ -115,7 +117,7 @@
 .dark {
   --background: oklch(0.153 0.006 107.1);
   --foreground: oklch(0.988 0.003 106.5);
-  --card: oklch(0.228 0.013 107.4);
+  --card: oklch(0.189 0.01 107.297);
   --card-foreground: oklch(0.988 0.003 106.5);
   --popover: oklch(0.228 0.013 107.4);
   --popover-foreground: oklch(0.988 0.003 106.5);
@@ -129,8 +131,8 @@
   --accent-foreground: oklch(0.988 0.003 106.5);
   --destructive: #d6402b;
   --destructive-text: #fa604c;
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
+  --border: oklch(0.288 0.007 107);
+  --input: oklch(0.288 0.007 107);
   --ring: oklch(0.58 0.031 107.3);
   --chart-1: oklch(0.88 0.011 106.6);
   --chart-2: oklch(0.58 0.031 107.3);

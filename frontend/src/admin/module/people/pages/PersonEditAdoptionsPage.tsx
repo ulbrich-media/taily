@@ -1,3 +1,4 @@
+import { CardTable } from '@/components/card/CardTable'
 import type { ReactNode } from 'react'
 import {
   Card,
@@ -44,11 +45,13 @@ export function PersonEditAdoptionsPage({
         </CardHeader>
         <CardContent>
           {adoptions.length ? (
-            <AdoptionList
-              adoptions={adoptions}
-              showApplicant={false}
-              renderDetailLink={renderAdoptionDetailLink}
-            />
+            <CardTable>
+              <AdoptionList
+                adoptions={adoptions}
+                showApplicant={false}
+                renderDetailLink={renderAdoptionDetailLink}
+              />
+            </CardTable>
           ) : (
             <Empty>
               <EmptyHeader>
@@ -71,10 +74,12 @@ export function PersonEditAdoptionsPage({
         </CardHeader>
         <CardContent>
           {inspections.length ? (
-            <PreInspectionList
-              inspections={inspections}
-              renderDetailLink={renderInspectionDetailLink}
-            />
+            <CardTable>
+              <PreInspectionList
+                inspections={inspections}
+                renderDetailLink={renderInspectionDetailLink}
+              />
+            </CardTable>
           ) : (
             <Empty>
               <EmptyHeader>
