@@ -28,6 +28,11 @@ class ContractSigningService
     /**
      * Start a brand-new signing process for the given adoption: freezes the
      * unsigned PDF, stores its hash, and issues the mediator's signing link.
+     *
+     * The audit event this writes is about $actor, the signed-in user who
+     * started the process — which need not be the mediator, any user with
+     * access to the adoption can start one. The mediator enters the trail
+     * with their invite, not here.
      */
     public function start(
         Adoption $adoption,
@@ -49,8 +54,8 @@ class ContractSigningService
                 ->usingFileName('unsigned.pdf')
                 ->toMediaCollection('document');
 
-            $mediator = $this->createSigner($process, $adoption->mediator, ContractSignerRole::MEDIATOR);
-            $this->writeAuditEvent($process, $mediator, ContractSigningEventType::LINK_GENERATED, $ipAddress, $userAgent, actor: $actor);
+            $this->createSigner($process, $adoption->mediator, ContractSignerRole::MEDIATOR);
+            $this->writeAuditEvent($process, null, ContractSigningEventType::PROCESS_STARTED, $ipAddress, $userAgent, actor: $actor);
 
             return $process;
         });
@@ -117,8 +122,11 @@ class ContractSigningService
             $locked->status = ContractSigningStatus::AWAITING_ADOPTER_SIGNATURE;
             $locked->save();
 
-            $adopter = $this->createSigner($locked, $locked->adoption->applicant, ContractSignerRole::ADOPTER);
-            $this->writeAuditEvent($locked, $adopter, ContractSigningEventType::LINK_GENERATED);
+            // Issuing the adopter's link writes no event of its own: it is
+            // an automatic consequence of the signature above, and the
+            // invite that follows records the same moment against the
+            // person it actually concerns.
+            $this->createSigner($locked, $locked->adoption->applicant, ContractSignerRole::ADOPTER);
         });
 
         $process->refresh();

@@ -1,60 +1,26 @@
-<!DOCTYPE html>
-<html lang="de">
-<head>
-    <meta charset="utf-8">
-    <title>Schutzvertrag</title>
-    <style>
-        body {
-            font-family: Helvetica, Arial, sans-serif;
-            font-size: 12px;
-            color: #1a1a1a;
+@extends('taily::contracts.layout')
+
+@section('title', 'Schutzvertrag')
+
+@push('styles')
+        /* A float would not do here: dompdf lays a width:100% table out
+           across the full containing block regardless of floats, so the
+           photo would be painted on top of the animal table's last column.
+           The layout table is what actually reserves the column for it. */
+        .layout-table td.layout-aside {
+            width: 140px;
+            padding-left: 16px;
         }
-        h1 {
-            font-size: 20px;
-            margin-bottom: 4px;
+        .layout-table .data-table {
+            margin-bottom: 0;
         }
-        h2 {
-            font-size: 14px;
-            margin-top: 24px;
-            margin-bottom: 8px;
-            border-bottom: 1px solid #ccc;
-            padding-bottom: 4px;
+        .animal-photo {
+            width: 150px;
+            border-radius: 4px;
         }
-        p {
-            line-height: 1.5;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 16px;
-        }
-        table td {
-            padding: 4px 8px;
-            border: 1px solid #ccc;
-            vertical-align: top;
-        }
-        table td.label {
-            width: 35%;
-            font-weight: bold;
-            background: #f5f5f5;
-        }
-        .signatures {
-            margin-top: 48px;
-            width: 100%;
-        }
-        .signatures td {
-            border: none;
-            padding-top: 48px;
-            width: 50%;
-        }
-        .signature-line {
-            border-top: 1px solid #1a1a1a;
-            padding-top: 4px;
-        }
-    </style>
-</head>
-<body>
-    <h1>Schutzvertrag</h1>
+@endpush
+
+@section('content')
     <p style="color: #b91c1c; font-style: italic;">
         Hinweis: Dies ist eine Beispielvorlage zu Demonstrationszwecken und kein
         rechtssicherer, produktionsreifer Vertrag. Vor dem Einsatz muss sie durch
@@ -67,30 +33,53 @@
     </p>
 
     <h2>Tier</h2>
-    <table>
+    <table class="layout-table">
         <tr>
-            <td class="label">Name</td>
-            <td>{{ $animal->name }}</td>
-        </tr>
-        <tr>
-            <td class="label">Tierart</td>
-            <td>{{ $animal->animalType->title ?? '' }}</td>
-        </tr>
-        <tr>
-            <td class="label">Rasse</td>
-            <td>{{ $animal->breed }}</td>
-        </tr>
-        <tr>
-            <td class="label">Tiernummer</td>
-            <td>{{ $animal->animal_number }}</td>
+            <td class="layout-main">
+                <table class="data-table">
+                    <tr>
+                        <td class="label">Name</td>
+                        <td>{{ $animal->name }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Tierart</td>
+                        <td>{{ $animal->animalType->title ?? '' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Rasse</td>
+                        <td>{{ $animal->breed }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Farbe</td>
+                        <td>{{ $animal->color }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Geburtsdatum</td>
+                        <td>{{ $animal->date_of_birth?->format('d.m.Y') }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Tiernummer</td>
+                        <td>{{ $animal->animal_number }}</td>
+                    </tr>
+                </table>
+            </td>
+            @if($animalPhoto)
+                <td class="layout-aside">
+                    <img class="animal-photo" src="{{ $animalPhoto }}" alt="Foto von {{ $animal->name }}">
+                </td>
+            @endif
         </tr>
     </table>
 
     <h2>Adoptant:in</h2>
-    <table>
+    <table class="data-table">
         <tr>
             <td class="label">Name</td>
             <td>{{ $applicant->full_name }}</td>
+        </tr>
+        <tr>
+            <td class="label">Geburtsdatum</td>
+            <td>{{ $applicant->date_of_birth?->format('d.m.Y') }}</td>
         </tr>
         <tr>
             <td class="label">Anschrift</td>
@@ -110,7 +99,7 @@
     </table>
 
     <h2>Vermittler:in</h2>
-    <table>
+    <table class="data-table">
         <tr>
             <td class="label">Name</td>
             <td>{{ $mediator->full_name ?? '' }}</td>
@@ -129,28 +118,4 @@
         Organisation untersagt. Bei Zuwiderhandlung gegen diesen Vertrag behält sich die
         vermittelnde Organisation das Recht vor, das Tier zurückzufordern.
     </p>
-
-    <table class="signatures">
-        <tr>
-            <td>
-                <div class="signature-line">
-                    Ort, Datum, Unterschrift Vermittler:in
-                </div>
-            </td>
-            <td>
-                <div class="signature-line">
-                    Ort, Datum, Unterschrift Adoptant:in
-                </div>
-            </td>
-        </tr>
-    </table>
-
-    {{--
-        Nothing signature- or audit-related is rendered here. This document is
-        generated once, before anyone has signed, and its pages are carried
-        into the final artifact unchanged; the typed signatures and the audit
-        trail are appended afterwards as their own pages by
-        ContractPdfService::appendSignaturePages(). See ADR-013.
-    --}}
-</body>
-</html>
+@endsection
