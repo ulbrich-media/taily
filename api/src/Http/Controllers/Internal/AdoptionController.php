@@ -23,6 +23,7 @@ class AdoptionController extends Controller
         'transport', 'transport.responsible', 'transport.responsible.media',
         'media',
         'latestContractSigningProcess.signers.person',
+        'latestContractSigningProcess.signers.latestInviteEvent',
     ];
 
     public function index(Request $request): AnonymousResourceCollection

@@ -21,6 +21,9 @@ class ContractSigningProcessResource extends JsonResource
             'terminated_at' => $this->resource->terminated_at,
             'signers' => $this->whenLoaded('signers', fn () => $this->resource->signers->map(fn ($signer) => [
                 'role' => $signer->role,
+                'invited_at' => $signer->relationLoaded('latestInviteEvent')
+                    ? $signer->latestInviteEvent?->occurred_at
+                    : null,
                 'signed_at' => $signer->signed_at,
                 'full_name' => $signer->relationLoaded('person') ? $signer->person->full_name : null,
                 'expires_at' => $signer->activeToken()?->expires_at,
