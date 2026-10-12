@@ -18,12 +18,12 @@ enum ContractSigningEventType: string
     public function label(): string
     {
         return match ($this) {
-            self::PROCESS_STARTED => 'Vorgang gestartet',
+            self::PROCESS_STARTED => 'Vertrag erstellt',
             self::EMAIL_SENT => 'E-Mail versendet',
             self::LINK_OPENED => 'Link geöffnet',
             self::SIGNATURE_SUBMITTED => 'Unterschrift übermittelt',
-            self::FINALIZED => 'Vorgang abgeschlossen',
-            self::CANCELLED => 'Vorgang abgebrochen',
+            self::FINALIZED => 'Unterzeichnung abgeschlossen',
+            self::CANCELLED => 'Unterzeichnung abgebrochen',
             self::EXPIRED => 'Link abgelaufen',
         };
     }

@@ -10,7 +10,7 @@
     <tr>
         <td class="head nowrap col-time">Zeitpunkt</td>
         <td class="head col-event">Ereignis</td>
-        <td class="head col-actor">Ausgelöst von<span class="sub">E-Mail</span></td>
+        <td class="head col-actor">Ausgelöst von</td>
         <td class="head nowrap col-ip">IP-Adresse</td>
         <td class="head col-device">Browser</td>
     </tr>

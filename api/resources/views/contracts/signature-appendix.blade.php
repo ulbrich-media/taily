@@ -143,24 +143,10 @@
         @include('taily::contracts.partials.signer-events', ['events' => $section['events']])
     @endforeach
 
-    <h2>Unterzeichnetes Dokument</h2>
-    <table class="data-table">
-        <tr>
-            <td class="label">SHA-256 des Vertragsdokuments</td>
-            <td class="hash">{{ $process->unsigned_document_hash }}</td>
-        </tr>
-    </table>
+    <h2>Verlauf des Vertrags</h2>
     <p class="muted">
-        Das ist der Prüfwert der vorstehenden Vertragsseiten, wie sie von den Vertragspartnern
-        gesehen und unterzeichnet wurden. Nach Unterzeichnung wurde ausschließlich dieser Anhang
-        angehangen. Das Gesamtdokument hat einen anderen Prüfwert, welcher zum Zeitpunkt der
-        Erstellung noch nicht bekannt war.
-    </p>
-
-    <h2>Vorgangsereignisse</h2>
-    <p class="muted">
-        Ereignisse, die den Signaturvorgang als Ganzes betreffen und nicht einer der beiden
-        Parteien zuzuordnen sind.
+        Ereignisse, die den Vertrag insgesamt betreffen und keiner der beiden Parteien
+        zuzuordnen sind.
     </p>
     @include('taily::contracts.partials.process-events', ['events' => $processEvents])
 @endsection
