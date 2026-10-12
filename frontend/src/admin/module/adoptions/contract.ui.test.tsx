@@ -100,9 +100,9 @@ describe('AdoptionContractSummary', () => {
       )
     )
 
-    expect(screen.getByText(/Vermittler:in – Maria/)).toBeInTheDocument()
-    expect(screen.getByText(/Adoptant:in – Anna/)).toBeInTheDocument()
-    expect(screen.getByText('Wartet auf Unterschrift')).toBeInTheDocument()
+    expect(screen.getByText(/Vermittler:in Maria/)).toBeInTheDocument()
+    expect(screen.getByText(/Adoptant:in Anna/)).toBeInTheDocument()
+    expect(screen.getByText('Warten auf Unterschrift')).toBeInTheDocument()
     expect(
       screen.getByRole('button', { name: /Einladung erneut senden/ })
     ).toBeInTheDocument()

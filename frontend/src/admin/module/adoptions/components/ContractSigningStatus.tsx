@@ -55,7 +55,7 @@ function SignerRow({ process, signer }: SignerRowProps) {
       })
       break
     case 'pending':
-      details.push({ text: 'Wartet auf Unterschrift' })
+      details.push({ text: 'Warten auf Unterschrift' })
       if (signer.invited_at) {
         details.push({
           text: `Einladung gesendet am ${formatApiDateTime(signer.invited_at)}`,
@@ -106,7 +106,7 @@ function SignerRow({ process, signer }: SignerRowProps) {
       <div className="min-w-0 space-y-0.5 text-sm">
         <p className="font-medium">
           {SIGNER_ROLE_LABELS[signer.role]}
-          {signer.full_name ? ` – ${signer.full_name}` : ''}
+          {signer.full_name ? ` ${signer.full_name}` : ''}
         </p>
         {details.map((detail) => (
           <p
