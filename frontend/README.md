@@ -15,6 +15,10 @@
 
 Start the dev server with `npm run dev`. You have to access the frontend through [taily.ddev.site:5544](https://taily.ddev.site:5544/) for the login and api to work.
 
+### Worktrees
+
+In a git worktree (e.g. Dispatch workspaces) run `scripts/worktree-init.sh` once from the repository root. It gives the worktree its own DDEV project, hostnames, `.env` files, Vite port and TLS cert (`https://<worktree>.taily.ddev.site:<port>`, API at `https://api.<worktree>.taily.ddev.site`), so several checkouts can run in parallel and the login cookie domain stays correct.
+
 Available commands:
 
 ```bash
