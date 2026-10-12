@@ -10,10 +10,12 @@ import { AlertCircle } from 'lucide-react'
 import { Alert, AlertDescription } from '@/shadcn/components/ui/alert.tsx'
 
 interface ErrorProps {
-  error: Error
+  error: unknown
 }
 
-const ErrorInfoComponent = ({ error }: ErrorProps) => {
+const ErrorInfoComponent = ({ error: caught }: ErrorProps) => {
+  const error = caught instanceof Error ? caught : new Error(String(caught))
+
   console.error('Error caught by router', error)
 
   return (
