@@ -390,7 +390,7 @@ class ContractPdfServiceTest extends TestCase
         return $text;
     }
 
-    public function test_append_signature_pages_renders_the_typed_names_and_document_hash(): void
+    public function test_append_signature_pages_renders_the_typed_names_and_audit_trail(): void
     {
         [$process, $unsigned] = $this->completedProcessWithFrozenPdf();
 
@@ -402,8 +402,7 @@ class ContractPdfServiceTest extends TestCase
         $this->assertStringContainsString('Unterschriften', $text);
         $this->assertStringContainsString('Vermittlerin', $text);
         $this->assertStringContainsString('bernehmerin', $text);
-        $this->assertStringContainsString('Vorgangsereignisse', $text);
-        $this->assertStringContainsString(substr($process->unsigned_document_hash, 0, 16), $text);
+        $this->assertStringContainsString('Verlauf des Vertrags', $text);
     }
 
     public function test_append_signature_pages_does_not_re_render_the_contract_template(): void
