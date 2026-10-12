@@ -81,11 +81,13 @@ Steps are optional and can be taken in any order. Each step derives its status i
 | Step | not_started / pending | in_progress | finished |
 |---|---|---|---|
 | Pre-inspection | no pre-inspection records exist for the applicant + animal type (mediator creates them manually) | at least one pre-inspection exists but has not yet been submitted by the inspector | all pre-inspections have been submitted (regardless of verdict) |
-| Contract | `contract_signed` is false | — (no in-progress state currently derived; see note below) | `contract_signed` is true |
+| Contract | `not_started`: no signing process exists yet, or the latest one is `cancelled`/`expired`. `pending`: the latest signing process is `awaiting_mediator_signature` or `awaiting_adopter_signature` | — (no separate in-progress state; the Advanced Version's in-flight signing is reported as `pending`, not `in_progress`; see note below) | `contract_signed` is true |
 | Transport | `transport_id` is null | transport assigned (details TBD) | transport completed (TBD) |
 | Handover | `handed_over_at` is null | — | `handed_over_at` is set |
 
-The contract step is currently binary (`getContractStatusAttribute()` only checks `contract_signed`) because the feature only supports the Simple Version today — see [features/contract.md](./features/contract.md). The Advanced Version (generated PDF, separate mediator/adopter signing) will need this reworked; the shape of that rework depends on the still-open questions in [ADR-012](./ADRs/ADR-012-contract-generation-and-signing.md) and isn't designed yet.
+`getContractStatusAttribute()` derives the step's coarse three-value status from `contract_signed` plus the adoption's latest `ContractSigningProcess` (if any), covering both the Simple Version (mark-signed-by-hand, no process at all) and the Advanced Version's native signing flow — see [features/contract.md](./features/contract.md) and [ADR-012](./ADRs/ADR-012-contract-generation-and-signing.md) for the full state machine and design rationale. The full-fidelity, five-value status (`ContractSigningStatus`, with German labels for the admin UI) is exposed separately via `AdoptionDetailResource::contract_signing_process`; this step's status stays a coarse summary to match the other steps in this table.
+
+A cancelled or expired signing process resets the step back to `not_started` rather than leaving it stuck — this lets the mediator regenerate and start a fresh signing process for the same adoption.
 
 #### Relations
 

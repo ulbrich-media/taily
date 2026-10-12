@@ -43,6 +43,11 @@ interface AdoptionEditContractPageProps {
   breadcrumb?: ReactNode
 }
 
+/**
+ * Manual path: record that the contract was signed outside Taily, with the
+ * signing date and the signed file. The digital signing flow lives in
+ * AdoptionStartContractSigningPage.
+ */
 export function AdoptionEditContractPage({
   adoption,
   onClose,
@@ -50,13 +55,17 @@ export function AdoptionEditContractPage({
 }: AdoptionEditContractPageProps) {
   const queryClient = useQueryClient()
 
+  const isNew = !adoption.contract_signed
+
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [removeExistingFile, setRemoveExistingFile] = useState(false)
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
-      contract_signed: adoption.contract_signed,
+      // Opening this dialog on an unsigned contract means the mediator is
+      // about to confirm a signature, so start with the switch on.
+      contract_signed: true,
       contract_signed_at: toDateFieldValue(adoption.contract_signed_at),
     },
   })
@@ -82,8 +91,8 @@ export function AdoptionEditContractPage({
       toast.success(response.message || 'Schutzvertrag erfolgreich gespeichert')
       onClose()
     },
-    onError: () => {
-      toast.error('Fehler beim Speichern des Schutzvertrags')
+    onError: (error) => {
+      toast.error(error.message || 'Fehler beim Speichern des Schutzvertrags')
     },
   })
 
@@ -128,9 +137,14 @@ export function AdoptionEditContractPage({
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Schutzvertrag bearbeiten</DialogTitle>
+          <DialogTitle>
+            {isNew
+              ? 'Unterschriebenen Vertrag erfassen'
+              : 'Schutzvertrag bearbeiten'}
+          </DialogTitle>
           <DialogDescription>
-            Unterzeichnungsstatus und Schutzvertragsdatei verwalten.
+            Der Vertrag wurde außerhalb von Taily unterschrieben. Hinterlege
+            Unterzeichnungsdatum und die unterschriebene Datei.
           </DialogDescription>
         </DialogHeader>
         <form

@@ -182,6 +182,18 @@ A Docker image built from the same distribution package, with instance data in n
 
 ---
 
+## Scheduled Tasks
+
+Taily's default hosting story (see [Constraint 1](ADRs/ADR-012-contract-generation-and-signing.md#constraint-1-hosting)) has no background worker or queue infrastructure, but Laravel's scheduler still requires one operator-configured cron entry to drive time-based jobs (e.g. contract-signing reminders and expiry, registered via `withSchedule()` in `bootstrap/app.php`). This is the first operational requirement of its kind — every install needs a single cron entry invoking Laravel's own dispatcher once a minute:
+
+```bash
+* * * * * php /path-to-your-install/artisan schedule:run >> /dev/null 2>&1
+```
+
+This does not run a persistent process or require Node/Docker — `schedule:run` is a normal one-shot PHP invocation that exits immediately if nothing is due, consistent with the shared-hosting constraint. It belongs in the `taily-app` scaffold's install documentation too (tracked separately, out of scope of this doc).
+
+---
+
 ## What Must Never Be in the Distribution Package
 
 - `.env` or any file containing secrets

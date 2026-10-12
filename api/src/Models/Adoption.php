@@ -7,8 +7,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Taily\Enums\ContractSigningStatus;
 
 class Adoption extends Model implements HasMedia
 {
@@ -72,6 +74,16 @@ class Adoption extends Model implements HasMedia
         return $this->hasMany(PreInspection::class, 'person_id', 'applicant_id');
     }
 
+    public function contractSigningProcesses(): HasMany
+    {
+        return $this->hasMany(ContractSigningProcess::class);
+    }
+
+    public function latestContractSigningProcess(): HasOne
+    {
+        return $this->hasOne(ContractSigningProcess::class)->latestOfMany('created_at');
+    }
+
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('contract')->singleFile()->useDisk('adoption-contract');
@@ -79,7 +91,31 @@ class Adoption extends Model implements HasMedia
 
     public function getContractStatusAttribute(): string
     {
-        return $this->contract_signed ? 'finished' : 'not_started';
+        if ($this->contract_signed) {
+            return 'finished';
+        }
+
+        $signingProcess = $this->getRelationValue('latestContractSigningProcess');
+
+        if ($signingProcess?->status->isActive()) {
+            return 'pending';
+        }
+
+        return 'not_started';
+    }
+
+    /**
+     * How the signed contract came to be: 'digital' when the native signing
+     * flow completed, 'manual' when it was confirmed by hand, null while
+     * there is no signed contract.
+     */
+    public function getContractSourceAttribute(): ?string
+    {
+        if ($this->getRelationValue('latestContractSigningProcess')?->status === ContractSigningStatus::COMPLETED) {
+            return 'digital';
+        }
+
+        return $this->contract_signed ? 'manual' : null;
     }
 
     public function getTransportStatusAttribute(): string

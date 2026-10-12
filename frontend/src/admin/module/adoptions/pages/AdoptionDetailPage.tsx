@@ -8,6 +8,7 @@ import {
   CardTitle,
 } from '@/shadcn/components/ui/card'
 import { PreInspectionList } from '@/admin/module/pre-inspections/components/PreInspectionList'
+import { AdoptionContractSummary } from '@/admin/module/adoptions/components/AdoptionContractSummary.tsx'
 import { BadgeBySet } from '@/shadcn/components/ui/badge-utils.tsx'
 import {
   InfoRow,
@@ -15,8 +16,6 @@ import {
 } from '@/shadcn/components/common/info-row.tsx'
 import { formatApiDate } from '@/lib/dates.utils.ts'
 import { Spinner } from '@/shadcn/components/ui/spinner.tsx'
-import { FilePenLineIcon } from 'lucide-react'
-import { Button } from '@/shadcn/components/ui/button.tsx'
 import { getTransportTitle } from '@/admin/module/transports/utils.ts'
 
 interface AdoptionDetailPageProps {
@@ -25,7 +24,9 @@ interface AdoptionDetailPageProps {
   inspectionsLoading: boolean
   inspectionsError: boolean
   editInternalNotesAction: (hasNote: boolean) => ReactNode
+  startContractAction: ReactNode
   editContractAction: ReactNode
+  cancelSigningAction: ReactNode
   editPreInspectionAction: (hasNote: boolean) => ReactNode
   newInspectionAction: ReactNode
   cancelAction: ReactNode
@@ -41,7 +42,9 @@ export function AdoptionDetailPage({
   inspectionsLoading,
   inspectionsError,
   editInternalNotesAction,
+  startContractAction,
   editContractAction,
+  cancelSigningAction,
   editPreInspectionAction,
   newInspectionAction,
   cancelAction,
@@ -135,33 +138,12 @@ export function AdoptionDetailPage({
           />
         }
       >
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <InfoRow label="Unterzeichnet">
-              {adoption.contract_signed ? 'Ja' : 'Nein'}
-            </InfoRow>
-            {adoption.contract_signed_at && (
-              <InfoRow label="Unterzeichnet am">
-                {formatApiDate(adoption.contract_signed_at)}
-              </InfoRow>
-            )}
-            {adoption.contract_file && (
-              <InfoRow label="Schutzvertrag">
-                <Button variant="ghost" size="sm" asChild>
-                  <a
-                    href={adoption.contract_file.url}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    <FilePenLineIcon className="size-4" />
-                    {adoption.contract_file.name}
-                  </a>
-                </Button>
-              </InfoRow>
-            )}
-          </div>
-          <div className="flex justify-end">{editContractAction}</div>
-        </div>
+        <AdoptionContractSummary
+          adoption={adoption}
+          startContractAction={startContractAction}
+          editContractAction={editContractAction}
+          cancelSigningAction={cancelSigningAction}
+        />
       </StepCard>
 
       <StepCard

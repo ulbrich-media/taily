@@ -7,6 +7,7 @@ import {
   EmptyTitle,
 } from '@/shadcn/components/ui/empty'
 import { Card, CardContent } from '@/shadcn/components/ui/card'
+import { CardTable } from '@/components/card/CardTable'
 import { type LucideIcon, SlashSquare } from 'lucide-react'
 
 interface TableListViewProps<T> {
@@ -42,7 +43,9 @@ export function TableListView<T>({
 
   return (
     <Card>
-      <CardContent>{children(data)}</CardContent>
+      <CardContent>
+        <CardTable>{children(data)}</CardTable>
+      </CardContent>
     </Card>
   )
 }

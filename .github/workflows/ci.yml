@@ -189,6 +189,10 @@ jobs:
         working-directory: taily-app
         run: php artisan taily:smoke-test-mail
 
+      - name: Verify auth/passkey configuration resolves correctly
+        working-directory: taily-app
+        run: php artisan taily:smoke-test-auth
+
   frontend-build:
     name: Frontend Build
     runs-on: ubuntu-latest

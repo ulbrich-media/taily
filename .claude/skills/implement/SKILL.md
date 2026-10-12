@@ -3,7 +3,7 @@ name: implement
 description: Implement a finalized issue plan and open a PR, or iterate on an existing PR from review/comment feedback. Use when the user runs /implement.
 ---
 
-Implement code changes and communicate the result through the structured JSON output described in Step 4 — you have no tool access to post comments or otherwise write to GitHub, with exactly two exceptions, both for the same reason: in build mode you create the PR yourself (Step 3.5), and in iterate mode you post your review replies and summary comment yourself (Step 3.6), because each must be authored by you while your own credentials are still live — a deterministic step running after your turn ends only has a dead token or the generic Actions identity to work with. Ready-toggling is the one thing still left to a deterministic workflow step outside this skill, since it's a state change rather than something that needs your authorship attached.
+Implement code changes and communicate the result through the structured JSON output described in Step 4 — you have no tool access to post comments or otherwise write to GitHub, with exactly three exceptions, all for the same reason: in build mode you post a short working notice on the issue once the plan is confirmed ready (Step 1.5) and later convert that same comment into a pointer to the PR (Step 3.5), and in iterate mode you post your review replies and summary comment yourself (Step 3.6) — because each must be authored by you while your own credentials are still live. A deterministic step running after your turn ends only has a dead token or the generic Actions identity to work with. Ready-toggling is the one thing still left to a deterministic workflow step outside this skill, since it's a state change rather than something that needs your authorship attached.
 
 You were handed `IS_PULL_REQUEST` (`true`/`false`) and an issue/PR number in your prompt — that tells you your mode unambiguously, no detection needed beyond that.
 
@@ -23,6 +23,16 @@ If one is found: stop immediately. Output `mode: "blocked"` with a `blocked_reas
 
 - No marker comment at all, or Status is not "Ready to implement": stop. Output `mode: "blocked"` with a specific `blocked_reason` (e.g. "no plan comment found — run `@claude refine` first" or "plan is still marked Currently being refined").
 
+## Step 1.5 — Post a working notice (build mode only)
+
+Once you've confirmed the plan is Ready and you're actually about to build (i.e. Step 0/1 didn't block), post a short plain comment on the issue announcing you're starting, and capture its id — you'll convert this same comment into a pointer to the PR once it exists (Step 3.5), rather than leaving it stranded or posting a second comment later:
+
+```
+gh api repos/{owner}/{repo}/issues/{issue_number}/comments -f body="🔄 Implementing this now." --jq '.id'
+```
+
+Keep the id for Step 3.5. Don't post this if Step 0 or Step 1 blocked — a blocked run shouldn't leave a stray "working on it" comment with nothing ever following up on it.
+
 **Iterate mode** (`IS_PULL_REQUEST: true`): read the PR's conversation comments (`gh api repos/{owner}/{repo}/issues/{pr_number}/comments`) and inline review feedback (`gh api repos/{owner}/{repo}/pulls/{pr_number}/comments` and `.../pulls/{pr_number}/reviews`) — note each item's `id` and whether it's an inline review comment or a plain conversation/review-body comment, you'll need both later. There's no persistent "since last run" marker on a PR — read all open feedback and cross-reference it against the current diff (`gh pr diff {pr_number}`), only treating what isn't already reflected in the code as new.
 
 **Evaluate every piece of feedback — don't blindly implement it.** You're not a mail merge for review comments. For each distinct point raised, form your own judgment: implement it if it's correct and applicable; decline it, with your reasoning, if it's factually wrong, conflicts with an established pattern or ADR, is out of scope for this PR, or you simply disagree; ask for clarification if you can't tell what's actually being requested. Disagreeing with a clear explanation is exactly as valid an outcome as making the change — silently complying with feedback you think is wrong is worse than pushing back on it. Every item you evaluate becomes one entry in `feedback_responses` (Step 4), whether you agreed with it or not.
@@ -38,7 +48,7 @@ Hard constraints, all from `AGENTS.md` and the repo's own documented conventions
 - UI components are Shadcn, copied into `frontend/src/components/ui/` — extend/reuse what's there rather than installing another component library (ADR-003).
 - Follow `docs/coding-patterns/`: `route-hooks-and-components.md`, `decoupled-route-and-page.md`, `frontend-links.md` (`FrontendUriBuilder`, never inline the frontend URL), `tokens.md` (`HasAccessToken` vs. self-contained token model), `empty-strings.md` (non-nullable strings default to `''`, not `null`), `api-type-handling.md` (backend responses always through Resources, never raw models; frontend types live one-file-per-entity in `frontend/src/api/types/*.ts` and mirror the Resource; nullable fields are `Type | null`, never `Type | undefined`), `file-storage.md`, `form-reset-after-submit.md`, `media-urls.md`.
 - Any change to `api/routes/api.php`, `api/src/Http/Controllers/Api/`, or `api/src/Http/Resources/Api/` requires a matching hand-edit to `api/public/openapi.yaml` — it is hand-maintained and not auto-generated, and easy to forget.
-- **You are not allowed to add or upgrade a package.** No human is available mid-run to grant the consent `AGENTS.md` requires for this. If the work seems to need a new dependency, don't install it — say so in `blocked_reason` (build mode) or `checks_summary` (iterate mode) instead of proceeding.
+- **You are not allowed to add or upgrade a package.** No human is available mid-run to grant the consent `AGENTS.md` requires for this. If the work seems to need a new dependency, don't install it — say so in `blocked_reason` (build mode) or `checks_summary` (iterate mode) instead of proceeding, and point at `docs/agents/dependency-approval.md` for the procedure (land it on `development` via its own small PR, then re-run `/refine` followed by `/implement`).
 - Keep solutions simple — avoid over-engineering, and follow existing Laravel/React conventions already present in the surrounding code rather than introducing new patterns.
 - UI copy is German; code, identifiers, and comments are English.
 
@@ -70,6 +80,11 @@ Do this immediately after Step 3, before producing the Step 4 JSON:
    > Dependency files changed on this branch (composer.json/lock or package.json/lock). New packages require human consent per AGENTS.md — review before merging.
    ```
 3. Create it: `gh pr create --repo {owner}/{repo} --base development --head "$CLAUDE_BRANCH" --title "<pr_title>" --body "<pr_body>" [--draft]` — using the exact `pr_title`/`pr_body` you're about to report in Step 4 (with the warning prepended per above, if applicable).
+4. Convert the Step 1.5 working notice into a pointer to the PR — edit that same comment in place, don't post a new one:
+   ```
+   gh api repos/{owner}/{repo}/issues/comments/{working_comment_id} -X PATCH -f body="Implementation started — see #{pr_number}"
+   ```
+   If Step 1.5 didn't produce an id for some reason, skip this rather than posting a fresh comment.
 
 Then continue to Step 4 as normal — still produce the full JSON (including `pr_title`/`pr_body` reflecting what you actually used) even though the workflow no longer creates the PR itself; it uses your JSON to verify the PR exists and as a fallback if this step failed for some reason.
 
@@ -107,4 +122,4 @@ End your turn by producing JSON matching the schema you were given, nothing else
 - Force-push, rebase, or run any raw `git` command — you don't have Bash access to git; use `commit_files`/`delete_files` for every commit instead.
 - Edit anything under `.github/workflows/` or `.claude/`.
 - Add, remove, or upgrade a dependency, or otherwise touch a lockfile, without it being something the issue/plan already explicitly asked for.
-- Call `gh pr ready`, `gh pr merge`, `gh issue comment`, or any other GitHub write beyond: the `gh pr create` call in Step 3.5 (build mode), and the `gh pr comment` / `gh api .../replies` calls in Step 3.6 (iterate mode) — those are the entire exception; everything else still goes through the Step 4 JSON.
+- Call `gh pr ready`, `gh pr merge`, or any other GitHub write beyond: the `gh api .../issues/{issue_number}/comments` post and its follow-up PATCH in Step 1.5/3.5 (build mode, the working notice and its conversion), the `gh pr create` call in Step 3.5 (build mode), and the `gh pr comment` / `gh api .../replies` calls in Step 3.6 (iterate mode) — those are the entire exception; everything else still goes through the Step 4 JSON.

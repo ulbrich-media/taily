@@ -1,3 +1,4 @@
+import { CardTable } from '@/components/card/CardTable'
 import { useMemo, type ReactNode } from 'react'
 import { SlashSquareIcon } from 'lucide-react'
 import {
@@ -79,32 +80,34 @@ export function VaccinationListPage({
                 <CardTitle>{group.title}</CardTitle>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Titel</TableHead>
-                      <TableHead>Beschreibung</TableHead>
-                      {renderRowActions && <TableHead></TableHead>}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {group.vaccinations.map((vaccination) => (
-                      <TableRow key={vaccination.id}>
-                        <TableCell className="font-medium">
-                          {vaccination.title}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {vaccination.description || '–'}
-                        </TableCell>
-                        {renderRowActions && (
-                          <TableCell className="text-right">
-                            {renderRowActions(vaccination)}
-                          </TableCell>
-                        )}
+                <CardTable>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Titel</TableHead>
+                        <TableHead>Beschreibung</TableHead>
+                        {renderRowActions && <TableHead></TableHead>}
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {group.vaccinations.map((vaccination) => (
+                        <TableRow key={vaccination.id}>
+                          <TableCell className="font-medium">
+                            {vaccination.title}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {vaccination.description || '–'}
+                          </TableCell>
+                          {renderRowActions && (
+                            <TableCell className="text-right">
+                              {renderRowActions(vaccination)}
+                            </TableCell>
+                          )}
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardTable>
               </CardContent>
             </Card>
           ))}

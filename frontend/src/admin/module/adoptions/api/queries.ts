@@ -1,5 +1,10 @@
 import { queryOptions } from '@tanstack/react-query'
-import { getAdoptions, getAdoption, type AdoptionsFilters } from './requests'
+import {
+  getAdoptions,
+  getAdoption,
+  getContractTemplates,
+  type AdoptionsFilters,
+} from './requests'
 
 export const adoptionQueryKeys = {
   all: ['adoptions'] as const,
@@ -8,6 +13,7 @@ export const adoptionQueryKeys = {
       ? (['adoptions', 'list', filters] as const)
       : (['adoptions', 'list'] as const),
   detail: (id: string) => ['adoptions', 'detail', id] as const,
+  contractTemplates: () => ['adoptions', 'contract-templates'] as const,
 }
 
 export const listAdoptionsQuery = (filters?: AdoptionsFilters) =>
@@ -20,4 +26,10 @@ export const getAdoptionQuery = (id: string) =>
   queryOptions({
     queryKey: adoptionQueryKeys.detail(id),
     queryFn: () => getAdoption(id),
+  })
+
+export const getContractTemplatesQuery = () =>
+  queryOptions({
+    queryKey: adoptionQueryKeys.contractTemplates(),
+    queryFn: () => getContractTemplates(),
   })

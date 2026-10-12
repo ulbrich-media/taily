@@ -118,6 +118,18 @@ class Animal extends Model implements HasMedia
         $this->addMediaCollection('pictures')->useDisk('animal-pictures');
     }
 
+    /**
+     * The animal's profile picture: the first image in the `pictures`
+     * collection, in upload order. The collection can also hold videos,
+     * which are skipped here.
+     */
+    public function getProfilePictureMedia(): ?Media
+    {
+        return $this->getMedia('pictures')
+            ->sortBy('order_column')
+            ->first(fn (Media $media) => str_starts_with($media->mime_type ?? '', 'image/'));
+    }
+
     public function registerMediaConversions(?Media $media = null): void
     {
         if ($media !== null && str_starts_with($media->mime_type ?? '', 'video/')) {
