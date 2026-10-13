@@ -6,6 +6,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Taily\Http\Controllers\Controller;
+use Taily\Http\Requests\AdoptionIndexRequest;
 use Taily\Http\Resources\AdoptionDetailResource;
 use Taily\Http\Resources\AdoptionListResource;
 use Taily\Http\Resources\AnimalListResource;
@@ -26,14 +27,41 @@ class AdoptionController extends Controller
         'latestContractSigningProcess.signers.latestInviteEvent',
     ];
 
-    public function index(Request $request): AnonymousResourceCollection
+    // What an adoption row of the list renders, including its derived step statuses.
+    private const LIST_RELATIONS = [
+        'animal', 'animal.animalType', 'animal.media',
+        'mediator.media', 'applicant.media',
+        'transport',
+        'latestContractSigningProcess',
+        'preInspections',
+    ];
+
+    /**
+     * Paginated, filtered, searched and sorted adoption list. Query contract:
+     * docs/coding-patterns/list-views.md. `per_page=0` only counts the matches.
+     */
+    public function index(AdoptionIndexRequest $request): AnonymousResourceCollection|JsonResponse
     {
-        $adoptions = Adoption::with([...self::DETAIL_RELATIONS, 'preInspections'])
-            ->when($request->filled('animal_id'), fn ($q) => $q->where('animal_id', $request->input('animal_id')))
-            ->when($request->filled('mediator_id'), fn ($q) => $q->where('mediator_id', $request->input('mediator_id')))
-            ->when($request->filled('applicant_id'), fn ($q) => $q->where('applicant_id', $request->input('applicant_id')))
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $query = Adoption::query()
+            ->filterBy($request->filters())
+            ->search($request->searchTerm());
+
+        if ($request->perPage() === 0) {
+            return response()->json([
+                'data' => [],
+                'meta' => [
+                    'current_page' => 1,
+                    'last_page' => 1,
+                    'per_page' => 0,
+                    'total' => $query->count(),
+                ],
+            ]);
+        }
+
+        $adoptions = $query
+            ->with(self::LIST_RELATIONS)
+            ->sortedBy($request->sortKey(), $request->sortDirection())
+            ->paginate($request->perPage());
 
         return AdoptionListResource::collection($adoptions);
     }

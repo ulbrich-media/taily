@@ -13,7 +13,7 @@ Small, bounded lists (organizations, API tokens, users, form templates…) do **
 | Param | Example | Meaning |
 |---|---|---|
 | `page` | `2` | 1-based page number |
-| `per_page` | `25` | Page size, capped by the FormRequest (default 25, max 100) |
+| `per_page` | `25` | Page size, capped by the FormRequest (default 25, max 100). `0` only counts, see below |
 | `sort` | `-created_at` | One sort key; leading `-` means descending |
 | `filter[<name>]` | `filter[status]=pending,in_progress` | Comma-separated values are OR-ed within one filter; different filters are AND-ed |
 | `search` | `search=müller` | Free text over the list's search columns |
@@ -26,23 +26,38 @@ Response is Laravel's paginated resource collection:
 { "data": [ … ], "meta": { "current_page": 1, "last_page": 8, "per_page": 25, "total": 187 }, "links": { … } }
 ```
 
+### Counting without loading rows
+
+`per_page=0` on the same endpoint answers with the total of the filtered query and no rows. Filters and search apply, nothing is eager-loaded or sorted, and a single `count` query runs. Use it for badges and preset counters.
+
+```json
+{ "data": [], "meta": { "current_page": 1, "last_page": 1, "per_page": 0, "total": 42 } }
+```
+
 ## Backend
 
 One list = one `FormRequest` + model scopes + a short controller method.
 
 ```php
-public function index(AdoptionIndexRequest $request): AnonymousResourceCollection
+public function index(AdoptionIndexRequest $request): AnonymousResourceCollection|JsonResponse
 {
-    $adoptions = Adoption::query()
-        ->with(self::LIST_RELATIONS)
-        ->filter($request->filters())   // scopes, see below
-        ->search($request->search())
-        ->sorted($request->sort())
-        ->paginate($request->perPage());
+    $query = Adoption::query()
+        ->filterBy($request->filters())   // scopes, see below
+        ->search($request->searchTerm());
 
-    return AdoptionListResource::collection($adoptions);
+    if ($request->perPage() === 0) {
+        return response()->json(['data' => [], 'meta' => [/* …, */ 'total' => $query->count()]]);
+    }
+
+    return AdoptionListResource::collection(
+        $query->with(self::LIST_RELATIONS)
+            ->sortedBy($request->sortKey(), $request->sortDirection())
+            ->paginate($request->perPage())
+    );
 }
 ```
+
+See `AdoptionController::index`, `AdoptionIndexRequest` and the scopes on `Adoption` for the reference implementation.
 
 ### FormRequest owns the whitelist
 
@@ -54,7 +69,9 @@ The request declares the allowed sort keys, filter names and filter values, and 
 - **A filter on a derived value is a named scope** that expresses the accessor's rule in SQL (e.g. `Adoption::scopeContractStatus()` next to `getContractStatusAttribute()`). Add a test that asserts accessor and scope agree for every state.
 - **Sorting by a relation column** needs a join (or subquery). Select `table.*` explicitly so eager loading and resources keep working.
 - **Search** is `LIKE` over the list's columns plus `orWhereHas` for related names. Group the `orWhere` clauses so they don't escape other constraints. Escape `%` and `_` in the term.
+- Sort by a related name with a correlated subquery in `orderBy`, not a join: the query keeps selecting only the list's own columns and counts stay exact.
 - Always add a deterministic tie-breaker (`id`) to the sort so pages don't overlap.
+- **Derived step statuses are one filter per step** (`filter[contract_status]=pending,finished`). Values of one step are OR-ed, different steps are AND-ed, which matches the general rule above.
 
 ### Keep list rows slim
 
