@@ -83,6 +83,7 @@ npm run format
 - **Frontend links via callback** — All backend-generated frontend URLs must go through `FrontendUriBuilder`; never build callback URLs inline. → [frontend-links](docs/coding-patterns/frontend-links.md)
 - **Token patterns** — Use the `HasAccessToken` trait to gate access to an existing record; use a self-contained token model when the token record is the business object. → [tokens](docs/coding-patterns/tokens.md)
 - **Empty strings** — String fields default to `''` (set via `$attributes` in the model), never `null`, unless `null` carries distinct semantic meaning. → [empty-strings](docs/coding-patterns/empty-strings.md)
+- **List views** — Large lists (adoptions, animals, people) are paginated, sorted, filtered and searched on the server via query params; state lives in the URL; no client-side data tables. → [list-views](docs/coding-patterns/list-views.md)
 
 ## Public API
 

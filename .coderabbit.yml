@@ -37,6 +37,12 @@ reviews:
     - Empty-string defaults must be set in the model via `protected $attributes`, not via `->default('')` in the migration.
     - Flag any seeder or factory that sets a string field to `null` where the column is non-nullable.
 
+    **List views** (`docs/coding-patterns/list-views.md`):
+    - Large lists (adoptions, animals, people) must paginate, sort, filter and search on the server via `page`, `per_page`, `sort`, `filter[...]` and `search`. Flag any such index endpoint that returns an unpaginated `->get()` or any frontend code that sorts/filters/searches the full list client-side.
+    - Sort keys and filter names must be whitelisted in a FormRequest. Flag any `orderBy($request->input(...))` or `where($request->input(...))` that uses client input as a column name.
+    - Filters on derived values (accessors) must be model scopes with a test asserting accessor and scope agree.
+    - List and filter state belongs in the URL (route `validateSearch`), not in component state. Flag new list pages that don't use it.
+
     **File storage** (`docs/coding-patterns/file-storage.md`):
     - Every model that stores media must use a dedicated disk in `registerMediaCollections()`. Flag any `useDisk('local')` or `useDisk('public')` on a model-specific collection — each file type needs its own named disk.
     - Flag any new disk in `filesystems.php` whose `root` path is nested inside another disk's root.
