@@ -13,23 +13,25 @@ import { Toaster } from '@/shadcn/components/ui/sonner.tsx'
 // Import the generated route tree
 import { routeTree } from './routeTree.gen'
 
-// Whether the navigation currently in flight may scroll the page to the top.
-let resetScrollOnRender = true
-
 const router = createRouter({
   routeTree,
   context: {
     isAdmin: false,
   },
-  // Called after a navigation rendered; returning false skips the scroll reset.
-  scrollRestoration: () => resetScrollOnRender,
 })
 
+// Dialog routes must not move the page behind them. The router resets scroll
+// once per navigation via its one-shot `_scroll.n` flag (set from `resetScroll`
+// on navigate/Link). We only ever turn it off here, never back on, so an
+// explicit `resetScroll: false` is respected.
 router.subscribe('onBeforeLoad', ({ fromLocation, toLocation }) => {
-  resetScrollOnRender = shouldResetScroll(
+  const reset = shouldResetScroll(
     fromLocation ? router.matchRoutes(fromLocation) : [],
     router.matchRoutes(toLocation)
   )
+  if (!reset) {
+    router._scroll.n = false
+  }
 })
 
 declare module '@tanstack/react-router' {

@@ -26,7 +26,7 @@ export const Route = createFileRoute(
       })
     )
   },
-  staticData: { breadcrumb: 'Vorkontrolle', dialog: true },
+  staticData: { breadcrumb: 'Vorkontrolle' },
   component: RouteComponent,
 })
 
