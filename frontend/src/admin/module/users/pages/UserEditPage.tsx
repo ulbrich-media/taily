@@ -6,6 +6,8 @@ import { z } from 'zod'
 import { userQueryKeys } from '@/admin/module/users/api/queries'
 import { updateUser } from '@/admin/module/users/api/requests'
 import type { UserResource } from '@/api/types/users'
+import type { PersonListResource } from '@/api/types/people'
+import { PersonSelect } from '@/components/field/PersonSelect'
 import {
   Dialog,
   DialogContent,
@@ -38,17 +40,24 @@ const updateUserSchema = z.object({
   role: z.enum(UserRole, {
     error: 'Bitte wähle eine Rolle aus',
   }),
+  person_id: z.string().nullable(),
 })
 
 type UpdateUserFormData = z.infer<typeof updateUserSchema>
 
 interface UserEditPageProps {
   user: UserResource
+  persons: PersonListResource[]
   onClose: () => void
   breadcrumb?: ReactNode
 }
 
-export function UserEditPage({ user, onClose, breadcrumb }: UserEditPageProps) {
+export function UserEditPage({
+  user,
+  persons,
+  onClose,
+  breadcrumb,
+}: UserEditPageProps) {
   const queryClient = useQueryClient()
 
   const form = useForm<UpdateUserFormData>({
@@ -57,6 +66,7 @@ export function UserEditPage({ user, onClose, breadcrumb }: UserEditPageProps) {
       name: user.name,
       email: user.email,
       role: user.role,
+      person_id: user.person_id,
     },
   })
 
@@ -119,6 +129,15 @@ export function UserEditPage({ user, onClose, breadcrumb }: UserEditPageProps) {
                   { value: UserRole.User, label: 'Benutzer' },
                   { value: UserRole.Admin, label: 'Administrator' },
                 ]}
+              />
+
+              <PersonSelect
+                name="person_id"
+                control={form.control}
+                label="Person"
+                description="Verknüpft den Benutzer mit einer Person (optional)."
+                persons={persons}
+                canRemove
               />
             </FieldGroup>
 
