@@ -2,6 +2,7 @@
 
 namespace Taily\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -222,5 +223,143 @@ class Animal extends Model implements HasMedia
     public function sponsor(): BelongsTo
     {
         return $this->belongsTo(Person::class, 'sponsor_id');
+    }
+
+    /**
+     * Apply the filters of the animal list. Unknown names are ignored here;
+     * the list request rejects them before they get this far.
+     *
+     * @param  array<string, string|list<string>>  $filters
+     */
+    public function scopeFilterBy(Builder $query, array $filters): void
+    {
+        foreach ($filters as $name => $value) {
+            if ($value === [] || $value === null || $value === '') {
+                continue;
+            }
+
+            match ($name) {
+                'animal_type_id' => $query->where('animals.animal_type_id', $value),
+                'status' => $query->whereListStatus($value),
+                'assigned_agent_id' => $value === 'none'
+                    ? $query->whereNull('animals.assigned_agent_id')
+                    : $query->where('animals.assigned_agent_id', $value),
+                'published' => $query->where('animals.do_publish', (bool) $value),
+                'neutered' => $query->where('animals.is_neutered', (bool) $value),
+                'has_image' => $query->whereHasImage((bool) $value),
+                'boarding' => $query->where('animals.is_boarding_animal', true),
+                'reserved' => $query->where('animals.is_reserved', true),
+                'has_sponsor' => $query->where(function (Builder $sponsor) {
+                    $sponsor->whereNotNull('animals.sponsor_id')
+                        ->orWhere(fn (Builder $external) => $external
+                            ->whereNotNull('animals.sponsor_external')
+                            ->where('animals.sponsor_external', '!=', ''));
+                }),
+                default => null,
+            };
+        }
+    }
+
+    /**
+     * Status is derived from the adoptions, there is no column: `adopted` has
+     * a done adoption, `in_progress` has a pending or in-progress one (and no
+     * done one), `open` has neither. Canceled adoptions do not count.
+     *
+     * @param  list<string>  $statuses
+     */
+    public function scopeWhereListStatus(Builder $query, array $statuses): void
+    {
+        $adoption = fn (array $states) => function ($sub) use ($states) {
+            $sub->selectRaw('1')
+                ->from('adoptions')
+                ->whereColumn('adoptions.animal_id', 'animals.id')
+                ->whereIn('adoptions.status', $states);
+        };
+
+        $query->where(function (Builder $any) use ($statuses, $adoption) {
+            foreach ($statuses as $status) {
+                $any->orWhere(fn (Builder $one) => match ($status) {
+                    'adopted' => $one->whereExists($adoption(['done'])),
+                    'in_progress' => $one->whereNotExists($adoption(['done']))
+                        ->whereExists($adoption(['pending', 'in_progress'])),
+                    'open' => $one->whereNotExists($adoption(['done', 'pending', 'in_progress'])),
+                    default => $one->whereRaw('1 = 0'),
+                });
+            }
+        });
+    }
+
+    /**
+     * At least one image in the `pictures` collection; videos do not count.
+     */
+    public function scopeWhereHasImage(Builder $query, bool $hasImage = true): void
+    {
+        $images = function ($sub) {
+            $sub->selectRaw('1')
+                ->from('media')
+                ->where('media.model_type', (new self)->getMorphClass())
+                ->whereColumn('media.model_id', 'animals.id')
+                ->where('media.collection_name', 'pictures')
+                ->where('media.mime_type', 'like', 'image/%');
+        };
+
+        $hasImage ? $query->whereExists($images) : $query->whereNotExists($images);
+    }
+
+    /**
+     * Match the name, old name, animal number, chip ids, origin organization,
+     * external sponsor or the full name of the owner or sponsor. Every word
+     * has to match the person's first or last name, so "Anna Müller" and
+     * "Müller Anna" find the same person.
+     */
+    public function scopeSearch(Builder $query, ?string $term): void
+    {
+        $term = trim((string) $term);
+
+        if ($term === '') {
+            return;
+        }
+
+        $words = preg_split('/\s+/u', $term, -1, PREG_SPLIT_NO_EMPTY);
+        $person = function (Builder $person) use ($words) {
+            foreach ($words as $word) {
+                $person->where(function (Builder $name) use ($word) {
+                    self::whereLike($name, 'people.first_name', $word);
+                    self::whereLike($name, 'people.last_name', $word, 'or');
+                });
+            }
+        };
+
+        $query->where(function (Builder $search) use ($term, $person) {
+            foreach (['name', 'old_name', 'animal_number', 'tasso_id', 'findefix_id', 'trace_id', 'origin_organization', 'sponsor_external'] as $column) {
+                self::whereLike($search, "animals.{$column}", $term, 'or');
+            }
+
+            $search->orWhereHas('owner', $person)->orWhereHas('sponsor', $person);
+        });
+    }
+
+    /**
+     * Nulls in `date_of_birth` come last in both directions. Ties are broken
+     * by id, so rows never repeat or vanish between pages.
+     */
+    public function scopeSortedBy(Builder $query, string $key, string $direction = 'desc'): void
+    {
+        if ($key === 'date_of_birth') {
+            $query->orderByRaw('animals.date_of_birth is null');
+        }
+
+        $query->orderBy("animals.{$key}", $direction)->orderBy('animals.id');
+    }
+
+    /**
+     * Case-insensitive contains match; LIKE wildcards in the term are escaped.
+     */
+    private static function whereLike(Builder $query, string $column, string $term, string $boolean = 'and'): void
+    {
+        $pattern = '%'.str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $term).'%';
+        $column = $query->getQuery()->getGrammar()->wrap($column);
+
+        $query->whereRaw("{$column} like ? escape ?", [$pattern, '!'], $boolean);
     }
 }

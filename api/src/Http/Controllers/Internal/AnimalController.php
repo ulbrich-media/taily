@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Validation\Rule;
 use Taily\Http\Controllers\Controller;
+use Taily\Http\Requests\AnimalIndexRequest;
 use Taily\Http\Resources\AnimalDetailResource;
 use Taily\Http\Resources\AnimalListResource;
 use Taily\Models\Animal;
@@ -15,20 +16,31 @@ use Taily\Services\AnimalTraitService;
 class AnimalController extends Controller
 {
     /**
-     * Display a listing of animals.
-     * Supports filtering via query parameters:
-     * - animal_type_id: Filter by specific animal type
+     * Display a page of animals (see AnimalIndexRequest for the query
+     * contract). `per_page=0` only counts the filtered animals.
      */
-    public function index(Request $request): AnonymousResourceCollection
+    public function index(AnimalIndexRequest $request): AnonymousResourceCollection|JsonResponse
     {
-        $query = Animal::query();
+        $query = Animal::query()
+            ->filterBy($request->filters())
+            ->search($request->searchTerm());
 
-        // Apply animal type filter if provided
-        if ($request->has('animal_type_id')) {
-            $query->where('animal_type_id', $request->input('animal_type_id'));
+        if ($request->perPage() === 0) {
+            return response()->json([
+                'data' => [],
+                'meta' => [
+                    'current_page' => 1,
+                    'last_page' => 1,
+                    'per_page' => 0,
+                    'total' => $query->count(),
+                ],
+            ]);
         }
 
-        $animals = $query->with(['media', 'animalType'])->orderBy('created_at', 'desc')->get();
+        $animals = $query
+            ->with(['media', 'animalType'])
+            ->sortedBy($request->sortKey(), $request->sortDirection())
+            ->paginate($request->perPage());
 
         return AnimalListResource::collection($animals);
     }
