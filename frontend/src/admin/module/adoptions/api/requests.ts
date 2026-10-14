@@ -1,5 +1,13 @@
 import { apiRequest } from '@/lib/api'
-import type { ContractTemplate } from '@/api/types/adoptions'
+import type {
+  AdoptionListResource,
+  ContractTemplate,
+} from '@/api/types/adoptions'
+import type { PaginatedResponse } from '@/api/types/pagination'
+import {
+  buildAdoptionListQuery,
+  type AdoptionListParams,
+} from '../adoption-list.search'
 import type {
   Adoption,
   AdoptionResponse,
@@ -16,9 +24,18 @@ export interface AdoptionsFilters {
   mediator_id?: string
 }
 
-// The list endpoint is paginated (max. 100 per page, see ADR-014). Until the
-// list views paginate, this fetches the first page in full.
+// The list endpoint is paginated (max. 100 per page, see ADR-014). This
+// fetches the first page in full for the small, scoped lists embedded in
+// person and transport pages; the adoption list view uses `getAdoptionsPage`.
 const MAX_PER_PAGE = 100
+
+export async function getAdoptionsPage(
+  params: AdoptionListParams
+): Promise<PaginatedResponse<AdoptionListResource>> {
+  return apiRequest<PaginatedResponse<AdoptionListResource>>(
+    `adoptions?${buildAdoptionListQuery(params)}`
+  )
+}
 
 export async function getAdoptions(
   filters?: AdoptionsFilters

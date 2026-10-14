@@ -92,31 +92,40 @@ Don't build a generic query builder up front. If sort-direction parsing or the `
 The route declares the search params with `validateSearch` (zod), including defaults. Changing a filter, sort or search term resets `page` to 1.
 
 - The route reads params, passes them into the query and the page component as props; the page reports changes via callback props (see [decoupled-route-and-page.md](decoupled-route-and-page.md)).
-- Query key includes the full params object, and the query uses `placeholderData: keepPreviousData` so the list doesn't flash while paging.
-- Search input is debounced (~300 ms) before it hits the URL.
+- Query key includes the full params object, and the query uses `placeholderData: keepPreviousData` so the list doesn't flash while paging. The route uses `stripSearchParams(defaults)` so default values stay out of the URL.
+- Search is applied explicitly (search button or Enter), so typing never changes the URL or triggers a request.
 
 ### Shared building blocks
 
-Table and card views are two renderers over the same result:
+Table and card views are two renderers over the same result. The generic parts live in `frontend/src/components/list/`, the list-specific ones next to the list's module (reference: adoptions).
 
-- `ListToolbar` — search, filter controls, presets, view toggle
-- `SortableHead` — table header cell that toggles sort; cards use a "Sort by" select with the same sort keys
-- `ListPagination` — built on shadcn pagination, driven by `meta`
-- `useListSearchParams` — reads/updates the URL state (page reset, defaults)
+- `ListToolbar` — filter bar: `search`, `filters` (declarative `ToolbarFilter[]`: `multi`, `single`, `sections`) and `trailing` controls (sort, view switch). Mobile: search on its own row, filters below. From `md`: search left, filters right on one row. Filters that don't fit collapse, last first, into one "Filter" button with a submenu per filter, measured with a `ResizeObserver`; never a second line, never horizontal scrolling. An icon-only reset button (`onReset`/`canReset`) always sits behind the last filter or the "Filter" button, disabled while nothing is active
+- `FilterDropdown` — a single filter as dropdown: checkbox items for multi-value filters, a radio group (with an "Alle …" entry) for single-value filters; both show the stock shadcn check; also used for the sort order in `trailing`. Triggers are ghost `sm` buttons showing only the filter name; an active filter shows a primary-coloured dot (`components/icons/circle.tsx`) instead of the chevron
+- `SearchInput` — input group with an explicit search button; the term is applied on submit (button or Enter), not while typing
+- `SortableHead` — table header cell that toggles sort; cards use a "Sortierung" select with the same sort keys
+- `ListPagination` — built on the shadcn `Pagination`, driven by `meta`
+- `list-search.ts` — `applyListChange` (every change except `page` resets the page), sort helpers
+- `<list>.search.ts` in the module — zod schema with defaults, `buildQuery` for the request contract, `hasActiveFilters`
 
 No table library is used; row rendering is the existing shadcn `Table` / card components.
 
+### View: table or cards
+
+The view is URL state like everything else (`view=table|cards`, default `table`). Both renderers are in the DOM and CSS picks one: cards are always shown below `lg`, so small screens need no JS media query; the view toggle is only offered from `lg`. The view is presentation only and is excluded from the loader deps and the query key. Changing it keeps the page.
+
+Sorting is available in both views: column headers toggle it in the table, and the toolbar's "Sortierung" dropdown offers every sort key (the only way with cards).
+
 ### Presets
 
-Presets are **hardcoded per list** as named bundles of search params, defined next to the list's module:
+Presets are **hardcoded per list** as named bundles of filters, defined next to the list's module (reference: `adoption-list.presets.ts`):
 
 ```ts
 export const adoptionPresets = [
-  { label: 'Meine aktiven Vermittlungen', params: { filter: { status: ['pending', 'in_progress'], mediator_id: 'me' } } },
+  { key: 'unassigned', label: 'Neu und ohne Vermittler', filters: { status: ['pending'], mediator_id: 'none' } },
 ]
 ```
 
-A preset is not a separate state: selecting one just writes its params to the URL; the preset appears active when the URL matches it.
+A preset is not a separate state: selecting one writes its filters to the URL, resetting every other filter first. The preset shows as checked while exactly its filters are active (search, sort, view and page don't count). In the toolbar it is a `multi` filter of independent checkbox items, first in the list, so it collapses last. At most one preset matches at a time, so it behaves like a radio group; unchecking the active one clears all filters.
 
 ### Pickers
 

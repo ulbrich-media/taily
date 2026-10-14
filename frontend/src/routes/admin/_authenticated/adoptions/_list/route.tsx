@@ -1,26 +1,74 @@
-import { createFileRoute, Outlet } from '@tanstack/react-router'
+import {
+  createFileRoute,
+  Outlet,
+  stripSearchParams,
+} from '@tanstack/react-router'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { Plus } from 'lucide-react'
 import { AdoptionListPage } from '@/admin/module/adoptions/pages/AdoptionListPage'
 import { useBreadcrumbs } from '@/router/useBreadcrumbs'
 import { BreadcrumbNav } from '@/router/BreadcrumbNav'
 import { queryClient } from '@/lib/queryClient'
-import { listAdoptionsQuery } from '@/admin/module/adoptions/api/queries'
-import { useSuspenseQuery } from '@tanstack/react-query'
+import { listAdoptionsPageQuery } from '@/admin/module/adoptions/api/queries'
+import { listAnimalTypesQuery } from '@/admin/module/animal-types/api/queries'
+import { listPeopleQuery } from '@/admin/module/people/api/queries'
+import {
+  adoptionListSearchDefaults,
+  adoptionListSearchSchema,
+  toAdoptionListParams,
+  type AdoptionListSearch,
+} from '@/admin/module/adoptions/adoption-list.search'
+import { applyListChange } from '@/components/list/list-search'
 import { Button } from '@/shadcn/components/ui/button'
-import { Plus } from 'lucide-react'
 import { Route as CreateRoute } from '@/routes/admin/_authenticated/adoptions/_list/create'
 import { Route as DetailRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/index'
 import type { AdoptionListResource } from '@/api/types/adoptions'
 
 export const Route = createFileRoute('/admin/_authenticated/adoptions/_list')({
-  loader: async () => {
-    await queryClient.ensureQueryData(listAdoptionsQuery())
+  validateSearch: adoptionListSearchSchema,
+  search: {
+    // Keep the URL short: parameters at their default are not written.
+    middlewares: [stripSearchParams(adoptionListSearchDefaults)],
+  },
+  // `view` is presentation only and must not trigger a reload.
+  loaderDeps: ({ search }) => toAdoptionListParams(search),
+  loader: async ({ deps }) => {
+    await Promise.all([
+      queryClient.ensureQueryData(listAdoptionsPageQuery(deps)),
+      queryClient.ensureQueryData(listAnimalTypesQuery),
+      queryClient.ensureQueryData(listPeopleQuery),
+    ])
   },
   component: RouteComponent,
 })
 
 function RouteComponent() {
   const breadcrumbs = useBreadcrumbs()
-  const { data: adoptions } = useSuspenseQuery(listAdoptionsQuery())
+  const search = Route.useSearch()
+  const navigate = Route.useNavigate()
+
+  const { data: adoptions, isPlaceholderData } = useQuery({
+    ...listAdoptionsPageQuery(toAdoptionListParams(search)),
+    placeholderData: keepPreviousData,
+  })
+  const { data: people } = useQuery(listPeopleQuery)
+  const { data: animalTypes } = useQuery(listAnimalTypesQuery)
+
+  // The loader fills the cache before this renders.
+  if (!adoptions) return null
+
+  const mediators = (people ?? []).filter(
+    (person) => person.mediator_animal_types?.length > 0
+  )
+
+  const handleSearchChange = (patch: Partial<AdoptionListSearch>) => {
+    navigate({
+      to: '.',
+      search: applyListChange(search, patch),
+      // Filtering is refinement of one view, not a history of its own.
+      replace: true,
+    })
+  }
 
   const createAction = (
     <Button asChild>
@@ -41,6 +89,11 @@ function RouteComponent() {
     <>
       <AdoptionListPage
         adoptions={adoptions}
+        search={search}
+        mediators={mediators}
+        animalTypes={animalTypes?.data ?? []}
+        isUpdating={isPlaceholderData}
+        onSearchChange={handleSearchChange}
         createAction={createAction}
         renderDetailLink={renderDetailLink}
         breadcrumb={<BreadcrumbNav items={breadcrumbs} />}
