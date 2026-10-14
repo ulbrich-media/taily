@@ -1,6 +1,7 @@
 import {
   createFileRoute,
   Outlet,
+  redirect,
   stripSearchParams,
 } from '@tanstack/react-router'
 import { useEffect } from 'react'
@@ -20,6 +21,11 @@ import {
   type AdoptionListSearch,
 } from '@/admin/module/adoptions/adoption-list.search'
 import { applyListChange } from '@/components/list/list-search'
+import {
+  isDefaultSearch,
+  recallListSearch,
+  rememberListSearch,
+} from '@/components/list/remembered-list-search'
 import { Button } from '@/shadcn/components/ui/button'
 import { Route as CreateRoute } from '@/routes/admin/_authenticated/adoptions/_list/create'
 import { Route as DetailRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/index'
@@ -28,11 +34,28 @@ import type { AdoptionListResource } from '@/api/types/adoptions'
 // Only the people who can be filtered by, not the whole directory.
 const mediatorsQuery = listPeopleFilteredQuery({ role: 'mediator' })
 
+const REMEMBER_KEY = 'adoptions'
+
 export const Route = createFileRoute('/admin/_authenticated/adoptions/_list')({
   validateSearch: adoptionListSearchSchema,
   search: {
     // Keep the URL short: parameters at their default are not written.
     middlewares: [stripSearchParams(adoptionListSearchDefaults)],
+  },
+  // Coming back through the navigation (a link without params) shows the
+  // filters of the last visit again, as long as that was recent.
+  beforeLoad: ({ search, cause, location }) => {
+    if (cause !== 'enter') return
+    if (!isDefaultSearch(search, adoptionListSearchDefaults)) return
+
+    const remembered = recallListSearch(REMEMBER_KEY, adoptionListSearchSchema)
+    if (!remembered || isDefaultSearch(remembered, search)) return
+
+    throw redirect({
+      to: location.pathname,
+      search: remembered,
+      replace: true,
+    })
   },
   // `view` is presentation only and must not trigger a reload.
   loaderDeps: ({ search }) => toAdoptionListParams(search),
@@ -58,6 +81,11 @@ function RouteComponent() {
   const breadcrumbs = useBreadcrumbs()
   const search = Route.useSearch()
   const navigate = Route.useNavigate()
+
+  // Includes reset states, so clearing the filters is remembered as well.
+  useEffect(() => {
+    rememberListSearch(REMEMBER_KEY, search)
+  }, [search])
 
   const { data: adoptions, isPlaceholderData } = useQuery({
     ...listAdoptionsPageQuery(toAdoptionListParams(search)),

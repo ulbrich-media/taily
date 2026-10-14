@@ -126,6 +126,17 @@ Sorting is available in both views: column headers toggle it in the table, and t
 - **Scrolling:** the route navigates with `resetScroll: false`, so filtering never moves the page. A page change scrolls the top of the list (toolbar included) into view right away, but only when it is out of view; `prefers-reduced-motion` is respected.
 - **Failures** are left to the router's error handling (`throwOnError`) until there is a unified approach.
 
+### Remembering the last filters
+
+The URL stays the source of truth, but coming back to the list through the navigation (a link without params) shows the filters of the last visit again. `components/list/remembered-list-search.ts` keeps a copy of the list's search in `localStorage` (per list key, without `page`) together with its save time.
+
+- Read only when the list is **entered** with a URL that asks for nothing special (all defaults). Any explicit param, e.g. a shared link, wins and nothing is restored.
+- Only recent state counts: entries older than `REMEMBER_MAX_AGE_MS` (2 h) are ignored and dropped. This is for work in progress, not a saved view.
+- The stored value is parsed with the route's zod schema again, so values that became invalid (deleted mediator, removed option) are discarded.
+- A reset is remembered too, otherwise clearing the filters would bring the old ones back.
+- Cleared on login and logout; storage failures are ignored.
+- A route opts in with a `beforeLoad` redirect and a `rememberListSearch` effect, see the adoptions list route.
+
 ### Presets
 
 Presets are **hardcoded per list** as named bundles of filters, defined next to the list's module (reference: `adoption-list.presets.ts`):
