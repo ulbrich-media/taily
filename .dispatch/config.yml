@@ -17,7 +17,7 @@ commands:
 
 workspace:
   # worktree-init.sh derives frontend/.env.local, api/.env and the DDEV project name (own hosts, DB) from the workspace directory.
-  setup: ["scripts/worktree-init.sh", "ddev start", "ddev composer install", "ddev artisan migrate --force", "npm ci --prefix frontend"]
+  setup: ["scripts/worktree-init.sh", "ddev start", "ddev composer install", "ddev artisan app:seed --fresh", "npm ci --prefix frontend"]
   # Removes the workspace's DDEV project (containers, volumes, DB) before the worktree is deleted; failures only warn.
   teardown: ["ddev delete --omit-snapshot --yes"]
   copy: []
