@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react'
+import { ArrowDownZA, ArrowUpAZ, ArrowUpDown } from 'lucide-react'
 import { Button } from '@/shadcn/components/ui/button'
 import { TableHead } from '@/shadcn/components/ui/table'
 import { nextSort, sortDirectionOf, type SortDirection } from './list-search'
@@ -26,9 +26,9 @@ export function SortableHead({
   const direction = sortDirectionOf(sort, sortKey)
   const Icon =
     direction === 'asc'
-      ? ArrowUp
+      ? ArrowUpAZ
       : direction === 'desc'
-        ? ArrowDown
+        ? ArrowDownZA
         : ArrowUpDown
 
   return (
