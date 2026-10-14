@@ -142,7 +142,10 @@ class Adoption extends Model implements HasMedia
 
         $query->where(function (Builder $search) use ($term, $words) {
             $search
-                ->whereHas('animal', fn (Builder $animal) => self::whereLike($animal, 'animals.name', $term))
+                ->whereHas('animal', function (Builder $animal) use ($term) {
+                    self::whereLike($animal, 'animals.name', $term);
+                    self::whereLike($animal, 'animals.old_name', $term, 'or');
+                })
                 ->orWhereHas('applicant', function (Builder $applicant) use ($words) {
                     foreach ($words as $word) {
                         $applicant->where(function (Builder $name) use ($word) {

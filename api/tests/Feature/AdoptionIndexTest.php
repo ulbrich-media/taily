@@ -181,6 +181,16 @@ class AdoptionIndexTest extends TestCase
         $this->assertSame([$rex->id], $this->ids($this->list('search=rex vom')));
     }
 
+    public function test_search_matches_the_old_animal_name(): void
+    {
+        $renamed = $this->animal('Luna');
+        $renamed->update(['old_name' => 'Fiffi']);
+        $this->adoption(animal: $renamed);
+        $this->adoption(animal: $this->animal('Bello'));
+
+        $this->assertSame([$renamed->adoptions()->first()->id], $this->ids($this->list('search=fiff')));
+    }
+
     public function test_search_does_not_match_the_mediator(): void
     {
         $this->adoption(mediator: $this->person('Maria', 'Vermittlerin'));
