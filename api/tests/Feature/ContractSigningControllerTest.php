@@ -121,7 +121,7 @@ class ContractSigningControllerTest extends TestCase
         $index->assertOk();
         $this->assertSame(
             'pending',
-            collect($index->json())->firstWhere('id', $adoption->id)['contract_status']
+            collect($index->json('data'))->firstWhere('id', $adoption->id)['contract_status']
         );
     }
 

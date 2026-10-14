@@ -47,7 +47,7 @@ function RouteComponent() {
   }
 
   const handleClose = () => {
-    navigateToAdoptionsList({})
+    navigateToAdoptionsList({ search: true })
   }
 
   return (

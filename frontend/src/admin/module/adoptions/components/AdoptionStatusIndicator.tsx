@@ -3,6 +3,7 @@ import type {
   AdoptionListResource,
   AdoptionStepStatus,
 } from '@/api/types/adoptions'
+import { STEP_STATUS_LABELS } from '../adoption-status.labels'
 import { Badge } from '@/shadcn/components/ui/badge'
 import {
   Tooltip,
@@ -11,12 +12,6 @@ import {
   TooltipTrigger,
 } from '@/shadcn/components/ui/tooltip'
 import { cn } from '@/shadcn/lib/utils'
-
-const STEP_STATUS_LABELS: Record<AdoptionStepStatus, string> = {
-  not_started: 'Offen',
-  pending: 'In Bearbeitung',
-  finished: 'Abgeschlossen',
-}
 
 // Connector gradient runs from the left node's color to the right node's color.
 // Full class names are required so Tailwind can detect them.

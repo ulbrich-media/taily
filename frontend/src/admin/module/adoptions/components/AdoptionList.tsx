@@ -1,7 +1,11 @@
 import type { ReactNode } from 'react'
-import { User, PawPrint } from 'lucide-react'
 import type { AdoptionListResource } from '@/api/types/adoptions'
 import { AdoptionStatusIndicator } from './AdoptionStatusIndicator'
+import {
+  AnimalSummary,
+  ApplicantSummary,
+  MediatorSummary,
+} from './AdoptionParties'
 import { Button } from '@/shadcn/components/ui/button'
 import {
   Table,
@@ -11,17 +15,16 @@ import {
   TableHeader,
   TableRow,
 } from '@/shadcn/components/ui/table'
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from '@/shadcn/components/ui/avatar.tsx'
+import { SortableHead } from '@/components/list/SortableHead'
 
 interface AdoptionListProps {
   adoptions: AdoptionListResource[]
   showAnimal?: boolean
   showApplicant?: boolean
   showMediator?: boolean
+  /** Current sort value (e.g. `-created_at`); makes the column headers sortable. */
+  sort?: string
+  onSortChange?: (sort: string) => void
   renderDetailLink?: (adoption: AdoptionListResource) => ReactNode
 }
 
@@ -30,15 +33,31 @@ export function AdoptionList({
   showAnimal = true,
   showApplicant = true,
   showMediator = true,
+  sort,
+  onSortChange,
   renderDetailLink,
 }: AdoptionListProps) {
+  const sortable = sort !== undefined && onSortChange !== undefined
+
+  const header = (label: string, sortKey: string) =>
+    sortable ? (
+      <SortableHead
+        label={label}
+        sortKey={sortKey}
+        sort={sort}
+        onSortChange={onSortChange}
+      />
+    ) : (
+      <TableHead>{label}</TableHead>
+    )
+
   return (
     <Table>
       <TableHeader>
         <TableRow>
-          {showAnimal && <TableHead>Tier</TableHead>}
-          {showApplicant && <TableHead>Interessent</TableHead>}
-          {showMediator && <TableHead>Vermittler</TableHead>}
+          {showAnimal && header('Tier', 'animal_name')}
+          {showApplicant && header('Interessent', 'applicant_name')}
+          {showMediator && header('Vermittler', 'mediator_name')}
           <TableHead>Status</TableHead>
           <TableHead className="th-contain"></TableHead>
         </TableRow>
@@ -48,71 +67,17 @@ export function AdoptionList({
           <TableRow key={adoption.id}>
             {showAnimal && (
               <TableCell>
-                <div className="flex gap-2 items-center">
-                  <Avatar size="lg" shape="square">
-                    {adoption.animal.profile_picture_url && (
-                      <AvatarImage
-                        alt={adoption.animal.name}
-                        src={adoption.animal.profile_picture_url}
-                      />
-                    )}
-                    <AvatarFallback>
-                      <PawPrint className="size-5 text-muted-foreground" />
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p>
-                      {adoption.animal.name}
-                      {adoption.animal.old_name &&
-                        ` (${adoption.animal.old_name})`}
-                    </p>
-                    <p className="text-muted-foreground">
-                      {adoption.animal.animal_type?.title}
-                    </p>
-                  </div>
-                </div>
+                <AnimalSummary animal={adoption.animal} />
               </TableCell>
             )}
             {showApplicant && (
               <TableCell>
-                <div className="flex gap-2 items-center">
-                  <div>
-                    <p>{adoption.applicant.full_name ?? ''}</p>
-                    {adoption.applicant.city && (
-                      <p className="text-muted-foreground">
-                        {adoption.applicant.postal_code}{' '}
-                        {adoption.applicant.city} (
-                        {adoption.applicant.country_code})
-                      </p>
-                    )}
-                  </div>
-                </div>
+                <ApplicantSummary applicant={adoption.applicant} />
               </TableCell>
             )}
             {showMediator && (
               <TableCell>
-                {adoption.mediator ? (
-                  <div className="flex gap-2 items-center">
-                    <Avatar size="lg">
-                      {adoption.mediator.profile_picture_url && (
-                        <AvatarImage
-                          alt={adoption.mediator.full_name}
-                          src={adoption.mediator.profile_picture_url}
-                        />
-                      )}
-                      <AvatarFallback>
-                        <User className="size-5 text-muted-foreground" />
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p>{adoption.mediator.full_name ?? ''}</p>
-                    </div>
-                  </div>
-                ) : (
-                  <span className="text-muted-foreground">
-                    Nicht zugewiesen
-                  </span>
-                )}
+                <MediatorSummary mediator={adoption.mediator} />
               </TableCell>
             )}
             <TableCell>

@@ -15,7 +15,10 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class Person extends Model implements HasMedia
 {
-    use HasFactory, HasUuids, InteractsWithMedia;
+    use HasFactory, HasUuids;
+
+    /** @use InteractsWithMedia<Media> */
+    use InteractsWithMedia;
 
     protected $hidden = ['media'];
 

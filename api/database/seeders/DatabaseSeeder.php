@@ -66,6 +66,7 @@ class DatabaseSeeder extends Seeder
 
         $this->call(PersonSeeder::class, false, [
             'count' => $profile->int('people'),
+            'mediators' => $profile->has('mediators') ? $profile->int('mediators') : null,
             'imageShare' => $imageShare['people'] ?? 0,
         ]);
 
