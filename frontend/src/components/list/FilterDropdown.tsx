@@ -1,3 +1,4 @@
+import type { ComponentProps } from 'react'
 import { ChevronDown, Funnel } from 'lucide-react'
 import { Button } from '@/shadcn/components/ui/button'
 import { CircleIcon } from '@/components/icons/circle'
@@ -23,6 +24,16 @@ import {
   type ToolbarFilter,
 } from './toolbar-filters'
 
+/** The mark of an active filter: the dot is decoration, so say it in text as well. */
+function ActiveDot() {
+  return (
+    <>
+      <CircleIcon className="text-primary" />
+      <span className="sr-only">(aktiv)</span>
+    </>
+  )
+}
+
 /** Trigger showing only the filter's name; a primary-coloured dot marks an active filter. */
 export function FilterTrigger({
   label,
@@ -33,12 +44,12 @@ export function FilterTrigger({
   label: string
   active: boolean
   withIcon?: boolean
-} & Omit<React.ComponentProps<typeof Button>, 'children'>) {
+} & Omit<ComponentProps<typeof Button>, 'children'>) {
   return (
     <Button type="button" size="sm" variant="ghost" {...props}>
       {withIcon && <Funnel />}
       {label}
-      {active ? <CircleIcon className="text-primary" /> : <ChevronDown />}
+      {active ? <ActiveDot /> : <ChevronDown />}
     </Button>
   )
 }
@@ -130,9 +141,7 @@ export function FilterOverflowMenu({
           <DropdownMenuSub key={filter.key}>
             <DropdownMenuSubTrigger>
               {filter.label}
-              {isFilterActive(filter) && (
-                <CircleIcon className="text-primary" />
-              )}
+              {isFilterActive(filter) && <ActiveDot />}
             </DropdownMenuSubTrigger>
             <DropdownMenuSubContent>
               <FilterMenuItems filter={filter} />

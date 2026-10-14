@@ -53,7 +53,10 @@ return [
     |   mediators                   optional: exactly this many people get the
     |                               mediator role, instead of every person
     |                               having a chance of it. A shelter has few
-    |                               mediators, who handle most of the adoptions
+    |                               mediators, who handle most of the adoptions.
+    |                               At least 2 (every animal type needs two)
+    |                               and at most `people`; anything else is
+    |                               rejected
     |   animals                     per species key from SpeciesCatalog
     |   adoptions                   how many adoptions to generate
     |   adoption_stages             relative weight of each AdoptionStage

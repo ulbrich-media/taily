@@ -28,6 +28,35 @@ describe('adoptionListSearchSchema', () => {
   })
 })
 
+describe('adoptionListSearchSchema against what the endpoint accepts', () => {
+  it('drops ids the endpoint would reject, keeps valid ones', () => {
+    const id = '0198a1b2-c3d4-7e5f-8a9b-0c1d2e3f4a5b'
+
+    expect(
+      adoptionListSearchSchema.parse({
+        mediator_id: 'foo',
+        animal_type_id: 'x',
+      })
+    ).toMatchObject({ mediator_id: undefined, animal_type_id: undefined })
+
+    expect(
+      adoptionListSearchSchema.parse({
+        mediator_id: 'none',
+        animal_type_id: id,
+      })
+    ).toMatchObject({ mediator_id: 'none', animal_type_id: id })
+  })
+
+  it('falls back to an empty search when the term is too long', () => {
+    expect(
+      adoptionListSearchSchema.parse({ search: 'a'.repeat(101) }).search
+    ).toBe('')
+    expect(adoptionListSearchSchema.parse({ search: '  luna ' }).search).toBe(
+      'luna'
+    )
+  })
+})
+
 describe('buildAdoptionListQuery', () => {
   const params = toAdoptionListParams(adoptionListSearchDefaults)
 

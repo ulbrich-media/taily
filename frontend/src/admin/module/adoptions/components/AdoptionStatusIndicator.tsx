@@ -3,7 +3,7 @@ import type {
   AdoptionListResource,
   AdoptionStepStatus,
 } from '@/api/types/adoptions'
-import { STEP_STATUS_LABELS } from '../adoption-list.labels'
+import { STEP_STATUS_LABELS } from '../adoption-status.labels'
 import { Badge } from '@/shadcn/components/ui/badge'
 import {
   Tooltip,

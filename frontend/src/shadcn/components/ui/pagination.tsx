@@ -101,12 +101,11 @@ function PaginationEllipsis({
 }: React.ComponentProps<'span'>) {
   return (
     <span
-      aria-hidden
       data-slot="pagination-ellipsis"
       className={cn('flex size-9 items-center justify-center', className)}
       {...props}
     >
-      <MoreHorizontal className="size-4" />
+      <MoreHorizontal className="size-4" aria-hidden />
       <span className="sr-only">Weitere Seiten</span>
     </span>
   )

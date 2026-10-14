@@ -78,27 +78,34 @@ export function ListToolbar({
             )}
           </div>
 
-          {/* Natural widths of all filters and the overflow button, measured to decide what fits. */}
+          {/* Natural widths of all filters and the overflow button, measured
+              to decide what fits. Clipped to the slot: when the strip is
+              wider than the slot (exactly when filters collapse), it must
+              not widen the page. */}
           <div
-            ref={measureRef}
             aria-hidden
             inert
-            className="invisible absolute top-0 left-0 flex h-0 w-max items-center gap-2 overflow-hidden"
+            className="pointer-events-none absolute inset-0 overflow-hidden"
           >
-            {filters.map((filter) => (
+            <div
+              ref={measureRef}
+              className="invisible flex h-0 w-max items-center gap-2"
+            >
+              {filters.map((filter) => (
+                <FilterTrigger
+                  key={filter.key}
+                  label={filter.label}
+                  active={isFilterActive(filter)}
+                  tabIndex={-1}
+                />
+              ))}
               <FilterTrigger
-                key={filter.key}
-                label={filter.label}
-                active={isFilterActive(filter)}
+                label={overflowLabel}
+                active
+                withIcon
                 tabIndex={-1}
               />
-            ))}
-            <FilterTrigger
-              label={overflowLabel}
-              active
-              withIcon
-              tabIndex={-1}
-            />
+            </div>
           </div>
         </div>
 

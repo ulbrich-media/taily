@@ -3,6 +3,7 @@ import {
   Outlet,
   stripSearchParams,
 } from '@tanstack/react-router'
+import { useEffect } from 'react'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { Plus } from 'lucide-react'
 import { AdoptionListPage } from '@/admin/module/adoptions/pages/AdoptionListPage'
@@ -11,7 +12,7 @@ import { BreadcrumbNav } from '@/router/BreadcrumbNav'
 import { queryClient } from '@/lib/queryClient'
 import { listAdoptionsPageQuery } from '@/admin/module/adoptions/api/queries'
 import { listAnimalTypesQuery } from '@/admin/module/animal-types/api/queries'
-import { listPeopleQuery } from '@/admin/module/people/api/queries'
+import { listPeopleFilteredQuery } from '@/admin/module/people/api/queries'
 import {
   adoptionListSearchDefaults,
   adoptionListSearchSchema,
@@ -23,6 +24,9 @@ import { Button } from '@/shadcn/components/ui/button'
 import { Route as CreateRoute } from '@/routes/admin/_authenticated/adoptions/_list/create'
 import { Route as DetailRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/index'
 import type { AdoptionListResource } from '@/api/types/adoptions'
+
+// Only the people who can be filtered by, not the whole directory.
+const mediatorsQuery = listPeopleFilteredQuery({ role: 'mediator' })
 
 export const Route = createFileRoute('/admin/_authenticated/adoptions/_list')({
   validateSearch: adoptionListSearchSchema,
@@ -44,7 +48,7 @@ export const Route = createFileRoute('/admin/_authenticated/adoptions/_list')({
     await Promise.all([
       queryClient.ensureQueryData(listAdoptionsPageQuery(deps)),
       queryClient.ensureQueryData(listAnimalTypesQuery),
-      queryClient.ensureQueryData(listPeopleQuery),
+      queryClient.ensureQueryData(mediatorsQuery),
     ])
   },
   component: RouteComponent,
@@ -61,15 +65,29 @@ function RouteComponent() {
     // A failed request is left to the router's error handling.
     throwOnError: true,
   })
-  const { data: people } = useQuery(listPeopleQuery)
+  const { data: mediators = [] } = useQuery(mediatorsQuery)
   const { data: animalTypes } = useQuery(listAnimalTypesQuery)
+
+  // A page past the end (old link, rows gone meanwhile) shows nothing useful:
+  // go to the last page that exists instead.
+  const lastPage = adoptions?.meta.last_page
+  const pastTheEnd =
+    adoptions !== undefined &&
+    adoptions.meta.total > 0 &&
+    adoptions.meta.current_page > adoptions.meta.last_page
+  useEffect(() => {
+    if (pastTheEnd && lastPage !== undefined) {
+      navigate({
+        to: '.',
+        search: applyListChange(search, { page: lastPage }),
+        replace: true,
+        resetScroll: false,
+      })
+    }
+  }, [pastTheEnd, lastPage, navigate, search])
 
   // The loader fills the cache before this renders.
   if (!adoptions) return null
-
-  const mediators = (people ?? []).filter(
-    (person) => person.mediator_animal_types?.length > 0
-  )
 
   const handleSearchChange = (patch: Partial<AdoptionListSearch>) => {
     navigate({

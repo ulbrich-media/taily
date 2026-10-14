@@ -1,7 +1,7 @@
 import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react'
 import { Button } from '@/shadcn/components/ui/button'
 import { TableHead } from '@/shadcn/components/ui/table'
-import { nextSort, sortDirectionOf } from './list-search'
+import { nextSort, sortDirectionOf, type SortDirection } from './list-search'
 
 interface SortableHeadProps {
   label: string
@@ -11,7 +11,7 @@ interface SortableHeadProps {
   sort: string
   onSortChange: (sort: string) => void
   /** Direction applied on the first click. */
-  firstDirection?: 'asc' | 'desc'
+  firstDirection?: SortDirection
   className?: string
 }
 

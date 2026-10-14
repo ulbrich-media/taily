@@ -1,24 +1,15 @@
 import type { AdoptionStatus, AdoptionStepStatus } from '@/api/types/adoptions'
 import type { FilterOption } from '@/components/list/toolbar-filters'
 import {
+  ADOPTION_STATUS_LABELS,
+  STEP_STATUS_LABELS,
+} from './adoption-status.labels'
+import {
   ADOPTION_STATUSES,
   HANDOVER_STATUSES,
   STEP_STATUSES,
   type AdoptionListSearch,
 } from './adoption-list.search'
-
-export const ADOPTION_STATUS_LABELS: Record<AdoptionStatus, string> = {
-  pending: 'Zu prüfen',
-  in_progress: 'In Bearbeitung',
-  canceled: 'Abgebrochen',
-  done: 'Abgeschlossen',
-}
-
-export const STEP_STATUS_LABELS: Record<AdoptionStepStatus, string> = {
-  not_started: 'Offen',
-  pending: 'In Bearbeitung',
-  finished: 'Abgeschlossen',
-}
 
 export const statusOptions: FilterOption<AdoptionStatus>[] =
   ADOPTION_STATUSES.map((value) => ({

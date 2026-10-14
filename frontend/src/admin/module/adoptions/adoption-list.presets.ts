@@ -1,5 +1,6 @@
 import {
   FILTER_KEYS,
+  NO_FILTERS,
   type AdoptionFilterKey,
   type AdoptionListSearch,
 } from './adoption-list.search'
@@ -22,17 +23,6 @@ export const adoptionPresets: AdoptionListPreset[] = [
     filters: { status: ['pending'], mediator_id: 'none' },
   },
 ]
-
-/** Every filter at its empty value, so a preset replaces the filters instead of adding to them. */
-const NO_FILTERS: Pick<AdoptionListSearch, AdoptionFilterKey> = {
-  status: [],
-  mediator_id: undefined,
-  animal_type_id: undefined,
-  pre_inspection_status: [],
-  contract_status: [],
-  transport_status: [],
-  handover_status: [],
-}
 
 /** The search params that clear every filter, e.g. when the active preset is unchecked. */
 export const clearFiltersPatch: Partial<AdoptionListSearch> = NO_FILTERS

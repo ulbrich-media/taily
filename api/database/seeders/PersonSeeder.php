@@ -10,6 +10,7 @@ use Faker\Generator;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Taily\Models\AnimalType;
 use Taily\Models\Organization;
@@ -36,8 +37,11 @@ class PersonSeeder extends Seeder
 
     /**
      * @param  int  $imageShare  percentage of people who get a profile picture
-     * @param  int|null  $mediators  how many people carry the mediator role;
-     *                               null leaves it to chance per person
+     * @param  int|null  $mediators  exactly how many people carry the mediator
+     *                               role; null leaves it to chance per
+     *                               person. Every animal type gets at least
+     *                               two of them, so the number must allow
+     *                               that, and cannot exceed the people
      */
     public function run(int $count = 30, int $imageShare = 100, ?int $mediators = null): void
     {
@@ -47,6 +51,8 @@ class PersonSeeder extends Seeder
 
         $organizations = Organization::all();
         $animalTypes = AnimalType::all();
+
+        $this->assertMediatorCount($mediators, $count, $animalTypes);
 
         /** @var list<Person> $people */
         $people = [];
@@ -107,7 +113,14 @@ class PersonSeeder extends Seeder
             $this->assignMediators($people, $mediators, $animalTypes, $faker);
         }
 
-        $this->ensureEveryRoleIsCovered($animalTypes);
+        // A fixed set of mediators already covers every animal type (see
+        // assignMediators), and topping up here would add people to it.
+        $this->ensureEveryRoleIsCovered(
+            $animalTypes,
+            $mediators === null
+                ? ['inspectorAnimalTypes', 'mediatorAnimalTypes', 'fosterAnimalTypes']
+                : ['inspectorAnimalTypes', 'fosterAnimalTypes'],
+        );
 
         // WithoutModelEvents on DatabaseSeeder suppresses the HasUuid creating event,
         // so UUIDs are not auto-generated for media created in seeders. Fix them here.
@@ -115,9 +128,37 @@ class PersonSeeder extends Seeder
     }
 
     /**
+     * Rejects a mediator count the data set cannot honour, rather than
+     * quietly seeding a different one.
+     *
+     * @param  Collection<int, AnimalType>  $animalTypes
+     */
+    private function assertMediatorCount(?int $mediators, int $people, Collection $animalTypes): void
+    {
+        if ($mediators === null) {
+            return;
+        }
+
+        if ($mediators < 0 || $mediators > $people) {
+            throw new InvalidArgumentException(
+                "Cannot seed {$mediators} mediators out of {$people} people."
+            );
+        }
+
+        if ($animalTypes->isNotEmpty() && $mediators < self::MINIMUM_PEOPLE_PER_ROLE) {
+            throw new InvalidArgumentException(sprintf(
+                'Cannot seed %d mediators: every animal type needs at least %d.',
+                $mediators,
+                self::MINIMUM_PEOPLE_PER_ROLE,
+            ));
+        }
+    }
+
+    /**
      * Gives exactly `$count` people the mediator role, each for a random
-     * subset of the animal types. A shelter has few mediators and many
-     * adoptions, so a data set sized for load should not spread its
+     * subset of the animal types, and makes sure that among them every
+     * animal type has at least two mediators. A shelter has few mediators
+     * and many adoptions, so a data set sized for load should not spread its
      * adoptions thinly over hundreds of them.
      *
      * @param  list<Person>  $people
@@ -125,10 +166,33 @@ class PersonSeeder extends Seeder
      */
     private function assignMediators(array $people, int $count, Collection $animalTypes, Generator $faker): void
     {
-        foreach (SeedRandom::pickMany(collect($people), $count) as $person) {
-            $person->mediatorAnimalTypes()->sync(
-                SeedRandom::pickMany($animalTypes, $faker->numberBetween(1, $animalTypes->count()))->pluck('id')
+        $pool = SeedRandom::pickMany(collect($people), $count)->values();
+
+        /** @var array<int, array<string, string>> $typesByMediator animal type ids, keyed by pool position */
+        $typesByMediator = [];
+
+        foreach ($pool as $position => $person) {
+            $typesByMediator[$position] = SeedRandom::pickMany(
+                $animalTypes,
+                $faker->numberBetween(1, $animalTypes->count())
+            )->pluck('id', 'id')->all();
+        }
+
+        // Cover the types the draw left short, from within the pool.
+        foreach ($animalTypes as $animalType) {
+            $without = SeedRandom::shuffle(
+                $pool->keys()->reject(fn (int $position) => isset($typesByMediator[$position][$animalType->id]))
             );
+
+            $missing = self::MINIMUM_PEOPLE_PER_ROLE - ($pool->count() - $without->count());
+
+            foreach ($without->take(max(0, $missing)) as $position) {
+                $typesByMediator[$position][$animalType->id] = $animalType->id;
+            }
+        }
+
+        foreach ($pool as $position => $person) {
+            $person->mediatorAnimalTypes()->sync(array_values($typesByMediator[$position]));
         }
     }
 
@@ -143,11 +207,10 @@ class PersonSeeder extends Seeder
      * all the same.
      *
      * @param  Collection<int, AnimalType>  $animalTypes
+     * @param  list<string>  $relations  the roles to top up
      */
-    private function ensureEveryRoleIsCovered(Collection $animalTypes): void
+    private function ensureEveryRoleIsCovered(Collection $animalTypes, array $relations): void
     {
-        $relations = ['inspectorAnimalTypes', 'mediatorAnimalTypes', 'fosterAnimalTypes'];
-
         foreach ($animalTypes as $animalType) {
             foreach ($relations as $relation) {
                 $holds = fn ($query) => $query->where('animal_types.id', $animalType->id);

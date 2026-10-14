@@ -12,11 +12,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Taily\Enums\ContractSigningStatus;
 
 class Adoption extends Model implements HasMedia
 {
-    use HasFactory, HasUuids, InteractsWithMedia;
+    use HasFactory, HasUuids;
+
+    /** @use InteractsWithMedia<Media> */
+    use InteractsWithMedia;
 
     protected $attributes = [
         'notes' => '',

@@ -7,6 +7,8 @@ import type { AdoptionListResource } from '@/api/types/adoptions'
 
 // Radix controls measure themselves; jsdom has no ResizeObserver.
 beforeAll(() => {
+  // jsdom has no layout and no scrollIntoView.
+  Element.prototype.scrollIntoView = vi.fn()
   vi.stubGlobal(
     'ResizeObserver',
     class {
@@ -101,15 +103,15 @@ describe('AdoptionListPage', () => {
     await userEvent.click(
       screen.getByRole('button', { name: 'Filter zurücksetzen' })
     )
-    expect(onSearchChange).toHaveBeenCalledWith(
-      expect.objectContaining({
-        status: [],
-        search: '',
-        mediator_id: undefined,
-        sort: 'animal_name',
-        view: 'cards',
-      })
-    )
+    const patch = onSearchChange.mock.calls[0][0]
+    expect(patch).toMatchObject({
+      status: [],
+      search: '',
+      mediator_id: undefined,
+    })
+    // A patch only changes what it names: sort and view stay as they are.
+    expect(patch).not.toHaveProperty('sort')
+    expect(patch).not.toHaveProperty('view')
   })
 
   describe('moving to the next page', () => {
@@ -135,7 +137,8 @@ describe('AdoptionListPage', () => {
     })
 
     it('does not move when the list top is already visible', async () => {
-      const scrollIntoView = mockListTop(40)
+      // Below the sticky header (96px), so the list top is in view.
+      const scrollIntoView = mockListTop(200)
       renderPage()
 
       await userEvent.click(screen.getByRole('button', { name: 'Seite 3' }))

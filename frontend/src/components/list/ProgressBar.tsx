@@ -50,7 +50,7 @@ export function ProgressBar({
       )}
     >
       <div
-        className="h-full w-1/3 bg-white animate-[progress-sweep_1.2s_ease-in-out_infinite] motion-reduce:w-full motion-reduce:animate-none"
+        className="h-full w-1/3 bg-foreground animate-[progress-sweep_1.2s_ease-in-out_infinite] motion-reduce:w-full motion-reduce:animate-none"
         onAnimationIteration={() => {
           // A sweep has just ended; stop here unless there is more to load.
           if (!loading) setShown(false)

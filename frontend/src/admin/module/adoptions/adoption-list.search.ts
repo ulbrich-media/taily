@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { LIST_VIEWS } from '@/components/list/list-search'
 
 export const ADOPTION_STATUSES = [
   'pending',
@@ -22,9 +23,6 @@ export const ADOPTION_SORTS = SORT_KEYS.flatMap((key) => [
   `-${key}` as const,
 ])
 
-export const ADOPTION_VIEWS = ['table', 'cards'] as const
-export type AdoptionListView = (typeof ADOPTION_VIEWS)[number]
-
 export const DEFAULT_ADOPTION_SORT = '-created_at'
 export const ADOPTIONS_PER_PAGE = 25
 
@@ -40,11 +38,16 @@ export const adoptionListSearchSchema = z.object({
     .enum(ADOPTION_SORTS)
     .default(DEFAULT_ADOPTION_SORT)
     .catch(DEFAULT_ADOPTION_SORT),
-  search: z.string().default('').catch(''),
-  view: z.enum(ADOPTION_VIEWS).default('table').catch('table'),
+  // Same limit as the endpoint (AdoptionIndexRequest), which rejects more.
+  search: z.string().trim().max(100).default('').catch(''),
+  view: z.enum(LIST_VIEWS).default('table').catch('table'),
   status: multi(ADOPTION_STATUSES),
-  mediator_id: z.string().optional().catch(undefined),
-  animal_type_id: z.string().optional().catch(undefined),
+  // A person id, or `none` for adoptions without a mediator.
+  mediator_id: z
+    .union([z.literal('none'), z.uuid()])
+    .optional()
+    .catch(undefined),
+  animal_type_id: z.uuid().optional().catch(undefined),
   pre_inspection_status: multi(STEP_STATUSES),
   contract_status: multi(STEP_STATUSES),
   transport_status: multi(STEP_STATUSES),
@@ -53,16 +56,32 @@ export const adoptionListSearchSchema = z.object({
 
 export type AdoptionListSearch = z.output<typeof adoptionListSearchSchema>
 
+export function isAdoptionSort(
+  value: string
+): value is AdoptionListSearch['sort'] {
+  return (ADOPTION_SORTS as readonly string[]).includes(value)
+}
+
+// Every filter at its empty value. Listing each key makes the compiler ask
+// for a new filter here, which presets and reset rely on.
+export const NO_FILTERS: {
+  [K in AdoptionFilterKey]: AdoptionListSearch[K]
+} = {
+  status: [],
+  mediator_id: undefined,
+  animal_type_id: undefined,
+  pre_inspection_status: [],
+  contract_status: [],
+  transport_status: [],
+  handover_status: [],
+}
+
 export const adoptionListSearchDefaults: AdoptionListSearch = {
   page: 1,
   sort: DEFAULT_ADOPTION_SORT,
   search: '',
   view: 'table',
-  status: [],
-  pre_inspection_status: [],
-  contract_status: [],
-  transport_status: [],
-  handover_status: [],
+  ...NO_FILTERS,
 }
 
 /** What the request depends on: the search params without presentation-only ones. */
@@ -128,16 +147,11 @@ export function hasActiveAdoptionFilters(search: AdoptionListSearch): boolean {
   )
 }
 
-/** Search params that clear the search term and every filter, keeping sort and view. */
-export function resetSearchPatch(
-  search: AdoptionListSearch
-): Partial<AdoptionListSearch> {
-  return {
-    ...adoptionListSearchDefaults,
-    // Sort and view are not filters.
-    sort: search.sort,
-    view: search.view,
-    mediator_id: undefined,
-    animal_type_id: undefined,
-  }
+/**
+ * Search params that clear the search term and every filter. Sort and view
+ * are left out on purpose: a patch only changes what it names.
+ */
+export const resetSearchPatch: Partial<AdoptionListSearch> = {
+  ...NO_FILTERS,
+  search: '',
 }

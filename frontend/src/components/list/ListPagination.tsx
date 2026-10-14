@@ -28,9 +28,13 @@ export function ListPagination({
 
   return (
     <div className="flex flex-col items-center gap-3 md:flex-row md:justify-between">
-      <p className="text-sm text-muted-foreground">
-        {from}–{to} von {total} {itemLabel}
-      </p>
+      {total > 0 ? (
+        <p className="text-sm text-muted-foreground">
+          {from}–{to} von {total} {itemLabel}
+        </p>
+      ) : (
+        <span />
+      )}
       {last_page > 1 && (
         <Pagination className="mx-0 w-auto">
           <PaginationContent>

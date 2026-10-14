@@ -93,18 +93,19 @@ The route declares the search params with `validateSearch` (zod), including defa
 
 - The route reads params, passes them into the query and the page component as props; the page reports changes via callback props (see [decoupled-route-and-page.md](decoupled-route-and-page.md)).
 - Query key includes the full params object, and the query uses `placeholderData: keepPreviousData` so the list doesn't flash while paging. The route uses `stripSearchParams(defaults)` so default values stay out of the URL.
-- Search is applied explicitly (search button or Enter), so typing never changes the URL or triggers a request.
+- Search is applied explicitly (search button or Enter), so typing never changes the URL or triggers a request. The one exception is emptying the field, which clears the search right away.
 
 ### Shared building blocks
 
 Table and card views are two renderers over the same result. The generic parts live in `frontend/src/components/list/`, the list-specific ones next to the list's module (reference: adoptions).
 
-- `ListToolbar` — filter bar: `search`, `filters` (declarative `ToolbarFilter[]`: `multi`, `single`, `sections`) and `trailing` controls (sort, view switch). Mobile: search on its own row, filters below. From `md`: search left, filters right on one row. Filters that don't fit collapse, last first, into one "Filter" button with a submenu per filter, measured with a `ResizeObserver`; never a second line, never horizontal scrolling. An icon-only reset button (`onReset`/`canReset`) always sits behind the last filter or the "Filter" button, disabled while nothing is active
+- `ListToolbar` — filter bar: `search`, `filters` (declarative `ToolbarFilter[]`: `multi`, `single`, `sections`) and `trailing` controls (sort, view switch). Mobile: search on its own row, filters below. From `md`: search left, filters right on one row. Filters that don't fit collapse, last first, into one "Filter" button with a submenu per filter, measured with a `ResizeObserver`; never a second line, never horizontal scrolling. An icon-only reset button (`onReset`/`canReset`) sits after the last filter or the "Filter" button (right-aligned with them from `md`), disabled while nothing is active
 - `FilterDropdown` — a single filter as dropdown: checkbox items for multi-value filters, a radio group (with an "Alle …" entry) for single-value filters; both show the stock shadcn check; also used for the sort order in `trailing`. Triggers are ghost `sm` buttons showing only the filter name; an active filter shows a primary-coloured dot (`components/icons/circle.tsx`) instead of the chevron
 - `SearchInput` — input group with an explicit search button; the term is applied on submit (button or Enter), not while typing
-- `SortableHead` — table header cell that toggles sort; cards use a "Sortierung" select with the same sort keys
+- `SortableHead` — table header cell that toggles sort; the "Sortierung" dropdown in the toolbar offers the same sort keys in both views, and is the only way with cards
 - `ListPagination` — built on the shadcn `Pagination`, driven by `meta`
-- `list-search.ts` — `applyListChange` (every change except `page` resets the page), sort helpers
+- `ListViewToggle`, `useScrollListIntoView` — the table/cards switch (from `lg` up) and the scroll-on-page-change behaviour
+- `list-search.ts` — `applyListChange` (every change except `page` resets the page), sort helpers, `listViewVisibility`
 - `<list>.search.ts` in the module — zod schema with defaults, `buildQuery` for the request contract, `hasActiveFilters`
 
 No table library is used; row rendering is the existing shadcn `Table` / card components.
@@ -118,8 +119,10 @@ Sorting is available in both views: column headers toggle it in the table, and t
 ### Loading feedback and scrolling
 
 - **The loader must not block in-page changes.** When filters, sort or page change on the open list (`cause === 'stay'`) the route loader only starts the fetch (`prefetchQuery`, not awaited). Otherwise TanStack Router keeps the old URL and render until the data is in, and the page never gets to show an updating state. Entering the list still awaits its data.
-- **Updating state, no spinners and no layout shift:** with `placeholderData: keepPreviousData` the old result stays in place while `isPlaceholderData` is true. The page passes it down as `isUpdating`; the rows pulse (`updatingClass`, after a 150 ms delay so fast responses never flash) and cannot be clicked. The pagination is left alone.
+- **Updating state, no spinners and no layout shift:** with `placeholderData: keepPreviousData` the old result stays in place while `isPlaceholderData` is true. The page passes it down as `isUpdating`; the table or cards pulse (`updatingClass`, header included, after a 150 ms delay so fast responses never flash) and cannot be clicked. The pagination is left alone.
 - **`TableCard`** (`components/card/TableCard.tsx`) is the card for a table: edge-to-edge, clipped to the card's rounded corners so row and header hover follow the radius, with a progress line along its top edge while `loading`. The line is `ProgressBar` (`components/list/ProgressBar.tsx`), our own because shadcn's `Progress` is determinate and has no value to show here: it appears after 150 ms and a started sweep always runs to the end. The cards view has no common edge, so its line runs in the gap between toolbar and grid.
+- **History:** every change on the list replaces the history entry (`replace: true`), page changes included, so the back button leaves the list instead of stepping through filters and pages. That is a decision, not an accident.
+- **Pages past the end** (old link, rows gone meanwhile) are redirected to the last page that exists.
 - **Scrolling:** the route navigates with `resetScroll: false`, so filtering never moves the page. A page change scrolls the top of the list (toolbar included) into view right away, but only when it is out of view; `prefers-reduced-motion` is respected.
 - **Failures** are left to the router's error handling (`throwOnError`) until there is a unified approach.
 

@@ -24,9 +24,10 @@ export interface AdoptionsFilters {
   mediator_id?: string
 }
 
-// The list endpoint is paginated (max. 100 per page, see ADR-014). This
-// fetches the first page in full for the small, scoped lists embedded in
-// person and transport pages; the adoption list view uses `getAdoptionsPage`.
+// The list endpoint is paginated (max. 100 per page, see ADR-014).
+// `getAdoptions` walks all pages for the small, scoped lists embedded in
+// person pages, so nothing is silently cut off; the adoption list view
+// itself uses `getAdoptionsPage`.
 const MAX_PER_PAGE = 100
 
 export async function getAdoptionsPage(
@@ -40,16 +41,31 @@ export async function getAdoptionsPage(
 export async function getAdoptions(
   filters?: AdoptionsFilters
 ): Promise<AdoptionsResponse> {
-  const params = new URLSearchParams({ per_page: String(MAX_PER_PAGE) })
-  if (filters?.animal_id) params.set('filter[animal_id]', filters.animal_id)
-  if (filters?.applicant_id)
-    params.set('filter[applicant_id]', filters.applicant_id)
-  if (filters?.mediator_id)
-    params.set('filter[mediator_id]', filters.mediator_id)
-  const response = await apiRequest<{ data: AdoptionsResponse }>(
-    `adoptions?${params.toString()}`
-  )
-  return response.data
+  const adoptions: AdoptionsResponse = []
+  let page = 1
+  let lastPage: number
+
+  do {
+    const params = new URLSearchParams({
+      per_page: String(MAX_PER_PAGE),
+      page: String(page),
+    })
+    if (filters?.animal_id) params.set('filter[animal_id]', filters.animal_id)
+    if (filters?.applicant_id)
+      params.set('filter[applicant_id]', filters.applicant_id)
+    if (filters?.mediator_id)
+      params.set('filter[mediator_id]', filters.mediator_id)
+
+    const response = await apiRequest<PaginatedResponse<AdoptionListResource>>(
+      `adoptions?${params.toString()}`
+    )
+
+    adoptions.push(...response.data)
+    lastPage = response.meta.last_page
+    page++
+  } while (page <= lastPage)
+
+  return adoptions
 }
 
 export async function getAdoption(id: string): Promise<Adoption> {

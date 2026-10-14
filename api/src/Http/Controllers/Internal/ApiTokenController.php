@@ -4,6 +4,7 @@ namespace Taily\Http\Controllers\Internal;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Laravel\Sanctum\PersonalAccessToken;
 use Taily\Http\Controllers\Controller;
 
 class ApiTokenController extends Controller
@@ -21,13 +22,14 @@ class ApiTokenController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $tokens = $request->user()->tokens->map(function ($token) {
+        $tokens = $request->user()->tokens()->get()->map(function (PersonalAccessToken $token) {
             return [
                 'id' => $token->id,
                 'name' => $token->name,
                 'abilities' => $token->abilities,
                 'last_used_at' => $token->last_used_at?->toIso8601String(),
-                'created_at' => $token->created_at->toIso8601String(),
+                // Psalm's model schema types the timestamp as string, it is a Carbon.
+                'created_at' => $token->getAttribute('created_at')?->toIso8601String(),
             ];
         });
 
@@ -60,7 +62,7 @@ class ApiTokenController extends Controller
                 'name' => $token->accessToken->name,
                 'abilities' => $token->accessToken->abilities,
                 'token' => $token->plainTextToken,
-                'created_at' => $token->accessToken->created_at->toIso8601String(),
+                'created_at' => $token->accessToken->getAttribute('created_at')?->toIso8601String(),
             ],
         ], 201);
     }

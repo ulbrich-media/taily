@@ -1,4 +1,4 @@
-import { useRef, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { FilterX, SlashSquare } from 'lucide-react'
 import type { AdoptionListResource } from '@/api/types/adoptions'
 import type { AnimalTypeResource } from '@/api/types/animal-types'
@@ -7,6 +7,8 @@ import type { PersonListResource } from '@/api/types/people'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { TableCard } from '@/components/card/TableCard'
 import { ProgressBar } from '@/components/list/ProgressBar'
+import { listViewVisibility } from '@/components/list/list-search'
+import { useScrollListIntoView } from '@/components/list/useScrollListIntoView'
 import { updatingClass } from '@/components/list/updating'
 import { ListPagination } from '@/components/list/ListPagination'
 import {
@@ -24,6 +26,7 @@ import { AdoptionCardGrid } from '@/admin/module/adoptions/components/AdoptionCa
 import { AdoptionListFilters } from '@/admin/module/adoptions/components/AdoptionListFilters'
 import {
   hasActiveAdoptionFilters,
+  isAdoptionSort,
   resetSearchPatch,
   type AdoptionListSearch,
 } from '@/admin/module/adoptions/adoption-list.search'
@@ -54,27 +57,14 @@ export function AdoptionListPage({
 }: AdoptionListPageProps) {
   const { data, meta } = adoptions
   const filtered = hasActiveAdoptionFilters(search)
-  const listRef = useRef<HTMLDivElement>(null)
+  const { ref: listRef, scrollIfNeeded } =
+    useScrollListIntoView<HTMLDivElement>()
 
-  // Cards are always used on small screens; the table is `lg` and up only.
-  const tableVisibility = search.view === 'table' ? 'hidden lg:block' : 'hidden'
-  const cardsVisibility = search.view === 'table' ? 'lg:hidden' : ''
+  const visibility = listViewVisibility(search.view)
 
-  // The pagination sits below the list, so after clicking it the user is
-  // looking at the bottom of the next page. Bring the top of the list (and
-  // with it the progress bar) into view right away, but only when it is
-  // actually out of view.
+  // The pagination sits below the list: see useScrollListIntoView.
   const handlePageChange = (page: number) => {
-    const list = listRef.current
-    if (list && list.getBoundingClientRect().top < 0) {
-      const reduceMotion =
-        typeof window.matchMedia === 'function' &&
-        window.matchMedia('(prefers-reduced-motion: reduce)').matches
-      list.scrollIntoView({
-        behavior: reduceMotion ? 'auto' : 'smooth',
-        block: 'start',
-      })
-    }
+    scrollIfNeeded()
     onSearchChange({ page })
   }
 
@@ -98,46 +88,50 @@ export function AdoptionListPage({
 
         <div className="space-y-4">
           {data.length === 0 ? (
-            <Empty>
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <SlashSquare />
-                </EmptyMedia>
-                <EmptyTitle>Keine Vermittlungen gefunden</EmptyTitle>
-                <EmptyDescription>
-                  {filtered
-                    ? 'Mit den gewählten Filtern gibt es keine Treffer.'
-                    : 'Noch keine Vermittlungsvorgänge vorhanden.'}
-                </EmptyDescription>
-              </EmptyHeader>
-              {filtered && (
-                <EmptyContent>
-                  <Button
-                    variant="outline"
-                    onClick={() => onSearchChange(resetSearchPatch(search))}
-                  >
-                    <FilterX />
-                    Filter zurücksetzen
-                  </Button>
-                </EmptyContent>
-              )}
-            </Empty>
+            <div className="relative">
+              <ProgressBar
+                loading={isUpdating}
+                className="absolute inset-x-0 top-0"
+              />
+              <Empty className={cn(isUpdating && updatingClass)}>
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <SlashSquare />
+                  </EmptyMedia>
+                  <EmptyTitle>Keine Vermittlungen gefunden</EmptyTitle>
+                  <EmptyDescription>
+                    {filtered
+                      ? 'Mit den gewählten Filtern gibt es keine Treffer.'
+                      : 'Noch keine Vermittlungsvorgänge vorhanden.'}
+                  </EmptyDescription>
+                </EmptyHeader>
+                {filtered && (
+                  <EmptyContent>
+                    <Button
+                      variant="outline"
+                      onClick={() => onSearchChange(resetSearchPatch)}
+                    >
+                      <FilterX />
+                      Filter zurücksetzen
+                    </Button>
+                  </EmptyContent>
+                )}
+              </Empty>
+            </div>
           ) : (
             <>
-              <TableCard loading={isUpdating} className={tableVisibility}>
+              <TableCard loading={isUpdating} className={visibility.table}>
                 <AdoptionList
                   adoptions={data}
                   sort={search.sort}
                   onSortChange={(sort) =>
-                    onSearchChange({
-                      sort: sort as AdoptionListSearch['sort'],
-                    })
+                    isAdoptionSort(sort) && onSearchChange({ sort })
                   }
                   renderDetailLink={renderDetailLink}
                 />
               </TableCard>
               {/* The cards have no common edge, so the progress line runs in the gap between toolbar and grid. */}
-              <div className={cn('relative', cardsVisibility)}>
+              <div className={cn('relative', visibility.cards)}>
                 <ProgressBar
                   loading={isUpdating}
                   className="absolute inset-x-0 -top-2.5"

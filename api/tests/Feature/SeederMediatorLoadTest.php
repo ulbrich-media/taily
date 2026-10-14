@@ -2,12 +2,17 @@
 
 namespace Taily\Tests\Feature;
 
+use Database\Seeders\AnimalTypeSeeder;
 use Database\Seeders\DatabaseSeeder;
+use Database\Seeders\PersonSeeder;
 use Database\Seeders\Support\SeedMail;
 use Database\Seeders\Support\SeedProfile;
 use Database\Seeders\Support\SeedRandom;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Taily\Models\Adoption;
+use Taily\Models\AnimalType;
 use Taily\Models\Person;
 use Taily\Tests\TestCase;
 
@@ -19,6 +24,31 @@ use Taily\Tests\TestCase;
 class SeederMediatorLoadTest extends TestCase
 {
     use RefreshDatabase;
+
+    #[DataProvider('impossibleMediatorCounts')]
+    public function test_a_mediator_count_the_data_cannot_honour_is_rejected(int $mediators): void
+    {
+        $this->seed(AnimalTypeSeeder::class);
+        $this->app->singleton(SeedMail::class, fn () => new SeedMail('local.local'));
+
+        $this->expectException(InvalidArgumentException::class);
+
+        // Rejected before anything is created: 60 people cannot have 61
+        // mediators, and every animal type needs two.
+        $this->app->make(PersonSeeder::class)->run(60, 0, $mediators);
+    }
+
+    /**
+     * @return array<string, array{int}>
+     */
+    public static function impossibleMediatorCounts(): array
+    {
+        return [
+            'more than people' => [61],
+            'fewer than a type needs' => [1],
+            'negative' => [-1],
+        ];
+    }
 
     public function test_a_fixed_number_of_mediators_carry_the_adoptions(): void
     {
@@ -41,10 +71,16 @@ class SeederMediatorLoadTest extends TestCase
 
         $mediators = Person::whereHas('mediatorAnimalTypes')->pluck('id');
 
-        // Covering every animal type may add a person, never more than the
-        // types there are.
-        $this->assertGreaterThanOrEqual(3, $mediators->count());
-        $this->assertLessThanOrEqual(3 + 2 * 2, $mediators->count());
+        // Exactly the requested number, and every animal type still has the
+        // two it needs among them.
+        $this->assertCount(3, $mediators);
+
+        foreach (AnimalType::all() as $animalType) {
+            $this->assertGreaterThanOrEqual(
+                2,
+                Person::whereHas('mediatorAnimalTypes', fn ($q) => $q->where('animal_types.id', $animalType->id))->count()
+            );
+        }
 
         $assigned = Adoption::whereNotNull('mediator_id')->count();
 

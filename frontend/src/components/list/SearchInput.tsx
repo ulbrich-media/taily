@@ -41,7 +41,9 @@ export function SearchInput({
   }
 
   const submit = () => {
-    if (text !== value) onSearch(text)
+    const term = text.trim()
+    setText(term)
+    if (term !== value) onSearch(term)
   }
 
   return (
@@ -50,6 +52,7 @@ export function SearchInput({
         type="search"
         aria-label={label}
         placeholder={placeholder}
+        maxLength={100}
         value={text}
         onChange={(event) => {
           const next = event.target.value
@@ -59,7 +62,8 @@ export function SearchInput({
           if (next === '' && value !== '') onSearch('')
         }}
         onKeyDown={(event) => {
-          if (event.key === 'Enter') {
+          // Enter that confirms an IME composition is not a submit.
+          if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
             event.preventDefault()
             submit()
           }
