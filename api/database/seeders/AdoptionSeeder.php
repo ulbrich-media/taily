@@ -55,6 +55,16 @@ class AdoptionSeeder extends Seeder
     /** @var Collection<string, Collection<int, Person>> mediators keyed by animal type id */
     private Collection $mediatorsByAnimalType;
 
+    /**
+     * How much of the caseload each mediator carries. Mediators are not
+     * equally busy: a few long-serving ones handle many times what a newer
+     * one does, which is what a list sorted or filtered by mediator has to
+     * cope with.
+     *
+     * @var array<string, int>
+     */
+    private array $mediatorWeights = [];
+
     /** @var Collection<string, Collection<int, Person>> inspectors keyed by animal type id */
     private Collection $inspectorsByAnimalType;
 
@@ -426,7 +436,34 @@ class AdoptionSeeder extends Seeder
 
         $qualified = $this->mediatorsByAnimalType->get($animal->animal_type_id);
 
-        return SeedRandom::pick($qualified?->isNotEmpty() ? $qualified : $this->mediators);
+        return $this->pickByWorkload($qualified?->isNotEmpty() ? $qualified : $this->mediators);
+    }
+
+    /**
+     * Picks a mediator in proportion to their workload, so the caseload ends
+     * up uneven instead of spread evenly over everybody.
+     *
+     * @param  Collection<int, Person>  $mediators
+     */
+    private function pickByWorkload(Collection $mediators): Person
+    {
+        $total = 0;
+
+        foreach ($mediators as $mediator) {
+            $total += $this->mediatorWeights[$mediator->id] ??= mt_rand(10, 100);
+        }
+
+        $roll = mt_rand(1, $total);
+
+        foreach ($mediators as $mediator) {
+            $roll -= $this->mediatorWeights[$mediator->id];
+
+            if ($roll <= 0) {
+                return $mediator;
+            }
+        }
+
+        return $mediators->last();
     }
 
     /**

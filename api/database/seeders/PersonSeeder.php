@@ -6,6 +6,7 @@ use Database\Seeders\Support\SeedImages;
 use Database\Seeders\Support\SeedMail;
 use Database\Seeders\Support\SeedRandom;
 use Faker\Factory as Faker;
+use Faker\Generator;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -35,8 +36,10 @@ class PersonSeeder extends Seeder
 
     /**
      * @param  int  $imageShare  percentage of people who get a profile picture
+     * @param  int|null  $mediators  how many people carry the mediator role;
+     *                               null leaves it to chance per person
      */
-    public function run(int $count = 30, int $imageShare = 100): void
+    public function run(int $count = 30, int $imageShare = 100, ?int $mediators = null): void
     {
         $faker = Faker::create('de_DE');
         $mail = app(SeedMail::class);
@@ -44,6 +47,9 @@ class PersonSeeder extends Seeder
 
         $organizations = Organization::all();
         $animalTypes = AnimalType::all();
+
+        /** @var list<Person> $people */
+        $people = [];
 
         for ($i = 0; $i < $count; $i++) {
             $firstName = $faker->firstName();
@@ -68,6 +74,7 @@ class PersonSeeder extends Seeder
             ]);
 
             $images->attachTo($person);
+            $people[] = $person;
 
             if ($animalTypes->isEmpty()) {
                 continue;
@@ -81,6 +88,11 @@ class PersonSeeder extends Seeder
             ];
 
             foreach ($roles as $relation => $chance) {
+                // A fixed number of mediators is handed out afterwards.
+                if ($relation === 'mediatorAnimalTypes' && $mediators !== null) {
+                    continue;
+                }
+
                 if (! $faker->boolean($chance)) {
                     continue;
                 }
@@ -91,11 +103,33 @@ class PersonSeeder extends Seeder
             }
         }
 
+        if ($mediators !== null && $animalTypes->isNotEmpty()) {
+            $this->assignMediators($people, $mediators, $animalTypes, $faker);
+        }
+
         $this->ensureEveryRoleIsCovered($animalTypes);
 
         // WithoutModelEvents on DatabaseSeeder suppresses the HasUuid creating event,
         // so UUIDs are not auto-generated for media created in seeders. Fix them here.
         Media::whereNull('uuid')->each(fn ($m) => $m->update(['uuid' => (string) Str::uuid()]));
+    }
+
+    /**
+     * Gives exactly `$count` people the mediator role, each for a random
+     * subset of the animal types. A shelter has few mediators and many
+     * adoptions, so a data set sized for load should not spread its
+     * adoptions thinly over hundreds of them.
+     *
+     * @param  list<Person>  $people
+     * @param  Collection<int, AnimalType>  $animalTypes
+     */
+    private function assignMediators(array $people, int $count, Collection $animalTypes, Generator $faker): void
+    {
+        foreach (SeedRandom::pickMany(collect($people), $count) as $person) {
+            $person->mediatorAnimalTypes()->sync(
+                SeedRandom::pickMany($animalTypes, $faker->numberBetween(1, $animalTypes->count()))->pluck('id')
+            );
+        }
     }
 
     /**
