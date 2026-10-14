@@ -115,6 +115,14 @@ The view is URL state like everything else (`view=table|cards`, default `table`)
 
 Sorting is available in both views: column headers toggle it in the table, and the toolbar's "Sortierung" dropdown offers every sort key (the only way with cards).
 
+### Loading feedback and scrolling
+
+- **The loader must not block in-page changes.** When filters, sort or page change on the open list (`cause === 'stay'`) the route loader only starts the fetch (`prefetchQuery`, not awaited). Otherwise TanStack Router keeps the old URL and render until the data is in, and the page never gets to show an updating state. Entering the list still awaits its data.
+- **Updating state, no spinners and no layout shift:** with `placeholderData: keepPreviousData` the old result stays in place while `isPlaceholderData` is true. The page passes it down as `isUpdating`; the rows pulse (`updatingClass`, after a 150 ms delay so fast responses never flash) and cannot be clicked. The pagination is left alone.
+- **`TableCard`** (`components/card/TableCard.tsx`) is the card for a table: edge-to-edge, clipped to the card's rounded corners so row and header hover follow the radius, with a progress line along its top edge while `loading`. The line is `ProgressBar` (`components/list/ProgressBar.tsx`), our own because shadcn's `Progress` is determinate and has no value to show here: it appears after 150 ms and a started sweep always runs to the end. The cards view has no common edge, so its line runs in the gap between toolbar and grid.
+- **Scrolling:** the route navigates with `resetScroll: false`, so filtering never moves the page. A page change scrolls the top of the list (toolbar included) into view right away, but only when it is out of view; `prefers-reduced-motion` is respected.
+- **Failures** are left to the router's error handling (`throwOnError`) until there is a unified approach.
+
 ### Presets
 
 Presets are **hardcoded per list** as named bundles of filters, defined next to the list's module (reference: `adoption-list.presets.ts`):

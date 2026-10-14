@@ -32,7 +32,15 @@ export const Route = createFileRoute('/admin/_authenticated/adoptions/_list')({
   },
   // `view` is presentation only and must not trigger a reload.
   loaderDeps: ({ search }) => toAdoptionListParams(search),
-  loader: async ({ deps }) => {
+  loader: async ({ deps, cause }) => {
+    // Changing filters, sort or page on the open list must not hold the
+    // navigation back: the page keeps showing the previous result and says
+    // that it is updating. Only entering the list waits for its data.
+    if (cause === 'stay') {
+      void queryClient.prefetchQuery(listAdoptionsPageQuery(deps))
+      return
+    }
+
     await Promise.all([
       queryClient.ensureQueryData(listAdoptionsPageQuery(deps)),
       queryClient.ensureQueryData(listAnimalTypesQuery),
@@ -50,6 +58,8 @@ function RouteComponent() {
   const { data: adoptions, isPlaceholderData } = useQuery({
     ...listAdoptionsPageQuery(toAdoptionListParams(search)),
     placeholderData: keepPreviousData,
+    // A failed request is left to the router's error handling.
+    throwOnError: true,
   })
   const { data: people } = useQuery(listPeopleQuery)
   const { data: animalTypes } = useQuery(listAnimalTypesQuery)
@@ -67,6 +77,8 @@ function RouteComponent() {
       search: applyListChange(search, patch),
       // Filtering is refinement of one view, not a history of its own.
       replace: true,
+      // The list decides itself whether and where to scroll.
+      resetScroll: false,
     })
   }
 

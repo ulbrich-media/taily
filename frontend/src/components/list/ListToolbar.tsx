@@ -63,7 +63,9 @@ export function ListToolbar({
       onSubmit={(event: FormEvent) => event.preventDefault()}
       className="flex flex-wrap items-center gap-2"
     >
-      {search && <div className="w-full md:w-60 md:shrink-0">{search}</div>}
+      {search && (
+        <div className="w-full md:w-60 xl:w-72 md:shrink-0">{search}</div>
+      )}
 
       <div className="flex min-w-0 flex-1 items-center gap-2">
         <div ref={slotRef} className="relative min-w-0 flex-1">

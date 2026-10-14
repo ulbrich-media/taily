@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { AdoptionListPage } from './AdoptionListPage'
@@ -52,6 +52,8 @@ function renderPage(
   )
   return { onSearchChange }
 }
+
+afterEach(() => vi.restoreAllMocks())
 
 describe('AdoptionListPage', () => {
   it('renders every adoption as table row and as card', () => {
@@ -108,6 +110,61 @@ describe('AdoptionListPage', () => {
         view: 'cards',
       })
     )
+  })
+
+  describe('moving to the next page', () => {
+    function mockListTop(top: number) {
+      const scrollIntoView = vi.fn()
+      Element.prototype.scrollIntoView = scrollIntoView
+      vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
+        top,
+      } as DOMRect)
+      return scrollIntoView
+    }
+
+    it('scrolls the list into view when its top is out of view', async () => {
+      const scrollIntoView = mockListTop(-300)
+      const { onSearchChange } = renderPage()
+
+      await userEvent.click(screen.getByRole('button', { name: 'Seite 3' }))
+
+      expect(scrollIntoView).toHaveBeenCalledWith(
+        expect.objectContaining({ block: 'start' })
+      )
+      expect(onSearchChange).toHaveBeenCalledWith({ page: 3 })
+    })
+
+    it('does not move when the list top is already visible', async () => {
+      const scrollIntoView = mockListTop(40)
+      renderPage()
+
+      await userEvent.click(screen.getByRole('button', { name: 'Seite 3' }))
+
+      expect(scrollIntoView).not.toHaveBeenCalled()
+    })
+  })
+
+  it('shows the progress bar only while the list is updating', async () => {
+    const { unmount } = render(
+      <AdoptionListPage
+        adoptions={{
+          data: [makeAdoption('1', 'Bello')],
+          meta: { current_page: 1, last_page: 1, per_page: 25, total: 1 },
+        }}
+        search={adoptionListSearchDefaults}
+        mediators={[]}
+        animalTypes={[]}
+        isUpdating
+        onSearchChange={vi.fn()}
+        createAction={null}
+      />
+    )
+    // The table card and the cards each have one; it appears after a short delay.
+    expect(await screen.findAllByRole('progressbar')).not.toHaveLength(0)
+    unmount()
+
+    renderPage()
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument()
   })
 
   it('explains an empty filtered result', () => {

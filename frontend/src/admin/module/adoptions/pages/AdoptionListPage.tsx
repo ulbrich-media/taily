@@ -1,13 +1,14 @@
-import type { ReactNode } from 'react'
+import { useRef, type ReactNode } from 'react'
 import { FilterX, SlashSquare } from 'lucide-react'
 import type { AdoptionListResource } from '@/api/types/adoptions'
 import type { AnimalTypeResource } from '@/api/types/animal-types'
 import type { PaginatedResponse } from '@/api/types/pagination'
 import type { PersonListResource } from '@/api/types/people'
 import { PageHeader } from '@/components/layout/PageHeader'
-import { CardTable } from '@/components/card/CardTable'
+import { TableCard } from '@/components/card/TableCard'
+import { ProgressBar } from '@/components/list/ProgressBar'
+import { updatingClass } from '@/components/list/updating'
 import { ListPagination } from '@/components/list/ListPagination'
-import { Card, CardContent } from '@/shadcn/components/ui/card'
 import {
   Empty,
   EmptyContent,
@@ -53,10 +54,29 @@ export function AdoptionListPage({
 }: AdoptionListPageProps) {
   const { data, meta } = adoptions
   const filtered = hasActiveAdoptionFilters(search)
+  const listRef = useRef<HTMLDivElement>(null)
 
   // Cards are always used on small screens; the table is `lg` and up only.
   const tableVisibility = search.view === 'table' ? 'hidden lg:block' : 'hidden'
   const cardsVisibility = search.view === 'table' ? 'lg:hidden' : ''
+
+  // The pagination sits below the list, so after clicking it the user is
+  // looking at the bottom of the next page. Bring the top of the list (and
+  // with it the progress bar) into view right away, but only when it is
+  // actually out of view.
+  const handlePageChange = (page: number) => {
+    const list = listRef.current
+    if (list && list.getBoundingClientRect().top < 0) {
+      const reduceMotion =
+        typeof window.matchMedia === 'function' &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      list.scrollIntoView({
+        behavior: reduceMotion ? 'auto' : 'smooth',
+        block: 'start',
+      })
+    }
+    onSearchChange({ page })
+  }
 
   return (
     <div className="space-y-6">
@@ -67,7 +87,8 @@ export function AdoptionListPage({
         breadcrumb={breadcrumb}
       />
 
-      <div className="space-y-4">
+      {/* scroll-mt clears the sticky header when scrolled into view */}
+      <div ref={listRef} className="scroll-mt-24 space-y-4">
         <AdoptionListFilters
           search={search}
           mediators={mediators}
@@ -75,13 +96,7 @@ export function AdoptionListPage({
           onChange={onSearchChange}
         />
 
-        <div
-          className={cn(
-            'space-y-4 transition-opacity',
-            isUpdating && 'opacity-60'
-          )}
-          aria-busy={isUpdating}
-        >
+        <div className="space-y-4">
           {data.length === 0 ? (
             <Empty>
               <EmptyHeader>
@@ -109,34 +124,37 @@ export function AdoptionListPage({
             </Empty>
           ) : (
             <>
-              <Card className={cn('py-0', tableVisibility)}>
-                <CardContent>
-                  <CardTable>
-                    <AdoptionList
-                      adoptions={data}
-                      sort={search.sort}
-                      onSortChange={(sort) =>
-                        onSearchChange({
-                          sort: sort as AdoptionListSearch['sort'],
-                        })
-                      }
-                      renderDetailLink={renderDetailLink}
-                    />
-                  </CardTable>
-                </CardContent>
-              </Card>
-              <AdoptionCardGrid
-                adoptions={data}
-                renderDetailLink={renderDetailLink}
-                className={cardsVisibility}
-              />
+              <TableCard loading={isUpdating} className={tableVisibility}>
+                <AdoptionList
+                  adoptions={data}
+                  sort={search.sort}
+                  onSortChange={(sort) =>
+                    onSearchChange({
+                      sort: sort as AdoptionListSearch['sort'],
+                    })
+                  }
+                  renderDetailLink={renderDetailLink}
+                />
+              </TableCard>
+              {/* The cards have no common edge, so the progress line runs in the gap between toolbar and grid. */}
+              <div className={cn('relative', cardsVisibility)}>
+                <ProgressBar
+                  loading={isUpdating}
+                  className="absolute inset-x-0 -top-2.5"
+                />
+                <AdoptionCardGrid
+                  adoptions={data}
+                  renderDetailLink={renderDetailLink}
+                  className={cn(isUpdating && updatingClass)}
+                />
+              </div>
             </>
           )}
 
           <ListPagination
             meta={meta}
             itemLabel="Vermittlungen"
-            onPageChange={(page) => onSearchChange({ page })}
+            onPageChange={handlePageChange}
           />
         </div>
       </div>
