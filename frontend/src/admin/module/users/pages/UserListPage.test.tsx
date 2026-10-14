@@ -9,6 +9,7 @@ function makeUser(overrides: Partial<UserResource> = {}): UserResource {
     name: 'Erika Mustermann',
     email: 'erika@example.com',
     role: 'user',
+    person_id: null,
     two_factor_enabled: false,
     last_login_at: null,
     created_at: '2026-01-15T10:00:00.000Z',

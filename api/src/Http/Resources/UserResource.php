@@ -19,6 +19,11 @@ class UserResource extends JsonResource
             'name' => $this->resource->name,
             'email' => $this->resource->email,
             'role' => $this->resource->role,
+            'person_id' => $this->resource->person_id,
+            'person' => $this->whenLoaded('person', fn ($p) => $p ? [
+                'id' => $p->id,
+                'full_name' => $p->full_name,
+            ] : null),
             // Confirmed second factor only. A generated-but-unconfirmed secret
             // does not gate login, so it counts as "not enabled" — matching the
             // signal ProfileController exposes for the authenticated user.
