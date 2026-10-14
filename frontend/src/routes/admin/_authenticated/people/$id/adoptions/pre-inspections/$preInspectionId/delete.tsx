@@ -9,6 +9,7 @@ import { Route as PreInspectionDetailRoute } from '@/routes/admin/_authenticated
 export const Route = createFileRoute(
   '/admin/_authenticated/people/$id/adoptions/pre-inspections/$preInspectionId/delete'
 )({
+  staticData: { dialog: true },
   loader: async ({ params }) => {
     const inspection = await queryClient.ensureQueryData(
       getPreInspectionQuery(params.preInspectionId)

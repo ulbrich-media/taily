@@ -21,6 +21,7 @@ export const Route = createFileRoute(
   component: RouteComponent,
   staticData: {
     breadcrumb: 'Neuen Test erstellen',
+    dialog: true,
   },
 })
 

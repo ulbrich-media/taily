@@ -8,6 +8,7 @@ import { Route as AnimalTypesRoute } from '@/routes/admin/_authenticated/setting
 export const Route = createFileRoute(
   '/admin/_authenticated/settings/animal-types/$id/delete'
 )({
+  staticData: { dialog: true },
   beforeLoad: ({ context }) => {
     if (!context.isAdmin) {
       throw new Error('403: Forbidden - Admin access required')

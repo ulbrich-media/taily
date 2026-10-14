@@ -14,6 +14,7 @@ export const Route = createFileRoute(
   },
   staticData: {
     breadcrumb: 'Neuen Benutzer erstellen',
+    dialog: true,
   },
   component: RouteComponent,
 })

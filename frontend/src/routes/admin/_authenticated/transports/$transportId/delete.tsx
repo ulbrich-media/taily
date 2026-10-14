@@ -8,6 +8,7 @@ import { Route as TransportsRoute } from '@/routes/admin/_authenticated/transpor
 export const Route = createFileRoute(
   '/admin/_authenticated/transports/$transportId/delete'
 )({
+  staticData: { dialog: true },
   loader: ({ params }) => {
     // We could do a single query to fetch both planned and done transports. Instead, we
     // replicate the parents route requests, so no additional requests are fired.

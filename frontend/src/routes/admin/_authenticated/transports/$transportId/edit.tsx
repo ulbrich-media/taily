@@ -13,6 +13,7 @@ import { getTransportTitle } from '@/admin/module/transports/utils.ts'
 export const Route = createFileRoute(
   '/admin/_authenticated/transports/$transportId/edit'
 )({
+  staticData: { dialog: true },
   loader: async ({ params }) => {
     await queryClient.ensureQueryData(listPeopleQuery)
 

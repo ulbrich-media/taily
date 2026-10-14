@@ -37,6 +37,7 @@ export const Route = createFileRoute(
   component: RouteComponent,
   staticData: {
     breadcrumb: 'Vertrag erfassen',
+    dialog: true,
   },
 })
 
