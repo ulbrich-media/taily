@@ -14,6 +14,8 @@ declare module '@tanstack/react-router' {
   interface StaticDataRouteOption {
     breadcrumb?: string
     breadcrumbRoot?: boolean
+    /** Route renders a dialog; opening or closing it keeps the scroll position. */
+    dialog?: boolean
   }
 }
 

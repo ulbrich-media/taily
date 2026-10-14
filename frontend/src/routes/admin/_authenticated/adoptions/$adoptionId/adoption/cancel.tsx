@@ -16,6 +16,7 @@ export const Route = createFileRoute(
   component: RouteComponent,
   staticData: {
     breadcrumb: 'Vermittlung abbrechen',
+    dialog: true,
   },
 })
 

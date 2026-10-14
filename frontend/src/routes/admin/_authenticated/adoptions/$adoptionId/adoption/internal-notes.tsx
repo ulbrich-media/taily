@@ -16,6 +16,7 @@ export const Route = createFileRoute(
   component: RouteComponent,
   staticData: {
     breadcrumb: 'Notizen bearbeiten',
+    dialog: true,
   },
 })
 

@@ -8,6 +8,7 @@ import { Route as PersonDetailRoute } from '@/routes/admin/_authenticated/people
 
 export const Route = createFileRoute('/admin/_authenticated/people/$id/delete')(
   {
+    staticData: { dialog: true },
     loader: async ({ params }) => {
       await queryClient.ensureQueryData(getPersonQuery(params.id))
     },

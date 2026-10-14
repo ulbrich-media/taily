@@ -8,6 +8,7 @@ import { Route as UsersRoute } from '@/routes/admin/_authenticated/settings/user
 export const Route = createFileRoute(
   '/admin/_authenticated/settings/users/$id/delete'
 )({
+  staticData: { dialog: true },
   beforeLoad: ({ context }) => {
     if (!context.isAdmin) {
       throw new Error('403: Forbidden - Admin access required')

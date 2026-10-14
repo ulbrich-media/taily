@@ -14,6 +14,7 @@ export const Route = createFileRoute(
   component: RouteComponent,
   staticData: {
     breadcrumb: 'Signaturvorgang abbrechen',
+    dialog: true,
   },
 })
 

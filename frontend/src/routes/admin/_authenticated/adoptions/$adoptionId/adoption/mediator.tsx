@@ -18,6 +18,7 @@ export const Route = createFileRoute(
   component: RouteComponent,
   staticData: {
     breadcrumb: 'Vermittler ändern',
+    dialog: true,
   },
 })
 

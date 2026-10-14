@@ -8,6 +8,7 @@ import { Route as AdoptionDetailRoute } from '@/routes/admin/_authenticated/adop
 export const Route = createFileRoute(
   '/admin/_authenticated/adoptions/$adoptionId/adoption/reopen'
 )({
+  staticData: { dialog: true },
   loader: async ({ params }) => {
     await queryClient.ensureQueryData(getAdoptionQuery(params.adoptionId))
   },

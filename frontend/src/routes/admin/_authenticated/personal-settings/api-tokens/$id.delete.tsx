@@ -8,6 +8,7 @@ import { Route as ApiTokensRoute } from '@/routes/admin/_authenticated/personal-
 export const Route = createFileRoute(
   '/admin/_authenticated/personal-settings/api-tokens/$id/delete'
 )({
+  staticData: { dialog: true },
   loader: async ({ params }) => {
     const tokens = await queryClient.ensureQueryData(listApiTokensQuery)
 

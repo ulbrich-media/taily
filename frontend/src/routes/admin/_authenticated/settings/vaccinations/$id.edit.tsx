@@ -11,6 +11,7 @@ import { Route as VaccinationsRoute } from '@/routes/admin/_authenticated/settin
 export const Route = createFileRoute(
   '/admin/_authenticated/settings/vaccinations/$id/edit'
 )({
+  staticData: { dialog: true },
   beforeLoad: ({ context }) => {
     if (!context.isAdmin) {
       throw new Error('403: Forbidden - Admin access required')
