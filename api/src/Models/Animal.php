@@ -13,10 +13,11 @@ use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Taily\Models\Concerns\SearchesWithLike;
 
 class Animal extends Model implements HasMedia
 {
-    use HasFactory, HasUuids;
+    use HasFactory, HasUuids, SearchesWithLike;
 
     /** @use InteractsWithMedia<Media> */
     use InteractsWithMedia;
@@ -350,16 +351,5 @@ class Animal extends Model implements HasMedia
         }
 
         $query->orderBy("animals.{$key}", $direction)->orderBy('animals.id');
-    }
-
-    /**
-     * Case-insensitive contains match; LIKE wildcards in the term are escaped.
-     */
-    private static function whereLike(Builder $query, string $column, string $term, string $boolean = 'and'): void
-    {
-        $pattern = '%'.str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $term).'%';
-        $column = $query->getQuery()->getGrammar()->wrap($column);
-
-        $query->whereRaw("{$column} like ? escape ?", [$pattern, '!'], $boolean);
     }
 }
