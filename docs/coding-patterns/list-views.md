@@ -132,8 +132,10 @@ The URL stays the source of truth, but coming back to the list through the navig
 
 - Read only when the list is **entered** with a URL that asks for nothing special (all defaults). Any explicit param, e.g. a shared link, wins and nothing is restored.
 - Only recent state counts: entries older than `REMEMBER_MAX_AGE_MS` (2 h) are ignored and dropped. This is for work in progress, not a saved view.
-- The stored value is parsed with the route's zod schema again, so values that became invalid (deleted mediator, removed option) are discarded.
+- The stored value is parsed with the route's zod schema again, so values that are no longer valid in format or enum are discarded. A well-formed id of a record that was deleted meanwhile is not: it filters the list down to nothing until the filter is reset.
 - A reset is remembered too, otherwise clearing the filters would bring the old ones back.
+- The save time is refreshed when the list is left, so the age counts from the last visit. Tabs share the storage; the last write wins.
+- The create dialog route keeps the list's search (`search: true` on its link and on closing), otherwise the list behind it would reset.
 - Cleared on login and logout; storage failures are ignored.
 - A route opts in with a `beforeLoad` redirect and a `rememberListSearch` effect, see the adoptions list route.
 

@@ -22,9 +22,8 @@ import {
 } from '@/admin/module/adoptions/adoption-list.search'
 import { applyListChange } from '@/components/list/list-search'
 import {
-  isDefaultSearch,
-  recallListSearch,
   rememberListSearch,
+  searchToRestore,
 } from '@/components/list/remembered-list-search'
 import { Button } from '@/shadcn/components/ui/button'
 import { Route as CreateRoute } from '@/routes/admin/_authenticated/adoptions/_list/create'
@@ -45,11 +44,14 @@ export const Route = createFileRoute('/admin/_authenticated/adoptions/_list')({
   // Coming back through the navigation (a link without params) shows the
   // filters of the last visit again, as long as that was recent.
   beforeLoad: ({ search, cause, location }) => {
-    if (cause !== 'enter') return
-    if (!isDefaultSearch(search, adoptionListSearchDefaults)) return
-
-    const remembered = recallListSearch(REMEMBER_KEY, adoptionListSearchSchema)
-    if (!remembered || isDefaultSearch(remembered, search)) return
+    const remembered = searchToRestore({
+      cause,
+      search,
+      defaults: adoptionListSearchDefaults,
+      key: REMEMBER_KEY,
+      schema: adoptionListSearchSchema,
+    })
+    if (!remembered) return
 
     throw redirect({
       to: location.pathname,
@@ -83,8 +85,11 @@ function RouteComponent() {
   const navigate = Route.useNavigate()
 
   // Includes reset states, so clearing the filters is remembered as well.
+  // Saved again on leaving, so the time counts from the last visit, not from
+  // the last change.
   useEffect(() => {
     rememberListSearch(REMEMBER_KEY, search)
+    return () => rememberListSearch(REMEMBER_KEY, search)
   }, [search])
 
   const { data: adoptions, isPlaceholderData } = useQuery({
@@ -130,7 +135,8 @@ function RouteComponent() {
 
   const createAction = (
     <Button asChild>
-      <CreateRoute.Link>
+      {/* The dialog opens over the list: it keeps the list's filters. */}
+      <CreateRoute.Link search>
         <Plus />
         Vermittlung hinzufügen
       </CreateRoute.Link>

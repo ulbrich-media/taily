@@ -126,9 +126,9 @@ class Adoption extends Model implements HasMedia
     }
 
     /**
-     * Match the full name of the applicant or the name of the animal. Every
-     * word has to match the applicant's first or last name, so "Anna Müller"
-     * and "Müller Anna" find the same person.
+     * Match the full name of the applicant or the name or old name of the
+     * animal. Every word has to match the applicant's first or last name, so
+     * "Anna Müller" and "Müller Anna" find the same person.
      */
     public function scopeSearch(Builder $query, ?string $term): void
     {

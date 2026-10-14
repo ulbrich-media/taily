@@ -81,3 +81,25 @@ export function clearRememberedListSearches(): void {
 export function isDefaultSearch<T>(search: T, defaults: T): boolean {
   return deepEqual(search, defaults)
 }
+
+/**
+ * The search to redirect to when a list is entered, or null to stay where we
+ * are. Only a fresh entry with nothing asked for in the URL restores; an
+ * explicit link, or moving within the open list, never does.
+ */
+export function searchToRestore<T>(options: {
+  cause: string
+  search: T
+  defaults: T
+  key: string
+  schema: ZodType<T>
+  now?: number
+}): T | null {
+  const { cause, search, defaults, key, schema, now } = options
+  if (cause !== 'enter') return null
+  if (!isDefaultSearch(search, defaults)) return null
+
+  const remembered = recallListSearch(key, schema, now)
+  if (!remembered || isDefaultSearch(remembered, search)) return null
+  return remembered
+}
