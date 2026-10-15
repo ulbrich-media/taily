@@ -5,13 +5,23 @@ import { SearchInput } from '@/components/list/SearchInput'
 import { FilterDropdown } from '@/components/list/FilterDropdown'
 import { ListToolbar } from '@/components/list/ListToolbar'
 import { ListViewToggle } from '@/components/list/ListViewToggle'
-import { defineFilter, defineGroup } from '@/components/list/toolbar-filters'
+import {
+  defineFilter,
+  defineGroup,
+  type FilterOption,
+} from '@/components/list/toolbar-filters'
 import {
   hasActiveAnimalFilters,
   resetSearchPatch,
   type AnimalListSearch,
 } from '../animal-list.search'
-import { sortOptions, statusOptions, yesNoOptions } from '../animal-list.labels'
+import {
+  hasImageOptions,
+  neuteredOptions,
+  publishedOptions,
+  sortOptions,
+  statusOptions,
+} from '../animal-list.labels'
 
 interface AnimalListFiltersProps {
   search: AnimalListSearch
@@ -26,7 +36,7 @@ type FlagKey = 'boarding' | 'reserved' | 'has_sponsor'
 const FLAG_OPTIONS: { value: FlagKey; label: string }[] = [
   { value: 'boarding', label: 'Nur Pensionstiere' },
   { value: 'reserved', label: 'Nur reservierte' },
-  { value: 'has_sponsor', label: 'Nur mit Pate' },
+  { value: 'has_sponsor', label: 'Nur mit Patenschaft' },
 ]
 
 export function AnimalListFilters({
@@ -49,11 +59,10 @@ export function AnimalListFilters({
 
   // A yes/no filter in a checkbox section: at most one of the two is set,
   // checking the other one switches, unchecking clears.
-  const yesNoGroup = (key: YesNoKey, label: string) =>
+  const yesNoGroup = (key: YesNoKey, options: FilterOption<'1' | '0'>[]) =>
     defineGroup({
       key,
-      label,
-      options: yesNoOptions,
+      options,
       value: search[key] ? [search[key]] : [],
       onChange: (values) =>
         onChange({ [key]: values.find((v) => v !== search[key]) }),
@@ -64,7 +73,7 @@ export function AnimalListFilters({
     defineFilter({
       type: 'multi',
       key: 'status',
-      label: 'Status',
+      label: 'Vermittlung',
       options: statusOptions,
       value: search.status,
       onChange: (status) => onChange({ status }),
@@ -93,14 +102,13 @@ export function AnimalListFilters({
     defineFilter({
       type: 'sections',
       key: 'more',
-      label: 'Weitere Filter',
+      label: 'Status',
       sections: [
-        yesNoGroup('published', 'Veröffentlicht'),
-        yesNoGroup('neutered', 'Kastriert'),
-        yesNoGroup('has_image', 'Mit Bild'),
+        yesNoGroup('published', publishedOptions),
+        yesNoGroup('neutered', neuteredOptions),
+        yesNoGroup('has_image', hasImageOptions),
         defineGroup({
           key: 'flags',
-          label: 'Nur anzeigen',
           options: FLAG_OPTIONS,
           value: FLAG_OPTIONS.filter((o) => search[o.value]).map(
             (o) => o.value

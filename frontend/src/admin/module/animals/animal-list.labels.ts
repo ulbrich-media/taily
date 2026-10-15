@@ -5,7 +5,7 @@ export const ANIMAL_STATUS_LABELS: Record<
   (typeof ANIMAL_STATUSES)[number],
   string
 > = {
-  open: 'Offen',
+  open: 'Keine Vermittlung',
   in_progress: 'In Vermittlung',
   adopted: 'Vermittelt',
 }
@@ -33,7 +33,18 @@ export const sortOptions: FilterOption<AnimalListSearch['sort']>[] = [
   { value: '-animal_number', label: 'Tiernummer (absteigend)' },
 ]
 
-export const yesNoOptions: FilterOption<'1' | '0'>[] = [
-  { value: '1', label: 'Ja' },
-  { value: '0', label: 'Nein' },
+/** Self-explanatory yes/no options, so the sections need no headline. */
+export const publishedOptions: FilterOption<'1' | '0'>[] = [
+  { value: '1', label: 'Veröffentlicht' },
+  { value: '0', label: 'Nicht veröffentlicht' },
+]
+
+export const neuteredOptions: FilterOption<'1' | '0'>[] = [
+  { value: '1', label: 'Kastriert' },
+  { value: '0', label: 'Nicht kastriert' },
+]
+
+export const hasImageOptions: FilterOption<'1' | '0'>[] = [
+  { value: '1', label: 'Mit Bild' },
+  { value: '0', label: 'Ohne Bild' },
 ]

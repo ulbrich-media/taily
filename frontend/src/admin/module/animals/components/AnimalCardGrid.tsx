@@ -35,12 +35,15 @@ export function AnimalCardGrid({
               <div className="flex gap-2 items-center">
                 <AnimalAvatar animal={animal} />
                 <div>
-                  <p>{animal.name}</p>
-                  {animal.old_name && (
-                    <p className="text-muted-foreground text-sm">
-                      (früher {animal.old_name})
-                    </p>
-                  )}
+                  <p>
+                    {animal.name}
+                    {animal.old_name && (
+                      <span className="text-muted-foreground">
+                        {' '}
+                        (früher {animal.old_name})
+                      </span>
+                    )}
+                  </p>
                   <p className="text-muted-foreground">
                     {animal.animal_type?.title}
                   </p>
