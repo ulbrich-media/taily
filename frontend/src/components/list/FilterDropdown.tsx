@@ -1,4 +1,4 @@
-import type { ComponentProps } from 'react'
+import { Fragment, type ComponentProps } from 'react'
 import { ChevronDown, Funnel } from 'lucide-react'
 import { Button } from '@/shadcn/components/ui/button'
 import { CircleIcon } from '@/components/icons/circle'
@@ -70,6 +70,29 @@ function MultiItems({ group }: { group: Omit<MultiFilterGroup, 'label'> }) {
   ))
 }
 
+/**
+ * Options of a single filter in display order (general ones first), marking the
+ * first specific option that follows general entries ("all" or `general`
+ * options) so a divider is drawn before it.
+ */
+function singleOptions(filter: Extract<ToolbarFilter, { type: 'single' }>) {
+  const ordered = [
+    ...filter.options.filter((o) => o.general),
+    ...filter.options.filter((o) => !o.general),
+  ]
+  let hasGeneral = filter.allLabel !== undefined
+  let separatorDone = false
+  return ordered.map((option) => {
+    if (option.general) {
+      hasGeneral = true
+      return { option, separated: false }
+    }
+    const separated = hasGeneral && !separatorDone
+    separatorDone = true
+    return { option, separated }
+  })
+}
+
 /** The menu entries of a filter, shared by its own dropdown and the overflow submenu. */
 function FilterMenuItems({ filter }: { filter: ToolbarFilter }) {
   switch (filter.type) {
@@ -88,10 +111,13 @@ function FilterMenuItems({ filter }: { filter: ToolbarFilter }) {
               {filter.allLabel}
             </DropdownMenuRadioItem>
           )}
-          {filter.options.map((option) => (
-            <DropdownMenuRadioItem key={option.value} value={option.value}>
-              {option.label}
-            </DropdownMenuRadioItem>
+          {singleOptions(filter).map(({ option, separated }) => (
+            <Fragment key={option.value}>
+              {separated && <DropdownMenuSeparator />}
+              <DropdownMenuRadioItem value={option.value}>
+                {option.label}
+              </DropdownMenuRadioItem>
+            </Fragment>
           ))}
         </DropdownMenuRadioGroup>
       )

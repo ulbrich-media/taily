@@ -57,7 +57,7 @@ export function PersonListFilters({
   const [searchFieldKey, setSearchFieldKey] = useState(0)
 
   const organizationOptions = [
-    { value: 'none', label: 'Ohne Organisation' },
+    { value: 'none', label: 'Ohne Organisation', general: true },
     ...organizations.map((organization) => ({
       value: organization.id,
       label: organization.name,
@@ -103,7 +103,7 @@ export function PersonListFilters({
       // preset matches at a time, and unchecking it clears the filters.
       type: 'multi',
       key: 'preset',
-      label: 'Voreinstellung',
+      label: 'Schnellfilter',
       options: personPresets.map((preset) => ({
         value: preset.key,
         label: preset.label,

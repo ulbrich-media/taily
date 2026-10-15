@@ -50,7 +50,7 @@ export function AnimalListFilters({
   const [searchFieldKey, setSearchFieldKey] = useState(0)
 
   const mediatorOptions = [
-    { value: 'none', label: 'Nicht zugewiesen' },
+    { value: 'none', label: 'Nicht zugewiesen', general: true },
     ...mediators.map((mediator) => ({
       value: mediator.id,
       label: mediator.full_name ?? '',
