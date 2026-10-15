@@ -18,6 +18,8 @@ import { Button } from '@/shadcn/components/ui/button'
 import { FieldGroup } from '@/shadcn/components/ui/field'
 import { toast } from 'sonner'
 import { UserRole } from '@/api/types/users'
+import type { PersonListResource } from '@/api/types/people'
+import { PersonSelect } from '@/components/field/PersonSelect'
 import { FormBlocker } from '@/components/form/FormBlocker'
 import { TextInput } from '@/components/field/TextInput'
 import { SelectInput } from '@/components/field/SelectInput'
@@ -33,16 +35,22 @@ const createUserSchema = z.object({
   role: z.enum(UserRole, {
     error: 'Bitte wähle eine Rolle aus',
   }),
+  person_id: z.string().nullable(),
 })
 
 type CreateUserFormData = z.infer<typeof createUserSchema>
 
 interface UserCreatePageProps {
+  persons: PersonListResource[]
   onClose: () => void
   breadcrumb?: ReactNode
 }
 
-export function UserCreatePage({ onClose, breadcrumb }: UserCreatePageProps) {
+export function UserCreatePage({
+  persons,
+  onClose,
+  breadcrumb,
+}: UserCreatePageProps) {
   const queryClient = useQueryClient()
 
   const [keepOpen, setKeepOpen] = useState(false)
@@ -53,6 +61,7 @@ export function UserCreatePage({ onClose, breadcrumb }: UserCreatePageProps) {
       name: '',
       email: '',
       role: UserRole.User,
+      person_id: null,
     },
   })
 
@@ -67,6 +76,7 @@ export function UserCreatePage({ onClose, breadcrumb }: UserCreatePageProps) {
           name: '',
           email: '',
           role: UserRole.User,
+          person_id: null,
         })
         setKeepOpen(false)
       } else {
@@ -130,6 +140,15 @@ export function UserCreatePage({ onClose, breadcrumb }: UserCreatePageProps) {
                   { value: UserRole.Admin, label: 'Administrator' },
                 ]}
                 placeholder="Rolle auswählen"
+              />
+
+              <PersonSelect
+                name="person_id"
+                control={form.control}
+                label="Person"
+                description="Verknüpft den Benutzer mit einer Person (optional)."
+                persons={persons}
+                canRemove
               />
             </FieldGroup>
 

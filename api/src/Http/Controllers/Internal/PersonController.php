@@ -2,22 +2,65 @@
 
 namespace Taily\Http\Controllers\Internal;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Taily\Http\Controllers\Controller;
+use Taily\Http\Requests\PersonIndexRequest;
 use Taily\Http\Resources\PersonDetailResource;
 use Taily\Http\Resources\PersonListResource;
 use Taily\Models\Person;
 
 class PersonController extends Controller
 {
+    private const LIST_RELATIONS = ['organization', 'inspectorAnimalTypes', 'mediatorAnimalTypes', 'fosterAnimalTypes', 'media'];
+
     /**
-     * Display a listing of people.
+     * Display a page of people (see PersonIndexRequest for the query
+     * contract). `per_page=0` only counts the filtered people. Without any
+     * list parameter the whole directory is returned, which the pickers in
+     * other forms still rely on.
      */
-    public function index(Request $request): AnonymousResourceCollection
+    public function index(PersonIndexRequest $request): AnonymousResourceCollection|JsonResponse
     {
-        $query = Person::with(['organization', 'inspectorAnimalTypes', 'mediatorAnimalTypes', 'fosterAnimalTypes', 'media']);
+        if (! $request->wantsListView()) {
+            return PersonListResource::collection($this->directory($request));
+        }
+
+        $query = Person::query()
+            ->filterBy($request->filters())
+            ->search($request->searchTerm());
+
+        if ($request->perPage() === 0) {
+            return response()->json([
+                'data' => [],
+                'meta' => [
+                    'current_page' => 1,
+                    'last_page' => 1,
+                    'per_page' => 0,
+                    'total' => $query->count(),
+                ],
+            ]);
+        }
+
+        $people = $query
+            ->with(self::LIST_RELATIONS)
+            ->sortedBy($request->sortKey(), $request->sortDirection())
+            ->paginate($request->perPage());
+
+        return PersonListResource::collection($people);
+    }
+
+    /**
+     * The whole directory, optionally narrowed by the legacy `role`,
+     * `animal_type_id` and `organization_id` parameters.
+     *
+     * @return Collection<int, Person>
+     */
+    private function directory(Request $request): Collection
+    {
+        $query = Person::with(self::LIST_RELATIONS);
 
         if ($request->filled('organization_id')) {
             $query->where('organization_id', $request->input('organization_id'));
@@ -54,9 +97,7 @@ class PersonController extends Controller
             });
         }
 
-        $people = $query->orderBy('created_at', 'desc')->get();
-
-        return PersonListResource::collection($people);
+        return $query->orderBy('created_at', 'desc')->get();
     }
 
     /**

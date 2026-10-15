@@ -7,7 +7,12 @@ import type {
   UpdatePersonRequest,
   DeletePersonResponse,
 } from './types'
-import type { PersonPicture } from '@/api/types/people'
+import type { PersonListResource, PersonPicture } from '@/api/types/people'
+import type { PaginatedResponse } from '@/api/types/pagination'
+import {
+  buildPersonListQuery,
+  type PersonListParams,
+} from '../person-list.search'
 
 export interface GetPeopleParams {
   role?: 'inspector' | 'mediator' | 'foster' | 'adopter'
@@ -25,6 +30,16 @@ export async function getPeople(
     query.set('organization_id', params.organization_id)
   const qs = query.toString()
   return apiRequest<PeopleResponse>(`persons${qs ? `?${qs}` : ''}`)
+}
+
+/** One page of the people list, see docs/coding-patterns/list-views.md. */
+export async function getPeoplePage(
+  params: PersonListParams,
+  perPage?: number
+): Promise<PaginatedResponse<PersonListResource>> {
+  return apiRequest<PaginatedResponse<PersonListResource>>(
+    `persons?${buildPersonListQuery(params, perPage)}`
+  )
 }
 
 export async function getPerson(id: string): Promise<Person> {
