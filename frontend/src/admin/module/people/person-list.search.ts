@@ -111,8 +111,13 @@ export type PersonListParams = ListParams<PersonListSearch>
 const config = createListConfig<PersonListSearch, PersonFilterKey>({
   noFilters: NO_FILTERS,
   perPage: PEOPLE_PER_PAGE,
-  multi: ['role', 'adoption_status'],
-  single: ['organization_id', 'has_adoptions', 'has_pre_inspections'],
+  filterKinds: {
+    role: 'multi',
+    adoption_status: 'multi',
+    organization_id: 'single',
+    has_adoptions: 'single',
+    has_pre_inspections: 'single',
+  },
 })
 
 export const toPersonListParams = (

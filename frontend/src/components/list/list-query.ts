@@ -66,8 +66,8 @@ export function hasActiveFilters<S extends BaseListSearch>(
 
 /**
  * Everything a list module needs from its filter description. `noFilters`
- * must list every filter key at its empty value, so the compiler asks for a
- * new filter there (reset and presets rely on it).
+ * and `filterKinds` must each name every filter key (at its empty value, and
+ * as `multi` or `single`), so the compiler asks for a new filter in both.
  */
 export function createListConfig<
   S extends BaseListSearch,
@@ -75,13 +75,13 @@ export function createListConfig<
 >(options: {
   noFilters: { [P in K]: S[P] }
   perPage: number
-  multi: readonly K[]
-  single: readonly K[]
+  filterKinds: { [P in K]: 'multi' | 'single' }
 }) {
-  const { noFilters, perPage } = options
+  const { noFilters, perPage, filterKinds } = options
+  const entries = Object.entries(filterKinds) as [K, 'multi' | 'single'][]
   const config: FilterQueryConfig<S> = {
-    multi: options.multi,
-    single: options.single,
+    multi: entries.filter(([, kind]) => kind === 'multi').map(([key]) => key),
+    single: entries.filter(([, kind]) => kind === 'single').map(([key]) => key),
   }
   return {
     perPage,

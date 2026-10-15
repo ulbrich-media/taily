@@ -99,17 +99,17 @@ export type AnimalListParams = ListParams<AnimalListSearch>
 const config = createListConfig<AnimalListSearch, AnimalFilterKey>({
   noFilters: NO_FILTERS,
   perPage: ANIMALS_PER_PAGE,
-  multi: ['status'],
-  single: [
-    'animal_type_id',
-    'assigned_agent_id',
-    'published',
-    'neutered',
-    'has_image',
-    'boarding',
-    'reserved',
-    'has_sponsor',
-  ],
+  filterKinds: {
+    status: 'multi',
+    animal_type_id: 'single',
+    assigned_agent_id: 'single',
+    published: 'single',
+    neutered: 'single',
+    has_image: 'single',
+    boarding: 'single',
+    reserved: 'single',
+    has_sponsor: 'single',
+  },
 })
 
 export const toAnimalListParams = (

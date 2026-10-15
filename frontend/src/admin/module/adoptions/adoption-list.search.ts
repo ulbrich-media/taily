@@ -95,14 +95,15 @@ export type AdoptionListParams = ListParams<AdoptionListSearch>
 const config = createListConfig<AdoptionListSearch, AdoptionFilterKey>({
   noFilters: NO_FILTERS,
   perPage: ADOPTIONS_PER_PAGE,
-  multi: [
-    'status',
-    'pre_inspection_status',
-    'contract_status',
-    'transport_status',
-    'handover_status',
-  ],
-  single: ['mediator_id', 'animal_type_id'],
+  filterKinds: {
+    status: 'multi',
+    pre_inspection_status: 'multi',
+    contract_status: 'multi',
+    transport_status: 'multi',
+    handover_status: 'multi',
+    mediator_id: 'single',
+    animal_type_id: 'single',
+  },
 })
 
 export const toAdoptionListParams = (

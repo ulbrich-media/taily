@@ -82,8 +82,7 @@ describe('createListConfig', () => {
   const list = createListConfig<TestSearch, 'tags' | 'owner'>({
     noFilters: NO_FILTERS,
     perPage: 7,
-    multi: ['tags'],
-    single: ['owner'],
+    filterKinds: { tags: 'multi', owner: 'single' },
   })
 
   it('resets the search term and filters but not sort or view', () => {
