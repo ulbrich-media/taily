@@ -90,6 +90,8 @@ A filter value of `me` is resolved server-side to the current user's person. Onl
 
 Don't build a generic query builder up front. If sort-direction parsing or the `per_page` cap ends up identical in all lists, extract a trait then.
 
+**Known duplication (follow-up):** `PersonIndexRequest`, `AnimalIndexRequest` and `AdoptionIndexRequest` predate `ListIndexRequest` and still repeat its constants, `prepareForValidation`, the accessors and the count-only response (`per_page=0`) in their controllers. They should extend `ListIndexRequest`, declare sort keys and filters through its hooks, keep custom rules in `filterRules()` and call `countResponse()`. This is deliberately left out of the PR that introduced the base class to keep the existing endpoints' behaviour untouched; new lists must use `ListIndexRequest`.
+
 ## Frontend
 
 ### State in the URL

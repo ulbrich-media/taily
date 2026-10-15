@@ -53,8 +53,12 @@ export const Route = createFileRoute('/admin/_authenticated/settings/users')({
     })
   },
   // `view` is presentation only and must not trigger a reload.
-  loaderDeps: ({ search }) => toUserListParams(search),
-  loader: async ({ deps, cause }) => {
+  loaderDeps: ({ search }) => ({
+    ...search,
+    view: userListSearchDefaults.view,
+  }),
+  loader: async ({ deps: search, cause, context }) => {
+    const deps = toUserListParams(search, context.isAdmin)
     // Changing filters, sort or page on the open list must not hold the
     // navigation back; only entering the list waits for its data.
     if (cause === 'stay') {
@@ -74,7 +78,7 @@ function RouteComponent() {
   const navigate = Route.useNavigate()
 
   const { data: users, isPlaceholderData } = useQuery({
-    ...listUsersPageQuery(toUserListParams(search)),
+    ...listUsersPageQuery(toUserListParams(search, isAdmin)),
     placeholderData: keepPreviousData,
     // A failed request is left to the router's error handling.
     throwOnError: true,

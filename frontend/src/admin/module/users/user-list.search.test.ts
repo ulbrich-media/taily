@@ -28,15 +28,18 @@ describe('userListSearchSchema', () => {
 describe('buildUserListQuery', () => {
   it('sends the filters, search and sort', () => {
     const query = buildUserListQuery(
-      toUserListParams({
-        ...userListSearchDefaults,
-        sort: '-last_login_at',
-        search: ' anna ',
-        role: ['admin', 'user'],
-        has_person: '0',
-        has_two_factor: '0',
-        has_logged_in: '1',
-      })
+      toUserListParams(
+        {
+          ...userListSearchDefaults,
+          sort: '-last_login_at',
+          search: ' anna ',
+          role: ['admin', 'user'],
+          has_person: '0',
+          has_two_factor: '0',
+          has_logged_in: '1',
+        },
+        true
+      )
     )
     const params = new URLSearchParams(query)
     expect(params.get('sort')).toBe('-last_login_at')
@@ -45,6 +48,26 @@ describe('buildUserListQuery', () => {
     expect(params.get('filter[has_person]')).toBe('0')
     expect(params.get('filter[has_two_factor]')).toBe('0')
     expect(params.get('filter[has_logged_in]')).toBe('1')
+  })
+
+  it('drops admin-only sort and filters for non-admins', () => {
+    const query = buildUserListQuery(
+      toUserListParams(
+        {
+          ...userListSearchDefaults,
+          sort: '-last_login_at',
+          has_two_factor: '0',
+          has_logged_in: '1',
+          has_person: '1',
+        },
+        false
+      )
+    )
+    const params = new URLSearchParams(query)
+    expect(params.get('sort')).toBe('name')
+    expect(params.has('filter[has_two_factor]')).toBe(false)
+    expect(params.has('filter[has_logged_in]')).toBe(false)
+    expect(params.get('filter[has_person]')).toBe('1')
   })
 })
 

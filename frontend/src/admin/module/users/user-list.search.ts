@@ -87,8 +87,26 @@ const config = createListConfig<UserListSearch, UserFilterKey>({
   },
 })
 
-export const toUserListParams = (search: UserListSearch): UserListParams =>
-  toListParams(search)
+/**
+ * The API rejects the admin-only sort and filters (422) for everyone else, so
+ * a shared or remembered URL must not send them for a non-admin.
+ */
+export const toUserListParams = (
+  search: UserListSearch,
+  isAdmin: boolean
+): UserListParams => {
+  if (isAdmin) return toListParams(search)
+
+  return toListParams({
+    ...search,
+    sort:
+      search.sort.replace(/^-/, '') === 'last_login_at'
+        ? DEFAULT_USER_SORT
+        : search.sort,
+    has_two_factor: undefined,
+    has_logged_in: undefined,
+  })
+}
 
 /** Query string of the list endpoint, see docs/coding-patterns/list-views.md. */
 export const buildUserListQuery = config.buildQuery
