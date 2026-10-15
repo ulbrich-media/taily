@@ -10,12 +10,7 @@ import {
 } from '@/shadcn/components/ui/table'
 import { SortableHead } from '@/components/list/SortableHead'
 import { formatApiDate } from '@/lib/dates.utils'
-import {
-  UserLastLogin,
-  UserName,
-  UserPerson,
-  UserTwoFactorStatus,
-} from './UserListParts'
+import { UserLastLogin, UserName, UserTwoFactorStatus } from './UserListParts'
 
 interface UserListProps {
   users: UserResource[]
@@ -52,7 +47,6 @@ export function UserList({
         <TableRow>
           {header('Name', 'name')}
           {header('E-Mail', 'email')}
-          <TableHead>Person</TableHead>
           {isAdmin && <TableHead>2FA</TableHead>}
           {header('Registriert', 'created_at')}
           {isAdmin && header('Letzter Login', 'last_login_at')}
@@ -66,9 +60,6 @@ export function UserList({
               <UserName user={user} />
             </TableCell>
             <TableCell>{user.email}</TableCell>
-            <TableCell>
-              <UserPerson user={user} />
-            </TableCell>
             {isAdmin && (
               <TableCell>
                 <UserTwoFactorStatus user={user} />

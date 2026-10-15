@@ -18,10 +18,7 @@ export const hasTwoFactorOptions: FilterOption<'1' | '0'>[] = [
 
 export const hasLoggedInOptions: FilterOption<'1' | '0'>[] = [
   { value: '1', label: 'Schon angemeldet' },
-  {
-    value: '0',
-    label: 'Noch nie angemeldet (eingeladen oder Einladung abgelaufen)',
-  },
+  { value: '0', label: 'Noch nie angemeldet' },
 ]
 
 const NAME_SORTS: FilterOption<UserListSearch['sort']>[] = [

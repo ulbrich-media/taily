@@ -111,9 +111,14 @@ function RouteComponent() {
               <Edit /> Bearbeiten
             </EditRoute.Link>
           </Button>
-          <Button size="sm" variant="destructive_outline" asChild>
-            <DeleteRoute.Link params={{ id: user.id }} search>
-              <Trash2 /> Löschen
+          <Button size="icon-sm" variant="destructive_outline" asChild>
+            <DeleteRoute.Link
+              params={{ id: user.id }}
+              search
+              aria-label="Löschen"
+              title="Löschen"
+            >
+              <Trash2 />
             </DeleteRoute.Link>
           </Button>
         </div>

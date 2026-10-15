@@ -90,17 +90,6 @@ describe('UserListPage', () => {
     expect(within(rowFor('Clara')).getByText('15.01.2026')).toBeInTheDocument()
   })
 
-  it('shows the linked person', () => {
-    renderPage([
-      makeUser({
-        name: 'Finn',
-        person: { id: 'p1', full_name: 'Finn Fischer' },
-      }),
-    ])
-
-    expect(within(rowFor('Finn')).getByText('Finn Fischer')).toBeInTheDocument()
-  })
-
   it('shows the same data as a card', () => {
     renderPage([makeUser({ name: 'Gina', two_factor_enabled: true })], {
       isAdmin: true,
