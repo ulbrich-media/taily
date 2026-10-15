@@ -35,13 +35,8 @@ function RouteComponent() {
           params: { animalTypeId, animalId },
         })
       }
-      onCancel={() =>
-        navigateToAnimalsList({
-          search: defaultAnimalTypeId
-            ? { animal_type_id: defaultAnimalTypeId }
-            : {},
-        })
-      }
+      // No params: the list restores the filters of its last visit.
+      onCancel={() => navigateToAnimalsList({ search: {} })}
     />
   )
 }

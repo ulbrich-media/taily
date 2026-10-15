@@ -41,8 +41,14 @@ export type ToolbarFilter<T extends string = string> =
       type: 'sections'
       key: string
       label: string
-      sections: MultiFilterGroup[]
+      sections: SectionGroup[]
     }
+
+/** A section of a `sections` filter; without a `label` it has no headline. */
+export type SectionGroup<T extends string = string> = Omit<
+  MultiFilterGroup<T>,
+  'label'
+> & { label?: string }
 
 /** Types a filter by its options and widens it for use in a `ToolbarFilter[]`. */
 export function defineFilter<T extends string>(
@@ -53,9 +59,9 @@ export function defineFilter<T extends string>(
 
 /** Same for one section of a `sections` filter. */
 export function defineGroup<T extends string>(
-  group: MultiFilterGroup<T>
-): MultiFilterGroup {
-  return group as MultiFilterGroup
+  group: SectionGroup<T>
+): SectionGroup {
+  return group as SectionGroup
 }
 
 export function isFilterActive(filter: ToolbarFilter): boolean {
@@ -74,7 +80,7 @@ export const ALL_VALUE = '__all__'
 
 /** Toggles `option` in a multi-value filter, keeping option order so equal selections give equal URLs. */
 export function toggleOption(
-  group: MultiFilterGroup,
+  group: Pick<MultiFilterGroup, 'options' | 'value'>,
   option: string,
   checked: boolean
 ): string[] {

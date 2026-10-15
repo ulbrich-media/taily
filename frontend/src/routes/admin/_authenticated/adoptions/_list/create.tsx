@@ -3,7 +3,6 @@ import { AdoptionCreatePage } from '@/admin/module/adoptions/pages/AdoptionCreat
 import { useBreadcrumbs } from '@/router/useBreadcrumbs'
 import { BreadcrumbNav } from '@/router/BreadcrumbNav'
 import { queryClient } from '@/lib/queryClient.ts'
-import { listAnimalsQuery } from '@/admin/module/animals/api/queries.ts'
 import {
   listPeopleQuery,
   listPeopleFilteredQuery,
@@ -17,7 +16,6 @@ export const Route = createFileRoute(
 )({
   loader: async () => {
     await Promise.all([
-      queryClient.ensureQueryData(listAnimalsQuery()),
       queryClient.ensureQueryData(listPeopleQuery),
       queryClient.ensureQueryData(
         listPeopleFilteredQuery({
@@ -37,7 +35,6 @@ function RouteComponent() {
   const breadcrumbs = useBreadcrumbs()
   const navigateToAdoptionDetail = AdoptionDetailRoute.useNavigate()
   const navigateToAdoptionsList = AdoptionsListRoute.useNavigate()
-  const { data: animals } = useSuspenseQuery(listAnimalsQuery())
   const { data: persons } = useSuspenseQuery(listPeopleQuery)
   const { data: mediators } = useSuspenseQuery(
     listPeopleFilteredQuery({ role: 'mediator' })
@@ -53,7 +50,6 @@ function RouteComponent() {
 
   return (
     <AdoptionCreatePage
-      animals={animals}
       persons={persons}
       mediators={mediators}
       onCreated={handleCreated}

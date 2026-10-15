@@ -54,7 +54,7 @@ export function FilterTrigger({
   )
 }
 
-function MultiItems({ group }: { group: MultiFilterGroup }) {
+function MultiItems({ group }: { group: Omit<MultiFilterGroup, 'label'> }) {
   return group.options.map((option) => (
     <DropdownMenuCheckboxItem
       key={option.value}
@@ -99,7 +99,9 @@ function FilterMenuItems({ filter }: { filter: ToolbarFilter }) {
       return filter.sections.map((section, index) => (
         <DropdownMenuGroup key={section.key}>
           {index > 0 && <DropdownMenuSeparator />}
-          <DropdownMenuLabel>{section.label}</DropdownMenuLabel>
+          {section.label && (
+            <DropdownMenuLabel>{section.label}</DropdownMenuLabel>
+          )}
           <MultiItems group={section} />
         </DropdownMenuGroup>
       ))
