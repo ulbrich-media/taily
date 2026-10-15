@@ -13,16 +13,18 @@ import {
 interface ListFiltersToolbarProps<S extends BaseListSearch> {
   search: S
   onChange: (patch: Partial<S>) => void
-  /** Patch that clears the search term and every filter. */
-  resetPatch: Partial<S>
-  canReset: boolean
+  /** Patch that clears the search term and every filter. Omit for lists without any. */
+  resetPatch?: Partial<S>
+  canReset?: boolean
   /** The list's filters, in priority order: the last ones collapse first. */
-  filters: ToolbarFilter[]
-  sortOptions: FilterOption[]
+  filters?: ToolbarFilter[]
+  /** Omit for lists with a fixed order: there is no sort dropdown then. */
+  sortOptions?: FilterOption[]
   /** Accessible label of the toolbar, e.g. "Tiere filtern". */
   label: string
-  searchLabel: string
-  searchPlaceholder: string
+  /** Omit both for lists that cannot be searched. */
+  searchLabel?: string
+  searchPlaceholder?: string
 }
 
 /** Toolbar shared by the filterable lists: search, filters, sort and view toggle. */
@@ -30,8 +32,8 @@ export function ListFiltersToolbar<S extends BaseListSearch>({
   search,
   onChange,
   resetPatch,
-  canReset,
-  filters,
+  canReset = false,
+  filters = [],
   sortOptions,
   label,
   searchLabel,
@@ -41,37 +43,45 @@ export function ListFiltersToolbar<S extends BaseListSearch>({
   // submitted is dropped as well.
   const [searchFieldKey, setSearchFieldKey] = useState(0)
 
-  const sort = defineFilter({
-    type: 'single',
-    key: 'sort',
-    label: 'Sortierung',
-    options: sortOptions,
-    value: search.sort,
-    onChange: (value) => value && onChange({ sort: value } as Partial<S>),
-    highlightActive: false,
-  })
+  const sort = sortOptions
+    ? defineFilter({
+        type: 'single',
+        key: 'sort',
+        label: 'Sortierung',
+        options: sortOptions,
+        value: search.sort,
+        onChange: (value) => value && onChange({ sort: value } as Partial<S>),
+        highlightActive: false,
+      })
+    : undefined
 
   return (
     <ListToolbar
       label={label}
       search={
-        <SearchInput
-          key={searchFieldKey}
-          label={searchLabel}
-          placeholder={searchPlaceholder}
-          value={search.search}
-          onSearch={(value) => onChange({ search: value } as Partial<S>)}
-        />
+        searchLabel && (
+          <SearchInput
+            key={searchFieldKey}
+            label={searchLabel}
+            placeholder={searchPlaceholder ?? ''}
+            value={search.search}
+            onSearch={(value) => onChange({ search: value } as Partial<S>)}
+          />
+        )
       }
       filters={filters}
-      onReset={() => {
-        setSearchFieldKey((key) => key + 1)
-        onChange(resetPatch)
-      }}
+      onReset={
+        resetPatch
+          ? () => {
+              setSearchFieldKey((key) => key + 1)
+              onChange(resetPatch)
+            }
+          : undefined
+      }
       canReset={canReset}
       trailing={
         <>
-          <FilterDropdown filter={sort} />
+          {sort && <FilterDropdown filter={sort} />}
           <ListViewToggle
             value={search.view}
             // Presentation only, so the page stays.

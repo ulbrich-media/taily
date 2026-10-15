@@ -47,7 +47,7 @@ function RouteComponent() {
   const { data: persons } = useSuspenseQuery(listPeopleQuery)
 
   const handleClose = () => {
-    navigate({})
+    navigate({ search: true })
   }
 
   return (

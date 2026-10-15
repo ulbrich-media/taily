@@ -6,7 +6,12 @@ Lists with large, growing data (adoptions, animals, people) are paginated, sorte
 
 Rationale and rejected alternatives: [ADR-014](../ADRs/ADR-014-list-view-data-handling.md).
 
-Small, bounded lists (organizations, API tokens, users, form templates…) do **not** use this pattern. They stay unpaginated.
+The settings lists (users, organizations, vaccinations, medical tests, animal types, form templates) use it too, in a lighter form: `ListIndexRequest` declares only what a list has (sort keys, filters, search), and lists with a fixed order (everything except users) have no `sort` param at all. Small lists that are not worth it (API tokens, transports…) stay unpaginated.
+
+- **Fixed order:** the frontend schema uses `fixedOrderListSearchShape` (`sort` is always empty and not sent, `search` too unless the list is searchable) and `ListFiltersToolbar` is given no `sortOptions`. Vaccinations and medical tests are one merged list, grouped by animal type and ordered by title (`ListedByAnimalType`). Animal types and form templates use `plain-list-search.ts`.
+- **Pickers keep working:** these endpoints still answer with the whole list when none of `page`, `per_page`, `sort`, `search`, `filter` is sent. The list views always send `page`.
+- **Admin-only data:** users expose 2FA and last login to admins only, so `UserIndexRequest` rejects filters and sorts on them for everyone else.
+- **Routes:** `useListRoute` holds what every list route shares (remembering the filters, redirect from a page past the end, applying changes to the URL). A list whose route is a layout with dialog children (`.../users/create`, `$id.edit`) passes `search` on those links and `search: true` when closing, so the list keeps its state.
 
 ## Request contract
 

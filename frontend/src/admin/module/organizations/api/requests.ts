@@ -1,5 +1,10 @@
 import { apiRequest } from '@/lib/api'
 import type { OrganizationResource } from '@/api/types/organizations'
+import type { PaginatedResponse } from '@/api/types/pagination'
+import {
+  buildOrganizationListQuery,
+  type OrganizationListParams,
+} from '../organization-list.search'
 import type {
   CreateOrganizationRequest,
   UpdateOrganizationRequest,
@@ -7,6 +12,13 @@ import type {
 
 export async function getOrganizations(): Promise<OrganizationResource[]> {
   return apiRequest('organizations')
+}
+
+/** One page of the organization list, see docs/coding-patterns/list-views.md. */
+export async function getOrganizationsPage(
+  params: OrganizationListParams
+): Promise<PaginatedResponse<OrganizationResource>> {
+  return apiRequest(`organizations?${buildOrganizationListQuery(params)}`)
 }
 
 export async function getOrganization(

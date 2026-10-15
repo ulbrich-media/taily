@@ -48,7 +48,7 @@ function RouteComponent() {
   const vaccination = vaccinations.find((v) => v.id === id)!
 
   const handleClose = () => {
-    navigate({})
+    navigate({ search: true })
   }
 
   return (
