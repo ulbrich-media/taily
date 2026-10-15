@@ -4,25 +4,20 @@ import type {
   AnimalDetailResource,
   AnimalPicture,
 } from '@/api/types/animals'
+import type { PaginatedResponse } from '@/api/types/pagination'
+import {
+  buildAnimalListQuery,
+  type AnimalListParams,
+} from '../animal-list.search'
 import type { CreateAnimalRequest, UpdateAnimalRequest } from './types'
 
-export interface AnimalFilters {
-  animal_type_id?: string
-}
-
-export async function getAnimals(
-  filters?: AnimalFilters
-): Promise<AnimalListResource[]> {
-  const params = new URLSearchParams()
-
-  if (filters?.animal_type_id) {
-    params.append('animal_type_id', filters.animal_type_id)
-  }
-
-  const queryString = params.toString()
-  const url = queryString ? `animals?${queryString}` : 'animals'
-
-  return apiRequest<AnimalListResource[]>(url)
+export async function getAnimalsPage(
+  params: AnimalListParams,
+  perPage?: number
+): Promise<PaginatedResponse<AnimalListResource>> {
+  return apiRequest<PaginatedResponse<AnimalListResource>>(
+    `animals?${buildAnimalListQuery(params, perPage)}`
+  )
 }
 
 export async function getAnimal(id: string): Promise<AnimalDetailResource> {

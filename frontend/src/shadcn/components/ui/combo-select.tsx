@@ -19,6 +19,14 @@ export interface ComboSelectProps<T> {
   renderListItem: (item: T) => React.ReactNode
   /** Renders a button item */
   renderButtonItem: (item: T) => React.ReactNode
+  /**
+   * Server-side search: called with the typed term (empty when cleared or
+   * closed). When set, `items` are shown as given instead of being filtered
+   * here, because they already are the result for the term.
+   */
+  onSearchChange?: (search: string) => void
+  /** Selected item that may not be part of `items` (it was chosen with an earlier search). */
+  selectedItem?: T | null
   placeholder?: string
   disabled?: boolean
   className?: string
@@ -35,6 +43,8 @@ export function ComboSelect<T>({
   getItemSearchText,
   renderListItem,
   renderButtonItem,
+  onSearchChange,
+  selectedItem: selectedItemProp = null,
   placeholder = 'Auswählen...',
   disabled = false,
   className,
@@ -42,20 +52,29 @@ export function ComboSelect<T>({
   'aria-invalid': ariaInvalid,
 }: ComboSelectProps<T>) {
   const [open, setOpen] = React.useState(false)
-  const [search, setSearch] = React.useState('')
+  const [search, setSearchState] = React.useState('')
 
   const searchRef = React.useRef<HTMLInputElement>(null)
   const itemRefs = React.useRef<(HTMLButtonElement | null)[]>([])
 
+  const setSearch = (next: string) => {
+    setSearchState(next)
+    onSearchChange?.(next)
+  }
+
   const selectedItem = value
-    ? (items.find((item) => getItemValue(item) === value) ?? null)
+    ? (items.find((item) => getItemValue(item) === value) ??
+      (selectedItemProp && getItemValue(selectedItemProp) === value
+        ? selectedItemProp
+        : null))
     : null
 
-  const filteredItems = search.trim()
-    ? items.filter((item) =>
-        getItemSearchText(item).toLowerCase().includes(search.toLowerCase())
-      )
-    : items
+  const filteredItems =
+    search.trim() && !onSearchChange
+      ? items.filter((item) =>
+          getItemSearchText(item).toLowerCase().includes(search.toLowerCase())
+        )
+      : items
 
   const handleSelect = (itemValue: string) => {
     onValueChange(itemValue)

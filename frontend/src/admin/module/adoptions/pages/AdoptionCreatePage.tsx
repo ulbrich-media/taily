@@ -18,7 +18,6 @@ import { Button } from '@/shadcn/components/ui/button.tsx'
 import { AnimalSelect } from '@/components/field/AnimalSelect.tsx'
 import { PersonSelect } from '@/components/field/PersonSelect.tsx'
 import { z } from 'zod'
-import type { AnimalListResource } from '@/api/types/animals'
 import type { PersonListResource } from '@/api/types/people'
 
 const adoptionCreateSchema = z.object({
@@ -30,7 +29,6 @@ const adoptionCreateSchema = z.object({
 type AdoptionCreateData = z.infer<typeof adoptionCreateSchema>
 
 interface AdoptionCreatePageProps {
-  animals: AnimalListResource[]
   persons: PersonListResource[]
   mediators: PersonListResource[]
   onCreated: (id: string) => void
@@ -39,7 +37,6 @@ interface AdoptionCreatePageProps {
 }
 
 export function AdoptionCreatePage({
-  animals,
   persons,
   mediators,
   onCreated,
@@ -98,7 +95,6 @@ export function AdoptionCreatePage({
             name="animal_id"
             control={form.control}
             label="Tier"
-            animals={animals}
             required
           />
           <PersonSelect

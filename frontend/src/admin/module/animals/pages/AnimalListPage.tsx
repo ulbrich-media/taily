@@ -1,41 +1,44 @@
 import type { ReactNode } from 'react'
-import { Bookmark, Eye, EyeOff, PawPrint } from 'lucide-react'
+import { FilterX, PawPrint } from 'lucide-react'
 import type { AnimalListResource } from '@/api/types/animals'
 import type { AnimalTypeResource } from '@/api/types/animal-types'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/shadcn/components/ui/table'
-import {
-  ToggleGroup,
-  ToggleGroupItem,
-} from '@/shadcn/components/ui/toggle-group.tsx'
-import { Field, FieldLabel } from '@/shadcn/components/ui/field.tsx'
-import { TableListView } from '@/components/list/TableListView'
+import type { PaginatedResponse } from '@/api/types/pagination'
+import type { PersonListResource } from '@/api/types/people'
 import { PageHeader } from '@/components/layout/PageHeader'
+import { TableCard } from '@/components/card/TableCard'
+import { ProgressBar } from '@/components/list/ProgressBar'
+import { listViewVisibility } from '@/components/list/list-search'
+import { useScrollListIntoView } from '@/components/list/useScrollListIntoView'
+import { updatingClass } from '@/components/list/updating'
+import { ListPagination } from '@/components/list/ListPagination'
 import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from '@/shadcn/components/ui/avatar.tsx'
-import { Card, CardContent } from '@/shadcn/components/ui/card.tsx'
-import { Badge } from '@/shadcn/components/ui/badge.tsx'
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/shadcn/components/ui/empty'
+import { Button } from '@/shadcn/components/ui/button'
+import { cn } from '@/shadcn/lib/utils'
+import { AnimalList } from '@/admin/module/animals/components/AnimalList'
+import { AnimalCardGrid } from '@/admin/module/animals/components/AnimalCardGrid'
+import { AnimalListFilters } from '@/admin/module/animals/components/AnimalListFilters'
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/shadcn/components/ui/tooltip.tsx'
+  hasActiveAnimalFilters,
+  isAnimalSort,
+  resetSearchPatch,
+  type AnimalListSearch,
+} from '@/admin/module/animals/animal-list.search'
 
 interface AnimalListPageProps {
-  animals: AnimalListResource[]
+  animals: PaginatedResponse<AnimalListResource>
+  search: AnimalListSearch
+  mediators: PersonListResource[]
   animalTypes: AnimalTypeResource[]
-  animalTypeId?: string
-  onAnimalTypeChange: (animalTypeId: string | undefined) => void
+  /** True while the previous result is shown and the next one is loading. */
+  isUpdating?: boolean
+  onSearchChange: (patch: Partial<AnimalListSearch>) => void
   createAction: ReactNode
   renderRowActions: (animal: AnimalListResource) => ReactNode
   breadcrumb?: ReactNode
@@ -43,15 +46,26 @@ interface AnimalListPageProps {
 
 export function AnimalListPage({
   animals,
+  search,
+  mediators,
   animalTypes,
-  animalTypeId,
-  onAnimalTypeChange,
+  isUpdating = false,
+  onSearchChange,
   createAction,
   renderRowActions,
   breadcrumb,
 }: AnimalListPageProps) {
-  const handleAnimalTypeChange = (value: string) => {
-    onAnimalTypeChange(value === 'all' ? undefined : value)
+  const { data, meta } = animals
+  const filtered = hasActiveAnimalFilters(search)
+  const { ref: listRef, scrollIfNeeded } =
+    useScrollListIntoView<HTMLDivElement>()
+
+  const visibility = listViewVisibility(search.view)
+
+  // The pagination sits below the list: see useScrollListIntoView.
+  const handlePageChange = (page: number) => {
+    scrollIfNeeded()
+    onSearchChange({ page })
   }
 
   return (
@@ -63,134 +77,81 @@ export function AnimalListPage({
         breadcrumb={breadcrumb}
       />
 
-      {/* Filter Controls */}
-      <Card>
-        <CardContent>
-          <div className="flex items-center gap-4">
-            <Field>
-              <FieldLabel>Tierarten</FieldLabel>
-              <ToggleGroup
-                type="single"
-                variant="outline"
-                value={animalTypeId ?? 'all'}
-                onValueChange={handleAnimalTypeChange}
-              >
-                <ToggleGroupItem value="all">Alle</ToggleGroupItem>
-                {animalTypes.map((type) => (
-                  <ToggleGroupItem key={type.id} value={type.id}>
-                    {type.title}
-                  </ToggleGroupItem>
-                ))}
-              </ToggleGroup>
-            </Field>
-          </div>
-        </CardContent>
-      </Card>
+      {/* scroll-mt clears the sticky header when scrolled into view */}
+      <div ref={listRef} className="scroll-mt-24 space-y-4">
+        <AnimalListFilters
+          search={search}
+          mediators={mediators}
+          animalTypes={animalTypes}
+          onChange={onSearchChange}
+        />
 
-      {/* Animal List Table */}
-      <TableListView
-        data={animals}
-        emptyState={{
-          title: 'Keine Ergebnisse gefunden',
-          description: 'Füge jetzt ein Tier hinzu!',
-        }}
-      >
-        {(animals) => (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-12"></TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Tierart</TableHead>
-                <TableHead>Rasse</TableHead>
-                <TableHead>Geschlecht</TableHead>
-                <TableHead>Farbe</TableHead>
-                <TableHead className="w-20">Status</TableHead>
-                <TableHead className="th-contain"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {animals.map((animal) => {
-                const animalType = animalTypes.find(
-                  (type) => type.id === animal.animal_type_id
-                )
-                return (
-                  <TableRow key={animal.id}>
-                    <TableCell>
-                      <Avatar size="lg" shape="square">
-                        {animal.profile_picture_url && (
-                          <AvatarImage
-                            alt={animal.name}
-                            src={animal.profile_picture_url}
-                          />
-                        )}
-                        <AvatarFallback>
-                          <PawPrint className="size-5 text-muted-foreground" />
-                        </AvatarFallback>
-                      </Avatar>
-                    </TableCell>
-                    <TableCell className="font-medium">{animal.name}</TableCell>
-                    <TableCell>{animalType?.title || '-'}</TableCell>
-                    <TableCell>{animal.breed || '-'}</TableCell>
-                    <TableCell>
-                      {animal.gender === 'male' ? 'Männlich' : 'Weiblich'}
-                    </TableCell>
-                    <TableCell>{animal.color || '-'}</TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
-                        <PublishStatusIndicator published={animal.do_publish} />
-                        {animal.do_publish && animal.is_reserved && (
-                          <ReservedStatusIndicator />
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {renderRowActions(animal)}
-                    </TableCell>
-                  </TableRow>
-                )
-              })}
-            </TableBody>
-          </Table>
-        )}
-      </TableListView>
+        <div className="space-y-4">
+          {data.length === 0 ? (
+            <div className="relative">
+              <ProgressBar
+                loading={isUpdating}
+                className="absolute inset-x-0 top-0"
+              />
+              <Empty className={cn(isUpdating && updatingClass)}>
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <PawPrint />
+                  </EmptyMedia>
+                  <EmptyTitle>Keine Tiere gefunden</EmptyTitle>
+                  <EmptyDescription>
+                    {filtered
+                      ? 'Mit den gewählten Filtern gibt es keine Treffer.'
+                      : 'Füge jetzt ein Tier hinzu!'}
+                  </EmptyDescription>
+                </EmptyHeader>
+                {filtered && (
+                  <EmptyContent>
+                    <Button
+                      variant="outline"
+                      onClick={() => onSearchChange(resetSearchPatch)}
+                    >
+                      <FilterX />
+                      Filter zurücksetzen
+                    </Button>
+                  </EmptyContent>
+                )}
+              </Empty>
+            </div>
+          ) : (
+            <>
+              <TableCard loading={isUpdating} className={visibility.table}>
+                <AnimalList
+                  animals={data}
+                  sort={search.sort}
+                  onSortChange={(sort) =>
+                    isAnimalSort(sort) && onSearchChange({ sort })
+                  }
+                  renderRowActions={renderRowActions}
+                />
+              </TableCard>
+              {/* The cards have no common edge, so the progress line runs in the gap between toolbar and grid. */}
+              <div className={cn('relative', visibility.cards)}>
+                <ProgressBar
+                  loading={isUpdating}
+                  className="absolute inset-x-0 -top-2.5"
+                />
+                <AnimalCardGrid
+                  animals={data}
+                  renderRowActions={renderRowActions}
+                  className={cn(isUpdating && updatingClass)}
+                />
+              </div>
+            </>
+          )}
+
+          <ListPagination
+            meta={meta}
+            itemLabel="Tiere"
+            onPageChange={handlePageChange}
+          />
+        </div>
+      </div>
     </div>
-  )
-}
-
-function PublishStatusIndicator({ published }: { published: boolean }) {
-  const label = published ? 'Veröffentlicht' : 'Nicht veröffentlicht'
-  const Icon = published ? Eye : EyeOff
-
-  return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Badge variant={published ? 'success' : 'outline'}>
-            <Icon />
-            <span className="sr-only">{label}</span>
-          </Badge>
-        </TooltipTrigger>
-        <TooltipContent>{label}</TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  )
-}
-
-function ReservedStatusIndicator() {
-  const label = 'Reserviert'
-
-  return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Badge variant="warning">
-            <Bookmark />
-            <span className="sr-only">{label}</span>
-          </Badge>
-        </TooltipTrigger>
-        <TooltipContent>{label}</TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
   )
 }
