@@ -13,7 +13,7 @@ commands:
   test: "ddev composer test && npm run test --prefix frontend"
   lint: "npm run lint --prefix frontend"
   # What CI runs and what writers run before handing over; their result gates "ready" (checks_run).
-  checks: ["ddev composer test", "ddev exec 'cd api && ./vendor/bin/pint --test'", "npm run lint --prefix frontend", "npm run format --prefix frontend", "npm run test --prefix frontend", "npm run build --prefix frontend"]
+  checks: ["ddev composer test", "ddev exec 'cd api && ./vendor/bin/pint --test'", "ddev exec api/vendor/bin/psalm --no-progress --report-show-info=false", "ddev exec api/vendor/bin/psalm --taint-analysis --no-progress --report-show-info=false", "npm run lint --prefix frontend", "npm run format --prefix frontend", "npm run test --prefix frontend", "npm run build --prefix frontend"]
 
 workspace:
   # worktree-init.sh derives frontend/.env.local, api/.env and the DDEV project name (own hosts, DB) from the workspace directory.
