@@ -1,0 +1,1 @@
+var e=[`table`,`cards`];function t(e){return{table:e===`table`?`hidden lg:block`:`hidden`,cards:e===`table`?`lg:hidden`:``}}function n(e,t){return e===t?`asc`:e===`-${t}`?`desc`:null}function r(e,t,r=`asc`){let i=n(e,t);return(i===null?r:i===`asc`?`desc`:`asc`)===`desc`?`-${t}`:t}function i(e,t){return{...e,page:1,...t}}export{n as a,r as i,i as n,t as r,e as t};
