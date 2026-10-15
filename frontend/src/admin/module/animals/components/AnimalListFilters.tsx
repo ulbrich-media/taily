@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { useAuth } from '@/lib/auth.hook'
 import type { AnimalTypeResource } from '@/api/types/animal-types'
 import type { PersonListResource } from '@/api/types/people'
 import { SearchInput } from '@/components/list/SearchInput'
@@ -10,6 +11,12 @@ import {
   defineGroup,
   type FilterOption,
 } from '@/components/list/toolbar-filters'
+import {
+  activePreset,
+  clearFiltersPatch,
+  getAnimalPresets,
+  presetPatch,
+} from '../animal-list.presets'
 import {
   hasActiveAnimalFilters,
   resetSearchPatch,
@@ -68,8 +75,35 @@ export function AnimalListFilters({
         onChange({ [key]: values.find((v) => v !== search[key]) }),
     })
 
+  const { user } = useAuth()
+  const personId = user?.person_id ?? null
+  const presets = useMemo(() => getAnimalPresets(personId), [personId])
+  const current = activePreset(search, presets)?.key
+
   // In priority order: the last filters collapse first on narrow screens.
   const filters = [
+    // Only offered when there is a preset for this user.
+    ...(presets.length > 0
+      ? [
+          defineFilter({
+            // Independent checkbox items that behave like radios: at most one
+            // preset matches at a time, and unchecking it clears the filters.
+            type: 'multi',
+            key: 'preset',
+            label: 'Schnellfilter',
+            options: presets.map((preset) => ({
+              value: preset.key,
+              label: preset.label,
+            })),
+            value: current ? [current] : [],
+            onChange: (keys: string[]) => {
+              const picked = keys.find((key) => key !== current)
+              const preset = presets.find((p) => p.key === picked)
+              onChange(preset ? presetPatch(preset) : clearFiltersPatch)
+            },
+          }),
+        ]
+      : []),
     defineFilter({
       type: 'multi',
       key: 'status',

@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { useAuth } from '@/lib/auth.hook'
 import type { AnimalTypeResource } from '@/api/types/animal-types'
 import type { PersonListResource } from '@/api/types/people'
 import { SearchInput } from '@/components/list/SearchInput'
@@ -8,8 +9,8 @@ import { ListViewToggle } from '@/components/list/ListViewToggle'
 import { defineFilter, defineGroup } from '@/components/list/toolbar-filters'
 import {
   activePreset,
-  adoptionPresets,
   clearFiltersPatch,
+  getAdoptionPresets,
   presetPatch,
 } from '../adoption-list.presets'
 import {
@@ -49,7 +50,10 @@ export function AdoptionListFilters({
     })),
   ]
 
-  const current = activePreset(search)?.key
+  const { user } = useAuth()
+  const personId = user?.person_id ?? null
+  const presets = useMemo(() => getAdoptionPresets(personId), [personId])
+  const current = activePreset(search, presets)?.key
 
   // In priority order: the last filters collapse first on narrow screens.
   const filters = [
@@ -59,14 +63,14 @@ export function AdoptionListFilters({
       type: 'multi',
       key: 'preset',
       label: 'Schnellfilter',
-      options: adoptionPresets.map((preset) => ({
+      options: presets.map((preset) => ({
         value: preset.key,
         label: preset.label,
       })),
       value: current ? [current] : [],
       onChange: (keys) => {
         const picked = keys.find((key) => key !== current)
-        const preset = adoptionPresets.find((p) => p.key === picked)
+        const preset = presets.find((p) => p.key === picked)
         onChange(preset ? presetPatch(preset) : clearFiltersPatch)
       },
     }),
