@@ -3,12 +3,7 @@ import type { UserResource } from '@/api/types/users'
 import { ListCard, ListCardGrid } from '@/components/list/ListCardGrid'
 import { InfoRow } from '@/shadcn/components/common/info-row'
 import { formatApiDate } from '@/lib/dates.utils'
-import {
-  UserLastLogin,
-  UserName,
-  UserPerson,
-  UserTwoFactorStatus,
-} from './UserListParts'
+import { UserLastLogin, UserName, UserTwoFactorStatus } from './UserListParts'
 
 interface UserCardGridProps {
   users: UserResource[]
@@ -41,9 +36,6 @@ export function UserCardGrid({
           }
           footer={renderRowActions?.(user)}
         >
-          <InfoRow label="Person">
-            <UserPerson user={user} />
-          </InfoRow>
           {isAdmin && (
             <InfoRow label="2FA">
               <UserTwoFactorStatus user={user} />

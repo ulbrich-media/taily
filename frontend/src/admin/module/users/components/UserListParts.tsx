@@ -11,11 +11,6 @@ export function UserName({ user }: { user: UserResource }) {
   )
 }
 
-export function UserPerson({ user }: { user: UserResource }) {
-  if (!user.person) return <>-</>
-  return <>{user.person.full_name}</>
-}
-
 export function UserTwoFactorStatus({ user }: { user: UserResource }) {
   if (user.two_factor_enabled) {
     return <Badge variant="success">Aktiv</Badge>
