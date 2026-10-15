@@ -9,7 +9,6 @@ import {
   TableRow,
 } from '@/shadcn/components/ui/table'
 import { SortableHead } from '@/components/list/SortableHead'
-import { formatAnimalAge } from '../animal-age'
 import { AnimalAvatar, AnimalPublishBadges } from './AnimalStatusBadges'
 
 interface AnimalListProps {
@@ -44,8 +43,6 @@ export function AnimalList({
           <TableHead>Tierart</TableHead>
           {header('Rasse', 'breed')}
           {header('Farbe', 'color')}
-          {header('Alter', 'date_of_birth')}
-          {header('Nummer', 'animal_number')}
           <TableHead className="w-20">Status</TableHead>
           <TableHead className="th-contain"></TableHead>
         </TableRow>
@@ -56,12 +53,18 @@ export function AnimalList({
             <TableCell>
               <AnimalAvatar animal={animal} />
             </TableCell>
-            <TableCell className="font-medium">{animal.name}</TableCell>
+            <TableCell className="font-medium">
+              {animal.name}
+              {animal.old_name && (
+                <span className="text-muted-foreground font-normal">
+                  {' '}
+                  (früher {animal.old_name})
+                </span>
+              )}
+            </TableCell>
             <TableCell>{animal.animal_type?.title || '-'}</TableCell>
             <TableCell>{animal.breed || '-'}</TableCell>
             <TableCell>{animal.color || '-'}</TableCell>
-            <TableCell>{formatAnimalAge(animal.date_of_birth)}</TableCell>
-            <TableCell>{animal.animal_number || '-'}</TableCell>
             <TableCell>
               <AnimalPublishBadges animal={animal} />
             </TableCell>

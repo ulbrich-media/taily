@@ -8,7 +8,6 @@ import {
 } from '@/shadcn/components/ui/card'
 import { InfoRow } from '@/shadcn/components/common/info-row'
 import { cn } from '@/shadcn/lib/utils'
-import { formatAnimalAge } from '../animal-age'
 import { AnimalAvatar, AnimalPublishBadges } from './AnimalStatusBadges'
 
 interface AnimalCardGridProps {
@@ -37,6 +36,11 @@ export function AnimalCardGrid({
                 <AnimalAvatar animal={animal} />
                 <div>
                   <p>{animal.name}</p>
+                  {animal.old_name && (
+                    <p className="text-muted-foreground text-sm">
+                      (früher {animal.old_name})
+                    </p>
+                  )}
                   <p className="text-muted-foreground">
                     {animal.animal_type?.title}
                   </p>
@@ -46,10 +50,6 @@ export function AnimalCardGrid({
             <CardContent className="space-y-4 px-4">
               <InfoRow label="Rasse">{animal.breed || '-'}</InfoRow>
               <InfoRow label="Farbe">{animal.color || '-'}</InfoRow>
-              <InfoRow label="Alter">
-                {formatAnimalAge(animal.date_of_birth)}
-              </InfoRow>
-              <InfoRow label="Nummer">{animal.animal_number || '-'}</InfoRow>
               <InfoRow label="Status">
                 <AnimalPublishBadges animal={animal} />
               </InfoRow>

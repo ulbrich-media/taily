@@ -77,8 +77,8 @@ describe('AnimalListPage', () => {
     const { onSearchChange } = renderPage()
     await userEvent.click(screen.getByRole('button', { name: 'Name' }))
     expect(onSearchChange).toHaveBeenCalledWith({ sort: 'name' })
-    await userEvent.click(screen.getByRole('button', { name: 'Alter' }))
-    expect(onSearchChange).toHaveBeenCalledWith({ sort: 'date_of_birth' })
+    await userEvent.click(screen.getByRole('button', { name: 'Rasse' }))
+    expect(onSearchChange).toHaveBeenCalledWith({ sort: 'breed' })
   })
 
   it('switches the view without leaving the page', async () => {
