@@ -4,7 +4,9 @@ namespace Taily\Http\Controllers\Internal;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Taily\Http\Controllers\Controller;
+use Taily\Http\Requests\CatalogIndexRequest;
 use Taily\Http\Requests\FormTemplateRequest;
 use Taily\Http\Resources\FormTemplateResource;
 use Taily\Models\FormTemplate;
@@ -17,13 +19,30 @@ class FormTemplateController extends Controller
     ) {}
 
     /**
-     * List all form templates with their latest version and total submission count.
+     * List form templates with their latest version and total submission
+     * count, ordered by name (see CatalogIndexRequest). `per_page=0` only
+     * counts. Without any list parameter all templates are returned, which
+     * the pickers in other forms still rely on.
      */
-    public function index(): JsonResponse
+    public function index(CatalogIndexRequest $request): AnonymousResourceCollection|JsonResponse
     {
-        $templates = FormTemplate::with('latestVersion')->withCount('formSubmissions')->get();
+        if (! $request->wantsListView()) {
+            $templates = FormTemplate::with('latestVersion')->withCount('formSubmissions')->get();
 
-        return response()->json(['data' => FormTemplateResource::collection($templates)]);
+            return response()->json(['data' => FormTemplateResource::collection($templates)]);
+        }
+
+        if ($request->perPage() === 0) {
+            return $request->countResponse(FormTemplate::query());
+        }
+
+        return FormTemplateResource::collection(
+            FormTemplate::with('latestVersion')
+                ->withCount('formSubmissions')
+                ->orderBy('name')
+                ->orderBy('id')
+                ->paginate($request->perPage())
+        );
     }
 
     /**

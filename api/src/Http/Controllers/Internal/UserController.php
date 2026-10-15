@@ -4,11 +4,13 @@ namespace Taily\Http\Controllers\Internal;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
 use Taily\Enums\UserRole;
 use Taily\Http\Controllers\Controller;
+use Taily\Http\Requests\UserIndexRequest;
 use Taily\Http\Resources\UserResource;
 use Taily\Mail\UserInvitationMail;
 use Taily\Models\User;
@@ -39,17 +41,32 @@ class UserController extends Controller
     }
 
     /**
-     * Display a listing of users.
+     * Display a page of users (see UserIndexRequest for the query contract).
+     * `per_page=0` only counts the filtered users. Without any list
+     * parameter all users are returned, which the pickers in other forms
+     * still rely on.
      */
-    public function index(Request $request): JsonResponse
+    public function index(UserIndexRequest $request): AnonymousResourceCollection|JsonResponse
     {
-        $query = User::with('person')->orderBy('name');
+        $relations = $request->user()->isAdmin() ? ['person', 'invitation'] : ['person'];
 
-        if ($request->user()->isAdmin()) {
-            $query->with('invitation');
+        if (! $request->wantsListView()) {
+            return response()->json(UserResource::collection(User::with($relations)->orderBy('name')->get()));
         }
 
-        return response()->json(UserResource::collection($query->get()));
+        $query = User::query()
+            ->filterBy($request->filters())
+            ->search($request->searchTerm());
+
+        if ($request->perPage() === 0) {
+            return $request->countResponse($query);
+        }
+
+        return UserResource::collection(
+            $query->with($relations)
+                ->sortedBy($request->sortKey(), $request->sortDirection())
+                ->paginate($request->perPage())
+        );
     }
 
     /**
