@@ -2,6 +2,25 @@
 
 All notable changes to Taily are documented here.
 
+# [0.12.0](https://github.com/ulbrich-media/taily/compare/v0.11.0...v0.12.0) (2026-10-15)
+
+
+### Bug Fixes
+
+* **api:** pin stateful domain and frontend URL in phpunit.xml ([7a9aa2f](https://github.com/ulbrich-media/taily/commit/7a9aa2fa2dea786a8b77b641b993675a8a6d908e))
+* **dev:** disable Mutagen for worktree DDEV projects ([539976e](https://github.com/ulbrich-media/taily/commit/539976e21054941009eab7d4bf94d84d4a3b6744))
+* **frontend:** keep scroll position when opening or closing dialogs ([#201](https://github.com/ulbrich-media/taily/issues/201)) ([8292bae](https://github.com/ulbrich-media/taily/commit/8292bae117872a124b9de5d210e0c53588faad7b))
+
+
+### Features
+
+* **adoptions:** filters, sorting, search and pagination added ([#199](https://github.com/ulbrich-media/taily/issues/199)) ([5f3c950](https://github.com/ulbrich-media/taily/commit/5f3c950a5a0edf6382b125fb7417c65751c5bd48))
+* **animals:** paginate, filter, search and sort the animal list API ([#205](https://github.com/ulbrich-media/taily/issues/205)) ([0f8be33](https://github.com/ulbrich-media/taily/commit/0f8be3340fea63d8e05f92ba2a487a29df45c83a))
+* **animals:** rebuild animal list with filters, search, sort and paging ([#207](https://github.com/ulbrich-media/taily/issues/207)) ([b2cfd11](https://github.com/ulbrich-media/taily/commit/b2cfd116b91338c9f26232322a2970c551566c65))
+* **list-filters:** add personalised and archive preset filters ([#210](https://github.com/ulbrich-media/taily/issues/210)) ([3852b2b](https://github.com/ulbrich-media/taily/commit/3852b2bc134a328df8dd08dfc3129e7d82351fe6))
+* **people:** paginate, filter, search and sort the people list ([#211](https://github.com/ulbrich-media/taily/issues/211)) ([53d55e5](https://github.com/ulbrich-media/taily/commit/53d55e546b79f7098477578a4da3a94f400ad71b))
+* **users:** link a user to an optional person ([#204](https://github.com/ulbrich-media/taily/issues/204)) ([589cf7e](https://github.com/ulbrich-media/taily/commit/589cf7e4eeee228c2c755101be8930dbcc3c4d28))
+
 # [0.11.0](https://github.com/ulbrich-media/taily/compare/v0.10.1...v0.11.0) (2026-10-12)
 
 
