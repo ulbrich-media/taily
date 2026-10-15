@@ -1,10 +1,22 @@
 import { z } from 'zod'
-import { LIST_VIEWS } from '@/components/list/list-search'
+import {
+  createListConfig,
+  toListParams,
+  type ListParams,
+} from '@/components/list/list-query'
+import {
+  baseListSearchShape,
+  multi,
+  only,
+  sortGuard,
+  sortsFor,
+  yesNo,
+} from '@/components/list/list-schema'
 
 /** Derived from the animal's adoptions, see AnimalIndexRequest. */
 export const ANIMAL_STATUSES = ['open', 'in_progress', 'adopted'] as const
 
-const SORT_KEYS = [
+export const ANIMAL_SORTS = sortsFor([
   'name',
   'breed',
   'color',
@@ -12,36 +24,17 @@ const SORT_KEYS = [
   'updated_at',
   'date_of_birth',
   'animal_number',
-] as const
-
-export const ANIMAL_SORTS = SORT_KEYS.flatMap((key) => [
-  key,
-  `-${key}` as const,
 ])
 
 export const DEFAULT_ANIMAL_SORT = '-created_at'
 export const ANIMALS_PER_PAGE = 25
 
-// Invalid or hand-edited values fall back to the default instead of failing
-// the whole route.
-const multi = <const T extends readonly [string, ...string[]]>(values: T) =>
-  z.array(z.enum(values)).default([]).catch([])
-
-// Yes/no filters: `1` or `0`, unset means "all".
-const yesNo = z.enum(['0', '1']).optional().catch(undefined)
-// "Only" flags: `1` or unset.
-const only = z.literal('1').optional().catch(undefined)
-
 /** The list's state in the URL. Defaults are stripped from the URL by the route. */
 export const animalListSearchSchema = z.object({
-  page: z.number().int().min(1).default(1).catch(1),
-  sort: z
-    .enum(ANIMAL_SORTS)
-    .default(DEFAULT_ANIMAL_SORT)
-    .catch(DEFAULT_ANIMAL_SORT),
-  // Same limit as the endpoint (AnimalIndexRequest), which rejects more.
-  search: z.string().trim().max(100).default('').catch(''),
-  view: z.enum(LIST_VIEWS).default('table').catch('table'),
+  ...baseListSearchShape({
+    sorts: ANIMAL_SORTS,
+    defaultSort: DEFAULT_ANIMAL_SORT,
+  }),
   animal_type_id: z.uuid().optional().catch(undefined),
   status: multi(ANIMAL_STATUSES),
   // A person id, or `none` for animals without an assigned member.
@@ -59,9 +52,22 @@ export const animalListSearchSchema = z.object({
 
 export type AnimalListSearch = z.output<typeof animalListSearchSchema>
 
-export function isAnimalSort(value: string): value is AnimalListSearch['sort'] {
-  return (ANIMAL_SORTS as readonly string[]).includes(value)
-}
+export const isAnimalSort = sortGuard(ANIMAL_SORTS)
+
+/** The params that narrow the list, as opposed to search, sort, view and page. */
+export const FILTER_KEYS = [
+  'animal_type_id',
+  'status',
+  'assigned_agent_id',
+  'published',
+  'neutered',
+  'has_image',
+  'boarding',
+  'reserved',
+  'has_sponsor',
+] as const satisfies readonly (keyof AnimalListSearch)[]
+
+export type AnimalFilterKey = (typeof FILTER_KEYS)[number]
 
 // Every filter at its empty value. Listing each key makes the compiler ask
 // for a new filter here, which reset relies on.
@@ -88,75 +94,36 @@ export const animalListSearchDefaults: AnimalListSearch = {
 }
 
 /** What the request depends on: the search params without presentation-only ones. */
-export type AnimalListParams = Omit<AnimalListSearch, 'view'>
+export type AnimalListParams = ListParams<AnimalListSearch>
 
-export function toAnimalListParams(search: AnimalListSearch): AnimalListParams {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { view, ...params } = search
-  return params
-}
+const config = createListConfig<AnimalListSearch, AnimalFilterKey>({
+  noFilters: NO_FILTERS,
+  perPage: ANIMALS_PER_PAGE,
+  multi: ['status'],
+  single: [
+    'animal_type_id',
+    'assigned_agent_id',
+    'published',
+    'neutered',
+    'has_image',
+    'boarding',
+    'reserved',
+    'has_sponsor',
+  ],
+})
 
-/** The params that narrow the list, as opposed to search, sort, view and page. */
-export const FILTER_KEYS = [
-  'animal_type_id',
-  'status',
-  'assigned_agent_id',
-  'published',
-  'neutered',
-  'has_image',
-  'boarding',
-  'reserved',
-  'has_sponsor',
-] as const satisfies readonly (keyof AnimalListSearch)[]
-
-export type AnimalFilterKey = (typeof FILTER_KEYS)[number]
-
-const SINGLE_FILTERS = [
-  'animal_type_id',
-  'assigned_agent_id',
-  'published',
-  'neutered',
-  'has_image',
-  'boarding',
-  'reserved',
-  'has_sponsor',
-] as const
+export const toAnimalListParams = (
+  search: AnimalListSearch
+): AnimalListParams => toListParams(search)
 
 /** Query string of the list endpoint, see docs/coding-patterns/list-views.md. */
-export function buildAnimalListQuery(
-  params: AnimalListParams,
-  perPage: number = ANIMALS_PER_PAGE
-): string {
-  const query = new URLSearchParams({
-    page: String(params.page),
-    per_page: String(perPage),
-    sort: params.sort,
-  })
-  if (params.search.trim()) query.set('search', params.search.trim())
-  if (params.status.length > 0) {
-    query.set('filter[status]', params.status.join(','))
-  }
-  for (const name of SINGLE_FILTERS) {
-    const value = params[name]
-    if (value) query.set(`filter[${name}]`, value)
-  }
-  return query.toString()
-}
+export const buildAnimalListQuery = config.buildQuery
 
 /** True when any filter or the search term narrows the list. Sort and view do not count. */
-export function hasActiveAnimalFilters(search: AnimalListSearch): boolean {
-  return (
-    search.search.trim() !== '' ||
-    search.status.length > 0 ||
-    SINGLE_FILTERS.some((name) => Boolean(search[name]))
-  )
-}
+export const hasActiveAnimalFilters = config.hasActive
 
 /**
  * Search params that clear the search term and every filter. Sort and view
  * are left out on purpose: a patch only changes what it names.
  */
-export const resetSearchPatch: Partial<AnimalListSearch> = {
-  ...NO_FILTERS,
-  search: '',
-}
+export const resetSearchPatch = config.resetSearchPatch
