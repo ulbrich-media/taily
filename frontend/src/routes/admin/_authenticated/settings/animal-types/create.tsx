@@ -21,6 +21,7 @@ export const Route = createFileRoute(
   component: RouteComponent,
   staticData: {
     breadcrumb: 'Neue Tierart erstellen',
+    dialog: true,
   },
 })
 

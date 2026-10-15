@@ -19,6 +19,7 @@ import { Route as AdoptionRoute } from '@/routes/admin/_authenticated/adoptions/
 export const Route = createFileRoute(
   '/admin/_authenticated/adoptions/$adoptionId/adoption/transport-remove'
 )({
+  staticData: { dialog: true },
   component: RouteComponent,
 })
 

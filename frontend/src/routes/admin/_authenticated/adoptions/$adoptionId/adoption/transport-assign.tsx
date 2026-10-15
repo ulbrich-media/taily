@@ -51,6 +51,7 @@ export const Route = createFileRoute(
   component: RouteComponent,
   staticData: {
     breadcrumb: 'Transport zuweisen',
+    dialog: true,
   },
 })
 

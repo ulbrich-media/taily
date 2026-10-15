@@ -5,6 +5,8 @@ export interface User {
   name: string
   email: string
   role: UserRole
+  /** The person linked to this account, i.e. who "me" is in lists. */
+  person_id: string | null
   two_factor_enabled: boolean
 }
 

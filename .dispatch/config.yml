@@ -1,0 +1,76 @@
+version: 1
+baseBranch: development
+
+autonomy:
+  clarify: on
+  answerTimeout: null
+
+# Commands given to agents in their rules, and used by the controller for
+# post-job checks. Detected from package.json where possible -- adjust freely.
+commands:
+  install: "ddev composer install && npm ci --prefix frontend"
+  build: "npm run build --prefix frontend"
+  test: "ddev composer test && npm run test --prefix frontend"
+  lint: "npm run lint --prefix frontend"
+  # What CI runs and what writers run before handing over; their result gates "ready" (checks_run).
+  checks: ["ddev composer test", "ddev exec 'cd api && ./vendor/bin/pint --test'", "npm run lint --prefix frontend", "npm run format --prefix frontend", "npm run test --prefix frontend", "npm run build --prefix frontend"]
+
+workspace:
+  # worktree-init.sh derives frontend/.env.local, api/.env and the DDEV project name (own hosts, DB) from the workspace directory.
+  setup: ["scripts/worktree-init.sh", "ddev start", "ddev composer install", "ddev artisan migrate --force", "npm ci --prefix frontend"]
+  # Removes the workspace's DDEV project (containers, volumes, DB) before the worktree is deleted; failures only warn.
+  teardown: ["ddev delete --omit-snapshot --yes"]
+  copy: []
+  env: {}
+  portEnv: {}
+
+review:
+  reviewers:
+    - correctness-review
+    - architecture-review
+    - skill: appsec-review
+      triggers: ["api/src/**", "api/routes/**", "api/config/**", ".github/**", "composer.json", "frontend/package.json"]
+  maxReviewRounds: 2
+  rereviewAfterHumanFix: false
+  actOnApprovalComments: false
+  humanReplyDebounceMin: 10
+
+ci:
+  required: true
+  maxCiFixAttempts: 2
+  ignoreChecks: []
+  noChecksGraceSec: 180
+  noChecksTimeoutMin: 15
+  mergeableUnknownGraceSec: 120
+
+rebase:
+  enabled: true
+  agent: on
+  maxAttempts: 1
+  reviewAfterConflictResolution: true
+  whenBehind: never
+
+limits:
+  implementer: { costBudget: 6.00, maxTurns: 500, timeoutMin: 90 }
+  clarifier: { costBudget: 0.50, maxTurns: 50, timeoutMin: 20 }
+  reviewer: { costBudget: 0.30, maxTurns: 100, timeoutMin: 20 }
+  fixer: { costBudget: 3.00, maxTurns: 250, timeoutMin: 45 }
+  taskCostBudget: 20.00
+  pushPartial: false
+
+models:
+  clarifier: { model: sonnet, effort: low }
+  implementer: { model: sonnet, effort: medium }
+  reviewer: { model: sonnet, effort: medium }
+  fixer: { model: sonnet, effort: medium }
+
+plan:
+  skill: plan
+  marker: "<!-- claude-plan -->"   # keeps plans already written by the repo's /refine workflow recognisable
+
+rules: |
+  Taily is a Laravel 12 API (api/, namespace Taily\ under api/src/) plus a React SPA (frontend/). Read AGENTS.md, CONTEXT-MAP.md and the relevant CONTEXT.md / docs/ADRs before changing code, and follow docs/coding-patterns/.
+  Each workspace has its own DDEV project (started during setup, own database and hostnames). Run all PHP tooling through DDEV from the workspace root: `ddev composer test`, `ddev exec 'cd api && ./vendor/bin/pint --repair'`, `ddev artisan ...`. Never run `php` or `composer` directly. The frontend checks (lint, format, test, build) run with `npm run <script> --prefix frontend`.
+  Do not add or upgrade packages (composer or npm); if the work needs one, stop and say so (see docs/agents/dependency-approval.md).
+  A change to api/routes/api.php, api/src/Http/Controllers/Api/ or api/src/Http/Resources/Api/ needs a matching hand edit to api/public/openapi.yaml.
+  UI copy is German; code, identifiers, comments, commits and PR texts are English. Use Conventional Commit PR titles (feat/fix/chore ...).

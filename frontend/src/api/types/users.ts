@@ -21,6 +21,8 @@ export interface UserResource {
   name: string
   email: string
   role: UserRole
+  person_id: string | null
+  person?: { id: string; full_name: string } | null
   // Only present when the requesting user is an admin: the API keeps the
   // security posture of other accounts away from regular users.
   two_factor_enabled?: boolean

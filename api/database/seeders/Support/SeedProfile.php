@@ -62,6 +62,11 @@ class SeedProfile
         return (string) ($this->values['label'] ?? $this->name);
     }
 
+    public function has(string $key): bool
+    {
+        return Arr::has($this->values, $key);
+    }
+
     public function int(string $key, int $default = 0): int
     {
         return (int) Arr::get($this->values, $key, $default);

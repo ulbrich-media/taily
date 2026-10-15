@@ -195,3 +195,13 @@
 .yarl__container {
   @apply bg-black/40!;
 }
+
+/* Indeterminate progress, see ProgressBar */
+@keyframes progress-sweep {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(300%);
+  }
+}

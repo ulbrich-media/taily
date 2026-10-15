@@ -9,6 +9,7 @@ import type {
 } from '@/lib/auth.types.ts'
 import { AuthContext } from '@/lib/auth.const.tsx'
 import { UserRole } from '@/api/types/users'
+import { clearRememberedListSearches } from '@/components/list/remembered-list-search'
 
 interface AuthProviderProps {
   children: ReactNode
@@ -64,6 +65,7 @@ export function AuthProvider({
     }
 
     await refetch()
+    clearRememberedListSearches()
     onLoginSuccess?.()
     return { twoFactorRequired: false }
   }
@@ -79,6 +81,7 @@ export function AuthProvider({
     })
 
     await refetch()
+    clearRememberedListSearches()
     onLoginSuccess?.()
   }
 
@@ -92,6 +95,7 @@ export function AuthProvider({
       console.error('Logout error:', error)
     } finally {
       queryClient.setQueryData(['profile'], null)
+      clearRememberedListSearches()
       onLogoutSuccess?.()
     }
   }

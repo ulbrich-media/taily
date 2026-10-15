@@ -3,6 +3,7 @@ import { useBreadcrumbs } from '@/router/useBreadcrumbs'
 import { BreadcrumbNav } from '@/router/BreadcrumbNav'
 import { queryClient } from '@/lib/queryClient'
 import { listUsersQuery } from '@/admin/module/users/api/queries'
+import { listPeopleQuery } from '@/admin/module/people/api/queries'
 import { UserEditPage } from '@/admin/module/users/pages/UserEditPage'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { Route as UsersRoute } from '@/routes/admin/_authenticated/settings/users/route'
@@ -10,6 +11,7 @@ import { Route as UsersRoute } from '@/routes/admin/_authenticated/settings/user
 export const Route = createFileRoute(
   '/admin/_authenticated/settings/users/$id/edit'
 )({
+  staticData: { dialog: true },
   beforeLoad: ({ context }) => {
     if (!context.isAdmin) {
       throw new Error('403: Forbidden - Admin access required')
@@ -18,7 +20,10 @@ export const Route = createFileRoute(
   loader: async ({ params }) => {
     const userId = params.id
 
-    const users = await queryClient.ensureQueryData(listUsersQuery)
+    const [users] = await Promise.all([
+      queryClient.ensureQueryData(listUsersQuery),
+      queryClient.ensureQueryData(listPeopleQuery),
+    ])
 
     const user = users.find((u) => u.id === userId)
 
@@ -39,6 +44,7 @@ function RouteComponent() {
   const navigate = UsersRoute.useNavigate()
   const { data: users } = useSuspenseQuery(listUsersQuery)
   const user = users.find((u) => u.id === id)!
+  const { data: persons } = useSuspenseQuery(listPeopleQuery)
 
   const handleClose = () => {
     navigate({})
@@ -47,6 +53,7 @@ function RouteComponent() {
   return (
     <UserEditPage
       user={user}
+      persons={persons}
       onClose={handleClose}
       breadcrumb={<BreadcrumbNav items={breadcrumbs} size="sm" />}
     />

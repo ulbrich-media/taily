@@ -8,6 +8,7 @@ import { Route as TransportsRoute } from '@/routes/admin/_authenticated/transpor
 export const Route = createFileRoute(
   '/admin/_authenticated/transports/$transportId/mark-done'
 )({
+  staticData: { dialog: true },
   loader: ({ params }) => {
     const planned =
       queryClient.getQueryData<TransportListResource[]>(

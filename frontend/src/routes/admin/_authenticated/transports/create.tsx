@@ -15,6 +15,7 @@ export const Route = createFileRoute('/admin/_authenticated/transports/create')(
     component: RouteComponent,
     staticData: {
       breadcrumb: 'Transport anlegen',
+      dialog: true,
     },
   }
 )

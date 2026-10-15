@@ -29,6 +29,8 @@ class UserController extends Controller
      */
     public function current(Request $request): JsonResponse
     {
+        $request->user()->load('person');
+
         if ($request->user()->isAdmin()) {
             $request->user()->load('invitation');
         }
@@ -41,7 +43,7 @@ class UserController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = User::orderBy('name');
+        $query = User::with('person')->orderBy('name');
 
         if ($request->user()->isAdmin()) {
             $query->with('invitation');
@@ -55,6 +57,8 @@ class UserController extends Controller
      */
     public function show(Request $request, User $user): JsonResponse
     {
+        $user->load('person');
+
         if ($request->user()->isAdmin()) {
             $user->load('invitation');
         }
@@ -71,6 +75,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'role' => ['required', Rule::enum(UserRole::class)],
+            'person_id' => ['nullable', 'uuid', 'exists:people,id', 'unique:users,person_id'],
         ]);
 
         // Generate a random password that will be replaced during invitation/password reset
@@ -81,7 +86,7 @@ class UserController extends Controller
         $invitation = UserInvitation::createForUser($user);
         Mail::to($user->email)->send(new UserInvitationMail($invitation, $invitation->plainTextToken));
 
-        $user->load('invitation');
+        $user->load('invitation', 'person');
 
         return response()->json([
             'message' => 'Benutzer erfolgreich erstellt.',
@@ -104,9 +109,16 @@ class UserController extends Controller
                 Rule::unique('users')->ignore($user->id),
             ],
             'role' => ['required', Rule::enum(UserRole::class)],
+            'person_id' => [
+                'nullable',
+                'uuid',
+                'exists:people,id',
+                Rule::unique('users', 'person_id')->ignore($user->id),
+            ],
         ]);
 
         $user->update($validated);
+        $user->load('person');
 
         return response()->json([
             'message' => 'Benutzer erfolgreich aktualisiert.',

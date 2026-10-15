@@ -25,10 +25,12 @@ export interface CreateUserRequest {
   name: string
   email: string
   role: UserRole
+  person_id: string | null
 }
 
 export interface UpdateUserRequest {
   name: string
   email: string
   role: UserRole
+  person_id: string | null
 }

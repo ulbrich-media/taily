@@ -19,6 +19,7 @@ These patterns ensure maintainability through similar approaches and can keep co
 - [File Storage](file-storage.md) — One disk per file type, disk naming, cloud migration path
 - [Form Reset After Submit](form-reset-after-submit.md) — Form state after mutation
 - [Frontend Links](frontend-links.md) — Backend-generated frontend URLs via `FrontendUriBuilder`
+- [List Views](list-views.md) — Server-side pagination, sorting, filtering, search; URL state
 - [Media URLs](media-urls.md) — Signed temporary URLs vs. direct UUID access
 - [Route Hooks and Components](route-hooks-and-components.md) — Data loading patterns
 - [Tokens](tokens.md) — `HasAccessToken` trait vs. self-contained token models

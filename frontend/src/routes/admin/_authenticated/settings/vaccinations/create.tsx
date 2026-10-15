@@ -21,6 +21,7 @@ export const Route = createFileRoute(
   component: RouteComponent,
   staticData: {
     breadcrumb: 'Neue Impfung erstellen',
+    dialog: true,
   },
 })
 

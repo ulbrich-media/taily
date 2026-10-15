@@ -50,6 +50,13 @@ return [
     |
     |   organizations               external clubs a person can belong to
     |   people                      the people directory, applicants included
+    |   mediators                   optional: exactly this many people get the
+    |                               mediator role, instead of every person
+    |                               having a chance of it. A shelter has few
+    |                               mediators, who handle most of the adoptions.
+    |                               At least 2 (every animal type needs two)
+    |                               and at most `people`; anything else is
+    |                               rejected
     |   animals                     per species key from SpeciesCatalog
     |   adoptions                   how many adoptions to generate
     |   adoption_stages             relative weight of each AdoptionStage
@@ -99,8 +106,11 @@ return [
             'label' => 'Load and performance testing; no pictures',
             'organizations' => 25,
             'people' => 2000,
+            // Few mediators for many adoptions: each carries around a
+            // hundred or more over their time, some far more than others.
+            'mediators' => 40,
             'animals' => ['dogs' => 3500, 'cats' => 1500],
-            'adoptions' => 4000,
+            'adoptions' => 5000,
             'adoption_stages' => AdoptionSeeder::DEFAULT_STAGE_WEIGHTS,
             'adoptions_per_transport' => [4, 15],
             'empty_transports' => 20,
