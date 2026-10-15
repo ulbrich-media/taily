@@ -5,6 +5,8 @@
 export interface FilterOption<T extends string = string> {
   value: T
   label: string
+  /** A general choice (e.g. "none") shown above a divider, apart from the specific options. */
+  general?: boolean
 }
 
 // `onChange` is declared as a method on purpose: method parameters are
