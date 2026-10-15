@@ -5,6 +5,11 @@ import { AdoptionListPage } from './AdoptionListPage'
 import { adoptionListSearchDefaults } from '../adoption-list.search'
 import type { AdoptionListResource } from '@/api/types/adoptions'
 
+// The filters read the current user for the personal presets.
+vi.mock('@/lib/auth.hook', () => ({
+  useAuth: () => ({ user: { person_id: 'person-1' } }),
+}))
+
 // Radix controls measure themselves; jsdom has no ResizeObserver.
 beforeAll(() => {
   // jsdom has no layout and no scrollIntoView.

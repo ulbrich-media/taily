@@ -5,6 +5,11 @@ import { AnimalListPage } from './AnimalListPage'
 import { animalListSearchDefaults } from '../animal-list.search'
 import type { AnimalListResource } from '@/api/types/animals'
 
+// The filters read the current user for the personal presets.
+vi.mock('@/lib/auth.hook', () => ({
+  useAuth: () => ({ user: { person_id: 'person-1' } }),
+}))
+
 beforeAll(() => {
   // jsdom has no layout, scrollIntoView or ResizeObserver.
   Element.prototype.scrollIntoView = vi.fn()

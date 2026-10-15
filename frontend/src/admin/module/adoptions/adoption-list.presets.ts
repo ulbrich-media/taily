@@ -15,14 +15,37 @@ export interface AdoptionListPreset {
   filters: Partial<Pick<AdoptionListSearch, AdoptionFilterKey>>
 }
 
-export const adoptionPresets: AdoptionListPreset[] = [
-  {
-    // Fresh applications nobody has picked up yet.
-    key: 'unassigned',
-    label: 'Neu und ohne Vermittler',
-    filters: { status: ['pending'], mediator_id: 'none' },
-  },
-]
+/** The presets for the current user. Personal ones need the user's person id. */
+export function getAdoptionPresets(
+  personId: string | null
+): AdoptionListPreset[] {
+  const mine: AdoptionListPreset[] = personId
+    ? [
+        {
+          key: 'my-open',
+          label: 'Meine offenen Vermittlungen',
+          filters: {
+            status: ['pending', 'in_progress'],
+            mediator_id: personId,
+          },
+        },
+      ]
+    : []
+  return [
+    {
+      // Fresh applications nobody has picked up yet.
+      key: 'unassigned',
+      label: 'Neu und ohne Vermittler',
+      filters: { status: ['pending'], mediator_id: 'none' },
+    },
+    ...mine,
+    {
+      key: 'archive',
+      label: 'Archiv',
+      filters: { status: ['done', 'canceled'] },
+    },
+  ]
+}
 
 /** The search params that clear every filter, e.g. when the active preset is unchecked. */
 export const clearFiltersPatch: Partial<AdoptionListSearch> = NO_FILTERS
@@ -40,7 +63,7 @@ const normalize = (value: unknown): string =>
 /** The preset whose filters are active exactly, no more and no less. Search, sort and view do not count. */
 export function activePreset(
   search: AdoptionListSearch,
-  presets: AdoptionListPreset[] = adoptionPresets
+  presets: AdoptionListPreset[]
 ): AdoptionListPreset | undefined {
   return presets.find((preset) => {
     const expected = { ...NO_FILTERS, ...preset.filters }

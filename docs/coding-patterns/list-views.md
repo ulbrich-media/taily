@@ -144,10 +144,14 @@ The URL stays the source of truth, but coming back to the list through the navig
 Presets are **hardcoded per list** as named bundles of filters, defined next to the list's module (reference: `adoption-list.presets.ts`):
 
 ```ts
-export const adoptionPresets = [
+export const getAdoptionPresets = (personId: string | null) => [
   { key: 'unassigned', label: 'Neu und ohne Vermittler', filters: { status: ['pending'], mediator_id: 'none' } },
+  // Personal presets are only offered when the user is linked to a person.
+  ...(personId ? [{ key: 'my-open', label: 'Meine offenen Vermittlungen', filters: { status: ['pending', 'in_progress'], mediator_id: personId } }] : []),
 ]
 ```
+
+Presets are a function of the current user's person id (`user.person_id`), so "my …" presets can filter by it. A list without any applicable preset omits the filter from the toolbar.
 
 A preset is not a separate state: selecting one writes its filters to the URL, resetting every other filter first. The preset shows as checked while exactly its filters are active (search, sort, view and page don't count). In the toolbar it is a `multi` filter of independent checkbox items, first in the list, so it collapses last. At most one preset matches at a time, so it behaves like a radio group; unchecking the active one clears all filters.
 
