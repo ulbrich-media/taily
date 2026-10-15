@@ -4,6 +4,7 @@ namespace Taily\Http\Requests;
 
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\Rule;
@@ -136,7 +137,7 @@ abstract class ListIndexRequest extends FormRequest
     /**
      * Answer of a count-only request (`per_page=0`): the total, no rows.
      *
-     * @param  Builder<*>  $query
+     * @param  Builder<Model>  $query
      */
     public function countResponse(Builder $query): JsonResponse
     {
@@ -151,6 +152,17 @@ abstract class ListIndexRequest extends FormRequest
         ]);
     }
 
+    /**
+     * The validated input as a plain map: the rules are assembled from the
+     * subclass hooks, so Psalm cannot derive their shape.
+     *
+     * @return array<string, mixed>
+     */
+    private function validatedInput(): array
+    {
+        return $this->validated();
+    }
+
     public function wantsListView(): bool
     {
         return $this->hasAny(self::LIST_PARAMETERS);
@@ -161,26 +173,26 @@ abstract class ListIndexRequest extends FormRequest
      */
     public function filters(): array
     {
-        return $this->validated()['filter'] ?? [];
+        return $this->validatedInput()['filter'] ?? [];
     }
 
     public function searchTerm(): ?string
     {
-        return $this->validated()['search'] ?? null;
+        return $this->validatedInput()['search'] ?? null;
     }
 
     public function perPage(): int
     {
-        return (int) ($this->validated()['per_page'] ?? self::DEFAULT_PER_PAGE);
+        return (int) ($this->validatedInput()['per_page'] ?? self::DEFAULT_PER_PAGE);
     }
 
     public function sortKey(): string
     {
-        return ltrim($this->validated()['sort'] ?? $this->defaultSort(), '-');
+        return ltrim($this->validatedInput()['sort'] ?? $this->defaultSort(), '-');
     }
 
     public function sortDirection(): string
     {
-        return str_starts_with($this->validated()['sort'] ?? $this->defaultSort(), '-') ? 'desc' : 'asc';
+        return str_starts_with($this->validatedInput()['sort'] ?? $this->defaultSort(), '-') ? 'desc' : 'asc';
     }
 }
