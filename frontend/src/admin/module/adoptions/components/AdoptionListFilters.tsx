@@ -1,12 +1,13 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useAuth } from '@/lib/auth.hook'
 import type { AnimalTypeResource } from '@/api/types/animal-types'
 import type { PersonListResource } from '@/api/types/people'
-import { SearchInput } from '@/components/list/SearchInput'
-import { FilterDropdown } from '@/components/list/FilterDropdown'
-import { ListToolbar } from '@/components/list/ListToolbar'
-import { ListViewToggle } from '@/components/list/ListViewToggle'
-import { defineFilter, defineGroup } from '@/components/list/toolbar-filters'
+import { ListFiltersToolbar } from '@/components/list/ListFiltersToolbar'
+import {
+  defineFilter,
+  defineGroup,
+  presetFilter,
+} from '@/components/list/toolbar-filters'
 import {
   activePreset,
   clearFiltersPatch,
@@ -38,10 +39,6 @@ export function AdoptionListFilters({
   animalTypes,
   onChange,
 }: AdoptionListFiltersProps) {
-  // Remounts the search field on reset, so a term that was typed but never
-  // submitted is dropped as well.
-  const [searchFieldKey, setSearchFieldKey] = useState(0)
-
   const mediatorOptions = [
     { value: 'none', label: 'Nicht zugewiesen', general: true },
     ...mediators.map((mediator) => ({
@@ -57,22 +54,11 @@ export function AdoptionListFilters({
 
   // In priority order: the last filters collapse first on narrow screens.
   const filters = [
-    defineFilter({
-      // Independent checkbox items that behave like radios: at most one
-      // preset matches at a time, and unchecking it clears the filters.
-      type: 'multi',
-      key: 'preset',
-      label: 'Schnellfilter',
-      options: presets.map((preset) => ({
-        value: preset.key,
-        label: preset.label,
-      })),
-      value: current ? [current] : [],
-      onChange: (keys) => {
-        const picked = keys.find((key) => key !== current)
-        const preset = presets.find((p) => p.key === picked)
-        onChange(preset ? presetPatch(preset) : clearFiltersPatch)
-      },
+    presetFilter({
+      presets,
+      current,
+      onPick: (preset) => onChange(presetPatch(preset)),
+      onClear: () => onChange(clearFiltersPatch),
     }),
     // One "Status" dropdown: the overall status plus one section per step.
     defineFilter({
@@ -141,44 +127,17 @@ export function AdoptionListFilters({
     }),
   ]
 
-  const sort = defineFilter({
-    type: 'single',
-    key: 'sort',
-    label: 'Sortierung',
-    options: sortOptions,
-    value: search.sort,
-    onChange: (value) => value && onChange({ sort: value }),
-    highlightActive: false,
-  })
-
   return (
-    <ListToolbar
-      label="Vermittlungen filtern"
-      search={
-        <SearchInput
-          key={searchFieldKey}
-          label="Vermittlungen durchsuchen"
-          placeholder="Suche nach Name"
-          value={search.search}
-          onSearch={(value) => onChange({ search: value })}
-        />
-      }
-      filters={filters}
-      onReset={() => {
-        setSearchFieldKey((key) => key + 1)
-        onChange(resetSearchPatch)
-      }}
+    <ListFiltersToolbar
+      search={search}
+      onChange={onChange}
+      resetPatch={resetSearchPatch}
       canReset={hasActiveAdoptionFilters(search)}
-      trailing={
-        <>
-          <FilterDropdown filter={sort} />
-          <ListViewToggle
-            value={search.view}
-            // Presentation only, so the page stays.
-            onChange={(view) => onChange({ view, page: search.page })}
-          />
-        </>
-      }
+      filters={filters}
+      sortOptions={sortOptions}
+      label="Vermittlungen filtern"
+      searchLabel="Vermittlungen durchsuchen"
+      searchPlaceholder="Suche nach Name"
     />
   )
 }

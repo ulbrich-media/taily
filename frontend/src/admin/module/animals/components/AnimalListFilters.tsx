@@ -1,15 +1,13 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useAuth } from '@/lib/auth.hook'
 import type { AnimalTypeResource } from '@/api/types/animal-types'
 import type { PersonListResource } from '@/api/types/people'
-import { SearchInput } from '@/components/list/SearchInput'
-import { FilterDropdown } from '@/components/list/FilterDropdown'
-import { ListToolbar } from '@/components/list/ListToolbar'
-import { ListViewToggle } from '@/components/list/ListViewToggle'
+import { ListFiltersToolbar } from '@/components/list/ListFiltersToolbar'
 import {
   defineFilter,
   defineGroup,
-  type FilterOption,
+  presetFilter,
+  yesNoGroup,
 } from '@/components/list/toolbar-filters'
 import {
   activePreset,
@@ -37,7 +35,6 @@ interface AnimalListFiltersProps {
   onChange: (patch: Partial<AnimalListSearch>) => void
 }
 
-type YesNoKey = 'published' | 'neutered' | 'has_image'
 type FlagKey = 'boarding' | 'reserved' | 'has_sponsor'
 
 const FLAG_OPTIONS: { value: FlagKey; label: string }[] = [
@@ -52,10 +49,6 @@ export function AnimalListFilters({
   animalTypes,
   onChange,
 }: AnimalListFiltersProps) {
-  // Remounts the search field on reset, so a term that was typed but never
-  // submitted is dropped as well.
-  const [searchFieldKey, setSearchFieldKey] = useState(0)
-
   const mediatorOptions = [
     { value: 'none', label: 'Nicht zugewiesen', general: true },
     ...mediators.map((mediator) => ({
@@ -63,17 +56,6 @@ export function AnimalListFilters({
       label: mediator.full_name ?? '',
     })),
   ]
-
-  // A yes/no filter in a checkbox section: at most one of the two is set,
-  // checking the other one switches, unchecking clears.
-  const yesNoGroup = (key: YesNoKey, options: FilterOption<'1' | '0'>[]) =>
-    defineGroup({
-      key,
-      options,
-      value: search[key] ? [search[key]] : [],
-      onChange: (values) =>
-        onChange({ [key]: values.find((v) => v !== search[key]) }),
-    })
 
   const { user } = useAuth()
   const personId = user?.person_id ?? null
@@ -85,22 +67,11 @@ export function AnimalListFilters({
     // Only offered when there is a preset for this user.
     ...(presets.length > 0
       ? [
-          defineFilter({
-            // Independent checkbox items that behave like radios: at most one
-            // preset matches at a time, and unchecking it clears the filters.
-            type: 'multi',
-            key: 'preset',
-            label: 'Schnellfilter',
-            options: presets.map((preset) => ({
-              value: preset.key,
-              label: preset.label,
-            })),
-            value: current ? [current] : [],
-            onChange: (keys: string[]) => {
-              const picked = keys.find((key) => key !== current)
-              const preset = presets.find((p) => p.key === picked)
-              onChange(preset ? presetPatch(preset) : clearFiltersPatch)
-            },
+          presetFilter({
+            presets,
+            current,
+            onPick: (preset) => onChange(presetPatch(preset)),
+            onClear: () => onChange(clearFiltersPatch),
           }),
         ]
       : []),
@@ -138,9 +109,9 @@ export function AnimalListFilters({
       key: 'more',
       label: 'Status',
       sections: [
-        yesNoGroup('published', publishedOptions),
-        yesNoGroup('neutered', neuteredOptions),
-        yesNoGroup('has_image', hasImageOptions),
+        yesNoGroup('published', publishedOptions, search.published, onChange),
+        yesNoGroup('neutered', neuteredOptions, search.neutered, onChange),
+        yesNoGroup('has_image', hasImageOptions, search.has_image, onChange),
         defineGroup({
           key: 'flags',
           options: FLAG_OPTIONS,
@@ -158,44 +129,17 @@ export function AnimalListFilters({
     }),
   ]
 
-  const sort = defineFilter({
-    type: 'single',
-    key: 'sort',
-    label: 'Sortierung',
-    options: sortOptions,
-    value: search.sort,
-    onChange: (value) => value && onChange({ sort: value }),
-    highlightActive: false,
-  })
-
   return (
-    <ListToolbar
-      label="Tiere filtern"
-      search={
-        <SearchInput
-          key={searchFieldKey}
-          label="Tiere durchsuchen"
-          placeholder="Suche nach Name, Nummer, Chip …"
-          value={search.search}
-          onSearch={(value) => onChange({ search: value })}
-        />
-      }
-      filters={filters}
-      onReset={() => {
-        setSearchFieldKey((key) => key + 1)
-        onChange(resetSearchPatch)
-      }}
+    <ListFiltersToolbar
+      search={search}
+      onChange={onChange}
+      resetPatch={resetSearchPatch}
       canReset={hasActiveAnimalFilters(search)}
-      trailing={
-        <>
-          <FilterDropdown filter={sort} />
-          <ListViewToggle
-            value={search.view}
-            // Presentation only, so the page stays.
-            onChange={(view) => onChange({ view, page: search.page })}
-          />
-        </>
-      }
+      filters={filters}
+      sortOptions={sortOptions}
+      label="Tiere filtern"
+      searchLabel="Tiere durchsuchen"
+      searchPlaceholder="Suche nach Name, Nummer, Chip …"
     />
   )
 }

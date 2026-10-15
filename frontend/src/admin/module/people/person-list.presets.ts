@@ -1,19 +1,19 @@
 import {
+  createPresetHelpers,
+  type ListPreset,
+} from '@/components/list/list-presets'
+import {
   FILTER_KEYS,
   NO_FILTERS,
   type PersonFilterKey,
   type PersonListSearch,
 } from './person-list.search'
 
-// Presets are hardcoded bundles of filters (docs/coding-patterns/list-views.md).
-// Selecting one writes its filters to the URL; it is not state of its own, it
-// shows as active while the URL matches it.
+// Presets are hardcoded bundles of filters, see components/list/list-presets.
 
-export interface PersonListPreset {
-  key: string
-  label: string
-  filters: Partial<Pick<PersonListSearch, PersonFilterKey>>
-}
+export type PersonListPreset = ListPreset<
+  Pick<PersonListSearch, PersonFilterKey>
+>
 
 export const personPresets: PersonListPreset[] = [
   {
@@ -30,28 +30,14 @@ export const personPresets: PersonListPreset[] = [
   },
 ]
 
-/** The search params that clear every filter, e.g. when the active preset is unchecked. */
-export const clearFiltersPatch: Partial<PersonListSearch> = NO_FILTERS
+const helpers = createPresetHelpers(NO_FILTERS, FILTER_KEYS)
 
-/** The search params to apply for a preset: all filters reset, then the preset's set. */
-export function presetPatch(
-  preset: PersonListPreset
-): Partial<PersonListSearch> {
-  return { ...NO_FILTERS, ...preset.filters }
-}
-
-const normalize = (value: unknown): string =>
-  Array.isArray(value) ? [...value].sort().join(',') : String(value ?? '')
+export const { clearFiltersPatch, presetPatch } = helpers
 
 /** The preset whose filters are active exactly, no more and no less. Search, sort and view do not count. */
 export function activePreset(
-  search: PersonListSearch,
+  search: Partial<Pick<PersonListSearch, PersonFilterKey>>,
   presets: PersonListPreset[] = personPresets
 ): PersonListPreset | undefined {
-  return presets.find((preset) => {
-    const expected = { ...NO_FILTERS, ...preset.filters }
-    return FILTER_KEYS.every(
-      (key) => normalize(search[key]) === normalize(expected[key])
-    )
-  })
+  return helpers.activePreset(search, presets)
 }

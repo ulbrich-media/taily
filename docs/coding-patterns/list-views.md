@@ -106,9 +106,24 @@ Table and card views are two renderers over the same result. The generic parts l
 - `ListPagination` — built on the shadcn `Pagination`, driven by `meta`
 - `ListViewToggle`, `useScrollListIntoView` — the table/cards switch (from `lg` up) and the scroll-on-page-change behaviour
 - `list-search.ts` — `applyListChange` (every change except `page` resets the page), sort helpers, `listViewVisibility`
-- `<list>.search.ts` in the module — zod schema with defaults, `buildQuery` for the request contract, `hasActiveFilters`
+- `list-schema.ts` — zod helpers (`multi`, `yesNo`, `only`), `baseListSearchShape` (page, sort, search, view), `sortsFor` / `sortGuard`
+- `list-query.ts` — `createListConfig` returns `buildQuery` (`filter[x]=a,b`), `hasActive` and `resetSearchPatch` from a list's `NO_FILTERS` plus its multi/single filter keys; `toListParams` drops `view`
+- `list-presets.ts` — `createPresetHelpers` gives `activePreset`, `presetPatch` and `clearFiltersPatch`; presets themselves stay hardcoded per list
+- `ListPage` — page shell: header, toolbar slot, table/cards renderers, empty state with reset, updating state, pagination
+- `ListFiltersToolbar` — `ListToolbar` wired with the search field (remounted on reset), sort dropdown and view toggle; `presetFilter` and `yesNoGroup` in `toolbar-filters.ts` build the "Schnellfilter" and yes/no sections
+- `<list>.search.ts` in the module — the list's own schema, `NO_FILTERS`, sort keys and `per_page`, exporting the helpers above under list-specific names (`buildAnimalListQuery`, `hasActiveAnimalFilters`, …)
 
 No table library is used; row rendering is the existing shadcn `Table` / card components.
+
+### Adding a new list
+
+1. `<list>.search.ts`: sort keys (`sortsFor`), zod schema (`z.object({ ...baseListSearchShape(…), filters })`), `FILTER_KEYS`, `NO_FILTERS`, defaults and `createListConfig`.
+2. `<list>.presets.ts` (optional): the hardcoded presets and `createPresetHelpers`.
+3. `<list>.labels.ts`: option labels and sort options (German copy).
+4. `<List>Filters.tsx`: the `ToolbarFilter[]` rendered by `ListFiltersToolbar`.
+5. `<List>.tsx` (table, `SortableHead` columns) and a card grid.
+6. `<List>Page.tsx`: a thin wrapper around `ListPage`.
+7. Route: `validateSearch` with the schema, `stripSearchParams(defaults)`, query via the list's `buildQuery`, and optionally `rememberListSearch`.
 
 ### View: table or cards
 

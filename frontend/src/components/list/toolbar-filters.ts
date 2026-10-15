@@ -66,6 +66,60 @@ export function defineGroup<T extends string>(
   return group as SectionGroup
 }
 
+/** A yes/no filter in a checkbox section: at most one of the two is set, checking the other one switches, unchecking clears. */
+export function yesNoGroup<K extends string>(
+  key: K,
+  options: FilterOption<'1' | '0'>[],
+  current: '1' | '0' | undefined,
+  onChange: (patch: Record<K, '1' | '0' | undefined>) => void
+): SectionGroup {
+  return defineGroup({
+    key,
+    options,
+    value: current ? [current] : [],
+    onChange: (values) =>
+      onChange({ [key]: values.find((v) => v !== current) } as Record<
+        K,
+        '1' | '0' | undefined
+      >),
+  })
+}
+
+/**
+ * The "Schnellfilter" dropdown: independent checkbox items that behave like
+ * radios. At most one preset matches at a time, and unchecking it clears the
+ * filters.
+ */
+export function presetFilter<P extends { key: string; label: string }>({
+  presets,
+  current,
+  onPick,
+  onClear,
+}: {
+  presets: P[]
+  /** Key of the preset that matches the URL, if any. */
+  current: string | undefined
+  onPick: (preset: P) => void
+  onClear: () => void
+}): ToolbarFilter {
+  return defineFilter({
+    type: 'multi',
+    key: 'preset',
+    label: 'Schnellfilter',
+    options: presets.map((preset) => ({
+      value: preset.key,
+      label: preset.label,
+    })),
+    value: current ? [current] : [],
+    onChange: (keys: string[]) => {
+      const picked = keys.find((key) => key !== current)
+      const preset = presets.find((p) => p.key === picked)
+      if (preset) onPick(preset)
+      else onClear()
+    },
+  })
+}
+
 export function isFilterActive(filter: ToolbarFilter): boolean {
   switch (filter.type) {
     case 'multi':
