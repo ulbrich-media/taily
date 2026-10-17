@@ -1,7 +1,6 @@
 // Building blocks for the zod schema of a list's URL state
 // (see docs/coding-patterns/list-views.md).
 import { z } from 'zod'
-import { LIST_VIEWS } from './list-search'
 
 // Invalid or hand-edited values fall back to the default instead of failing
 // the whole route.
@@ -43,12 +42,12 @@ export function fixedOrderListSearchShape({
     page: base.page,
     sort: z.literal('').default('').catch(''),
     search: searchable ? base.search : z.literal('').default('').catch(''),
-    view: base.view,
   }
 }
 
 /**
- * The fields every list has: page, sort, search and view. A list's schema
+ * The fields every list has: page, sort and search. The table/cards view is
+ * not among them: it is not URL state, see `useListView`. A list's schema
  * spreads this into its own `z.object({ ...baseListSearchShape(…), filters })`.
  */
 export function baseListSearchShape<const S extends string>({
@@ -66,6 +65,5 @@ export function baseListSearchShape<const S extends string>({
       .catch(defaultSort),
     // Same limit as the endpoints, which reject more.
     search: z.string().trim().max(100).default('').catch(''),
-    view: z.enum(LIST_VIEWS).default('table').catch('table'),
   }
 }

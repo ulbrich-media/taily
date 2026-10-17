@@ -54,7 +54,7 @@ export function PersonListPage({
         />
       }
       list={people}
-      view={search.view}
+      viewKey="people"
       isUpdating={isUpdating}
       onPageChange={(page) => onSearchChange({ page })}
       itemLabel="Personen"

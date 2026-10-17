@@ -26,6 +26,7 @@ export function VaccinationListPage({
     <AnimalTypeItemListPage
       title="Impfungen"
       description="Verwalte die verfügbaren Impfungen der Tiere"
+      viewKey="vaccinations"
       itemLabel="Impfungen"
       icon={Syringe}
       emptyTitle="Keine Impfungen vorhanden"

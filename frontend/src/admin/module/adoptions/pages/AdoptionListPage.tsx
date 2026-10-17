@@ -54,7 +54,7 @@ export function AdoptionListPage({
         />
       }
       list={adoptions}
-      view={search.view}
+      viewKey="adoptions"
       isUpdating={isUpdating}
       onPageChange={(page) => onSearchChange({ page })}
       itemLabel="Vermittlungen"

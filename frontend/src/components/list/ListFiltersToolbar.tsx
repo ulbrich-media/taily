@@ -3,6 +3,7 @@ import { SearchInput } from '@/components/list/SearchInput'
 import { FilterDropdown } from '@/components/list/FilterDropdown'
 import { ListToolbar } from '@/components/list/ListToolbar'
 import { ListViewToggle } from '@/components/list/ListViewToggle'
+import { useListViewControl } from '@/components/list/list-view'
 import type { BaseListSearch } from '@/components/list/list-query'
 import {
   defineFilter,
@@ -42,6 +43,7 @@ export function ListFiltersToolbar<S extends BaseListSearch>({
   // Remounts the search field on reset, so a term that was typed but never
   // submitted is dropped as well.
   const [searchFieldKey, setSearchFieldKey] = useState(0)
+  const { view, setView } = useListViewControl()
 
   const sort = sortOptions
     ? defineFilter({
@@ -82,13 +84,7 @@ export function ListFiltersToolbar<S extends BaseListSearch>({
       trailing={
         <>
           {sort && <FilterDropdown filter={sort} />}
-          <ListViewToggle
-            value={search.view}
-            // Presentation only, so the page stays.
-            onChange={(view) =>
-              onChange({ view, page: search.page } as Partial<S>)
-            }
-          />
+          <ListViewToggle value={view} onChange={setView} />
         </>
       }
     />

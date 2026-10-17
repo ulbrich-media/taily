@@ -32,11 +32,10 @@ export const animalTypeItemListSearchDefaults: AnimalTypeItemListSearch = {
   page: 1,
   sort: '',
   search: '',
-  view: 'table',
   ...NO_FILTERS,
 }
 
-/** What the request depends on: the search params without presentation-only ones. */
+/** What the request depends on: all of the search params. */
 export type AnimalTypeItemListParams = ListParams<AnimalTypeItemListSearch>
 
 const config = createListConfig<AnimalTypeItemListSearch, 'animal_type_id'>({

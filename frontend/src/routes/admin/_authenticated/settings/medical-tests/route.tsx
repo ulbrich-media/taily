@@ -55,7 +55,6 @@ export const Route = createFileRoute(
       replace: true,
     })
   },
-  // `view` is presentation only and must not trigger a reload.
   loaderDeps: ({ search }) => toAnimalTypeItemListParams(search),
   loader: async ({ deps, cause }) => {
     // Changing the filter or page on the open list must not hold the

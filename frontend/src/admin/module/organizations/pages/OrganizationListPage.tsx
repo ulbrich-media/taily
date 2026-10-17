@@ -50,7 +50,7 @@ export function OrganizationListPage({
         />
       }
       list={organizations}
-      view={search.view}
+      viewKey="organizations"
       isUpdating={isUpdating}
       onPageChange={(page) => onSearchChange({ page })}
       itemLabel="Organisationen"

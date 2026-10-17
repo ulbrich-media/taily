@@ -59,7 +59,6 @@ export const Route = createFileRoute('/admin/_authenticated/adoptions/_list')({
       replace: true,
     })
   },
-  // `view` is presentation only and must not trigger a reload.
   loaderDeps: ({ search }) => toAdoptionListParams(search),
   loader: async ({ deps, cause }) => {
     // Changing filters, sort or page on the open list must not hold the

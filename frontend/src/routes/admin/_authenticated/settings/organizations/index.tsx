@@ -50,7 +50,6 @@ export const Route = createFileRoute(
       replace: true,
     })
   },
-  // `view` is presentation only and must not trigger a reload.
   loaderDeps: ({ search }) => toOrganizationListParams(search),
   loader: async ({ deps, cause }) => {
     // Changing search or page on the open list must not hold the navigation

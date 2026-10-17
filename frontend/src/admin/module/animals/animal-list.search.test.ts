@@ -19,7 +19,6 @@ describe('animalListSearchSchema', () => {
     const parsed = animalListSearchSchema.parse({
       page: -3,
       sort: 'password',
-      view: 'grid',
       status: ['adopted', 'bogus'],
       published: 'maybe',
       boarding: '0',
@@ -29,7 +28,6 @@ describe('animalListSearchSchema', () => {
     expect(parsed).toMatchObject({
       page: 1,
       sort: '-created_at',
-      view: 'table',
       status: [],
       published: undefined,
       boarding: undefined,
@@ -118,12 +116,11 @@ describe('buildAnimalListQuery', () => {
 })
 
 describe('hasActiveAnimalFilters', () => {
-  it('ignores sort, view and page', () => {
+  it('ignores sort and page', () => {
     expect(
       hasActiveAnimalFilters({
         ...animalListSearchDefaults,
         sort: 'name',
-        view: 'cards',
         page: 3,
       })
     ).toBe(false)

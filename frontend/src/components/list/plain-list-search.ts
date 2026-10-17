@@ -14,10 +14,9 @@ export const plainListSearchDefaults: PlainListSearch = {
   page: 1,
   sort: '',
   search: '',
-  view: 'table',
 }
 
-/** What the request depends on: the search params without presentation-only ones. */
+/** What the request depends on: all of the search params. */
 export type PlainListParams = ListParams<PlainListSearch>
 
 const config = createListConfig<PlainListSearch, never>({

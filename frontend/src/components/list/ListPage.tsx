@@ -4,10 +4,8 @@ import type { PaginatedResponse } from '@/api/types/pagination'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { TableCard } from '@/components/card/TableCard'
 import { ProgressBar } from '@/components/list/ProgressBar'
-import {
-  listViewVisibility,
-  type ListView,
-} from '@/components/list/list-search'
+import { listViewVisibility } from '@/components/list/list-search'
+import { ListViewProvider, useListView } from '@/components/list/list-view'
 import { useScrollListIntoView } from '@/components/list/useScrollListIntoView'
 import { updatingClass } from '@/components/list/updating'
 import { ListPagination } from '@/components/list/ListPagination'
@@ -30,7 +28,8 @@ interface ListPageProps<T> {
   /** The filter toolbar, rendered above the list. */
   toolbar: ReactNode
   list: PaginatedResponse<T>
-  view: ListView
+  /** Key the table/cards choice of this list is remembered under. */
+  viewKey: string
   /** True while the previous result is shown and the next one is loading. */
   isUpdating?: boolean
   onPageChange: (page: number) => void
@@ -58,7 +57,7 @@ export function ListPage<T>({
   createAction,
   toolbar,
   list,
-  view,
+  viewKey,
   isUpdating = false,
   onPageChange,
   itemLabel,
@@ -69,7 +68,8 @@ export function ListPage<T>({
   const { data, meta } = list
   const { ref: listRef, scrollIfNeeded } =
     useScrollListIntoView<HTMLDivElement>()
-  const visibility = listViewVisibility(view)
+  const listView = useListView(viewKey)
+  const visibility = listViewVisibility(listView.view)
   const EmptyIcon = empty.icon
 
   // The pagination sits below the list: see useScrollListIntoView.
@@ -89,7 +89,7 @@ export function ListPage<T>({
 
       {/* scroll-mt clears the sticky header when scrolled into view */}
       <div ref={listRef} className="scroll-mt-24 space-y-4">
-        {toolbar}
+        <ListViewProvider value={listView}>{toolbar}</ListViewProvider>
 
         <div className="space-y-4">
           {data.length === 0 ? (

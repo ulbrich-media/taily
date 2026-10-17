@@ -25,10 +25,9 @@ export const organizationListSearchDefaults: OrganizationListSearch = {
   page: 1,
   sort: '',
   search: '',
-  view: 'table',
 }
 
-/** What the request depends on: the search params without presentation-only ones. */
+/** What the request depends on: all of the search params. */
 export type OrganizationListParams = ListParams<OrganizationListSearch>
 
 const config = createListConfig<OrganizationListSearch, never>({

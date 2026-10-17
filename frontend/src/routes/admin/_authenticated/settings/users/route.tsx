@@ -52,11 +52,7 @@ export const Route = createFileRoute('/admin/_authenticated/settings/users')({
       replace: true,
     })
   },
-  // `view` is presentation only and must not trigger a reload.
-  loaderDeps: ({ search }) => ({
-    ...search,
-    view: userListSearchDefaults.view,
-  }),
+  loaderDeps: ({ search }) => search,
   loader: async ({ deps: search, cause, context }) => {
     const deps = toUserListParams(search, context.isAdmin)
     // Changing filters, sort or page on the open list must not hold the

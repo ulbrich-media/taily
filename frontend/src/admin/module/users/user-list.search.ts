@@ -69,11 +69,10 @@ export const userListSearchDefaults: UserListSearch = {
   page: 1,
   sort: DEFAULT_USER_SORT,
   search: '',
-  view: 'table',
   ...NO_FILTERS,
 }
 
-/** What the request depends on: the search params without presentation-only ones. */
+/** What the request depends on: all of the search params. */
 export type UserListParams = ListParams<UserListSearch>
 
 const config = createListConfig<UserListSearch, UserFilterKey>({

@@ -113,8 +113,8 @@ Table and card views are two renderers over the same result. The generic parts l
 - `ListPagination` — built on the shadcn `Pagination`, driven by `meta`
 - `ListViewToggle`, `useScrollListIntoView` — the table/cards switch (from `lg` up) and the scroll-on-page-change behaviour
 - `list-search.ts` — `applyListChange` (every change except `page` resets the page), sort helpers, `listViewVisibility`
-- `list-schema.ts` — zod helpers (`multi`, `yesNo`, `only`), `baseListSearchShape` (page, sort, search, view), `sortsFor` / `sortGuard`
-- `list-query.ts` — `createListConfig` returns `buildQuery` (`filter[x]=a,b`), `hasActive` and `resetSearchPatch` from a list's `NO_FILTERS` plus its multi/single filter keys; `toListParams` drops `view`
+- `list-schema.ts` — zod helpers (`multi`, `yesNo`, `only`), `baseListSearchShape` (page, sort, search), `sortsFor` / `sortGuard`
+- `list-query.ts` — `createListConfig` returns `buildQuery` (`filter[x]=a,b`), `hasActive` and `resetSearchPatch` from a list's `NO_FILTERS` plus its multi/single filter keys
 - `list-presets.ts` — `createPresetHelpers` gives `activePreset`, `presetPatch` and `clearFiltersPatch`; presets themselves stay hardcoded per list
 - `ListPage` — page shell: header, toolbar slot, table/cards renderers, empty state with reset, updating state, pagination
 - `ListFiltersToolbar` — `ListToolbar` wired with the search field (remounted on reset), sort dropdown and view toggle; `presetFilter` and `yesNoGroup` in `toolbar-filters.ts` build the "Schnellfilter" and yes/no sections
@@ -129,12 +129,12 @@ No table library is used; row rendering is the existing shadcn `Table` / card co
 3. `<list>.labels.ts`: option labels and sort options (German copy).
 4. `<List>Filters.tsx`: the `ToolbarFilter[]` rendered by `ListFiltersToolbar`.
 5. `<List>.tsx` (table, `SortableHead` columns) and a card grid.
-6. `<List>Page.tsx`: a thin wrapper around `ListPage`.
+6. `<List>Page.tsx`: a thin wrapper around `ListPage` (with a `viewKey` for the remembered table/cards choice).
 7. Route: `validateSearch` with the schema, `stripSearchParams(defaults)`, query via the list's `buildQuery`, and optionally `rememberListSearch`.
 
 ### View: table or cards
 
-The view is URL state like everything else (`view=table|cards`, default `table`). Both renderers are in the DOM and CSS picks one: cards are always shown below `lg`, so small screens need no JS media query; the view toggle is only offered from `lg`. The view is presentation only and is excluded from the loader deps and the query key. Changing it keeps the page.
+The view is not URL state and has nothing to do with routing: it is a per-list preference kept in local storage (`list-view.ts`: `useListView(viewKey)`, default `table`), so it does not expire, survives logout and is never part of the search schema, the loader deps or the query key. `ListPage` takes a `viewKey` and hands the view to the toolbar through context. Both renderers are in the DOM and CSS picks one: cards are always shown below `lg`, so small screens need no JS media query; the view toggle is only offered from `lg`. Changing the view keeps the page.
 
 Sorting is available in both views: column headers toggle it in the table, and the toolbar's "Sortierung" dropdown offers every sort key (the only way with cards).
 
@@ -175,7 +175,7 @@ export const getAdoptionPresets = (personId: string | null) => [
 
 Presets are a function of the current user's person id (`user.person_id`), so "my …" presets can filter by it. A list without any applicable preset omits the filter from the toolbar.
 
-A preset is not a separate state: selecting one writes its filters to the URL, resetting every other filter first. The preset shows as checked while exactly its filters are active (search, sort, view and page don't count). In the toolbar it is a `multi` filter of independent checkbox items, first in the list, so it collapses last. At most one preset matches at a time, so it behaves like a radio group; unchecking the active one clears all filters.
+A preset is not a separate state: selecting one writes its filters to the URL, resetting every other filter first. The preset shows as checked while exactly its filters are active (search, sort and page don't count). In the toolbar it is a `multi` filter of independent checkbox items, first in the list, so it collapses last. At most one preset matches at a time, so it behaves like a radio group; unchecking the active one clears all filters.
 
 ### Pickers
 
