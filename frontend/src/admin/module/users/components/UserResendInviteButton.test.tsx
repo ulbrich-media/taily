@@ -68,9 +68,12 @@ describe('UserResendInviteButton', () => {
     )
 
     await waitFor(() =>
-      expect(apiRequest).toHaveBeenCalledWith('users/user-1/resend-invitation', {
-        method: 'POST',
-      })
+      expect(apiRequest).toHaveBeenCalledWith(
+        'users/user-1/resend-invitation',
+        {
+          method: 'POST',
+        }
+      )
     )
   })
 })

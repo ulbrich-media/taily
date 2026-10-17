@@ -47,10 +47,9 @@ export async function updateUser(
 export async function resendUserInvitation(
   id: string
 ): Promise<ResendInvitationResponse> {
-  return apiRequest<ResendInvitationResponse>(
-    `users/${id}/resend-invitation`,
-    { method: 'POST' }
-  )
+  return apiRequest<ResendInvitationResponse>(`users/${id}/resend-invitation`, {
+    method: 'POST',
+  })
 }
 
 export async function deleteUser(id: string): Promise<DeleteUserResponse> {
