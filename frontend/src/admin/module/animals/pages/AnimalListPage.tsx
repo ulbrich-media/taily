@@ -54,7 +54,7 @@ export function AnimalListPage({
         />
       }
       list={animals}
-      view={search.view}
+      viewKey="animals"
       isUpdating={isUpdating}
       onPageChange={(page) => onSearchChange({ page })}
       itemLabel="Tiere"

@@ -32,7 +32,6 @@ export const animalTypeItemListSearchDefaults: AnimalTypeItemListSearch = {
   page: 1,
   sort: '',
   search: '',
-  view: 'table',
   ...NO_FILTERS,
 }
 

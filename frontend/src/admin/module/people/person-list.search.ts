@@ -101,7 +101,6 @@ export const personListSearchDefaults: PersonListSearch = {
   page: 1,
   sort: DEFAULT_PERSON_SORT,
   search: '',
-  view: 'table',
   ...NO_FILTERS,
 }
 

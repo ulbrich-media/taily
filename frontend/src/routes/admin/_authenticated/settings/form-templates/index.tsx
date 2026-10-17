@@ -26,7 +26,6 @@ export const Route = createFileRoute(
     // Keep the URL short: parameters at their default are not written.
     middlewares: [stripSearchParams(plainListSearchDefaults)],
   },
-  // `view` is presentation only and must not trigger a reload.
   loaderDeps: ({ search }) => toPlainListParams(search),
   loader: async ({ deps, cause }) => {
     // Changing the page on the open list must not hold the navigation back;

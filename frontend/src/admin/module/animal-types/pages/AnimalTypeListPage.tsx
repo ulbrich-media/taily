@@ -44,7 +44,7 @@ export function AnimalTypeListPage({
         />
       }
       list={animalTypes}
-      view={search.view}
+      viewKey="animal-types"
       isUpdating={isUpdating}
       onPageChange={(page) => onSearchChange({ page })}
       itemLabel="Tierarten"

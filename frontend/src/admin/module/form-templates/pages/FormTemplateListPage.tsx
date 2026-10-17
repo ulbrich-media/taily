@@ -44,7 +44,7 @@ export function FormTemplateListPage({
         />
       }
       list={templates}
-      view={search.view}
+      viewKey="form-templates"
       isUpdating={isUpdating}
       onPageChange={(page) => onSearchChange({ page })}
       itemLabel="Formularvorlagen"

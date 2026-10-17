@@ -26,6 +26,7 @@ export function MedicalTestListPage({
     <AnimalTypeItemListPage
       title="Tests"
       description="Verwalte die verfügbaren medizinischen Tests der Tiere"
+      viewKey="medical-tests"
       itemLabel="Tests"
       icon={FlaskConical}
       emptyTitle="Keine Tests vorhanden"

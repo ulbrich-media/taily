@@ -25,7 +25,6 @@ export const organizationListSearchDefaults: OrganizationListSearch = {
   page: 1,
   sort: '',
   search: '',
-  view: 'table',
 }
 
 /** What the request depends on: the search params without presentation-only ones. */

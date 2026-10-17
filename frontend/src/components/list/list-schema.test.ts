@@ -40,7 +40,6 @@ describe('fixedOrderListSearchShape', () => {
       page: 3,
       sort: '',
       search: '',
-      view: 'table',
     })
   })
 
@@ -59,18 +58,20 @@ describe('baseListSearchShape', () => {
       page: 1,
       sort: 'name',
       search: '',
-      view: 'table',
       tags: [],
       flag: undefined,
       only: undefined,
     })
   })
 
+  it('keeps the view out of the URL state', () => {
+    expect(schema.parse({ view: 'cards' })).not.toHaveProperty('view')
+  })
+
   it('falls back for invalid values instead of failing', () => {
     const parsed = schema.parse({
       page: 0,
       sort: 'bogus',
-      view: 'grid',
       search: 'x'.repeat(101),
       tags: ['a', 'zzz'],
       flag: '2',
@@ -79,7 +80,6 @@ describe('baseListSearchShape', () => {
     expect(parsed).toMatchObject({
       page: 1,
       sort: 'name',
-      view: 'table',
       search: '',
       tags: [],
       flag: undefined,
@@ -92,7 +92,6 @@ describe('baseListSearchShape', () => {
       schema.parse({
         page: 2,
         sort: '-created_at',
-        view: 'cards',
         search: ' hi ',
         tags: ['b'],
         flag: '0',
@@ -101,7 +100,6 @@ describe('baseListSearchShape', () => {
     ).toEqual({
       page: 2,
       sort: '-created_at',
-      view: 'cards',
       search: 'hi',
       tags: ['b'],
       flag: '0',

@@ -18,6 +18,8 @@ import {
 interface AnimalTypeItemListPageProps<T extends AnimalTypeItem> {
   title: string
   description: string
+  /** Key the table/cards choice is remembered under. */
+  viewKey: string
   /** Plural noun for the pagination, e.g. "Impfungen". */
   itemLabel: string
   icon: ComponentType
@@ -38,6 +40,7 @@ interface AnimalTypeItemListPageProps<T extends AnimalTypeItem> {
 export function AnimalTypeItemListPage<T extends AnimalTypeItem>({
   title,
   description,
+  viewKey,
   itemLabel,
   icon,
   emptyTitle,
@@ -83,7 +86,7 @@ export function AnimalTypeItemListPage<T extends AnimalTypeItem>({
         />
       }
       list={items}
-      view={search.view}
+      viewKey={viewKey}
       isUpdating={isUpdating}
       onPageChange={(page) => onSearchChange({ page })}
       itemLabel={itemLabel}

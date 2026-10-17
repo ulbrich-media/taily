@@ -18,13 +18,16 @@ describe('adoptionListSearchSchema', () => {
     const parsed = adoptionListSearchSchema.parse({
       page: -3,
       sort: 'password',
-      view: 'grid',
       status: ['done', 'bogus'],
     })
     expect(parsed.page).toBe(1)
     expect(parsed.sort).toBe('-created_at')
-    expect(parsed.view).toBe('table')
     expect(parsed.status).toEqual([])
+  })
+
+  it('keeps the view out of the URL state', () => {
+    const parsed = adoptionListSearchSchema.parse({ view: 'cards' })
+    expect(parsed).not.toHaveProperty('view')
   })
 })
 
@@ -91,21 +94,14 @@ describe('buildAdoptionListQuery', () => {
     })
     expect(query.has('filter[transport_status]')).toBe(false)
   })
-
-  it('leaves the view out of the request params', () => {
-    expect(
-      toAdoptionListParams({ ...adoptionListSearchDefaults, view: 'cards' })
-    ).not.toHaveProperty('view')
-  })
 })
 
 describe('hasActiveAdoptionFilters', () => {
-  it('ignores sort, view and page', () => {
+  it('ignores sort and page', () => {
     expect(
       hasActiveAdoptionFilters({
         ...adoptionListSearchDefaults,
         sort: 'animal_name',
-        view: 'cards',
         page: 3,
       })
     ).toBe(false)

@@ -18,17 +18,10 @@ const base: TestSearch = {
   page: 1,
   sort: 'name',
   search: '',
-  view: 'table',
   ...NO_FILTERS,
 }
 
 const config = { multi: ['tags'], single: ['owner'] } as const
-
-describe('toListParams', () => {
-  it('drops the view', () => {
-    expect(toListParams({ ...base, view: 'cards' })).not.toHaveProperty('view')
-  })
-})
 
 describe('buildListQuery', () => {
   it('sends page, per_page and sort only for an unfiltered list', () => {
@@ -64,13 +57,9 @@ describe('buildListQuery', () => {
 })
 
 describe('hasActiveFilters', () => {
-  it('ignores sort, view and page', () => {
-    expect(
-      hasActiveFilters(
-        { ...base, sort: '-name', view: 'cards', page: 3 },
-        config
-      )
-    ).toBe(false)
+  it('ignores sort and page', () => {
+    const search = { ...base, sort: '-name', page: 3 }
+    expect(hasActiveFilters(search, config)).toBe(false)
   })
 
   it('is true when the search term, a multi or a single filter is set', () => {
@@ -91,14 +80,13 @@ describe('createListConfig', () => {
     filterKinds: { tags: 'multi', owner: 'single' },
   })
 
-  it('resets the search term and filters but not sort or view', () => {
+  it('resets the search term and filters but not the sort', () => {
     expect(list.resetSearchPatch).toEqual({
       search: '',
       tags: [],
       owner: undefined,
     })
     expect(list.resetSearchPatch).not.toHaveProperty('sort')
-    expect(list.resetSearchPatch).not.toHaveProperty('view')
   })
 
   it('uses its page size unless told otherwise', () => {

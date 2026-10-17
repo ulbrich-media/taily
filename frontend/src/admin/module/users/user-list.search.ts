@@ -69,7 +69,6 @@ export const userListSearchDefaults: UserListSearch = {
   page: 1,
   sort: DEFAULT_USER_SORT,
   search: '',
-  view: 'table',
   ...NO_FILTERS,
 }
 

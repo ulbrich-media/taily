@@ -53,7 +53,7 @@ export function UserListPage({
         />
       }
       list={users}
-      view={search.view}
+      viewKey="users"
       isUpdating={isUpdating}
       onPageChange={(page) => onSearchChange({ page })}
       itemLabel="Benutzer"

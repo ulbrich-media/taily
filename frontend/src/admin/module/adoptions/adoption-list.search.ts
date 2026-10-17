@@ -85,7 +85,6 @@ export const adoptionListSearchDefaults: AdoptionListSearch = {
   page: 1,
   sort: DEFAULT_ADOPTION_SORT,
   search: '',
-  view: 'table',
   ...NO_FILTERS,
 }
 

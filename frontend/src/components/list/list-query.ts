@@ -1,17 +1,15 @@
 // Request and reset logic shared by the list views
 // (see docs/coding-patterns/list-views.md).
-import type { ListView } from './list-search'
 
 /** The state every list has in the URL. */
 export interface BaseListSearch {
   page: number
   sort: string
   search: string
-  view: ListView
 }
 
-/** What the request depends on: the search params without presentation-only ones. */
-export type ListParams<S extends BaseListSearch> = Omit<S, 'view'>
+/** What the request depends on: all of the search params. */
+export type ListParams<S extends BaseListSearch> = S
 
 /** Which filters are sent as `filter[x]=a,b` (multi) or `filter[x]=a` (single). */
 export interface FilterQueryConfig<S> {
@@ -22,9 +20,7 @@ export interface FilterQueryConfig<S> {
 export function toListParams<S extends BaseListSearch>(
   search: S
 ): ListParams<S> {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { view, ...params } = search
-  return params
+  return search
 }
 
 /** Query string of the list endpoint. */

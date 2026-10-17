@@ -89,7 +89,6 @@ export const animalListSearchDefaults: AnimalListSearch = {
   page: 1,
   sort: DEFAULT_ANIMAL_SORT,
   search: '',
-  view: 'table',
   ...NO_FILTERS,
 }
 
