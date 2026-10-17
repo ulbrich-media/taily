@@ -164,6 +164,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::delete('/user/sessions', [SessionController::class, 'destroyOthers']);
 
     // Users administration
+    Route::post('users/{user}/resend-invitation', [UserController::class, 'resendInvitation']);
     Route::apiResource('users', UserController::class);
 
     // Animals

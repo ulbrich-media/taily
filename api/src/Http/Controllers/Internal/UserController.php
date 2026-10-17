@@ -23,7 +23,7 @@ class UserController extends Controller
      */
     public function __construct()
     {
-        $this->middleware('admin')->only(['store', 'update', 'destroy']);
+        $this->middleware('admin')->only(['store', 'update', 'destroy', 'resendInvitation']);
     }
 
     /**
@@ -139,6 +139,32 @@ class UserController extends Controller
 
         return response()->json([
             'message' => 'Benutzer erfolgreich aktualisiert.',
+            'data' => new UserResource($user),
+        ]);
+    }
+
+    /**
+     * Send a fresh invitation to a user who has never logged in, whether the
+     * previous invitation is still valid or has expired. Older invitations are
+     * removed so only the newest link works.
+     */
+    public function resendInvitation(User $user): JsonResponse
+    {
+        if ($user->last_login_at !== null) {
+            return response()->json([
+                'message' => 'Dieser Benutzer hat sich bereits angemeldet.',
+            ], 422);
+        }
+
+        UserInvitation::where('user_id', $user->id)->delete();
+
+        $invitation = UserInvitation::createForUser($user);
+        Mail::to($user->email)->send(new UserInvitationMail($invitation, $invitation->plainTextToken));
+
+        $user->load('invitation', 'person');
+
+        return response()->json([
+            'message' => 'Einladung erneut gesendet.',
             'data' => new UserResource($user),
         ]);
     }
