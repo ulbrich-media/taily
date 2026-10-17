@@ -92,7 +92,7 @@ export const animalListSearchDefaults: AnimalListSearch = {
   ...NO_FILTERS,
 }
 
-/** What the request depends on: the search params without presentation-only ones. */
+/** What the request depends on: all of the search params. */
 export type AnimalListParams = ListParams<AnimalListSearch>
 
 const config = createListConfig<AnimalListSearch, AnimalFilterKey>({

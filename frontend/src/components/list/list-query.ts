@@ -17,6 +17,7 @@ export interface FilterQueryConfig<S> {
   single: readonly (keyof S & string)[]
 }
 
+/** Identity today; kept as the single seam between URL search and request params. */
 export function toListParams<S extends BaseListSearch>(
   search: S
 ): ListParams<S> {

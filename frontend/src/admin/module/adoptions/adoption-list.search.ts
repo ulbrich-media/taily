@@ -88,7 +88,7 @@ export const adoptionListSearchDefaults: AdoptionListSearch = {
   ...NO_FILTERS,
 }
 
-/** What the request depends on: the search params without presentation-only ones. */
+/** What the request depends on: all of the search params. */
 export type AdoptionListParams = ListParams<AdoptionListSearch>
 
 const config = createListConfig<AdoptionListSearch, AdoptionFilterKey>({
