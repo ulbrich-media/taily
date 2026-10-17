@@ -34,7 +34,7 @@ function RouteComponent() {
   const animalType = animalTypesData.data.find((at) => at.id === id)!
 
   const handleClose = () => {
-    navigate({})
+    navigate({ search: true })
   }
 
   return <AnimalTypeDeletePage animalType={animalType} onClose={handleClose} />

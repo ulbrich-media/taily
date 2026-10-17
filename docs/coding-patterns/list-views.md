@@ -6,7 +6,12 @@ Lists with large, growing data (adoptions, animals, people) are paginated, sorte
 
 Rationale and rejected alternatives: [ADR-014](../ADRs/ADR-014-list-view-data-handling.md).
 
-Small, bounded lists (organizations, API tokens, users, form templates…) do **not** use this pattern. They stay unpaginated.
+The settings lists (users, organizations, vaccinations, medical tests, animal types, form templates) use it too, in a lighter form: `ListIndexRequest` declares only what a list has (sort keys, filters, search), and lists with a fixed order (everything except users) have no `sort` param at all. Small lists that are not worth it (API tokens, transports…) stay unpaginated.
+
+- **Fixed order:** the frontend schema uses `fixedOrderListSearchShape` (`sort` is always empty and not sent, `search` too unless the list is searchable) and `ListFiltersToolbar` is given no `sortOptions`. Vaccinations and medical tests are one merged list, grouped by animal type and ordered by title (`ListedByAnimalType`). Animal types and form templates use `plain-list-search.ts`.
+- **Pickers keep working:** these endpoints still answer with the whole list when none of `page`, `per_page`, `sort`, `search`, `filter` is sent. The list views always send `page`.
+- **Admin-only data:** users expose 2FA and last login to admins only, so `UserIndexRequest` rejects filters and sorts on them for everyone else.
+- **Routes:** `useListRoute` holds what every list route shares (remembering the filters, redirect from a page past the end, applying changes to the URL). A list whose route is a layout with dialog children (`.../users/create`, `$id.edit`) passes `search` on those links and `search: true` when closing, so the list keeps its state.
 
 ## Request contract
 
@@ -84,6 +89,8 @@ A filter value of `me` is resolved server-side to the current user's person. Onl
 ### Duplication
 
 Don't build a generic query builder up front. If sort-direction parsing or the `per_page` cap ends up identical in all lists, extract a trait then.
+
+**Known duplication (follow-up):** `PersonIndexRequest`, `AnimalIndexRequest` and `AdoptionIndexRequest` predate `ListIndexRequest` and still repeat its constants, `prepareForValidation`, the accessors and the count-only response (`per_page=0`) in their controllers. They should extend `ListIndexRequest`, declare sort keys and filters through its hooks, keep custom rules in `filterRules()` and call `countResponse()`. This is deliberately left out of the PR that introduced the base class to keep the existing endpoints' behaviour untouched; new lists must use `ListIndexRequest`.
 
 ## Frontend
 

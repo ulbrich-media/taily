@@ -1,4 +1,10 @@
 import { apiRequest } from '@/lib/api'
+import type { MedicalTestResource } from '@/api/types/medical-tests'
+import type { PaginatedResponse } from '@/api/types/pagination'
+import {
+  buildAnimalTypeItemListQuery,
+  type AnimalTypeItemListParams,
+} from '@/admin/module/animal-types/animal-type-item-list.search'
 import type {
   MedicalTestsResponse,
   CreateMedicalTestRequest,
@@ -18,6 +24,15 @@ export async function getMedicalTests(
   ).toString()
   return apiRequest<MedicalTestsResponse>(
     params ? `medical-tests?${params}` : 'medical-tests'
+  )
+}
+
+/** One page of the merged medical test list, see docs/coding-patterns/list-views.md. */
+export async function getMedicalTestsPage(
+  params: AnimalTypeItemListParams
+): Promise<PaginatedResponse<MedicalTestResource>> {
+  return apiRequest<PaginatedResponse<MedicalTestResource>>(
+    `medical-tests?${buildAnimalTypeItemListQuery(params)}`
   )
 }
 

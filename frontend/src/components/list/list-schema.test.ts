@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import {
   baseListSearchShape,
+  fixedOrderListSearchShape,
   multi,
   only,
   sortGuard,
@@ -29,6 +30,26 @@ describe('sortGuard', () => {
     const isSort = sortGuard(SORTS)
     expect(isSort('-name')).toBe(true)
     expect(isSort('other')).toBe(false)
+  })
+})
+
+describe('fixedOrderListSearchShape', () => {
+  it('has neither a sort nor, by default, a search', () => {
+    const fixed = z.object(fixedOrderListSearchShape())
+    expect(fixed.parse({ sort: '-name', search: 'x', page: 3 })).toEqual({
+      page: 3,
+      sort: '',
+      search: '',
+      view: 'table',
+    })
+  })
+
+  it('keeps the search of a searchable list', () => {
+    const fixed = z.object(fixedOrderListSearchShape({ searchable: true }))
+    expect(fixed.parse({ sort: '-name', search: 'x' })).toMatchObject({
+      sort: '',
+      search: 'x',
+    })
   })
 })
 

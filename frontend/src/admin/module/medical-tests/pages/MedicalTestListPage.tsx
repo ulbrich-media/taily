@@ -1,32 +1,18 @@
-import { CardTable } from '@/components/card/CardTable'
-import { useMemo, type ReactNode } from 'react'
-import { SlashSquareIcon } from 'lucide-react'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/shadcn/components/ui/table'
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/shadcn/components/ui/empty.tsx'
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/shadcn/components/ui/card'
+import type { ReactNode } from 'react'
+import { FlaskConical } from 'lucide-react'
+import type { AnimalTypeResource } from '@/api/types/animal-types'
 import type { MedicalTestResource } from '@/api/types/medical-tests'
-import { PageHeader } from '@/components/layout/PageHeader'
+import type { PaginatedResponse } from '@/api/types/pagination'
+import { AnimalTypeItemListPage } from '@/admin/module/animal-types/pages/AnimalTypeItemListPage'
+import type { AnimalTypeItemListSearch } from '@/admin/module/animal-types/animal-type-item-list.search'
 
 interface MedicalTestListPageProps {
-  medicalTests: MedicalTestResource[]
+  medicalTests: PaginatedResponse<MedicalTestResource>
+  search: AnimalTypeItemListSearch
+  animalTypes: AnimalTypeResource[]
+  /** True while the previous result is shown and the next one is loading. */
+  isUpdating?: boolean
+  onSearchChange: (patch: Partial<AnimalTypeItemListSearch>) => void
   createAction?: ReactNode
   renderRowActions?: (medicalTest: MedicalTestResource) => ReactNode
   breadcrumb?: ReactNode
@@ -34,95 +20,18 @@ interface MedicalTestListPageProps {
 
 export function MedicalTestListPage({
   medicalTests,
-  createAction,
-  renderRowActions,
-  breadcrumb,
+  ...props
 }: MedicalTestListPageProps) {
-  const groupedTests = useMemo(() => {
-    const groups = new Map<
-      string,
-      { id: string; title: string; tests: MedicalTestResource[] }
-    >()
-
-    medicalTests?.forEach((test) => {
-      const typeId = test.animal_type.id
-      if (!groups.has(typeId)) {
-        groups.set(typeId, {
-          id: typeId,
-          title: test.animal_type.title,
-          tests: [],
-        })
-      }
-      groups.get(typeId)!.tests.push(test)
-    })
-
-    return Array.from(groups.values()).sort((a, b) =>
-      a.title.localeCompare(b.title)
-    )
-  }, [medicalTests])
-
-  const hasTests = medicalTests && medicalTests.length > 0
-
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Tests"
-        description="Verwalte die verfügbaren medizinischen Tests der Tiere"
-        actions={createAction}
-        breadcrumb={breadcrumb}
-      />
-
-      {hasTests ? (
-        <div className="space-y-6">
-          {groupedTests.map((group) => (
-            <Card key={group.id}>
-              <CardHeader>
-                <CardTitle>{group.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardTable>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Titel</TableHead>
-                        <TableHead>Beschreibung</TableHead>
-                        {renderRowActions && <TableHead></TableHead>}
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {group.tests.map((test) => (
-                        <TableRow key={test.id}>
-                          <TableCell className="font-medium">
-                            {test.title}
-                          </TableCell>
-                          <TableCell className="text-muted-foreground">
-                            {test.description || '–'}
-                          </TableCell>
-                          {renderRowActions && (
-                            <TableCell className="text-right">
-                              {renderRowActions(test)}
-                            </TableCell>
-                          )}
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardTable>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : (
-        <Empty>
-          <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <SlashSquareIcon />
-            </EmptyMedia>
-            <EmptyTitle>Keine Tests vorhanden</EmptyTitle>
-            <EmptyDescription>Erstelle den ersten Test!</EmptyDescription>
-          </EmptyHeader>
-        </Empty>
-      )}
-    </div>
+    <AnimalTypeItemListPage
+      title="Tests"
+      description="Verwalte die verfügbaren medizinischen Tests der Tiere"
+      itemLabel="Tests"
+      icon={FlaskConical}
+      emptyTitle="Keine Tests vorhanden"
+      emptyDescription="Erstelle den ersten Test!"
+      items={medicalTests}
+      {...props}
+    />
   )
 }

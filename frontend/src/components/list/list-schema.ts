@@ -31,6 +31,23 @@ export function sortGuard<S extends string>(sorts: readonly S[]) {
 }
 
 /**
+ * The fields of a list with a fixed order that is not user-selectable: like
+ * `baseListSearchShape`, but `sort` is always empty (and not sent), and
+ * `search` is too unless the list is `searchable`.
+ */
+export function fixedOrderListSearchShape({
+  searchable = false,
+}: { searchable?: boolean } = {}) {
+  const base = baseListSearchShape({ sorts: ['name'], defaultSort: 'name' })
+  return {
+    page: base.page,
+    sort: z.literal('').default('').catch(''),
+    search: searchable ? base.search : z.literal('').default('').catch(''),
+    view: base.view,
+  }
+}
+
+/**
  * The fields every list has: page, sort, search and view. A list's schema
  * spreads this into its own `z.object({ ...baseListSearchShape(…), filters })`.
  */

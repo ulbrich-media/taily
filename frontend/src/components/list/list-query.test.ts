@@ -37,6 +37,12 @@ describe('buildListQuery', () => {
     )
   })
 
+  it('sends no sort for a list with a fixed order', () => {
+    expect(
+      buildListQuery(toListParams({ ...base, sort: '' }), 10, config)
+    ).toBe('page=1&per_page=10')
+  })
+
   it('joins multi values with commas and trims the search term', () => {
     const query = new URLSearchParams(
       buildListQuery(

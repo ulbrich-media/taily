@@ -35,7 +35,7 @@ function RouteComponent() {
   const user = users.find((u) => u.id === id)!
 
   const handleClose = () => {
-    navigate({})
+    navigate({ search: true })
   }
 
   return <UserDeletePage user={user} onClose={handleClose} />

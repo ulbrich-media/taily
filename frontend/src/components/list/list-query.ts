@@ -37,8 +37,9 @@ export function buildListQuery<S extends BaseListSearch>(
   const query = new URLSearchParams({
     page: String(params.page),
     per_page: String(perPage),
-    sort: params.sort,
   })
+  // Lists with a fixed order have no sort value and send none.
+  if (params.sort) query.set('sort', params.sort)
   if (params.search.trim()) query.set('search', params.search.trim())
   for (const name of config.multi) {
     const value = values[name] as string[]
