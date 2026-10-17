@@ -18,6 +18,7 @@ import {
 } from '@/admin/module/users/user-list.search'
 import { searchToRestore } from '@/components/list/remembered-list-search'
 import { useListRoute } from '@/components/list/useListRoute'
+import { UserResendInviteButton } from '@/admin/module/users/components/UserResendInviteButton'
 import { useAuth } from '@/lib/auth.hook'
 import { Button } from '@/shadcn/components/ui/button'
 import type { UserResource } from '@/api/types/users'
@@ -102,6 +103,7 @@ function RouteComponent() {
   const renderRowActions = isAdmin
     ? (user: UserResource) => (
         <div className="flex justify-end gap-2">
+          <UserResendInviteButton user={user} />
           <Button size="sm" variant="outline" asChild>
             <EditRoute.Link params={{ id: user.id }} search>
               <Edit /> Bearbeiten

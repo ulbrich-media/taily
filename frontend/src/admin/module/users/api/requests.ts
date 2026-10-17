@@ -9,6 +9,7 @@ import type {
   UpdateUserRequest,
   UpdateUserResponse,
   DeleteUserResponse,
+  ResendInvitationResponse,
 } from './types'
 
 export async function getUsers(): Promise<UsersResponse> {
@@ -40,6 +41,14 @@ export async function updateUser(
   return apiRequest<UpdateUserResponse>(`users/${id}`, {
     method: 'PUT',
     body: JSON.stringify(data),
+  })
+}
+
+export async function resendUserInvitation(
+  id: string
+): Promise<ResendInvitationResponse> {
+  return apiRequest<ResendInvitationResponse>(`users/${id}/resend-invitation`, {
+    method: 'POST',
   })
 }
 
