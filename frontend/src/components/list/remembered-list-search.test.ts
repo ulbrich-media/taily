@@ -4,6 +4,8 @@ import {
   clearRememberedListSearches,
   isDefaultSearch,
   recallListSearch,
+  recallListView,
+  rememberListView,
   searchToRestore,
   REMEMBER_MAX_AGE_MS,
   rememberListSearch,
@@ -106,6 +108,87 @@ describe('remembered list search', () => {
 
     it('does nothing when nothing is remembered', () => {
       expect(restore('enter')).toBeNull()
+    })
+  })
+
+  describe('remembered view', () => {
+    const viewSchema = z.object({
+      page: z.number().default(1),
+      view: z.enum(['table', 'cards']).default('table'),
+    })
+    const defaults = { page: 1, view: 'table' as 'table' | 'cards' }
+    const restore = (cause: string, search = defaults, now = 2000) =>
+      searchToRestore({
+        cause,
+        search,
+        defaults,
+        key: 'v',
+        schema: viewSchema,
+        now,
+      })
+
+    it('stores and recalls the view per list', () => {
+      rememberListView('v', 'cards')
+
+      expect(recallListView('v')).toBe('cards')
+      expect(recallListView('other')).toBeNull()
+    })
+
+    it('ignores an invalid stored view', () => {
+      localStorage.setItem('taily:list-view:v', 'grid')
+
+      expect(recallListView('v')).toBeNull()
+    })
+
+    it('is saved together with the list search', () => {
+      rememberListSearch('v', { page: 2, view: 'cards' })
+
+      expect(recallListView('v')).toBe('cards')
+    })
+
+    it('restores the view on entering the list', () => {
+      rememberListSearch('v', { view: 'cards' }, 1000)
+
+      expect(restore('enter')).toEqual({ page: 1, view: 'cards' })
+    })
+
+    it('restores the view after the remembered search has expired', () => {
+      rememberListSearch('v', { view: 'cards' }, 1000)
+
+      const later = 1000 + REMEMBER_MAX_AGE_MS + 1
+
+      expect(restore('enter', defaults, later)).toEqual({
+        page: 1,
+        view: 'cards',
+      })
+    })
+
+    it('applies the view to an explicit search without a view', () => {
+      rememberListView('v', 'cards')
+
+      expect(restore('enter', { page: 3, view: 'table' })).toEqual({
+        page: 3,
+        view: 'cards',
+      })
+    })
+
+    it('lets an explicit view in the URL win', () => {
+      rememberListView('v', 'table')
+
+      expect(restore('enter', { page: 1, view: 'cards' })).toBeNull()
+    })
+
+    it('does not change the view while moving within the open list', () => {
+      rememberListView('v', 'cards')
+
+      expect(restore('stay')).toBeNull()
+    })
+
+    it('survives clearing the remembered searches', () => {
+      rememberListSearch('v', { view: 'cards' })
+      clearRememberedListSearches()
+
+      expect(recallListView('v')).toBe('cards')
     })
   })
 })

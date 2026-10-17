@@ -1,10 +1,12 @@
 import { deepEqual } from '@tanstack/react-router'
 import type { ZodType } from 'zod'
+import { LIST_VIEWS, type ListView } from './list-search'
 
 // Work in progress is what this is for, not a long-term preference.
 export const REMEMBER_MAX_AGE_MS = 2 * 60 * 60 * 1000
 
 const PREFIX = 'taily:list-search:'
+const VIEW_PREFIX = 'taily:list-view:'
 
 interface Stored {
   savedAt: number
@@ -33,6 +35,33 @@ export function rememberListSearch(
     localStorage.setItem(PREFIX + key, JSON.stringify(stored))
   } catch {
     // Not remembering is fine.
+  }
+  if (isListView(search.view)) rememberListView(key, search.view)
+}
+
+function isListView(value: unknown): value is ListView {
+  return (LIST_VIEWS as readonly unknown[]).includes(value)
+}
+
+/**
+ * Remembers the table/cards choice of a list. Unlike the filters this is a
+ * preference: it does not expire and survives logout.
+ */
+export function rememberListView(key: string, view: ListView): void {
+  try {
+    localStorage.setItem(VIEW_PREFIX + key, view)
+  } catch {
+    // Not remembering is fine.
+  }
+}
+
+/** The remembered view of a list, or null if none or invalid. */
+export function recallListView(key: string): ListView | null {
+  try {
+    const value = localStorage.getItem(VIEW_PREFIX + key)
+    return isListView(value) ? value : null
+  } catch {
+    return null
   }
 }
 
@@ -97,9 +126,21 @@ export function searchToRestore<T>(options: {
 }): T | null {
   const { cause, search, defaults, key, schema, now } = options
   if (cause !== 'enter') return null
-  if (!isDefaultSearch(search, defaults)) return null
 
-  const remembered = recallListSearch(key, schema, now)
-  if (!remembered || isDefaultSearch(remembered, search)) return null
-  return remembered
+  let target: T = search
+  if (isDefaultSearch(search, defaults)) {
+    target = recallListSearch(key, schema, now) ?? search
+  }
+
+  // The view is a lasting preference and wins over the (expiring) remembered
+  // search. Defaults are stripped from URLs, so a view equal to the default
+  // counts as "not asked for".
+  const view = (target as { view?: unknown }).view
+  const defaultView = (defaults as { view?: unknown }).view
+  const preferred = recallListView(key)
+  if (preferred && view === defaultView && preferred !== view) {
+    target = { ...target, view: preferred }
+  }
+
+  return isDefaultSearch(target, search) ? null : target
 }
