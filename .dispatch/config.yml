@@ -1,9 +1,9 @@
 version: 1
 baseBranch: development
 
-autonomy:
-  clarify: on
-  answerTimeout: null
+# default: the full process up to a ready PR for the human.
+# automatic: the same, but a merge-triage agent may enable auto-merge on a non-blocking, high-confidence PR.
+mode: default
 
 # Commands given to agents in their rules, and used by the controller for
 # post-job checks. Detected from package.json where possible -- adjust freely.
@@ -30,25 +30,9 @@ review:
     - architecture-review
     - skill: appsec-review
       triggers: ["api/src/**", "api/routes/**", "api/config/**", ".github/**", "composer.json", "frontend/package.json"]
-  maxReviewRounds: 2
-  rereviewAfterHumanFix: false
-  actOnApprovalComments: false
-  humanReplyDebounceMin: 10
 
 ci:
-  required: true
-  maxCiFixAttempts: 2
   ignoreChecks: []
-  noChecksGraceSec: 180
-  noChecksTimeoutMin: 15
-  mergeableUnknownGraceSec: 120
-
-rebase:
-  enabled: true
-  agent: on
-  maxAttempts: 1
-  reviewAfterConflictResolution: true
-  whenBehind: never
 
 limits:
   implementer: { costBudget: 6.00, maxTurns: 500, timeoutMin: 90 }
@@ -57,16 +41,6 @@ limits:
   fixer: { costBudget: 3.00, maxTurns: 250, timeoutMin: 45 }
   taskCostBudget: 20.00
   pushPartial: false
-
-models:
-  clarifier: { model: sonnet, effort: low }
-  implementer: { model: sonnet, effort: medium }
-  reviewer: { model: sonnet, effort: medium }
-  fixer: { model: sonnet, effort: medium }
-
-plan:
-  skill: plan
-  marker: "<!-- claude-plan -->"   # keeps plans already written by the repo's /refine workflow recognisable
 
 rules: |
   Taily is a Laravel 12 API (api/, namespace Taily\ under api/src/) plus a React SPA (frontend/). Read AGENTS.md, CONTEXT-MAP.md and the relevant CONTEXT.md / docs/ADRs before changing code, and follow docs/coding-patterns/.
