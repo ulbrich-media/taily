@@ -1,0 +1,1 @@
+import{s as e}from"./schemas-DqceFf3r.js";import{c as t,l as n,n as r}from"./list-schema-1js_NEQA.js";var i=e(r()),a={page:1,sort:``,search:``},o=t({noFilters:{},perPage:25,filterKinds:{}}),s=e=>n(e),c=o.buildQuery;export{s as i,a as n,i as r,c as t};
