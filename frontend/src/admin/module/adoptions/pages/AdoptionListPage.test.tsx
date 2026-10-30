@@ -60,7 +60,10 @@ function renderPage(
   return { onSearchChange }
 }
 
-afterEach(() => vi.restoreAllMocks())
+afterEach(() => {
+  vi.restoreAllMocks()
+  localStorage.clear()
+})
 
 describe('AdoptionListPage', () => {
   it('renders every adoption as table row and as card', () => {
@@ -76,10 +79,17 @@ describe('AdoptionListPage', () => {
     expect(onSearchChange).toHaveBeenCalledWith({ sort: 'animal_name' })
   })
 
-  it('switches the view without leaving the page', async () => {
+  it('switches the view without touching the search', async () => {
     const { onSearchChange } = renderPage()
     await userEvent.click(screen.getByRole('radio', { name: 'Karten' }))
-    expect(onSearchChange).toHaveBeenCalledWith({ view: 'cards', page: 2 })
+    expect(onSearchChange).not.toHaveBeenCalled()
+    expect(screen.getByRole('radio', { name: 'Karten' })).toBeChecked()
+  })
+
+  it('shows the remembered view', () => {
+    localStorage.setItem('taily:list-view:adoptions', 'cards')
+    renderPage()
+    expect(screen.getByRole('radio', { name: 'Karten' })).toBeChecked()
   })
 
   it('changes the page through the pagination', async () => {
@@ -95,14 +105,13 @@ describe('AdoptionListPage', () => {
     ).toBeDisabled()
   })
 
-  it('resets search and filters but keeps sort and view', async () => {
+  it('resets search and filters but keeps the sort', async () => {
     const { onSearchChange } = renderPage({
       search: {
         ...adoptionListSearchDefaults,
         status: ['done'],
         search: 'luna',
         sort: 'animal_name',
-        view: 'cards',
       },
     })
     await userEvent.click(
@@ -114,9 +123,8 @@ describe('AdoptionListPage', () => {
       search: '',
       mediator_id: undefined,
     })
-    // A patch only changes what it names: sort and view stay as they are.
+    // A patch only changes what it names: the sort stays as it is.
     expect(patch).not.toHaveProperty('sort')
-    expect(patch).not.toHaveProperty('view')
   })
 
   describe('moving to the next page', () => {

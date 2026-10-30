@@ -66,7 +66,10 @@ function renderPage(
   return { onSearchChange }
 }
 
-afterEach(() => vi.restoreAllMocks())
+afterEach(() => {
+  vi.restoreAllMocks()
+  localStorage.clear()
+})
 
 describe('AnimalListPage', () => {
   it('renders every animal as table row and as card', () => {
@@ -86,10 +89,11 @@ describe('AnimalListPage', () => {
     expect(onSearchChange).toHaveBeenCalledWith({ sort: 'breed' })
   })
 
-  it('switches the view without leaving the page', async () => {
+  it('switches the view without touching the search', async () => {
     const { onSearchChange } = renderPage()
     await userEvent.click(screen.getByRole('radio', { name: 'Karten' }))
-    expect(onSearchChange).toHaveBeenCalledWith({ view: 'cards', page: 2 })
+    expect(onSearchChange).not.toHaveBeenCalled()
+    expect(screen.getByRole('radio', { name: 'Karten' })).toBeChecked()
   })
 
   it('changes the page through the pagination', async () => {
@@ -105,7 +109,7 @@ describe('AnimalListPage', () => {
     ).toBeDisabled()
   })
 
-  it('resets search and filters but keeps sort and view', async () => {
+  it('resets search and filters but keeps the sort', async () => {
     const { onSearchChange } = renderPage({
       search: {
         ...animalListSearchDefaults,
@@ -113,7 +117,6 @@ describe('AnimalListPage', () => {
         boarding: '1',
         search: 'luna',
         sort: 'name',
-        view: 'cards',
       },
     })
     await userEvent.click(
@@ -127,7 +130,6 @@ describe('AnimalListPage', () => {
       assigned_agent_id: undefined,
     })
     expect(patch).not.toHaveProperty('sort')
-    expect(patch).not.toHaveProperty('view')
   })
 
   it('shows the progress bar only while the list is updating', async () => {

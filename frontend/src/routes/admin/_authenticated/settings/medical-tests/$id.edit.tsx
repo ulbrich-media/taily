@@ -46,7 +46,7 @@ function RouteComponent() {
   const medicalTest = medicalTests.find((t) => t.id === id)!
 
   const handleClose = () => {
-    navigate({})
+    navigate({ search: true })
   }
 
   return (

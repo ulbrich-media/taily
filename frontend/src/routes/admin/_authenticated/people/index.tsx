@@ -55,7 +55,6 @@ export const Route = createFileRoute('/admin/_authenticated/people/')({
       replace: true,
     })
   },
-  // `view` is presentation only and must not trigger a reload.
   loaderDeps: ({ search }) => toPersonListParams(search),
   loader: async ({ deps, cause }) => {
     // Changing filters, sort or page on the open list must not hold the

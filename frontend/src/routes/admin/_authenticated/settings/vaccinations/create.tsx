@@ -31,7 +31,7 @@ function RouteComponent() {
   const { data: animalTypesData } = useSuspenseQuery(listAnimalTypesQuery)
 
   const handleClose = () => {
-    navigate({})
+    navigate({ search: true })
   }
 
   return (

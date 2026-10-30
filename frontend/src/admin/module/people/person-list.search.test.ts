@@ -95,12 +95,11 @@ describe('filter state', () => {
     expect(hasActivePersonFilters(reset)).toBe(false)
   })
 
-  it('does not count sort and view as filters', () => {
+  it('does not count the sort as a filter', () => {
     expect(
       hasActivePersonFilters({
         ...personListSearchDefaults,
         sort: '-roles',
-        view: 'cards',
       })
     ).toBe(false)
   })

@@ -1,4 +1,7 @@
 import { apiRequest } from '@/lib/api'
+import type { PaginatedResponse } from '@/api/types/pagination'
+import type { UserResource } from '@/api/types/users'
+import { buildUserListQuery, type UserListParams } from '../user-list.search'
 import type {
   UsersResponse,
   CreateUserRequest,
@@ -6,10 +9,20 @@ import type {
   UpdateUserRequest,
   UpdateUserResponse,
   DeleteUserResponse,
+  ResendInvitationResponse,
 } from './types'
 
 export async function getUsers(): Promise<UsersResponse> {
   return apiRequest<UsersResponse>('users')
+}
+
+/** One page of the user list, see docs/coding-patterns/list-views.md. */
+export async function getUsersPage(
+  params: UserListParams
+): Promise<PaginatedResponse<UserResource>> {
+  return apiRequest<PaginatedResponse<UserResource>>(
+    `users?${buildUserListQuery(params)}`
+  )
 }
 
 export async function createUser(
@@ -28,6 +41,14 @@ export async function updateUser(
   return apiRequest<UpdateUserResponse>(`users/${id}`, {
     method: 'PUT',
     body: JSON.stringify(data),
+  })
+}
+
+export async function resendUserInvitation(
+  id: string
+): Promise<ResendInvitationResponse> {
+  return apiRequest<ResendInvitationResponse>(`users/${id}/resend-invitation`, {
+    method: 'POST',
   })
 }
 

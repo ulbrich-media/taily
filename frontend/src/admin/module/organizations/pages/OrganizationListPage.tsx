@@ -1,18 +1,23 @@
 import type { ReactNode } from 'react'
+import { Building2 } from 'lucide-react'
 import type { OrganizationResource } from '@/api/types/organizations'
+import type { PaginatedResponse } from '@/api/types/pagination'
+import { ListPage } from '@/components/list/ListPage'
+import { ListFiltersToolbar } from '@/components/list/ListFiltersToolbar'
+import { OrganizationList } from '@/admin/module/organizations/components/OrganizationList'
+import { OrganizationCardGrid } from '@/admin/module/organizations/components/OrganizationCardGrid'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/shadcn/components/ui/table'
-import { TableListView } from '@/components/list/TableListView'
-import { PageHeader } from '@/components/layout/PageHeader'
+  hasActiveOrganizationFilters,
+  resetSearchPatch,
+  type OrganizationListSearch,
+} from '@/admin/module/organizations/organization-list.search'
 
 interface OrganizationListPageProps {
-  organizations: OrganizationResource[]
+  organizations: PaginatedResponse<OrganizationResource>
+  search: OrganizationListSearch
+  /** True while the previous result is shown and the next one is loading. */
+  isUpdating?: boolean
+  onSearchChange: (patch: Partial<OrganizationListSearch>) => void
   createAction: ReactNode
   renderRowActions: (organization: OrganizationResource) => ReactNode
   breadcrumb?: ReactNode
@@ -20,55 +25,56 @@ interface OrganizationListPageProps {
 
 export function OrganizationListPage({
   organizations,
+  search,
+  isUpdating = false,
+  onSearchChange,
   createAction,
   renderRowActions,
   breadcrumb,
 }: OrganizationListPageProps) {
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Organisationen"
-        description="Verwalte alle Organisationen im System"
-        actions={createAction}
-        breadcrumb={breadcrumb}
-      />
-
-      <TableListView
-        data={organizations}
-        emptyState={{
-          title: 'Keine Organisationen gefunden',
-          description: 'Füge jetzt eine Organisation hinzu!',
-        }}
-      >
-        {(organizations) => (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>E-Mail</TableHead>
-                <TableHead>Stadt</TableHead>
-                <TableHead>Personen</TableHead>
-                <TableHead className="th-contain"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {organizations.map((organization) => (
-                <TableRow key={organization.id}>
-                  <TableCell className="font-medium">
-                    {organization.name}
-                  </TableCell>
-                  <TableCell>{organization.email || '-'}</TableCell>
-                  <TableCell>{organization.city || '-'}</TableCell>
-                  <TableCell>{organization.people_count || 0}</TableCell>
-                  <TableCell className="text-right">
-                    {renderRowActions(organization)}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </TableListView>
-    </div>
+    <ListPage
+      title="Organisationen"
+      description="Verwalte alle Organisationen im System"
+      breadcrumb={breadcrumb}
+      createAction={createAction}
+      toolbar={
+        <ListFiltersToolbar
+          search={search}
+          onChange={onSearchChange}
+          resetPatch={resetSearchPatch}
+          canReset={hasActiveOrganizationFilters(search)}
+          label="Organisationen filtern"
+          searchLabel="Organisationen durchsuchen"
+          searchPlaceholder="Suche nach Name, E-Mail, Ort …"
+        />
+      }
+      list={organizations}
+      viewKey="organizations"
+      isUpdating={isUpdating}
+      onPageChange={(page) => onSearchChange({ page })}
+      itemLabel="Organisationen"
+      empty={{
+        icon: Building2,
+        title: 'Keine Organisationen gefunden',
+        descriptionFiltered: 'Mit der Suche gibt es keine Treffer.',
+        descriptionEmpty: 'Füge jetzt eine Organisation hinzu!',
+        filtered: hasActiveOrganizationFilters(search),
+        onReset: () => onSearchChange(resetSearchPatch),
+      }}
+      renderTable={(items) => (
+        <OrganizationList
+          organizations={items}
+          renderRowActions={renderRowActions}
+        />
+      )}
+      renderCards={(items, className) => (
+        <OrganizationCardGrid
+          organizations={items}
+          renderRowActions={renderRowActions}
+          className={className}
+        />
+      )}
+    />
   )
 }

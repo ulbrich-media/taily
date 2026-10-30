@@ -31,7 +31,7 @@ function RouteComponent() {
   const { data: formTemplatesData } = useSuspenseQuery(listFormTemplatesQuery)
 
   const handleClose = () => {
-    navigate({})
+    navigate({ search: true })
   }
 
   return (

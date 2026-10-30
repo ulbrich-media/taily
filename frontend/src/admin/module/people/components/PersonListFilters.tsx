@@ -1,13 +1,11 @@
-import { useState } from 'react'
 import type { AnimalTypeResource } from '@/api/types/animal-types'
 import type { OrganizationResource } from '@/api/types/organizations'
-import { SearchInput } from '@/components/list/SearchInput'
-import { FilterDropdown } from '@/components/list/FilterDropdown'
-import { ListToolbar } from '@/components/list/ListToolbar'
-import { ListViewToggle } from '@/components/list/ListViewToggle'
+import { ListFiltersToolbar } from '@/components/list/ListFiltersToolbar'
 import {
   defineFilter,
   defineGroup,
+  presetFilter,
+  yesNoGroup,
   type FilterOption,
 } from '@/components/list/toolbar-filters'
 import {
@@ -40,8 +38,6 @@ interface PersonListFiltersProps {
   onChange: (patch: Partial<PersonListSearch>) => void
 }
 
-type YesNoKey = 'has_adoptions' | 'has_pre_inspections'
-
 /** Whether a role filter value belongs to the section of `role` (`mediator` or `mediator:<id>`). */
 const inSection = (value: string, role: PersonRole) =>
   value === role || value.startsWith(`${role}:`)
@@ -52,10 +48,6 @@ export function PersonListFilters({
   animalTypes,
   onChange,
 }: PersonListFiltersProps) {
-  // Remounts the search field on reset, so a term that was typed but never
-  // submitted is dropped as well.
-  const [searchFieldKey, setSearchFieldKey] = useState(0)
-
   const organizationOptions = [
     { value: 'none', label: 'Ohne Organisation', general: true },
     ...organizations.map((organization) => ({
@@ -85,35 +77,13 @@ export function PersonListFilters({
         }),
     })
 
-  // A yes/no filter in a checkbox section: at most one of the two is set,
-  // checking the other one switches, unchecking clears.
-  const yesNoGroup = (key: YesNoKey, options: FilterOption<'1' | '0'>[]) =>
-    defineGroup({
-      key,
-      options,
-      value: search[key] ? [search[key]] : [],
-      onChange: (values) =>
-        onChange({ [key]: values.find((v) => v !== search[key]) }),
-    })
-
   // In priority order: the last filters collapse first on narrow screens.
   const filters = [
-    defineFilter({
-      // Independent checkbox items that behave like radios: at most one
-      // preset matches at a time, and unchecking it clears the filters.
-      type: 'multi',
-      key: 'preset',
-      label: 'Schnellfilter',
-      options: personPresets.map((preset) => ({
-        value: preset.key,
-        label: preset.label,
-      })),
-      value: current ? [current] : [],
-      onChange: (selected) => {
-        const picked = selected.find((key) => key !== current)
-        const preset = personPresets.find((p) => p.key === picked)
-        onChange(preset ? presetPatch(preset) : clearFiltersPatch)
-      },
+    presetFilter({
+      presets: personPresets,
+      current,
+      onPick: (preset) => onChange(presetPatch(preset)),
+      onClear: () => onChange(clearFiltersPatch),
     }),
     defineFilter({
       type: 'sections',
@@ -150,8 +120,18 @@ export function PersonListFilters({
       key: 'more',
       label: 'Status',
       sections: [
-        yesNoGroup('has_adoptions', hasAdoptionsOptions),
-        yesNoGroup('has_pre_inspections', hasPreInspectionsOptions),
+        yesNoGroup(
+          'has_adoptions',
+          hasAdoptionsOptions,
+          search.has_adoptions,
+          onChange
+        ),
+        yesNoGroup(
+          'has_pre_inspections',
+          hasPreInspectionsOptions,
+          search.has_pre_inspections,
+          onChange
+        ),
         defineGroup({
           key: 'adoption_status',
           options: adoptionStatusOptions,
@@ -162,44 +142,17 @@ export function PersonListFilters({
     }),
   ]
 
-  const sort = defineFilter({
-    type: 'single',
-    key: 'sort',
-    label: 'Sortierung',
-    options: sortOptions,
-    value: search.sort,
-    onChange: (value) => value && onChange({ sort: value }),
-    highlightActive: false,
-  })
-
   return (
-    <ListToolbar
-      label="Personen filtern"
-      search={
-        <SearchInput
-          key={searchFieldKey}
-          label="Personen durchsuchen"
-          placeholder="Suche nach Name, E-Mail, Ort …"
-          value={search.search}
-          onSearch={(value) => onChange({ search: value })}
-        />
-      }
-      filters={filters}
-      onReset={() => {
-        setSearchFieldKey((key) => key + 1)
-        onChange(resetSearchPatch)
-      }}
+    <ListFiltersToolbar
+      search={search}
+      onChange={onChange}
+      resetPatch={resetSearchPatch}
       canReset={hasActivePersonFilters(search)}
-      trailing={
-        <>
-          <FilterDropdown filter={sort} />
-          <ListViewToggle
-            value={search.view}
-            // Presentation only, so the page stays.
-            onChange={(view) => onChange({ view, page: search.page })}
-          />
-        </>
-      }
+      filters={filters}
+      sortOptions={sortOptions}
+      label="Personen filtern"
+      searchLabel="Personen durchsuchen"
+      searchPlaceholder="Suche nach Name, E-Mail, Ort …"
     />
   )
 }

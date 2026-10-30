@@ -13,6 +13,10 @@ export interface UpdateUserResponse {
   message: string
   data: UserResource
 }
+export interface ResendInvitationResponse {
+  message: string
+  data: UserResource
+}
 export interface DeleteUserResponse {
   message: string
 }

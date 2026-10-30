@@ -1,32 +1,18 @@
-import { CardTable } from '@/components/card/CardTable'
-import { useMemo, type ReactNode } from 'react'
-import { SlashSquareIcon } from 'lucide-react'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/shadcn/components/ui/table'
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/shadcn/components/ui/empty.tsx'
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/shadcn/components/ui/card'
+import type { ReactNode } from 'react'
+import { Syringe } from 'lucide-react'
+import type { AnimalTypeResource } from '@/api/types/animal-types'
+import type { PaginatedResponse } from '@/api/types/pagination'
 import type { VaccinationResource } from '@/api/types/vaccinations'
-import { PageHeader } from '@/components/layout/PageHeader'
+import { AnimalTypeItemListPage } from '@/admin/module/animal-types/pages/AnimalTypeItemListPage'
+import type { AnimalTypeItemListSearch } from '@/admin/module/animal-types/animal-type-item-list.search'
 
 interface VaccinationListPageProps {
-  vaccinations: VaccinationResource[]
+  vaccinations: PaginatedResponse<VaccinationResource>
+  search: AnimalTypeItemListSearch
+  animalTypes: AnimalTypeResource[]
+  /** True while the previous result is shown and the next one is loading. */
+  isUpdating?: boolean
+  onSearchChange: (patch: Partial<AnimalTypeItemListSearch>) => void
   createAction?: ReactNode
   renderRowActions?: (vaccination: VaccinationResource) => ReactNode
   breadcrumb?: ReactNode
@@ -34,95 +20,19 @@ interface VaccinationListPageProps {
 
 export function VaccinationListPage({
   vaccinations,
-  createAction,
-  renderRowActions,
-  breadcrumb,
+  ...props
 }: VaccinationListPageProps) {
-  const groupedVaccinations = useMemo(() => {
-    const groups = new Map<
-      string,
-      { id: string; title: string; vaccinations: VaccinationResource[] }
-    >()
-
-    vaccinations?.forEach((vaccination) => {
-      const typeId = vaccination.animal_type.id
-      if (!groups.has(typeId)) {
-        groups.set(typeId, {
-          id: typeId,
-          title: vaccination.animal_type.title,
-          vaccinations: [],
-        })
-      }
-      groups.get(typeId)!.vaccinations.push(vaccination)
-    })
-
-    return Array.from(groups.values()).sort((a, b) =>
-      a.title.localeCompare(b.title)
-    )
-  }, [vaccinations])
-
-  const hasVaccinations = vaccinations && vaccinations.length > 0
-
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Impfungen"
-        description="Verwalte die verfügbaren Impfungen der Tiere"
-        actions={createAction}
-        breadcrumb={breadcrumb}
-      />
-
-      {hasVaccinations ? (
-        <div className="space-y-6">
-          {groupedVaccinations.map((group) => (
-            <Card key={group.id}>
-              <CardHeader>
-                <CardTitle>{group.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardTable>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Titel</TableHead>
-                        <TableHead>Beschreibung</TableHead>
-                        {renderRowActions && <TableHead></TableHead>}
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {group.vaccinations.map((vaccination) => (
-                        <TableRow key={vaccination.id}>
-                          <TableCell className="font-medium">
-                            {vaccination.title}
-                          </TableCell>
-                          <TableCell className="text-muted-foreground">
-                            {vaccination.description || '–'}
-                          </TableCell>
-                          {renderRowActions && (
-                            <TableCell className="text-right">
-                              {renderRowActions(vaccination)}
-                            </TableCell>
-                          )}
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardTable>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : (
-        <Empty>
-          <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <SlashSquareIcon />
-            </EmptyMedia>
-            <EmptyTitle>Keine Impfungen vorhanden</EmptyTitle>
-            <EmptyDescription>Erstelle die erste Impfung!</EmptyDescription>
-          </EmptyHeader>
-        </Empty>
-      )}
-    </div>
+    <AnimalTypeItemListPage
+      title="Impfungen"
+      description="Verwalte die verfügbaren Impfungen der Tiere"
+      viewKey="vaccinations"
+      itemLabel="Impfungen"
+      icon={Syringe}
+      emptyTitle="Keine Impfungen vorhanden"
+      emptyDescription="Erstelle die erste Impfung!"
+      items={vaccinations}
+      {...props}
+    />
   )
 }

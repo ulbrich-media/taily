@@ -1,4 +1,10 @@
 import { apiRequest } from '@/lib/api'
+import type { PaginatedResponse } from '@/api/types/pagination'
+import type { VaccinationResource } from '@/api/types/vaccinations'
+import {
+  buildAnimalTypeItemListQuery,
+  type AnimalTypeItemListParams,
+} from '@/admin/module/animal-types/animal-type-item-list.search'
 import type {
   VaccinationsResponse,
   CreateVaccinationRequest,
@@ -18,6 +24,15 @@ export async function getVaccinations(
   ).toString()
   return apiRequest<VaccinationsResponse>(
     params ? `vaccinations?${params}` : 'vaccinations'
+  )
+}
+
+/** One page of the merged vaccination list, see docs/coding-patterns/list-views.md. */
+export async function getVaccinationsPage(
+  params: AnimalTypeItemListParams
+): Promise<PaginatedResponse<VaccinationResource>> {
+  return apiRequest<PaginatedResponse<VaccinationResource>>(
+    `vaccinations?${buildAnimalTypeItemListQuery(params)}`
   )
 }
 

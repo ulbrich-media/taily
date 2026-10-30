@@ -1,4 +1,10 @@
 import { apiRequest } from '@/lib/api'
+import type { AnimalTypeResource } from '@/api/types/animal-types'
+import type { PaginatedResponse } from '@/api/types/pagination'
+import {
+  buildPlainListQuery,
+  type PlainListParams,
+} from '@/components/list/plain-list-search'
 import type {
   AnimalTypesResponse,
   AnimalType,
@@ -10,6 +16,15 @@ import type {
 
 export async function getAnimalTypes(): Promise<AnimalTypesResponse> {
   return apiRequest<AnimalTypesResponse>('animal-types')
+}
+
+/** One page of the animal type list, see docs/coding-patterns/list-views.md. */
+export async function getAnimalTypesPage(
+  params: PlainListParams
+): Promise<PaginatedResponse<AnimalTypeResource>> {
+  return apiRequest<PaginatedResponse<AnimalTypeResource>>(
+    `animal-types?${buildPlainListQuery(params)}`
+  )
 }
 
 export async function getAnimalType(id: string): Promise<AnimalType> {

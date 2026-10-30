@@ -4,22 +4,42 @@ namespace Taily\Http\Controllers\Internal;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Taily\Http\Controllers\Controller;
+use Taily\Http\Requests\OrganizationIndexRequest;
 use Taily\Http\Resources\OrganizationResource;
 use Taily\Models\Organization;
 
 class OrganizationController extends Controller
 {
     /**
-     * Display a listing of organizations.
+     * Display a page of organizations, always ordered by name (see
+     * OrganizationIndexRequest). `per_page=0` only counts. Without any list
+     * parameter all organizations are returned, which the pickers in other
+     * forms still rely on.
      */
-    public function index(): JsonResponse
+    public function index(OrganizationIndexRequest $request): AnonymousResourceCollection|JsonResponse
     {
-        $organizations = Organization::withCount('people')
-            ->orderBy('name')
-            ->get();
+        if (! $request->wantsListView()) {
+            $organizations = Organization::withCount('people')
+                ->orderBy('name')
+                ->get();
 
-        return response()->json(OrganizationResource::collection($organizations));
+            return response()->json(OrganizationResource::collection($organizations));
+        }
+
+        $query = Organization::query()->search($request->searchTerm());
+
+        if ($request->perPage() === 0) {
+            return $request->countResponse($query);
+        }
+
+        return OrganizationResource::collection(
+            $query->withCount('people')
+                ->orderBy('organizations.name')
+                ->orderBy('organizations.id')
+                ->paginate($request->perPage())
+        );
     }
 
     /**

@@ -4,11 +4,13 @@ namespace Taily\Http\Controllers\Internal;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
 use Taily\Enums\UserRole;
 use Taily\Http\Controllers\Controller;
+use Taily\Http\Requests\UserIndexRequest;
 use Taily\Http\Resources\UserResource;
 use Taily\Mail\UserInvitationMail;
 use Taily\Models\User;
@@ -21,7 +23,7 @@ class UserController extends Controller
      */
     public function __construct()
     {
-        $this->middleware('admin')->only(['store', 'update', 'destroy']);
+        $this->middleware('admin')->only(['store', 'update', 'destroy', 'resendInvitation']);
     }
 
     /**
@@ -39,17 +41,32 @@ class UserController extends Controller
     }
 
     /**
-     * Display a listing of users.
+     * Display a page of users (see UserIndexRequest for the query contract).
+     * `per_page=0` only counts the filtered users. Without any list
+     * parameter all users are returned, which the pickers in other forms
+     * still rely on.
      */
-    public function index(Request $request): JsonResponse
+    public function index(UserIndexRequest $request): AnonymousResourceCollection|JsonResponse
     {
-        $query = User::with('person')->orderBy('name');
+        $relations = $request->user()->isAdmin() ? ['person', 'invitation'] : ['person'];
 
-        if ($request->user()->isAdmin()) {
-            $query->with('invitation');
+        if (! $request->wantsListView()) {
+            return response()->json(UserResource::collection(User::with($relations)->orderBy('name')->get()));
         }
 
-        return response()->json(UserResource::collection($query->get()));
+        $query = User::query()
+            ->filterBy($request->filters())
+            ->search($request->searchTerm());
+
+        if ($request->perPage() === 0) {
+            return $request->countResponse($query);
+        }
+
+        return UserResource::collection(
+            $query->with($relations)
+                ->sortedBy($request->sortKey(), $request->sortDirection())
+                ->paginate($request->perPage())
+        );
     }
 
     /**
@@ -122,6 +139,32 @@ class UserController extends Controller
 
         return response()->json([
             'message' => 'Benutzer erfolgreich aktualisiert.',
+            'data' => new UserResource($user),
+        ]);
+    }
+
+    /**
+     * Send a fresh invitation to a user who has never logged in, whether the
+     * previous invitation is still valid or has expired. Older invitations are
+     * removed so only the newest link works.
+     */
+    public function resendInvitation(User $user): JsonResponse
+    {
+        if ($user->last_login_at !== null) {
+            return response()->json([
+                'message' => 'Dieser Benutzer hat sich bereits angemeldet.',
+            ], 422);
+        }
+
+        UserInvitation::where('user_id', $user->id)->delete();
+
+        $invitation = UserInvitation::createForUser($user);
+        Mail::to($user->email)->send(new UserInvitationMail($invitation, $invitation->plainTextToken));
+
+        $user->load('invitation', 'person');
+
+        return response()->json([
+            'message' => 'Einladung erneut gesendet.',
             'data' => new UserResource($user),
         ]);
     }

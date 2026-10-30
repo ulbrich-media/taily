@@ -1,20 +1,21 @@
 import type { ReactNode } from 'react'
+import { FileText } from 'lucide-react'
 import type { FormTemplateResource } from '@/api/types/form-templates'
-import { PageHeader } from '@/components/layout/PageHeader'
-import { TableListView } from '@/components/list/TableListView'
-import { Badge } from '@/shadcn/components/ui/badge'
+import type { PaginatedResponse } from '@/api/types/pagination'
+import { ListPage } from '@/components/list/ListPage'
+import { ListFiltersToolbar } from '@/components/list/ListFiltersToolbar'
+import type { PlainListSearch } from '@/components/list/plain-list-search'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/shadcn/components/ui/table'
-import { formatApiDate } from '@/lib/dates.utils.ts'
+  FormTemplateCardGrid,
+  FormTemplateList,
+} from '@/admin/module/form-templates/components/FormTemplateList'
 
-interface FormTemplateResourceListPageProps {
-  templates: FormTemplateResource[]
+interface FormTemplateListPageProps {
+  templates: PaginatedResponse<FormTemplateResource>
+  search: PlainListSearch
+  /** True while the previous result is shown and the next one is loading. */
+  isUpdating?: boolean
+  onSearchChange: (patch: Partial<PlainListSearch>) => void
   createAction?: ReactNode
   renderRowActions: (template: FormTemplateResource) => ReactNode
   breadcrumb?: ReactNode
@@ -22,55 +23,52 @@ interface FormTemplateResourceListPageProps {
 
 export function FormTemplateListPage({
   templates,
+  search,
+  isUpdating = false,
+  onSearchChange,
   createAction,
   renderRowActions,
   breadcrumb,
-}: FormTemplateResourceListPageProps) {
+}: FormTemplateListPageProps) {
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Formularvorlagen"
-        description="Verwalte dynamische Formularvorlagen für Inspektionen, Bewerbungen und mehr"
-        actions={createAction}
-        breadcrumb={breadcrumb}
-      />
-
-      <TableListView
-        data={templates}
-        emptyState={{
-          title: 'Keine Formularvorlagen vorhanden',
-          description: 'Erstelle die erste Formularvorlage!',
-        }}
-      >
-        {(templates) => (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Version</TableHead>
-                <TableHead>Zuletzt geändert</TableHead>
-                <TableHead className="th-contain"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {templates.map((template) => (
-                <TableRow key={template.id}>
-                  <TableCell className="font-medium">{template.name}</TableCell>
-                  <TableCell>
-                    <Badge variant="secondary">v{template.version}</Badge>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {formatApiDate(template.updated_at)}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {renderRowActions(template)}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </TableListView>
-    </div>
+    <ListPage
+      title="Formularvorlagen"
+      description="Verwalte dynamische Formularvorlagen für Inspektionen, Bewerbungen und mehr"
+      breadcrumb={breadcrumb}
+      createAction={createAction}
+      toolbar={
+        <ListFiltersToolbar
+          search={search}
+          onChange={onSearchChange}
+          label="Formularvorlagen"
+        />
+      }
+      list={templates}
+      viewKey="form-templates"
+      isUpdating={isUpdating}
+      onPageChange={(page) => onSearchChange({ page })}
+      itemLabel="Formularvorlagen"
+      empty={{
+        icon: FileText,
+        title: 'Keine Formularvorlagen vorhanden',
+        descriptionFiltered: '',
+        descriptionEmpty: 'Erstelle die erste Formularvorlage!',
+        filtered: false,
+        onReset: () => undefined,
+      }}
+      renderTable={(items) => (
+        <FormTemplateList
+          templates={items}
+          renderRowActions={renderRowActions}
+        />
+      )}
+      renderCards={(items, className) => (
+        <FormTemplateCardGrid
+          templates={items}
+          renderRowActions={renderRowActions}
+          className={className}
+        />
+      )}
+    />
   )
 }
