@@ -8,10 +8,6 @@ updates:
       semver-minor-days: 3
       semver-patch-days: 3
       semver-major-days: 14
-    ignore:
-      # typescript-eslint does not support TypeScript 7 yet
-      - dependency-name: "typescript"
-        update-types: ["version-update:semver-major"]
     groups:
       frontend-minor:
         update-types:
