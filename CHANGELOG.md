@@ -2,6 +2,15 @@
 
 All notable changes to Taily are documented here.
 
+# [0.13.0](https://github.com/ulbrich-media/taily/compare/v0.12.0...v0.13.0) (2026-10-30)
+
+
+### Features
+
+* **frontend:** persist card/table choice of list views ([#218](https://github.com/ulbrich-media/taily/issues/218)) ([129222d](https://github.com/ulbrich-media/taily/commit/129222d2373f961dcdfe25f27dc7558fb6c94463))
+* **lists:** add pager, cards and toolbar to remaining list views ([#215](https://github.com/ulbrich-media/taily/issues/215)) ([1d3470d](https://github.com/ulbrich-media/taily/commit/1d3470d9c8a63e74dffc1d94389e7d6db42c823a))
+* **users:** resend invitation for users who never logged in ([#219](https://github.com/ulbrich-media/taily/issues/219)) ([5531dd3](https://github.com/ulbrich-media/taily/commit/5531dd3a91a6c0d6f6b37c26c2996a316182f56b))
+
 # [0.12.0](https://github.com/ulbrich-media/taily/compare/v0.11.0...v0.12.0) (2026-10-15)
 
 
