@@ -1,0 +1,1 @@
+import{Sa as e}from"./index-DbKRVY-d.js";var t=e;export{t as component};

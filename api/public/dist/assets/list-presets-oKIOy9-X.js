@@ -1,0 +1,1 @@
+var e=e=>Array.isArray(e)?[...e].sort().join(`,`):String(e??``);function t(t,n){return{clearFiltersPatch:t,presetPatch:e=>({...t,...e.filters}),activePreset:(r,i)=>i.find(i=>{let a={...t,...i.filters};return n.every(t=>e(r[t])===e(a[t]))})}}export{t};
