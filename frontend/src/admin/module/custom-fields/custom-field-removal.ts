@@ -9,9 +9,7 @@ export class CustomFieldRemovalCancelledError extends Error {
   }
 }
 
-export function isCustomFieldRemovalCancelled(
-  error: unknown
-): error is CustomFieldRemovalCancelledError {
+export function isCustomFieldRemovalCancelled(error: unknown): boolean {
   return error instanceof CustomFieldRemovalCancelledError
 }
 

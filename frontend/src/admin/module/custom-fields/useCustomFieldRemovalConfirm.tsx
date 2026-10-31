@@ -22,8 +22,10 @@ export function useCustomFieldRemovalConfirm() {
     setImpact(null)
   }
 
-  const run = <T,>(request: (confirmRemoval: boolean) => Promise<T>) =>
-    runWithRemovalConfirm(
+  const run = <T,>(
+    request: (confirmRemoval: boolean) => Promise<T>
+  ): Promise<T> =>
+    runWithRemovalConfirm<T>(
       request,
       (nextImpact) =>
         new Promise<boolean>((resolve) => {
@@ -40,5 +42,8 @@ export function useCustomFieldRemovalConfirm() {
     />
   )
 
-  return { run, dialog }
+  /** True while the confirmation dialog is open. */
+  const isConfirming = impact !== null
+
+  return { run, dialog, isConfirming }
 }
