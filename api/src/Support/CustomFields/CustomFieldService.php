@@ -49,6 +49,17 @@ class CustomFieldService
                 continue;
             }
 
+            // Only groups shown for the record take values: in scope, or
+            // already holding a value. Out-of-scope fields can be edited or
+            // emptied while filled, but not filled anew.
+            if (! $field->group->isInScope($animalTypeId, $roles)
+                && array_intersect($field->group->keys(), array_keys($values)) === []
+                && ! CustomFieldValues::isEmpty($value)) {
+                $errors["custom_fields.{$key}"] = ['Dieses Feld gilt nicht für diesen Datensatz.'];
+
+                continue;
+            }
+
             if (CustomFieldValues::isEmpty($value) || ($field->type() === 'checkbox' && $value === false)) {
                 unset($values[$key]);
 

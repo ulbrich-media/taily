@@ -76,7 +76,7 @@ class CustomFieldGroupRequest extends FormRequest
 
     private function group(): ?CustomFieldGroup
     {
-        $group = $this->route('customFieldGroup');
+        $group = $this->route('custom_field_group');
 
         return $group instanceof CustomFieldGroup ? $group : null;
     }

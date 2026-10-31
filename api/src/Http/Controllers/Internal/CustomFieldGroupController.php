@@ -39,6 +39,7 @@ class CustomFieldGroupController extends Controller
         $group = DB::transaction(function () use ($request) {
             $group = CustomFieldGroup::create($request->safe()->except('animal_type_ids'));
             $group->animalTypes()->sync($request->validated('animal_type_ids'));
+            $this->pruneFieldSettings($group);
 
             return $group;
         });
@@ -63,6 +64,7 @@ class CustomFieldGroupController extends Controller
         DB::transaction(function () use ($request, $customFieldGroup) {
             $customFieldGroup->update($request->safe()->except(['animal_type_ids', 'entity']));
             $customFieldGroup->animalTypes()->sync($request->validated('animal_type_ids'));
+            $this->pruneFieldSettings($customFieldGroup);
         });
 
         $this->definitions->flush();
@@ -92,6 +94,19 @@ class CustomFieldGroupController extends Controller
         });
 
         return response()->json(['message' => 'Zusatzfelder erfolgreich gelöscht.']);
+    }
+
+    /**
+     * Settings for keys the template no longer has are dropped on every save.
+     */
+    private function pruneFieldSettings(CustomFieldGroup $group): void
+    {
+        $group->load('formTemplate.latestVersion');
+        $settings = array_intersect_key($group->field_settings, array_flip($group->keys()));
+
+        if ($settings !== $group->field_settings) {
+            $group->update(['field_settings' => $settings]);
+        }
     }
 
     private function fresh(CustomFieldGroup $group): CustomFieldGroup

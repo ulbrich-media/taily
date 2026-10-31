@@ -207,6 +207,15 @@ class CustomFieldsTest extends TestCase
             ->assertJsonValidationErrors(['custom_fields.expected_size', 'custom_fields.unknown']);
     }
 
+    public function test_fields_of_groups_out_of_scope_cannot_be_filled(): void
+    {
+        $this->group($this->sizeTemplate(), animalTypeIds: [$this->dogs->id]);
+
+        $this->createAnimal(['expected_size' => 'small'], $this->cats)
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['custom_fields.expected_size']);
+    }
+
     public function test_update_only_validates_touched_groups(): void
     {
         $this->group($this->sizeTemplate());
@@ -340,6 +349,42 @@ class CustomFieldsTest extends TestCase
             ->assertJsonPath('data.fields.0.key', 'expected_size')
             ->assertJsonPath('data.fields.0.type', 'select')
             ->assertJsonPath('data.field_settings.expected_size.public', true);
+    }
+
+    public function test_admin_can_update_a_group_and_stale_settings_are_dropped(): void
+    {
+        $group = $this->group($this->sizeTemplate(), settings: ['expected_size' => ['public' => true], 'gone' => ['public' => true]]);
+
+        $this->api()->putJson("/internal/custom-field-groups/{$group->id}", [
+            'entity' => 'animal',
+            'section' => 'extra',
+            'animal_type_ids' => [$this->cats->id],
+            'person_roles' => [],
+            'form_template_id' => $group->form_template_id,
+            'title' => 'Neu',
+            'position' => 3,
+            'field_settings' => $group->field_settings,
+        ])->assertOk()
+            ->assertJsonPath('data.title', 'Neu')
+            ->assertJsonPath('data.section', 'extra')
+            ->assertJsonPath('data.animal_type_ids', [$this->cats->id])
+            ->assertJsonPath('data.field_settings', ['expected_size' => ['public' => true]]);
+    }
+
+    public function test_the_entity_of_a_group_cannot_change(): void
+    {
+        $group = $this->group($this->idCardTemplate(), 'person');
+
+        $this->api()->putJson("/internal/custom-field-groups/{$group->id}", [
+            'entity' => 'animal',
+            'section' => 'basic',
+            'animal_type_ids' => [],
+            'person_roles' => [],
+            'form_template_id' => $group->form_template_id,
+            'title' => 'Ausweis',
+            'position' => 0,
+            'field_settings' => [],
+        ])->assertUnprocessable()->assertJsonValidationErrors(['entity']);
     }
 
     public function test_non_admins_cannot_manage_groups(): void

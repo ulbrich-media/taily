@@ -13,7 +13,7 @@ class CustomFieldKeys
     public function __construct(private CustomFieldDefinitions $definitions) {}
 
     /**
-     * The German error message for the first key of `$keys` already used by
+     * The German error message naming the keys of `$keys` already used by
      * another group of the entity, or null when there is none.
      *
      * @param  list<string>  $keys
@@ -26,8 +26,14 @@ class CustomFieldKeys
                 continue;
             }
 
-            foreach (array_intersect($keys, $group->keys()) as $key) {
-                return "Der Feldname `{$key}` wird bereits in der Gruppe ‚{$group->title}' verwendet.";
+            $taken = array_values(array_intersect($keys, $group->keys()));
+
+            if ($taken !== []) {
+                $names = implode(', ', array_map(fn ($key) => "`{$key}`", $taken));
+
+                return count($taken) === 1
+                    ? "Der Feldname {$names} wird bereits in der Gruppe „{$group->title}“ verwendet."
+                    : "Die Feldnamen {$names} werden bereits in der Gruppe „{$group->title}“ verwendet.";
             }
         }
 
