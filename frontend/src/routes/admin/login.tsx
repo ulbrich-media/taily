@@ -5,6 +5,8 @@ import { Route as ForgotPasswordRoute } from '@/routes/admin/forgot-password'
 import { Route as TwoFactorChallengeRoute } from '@/routes/admin/two-factor-challenge'
 
 export const Route = createFileRoute('/admin/login')({
+  validateSearch: (search: Record<string, unknown>): { reason?: 'expired' } =>
+    search.reason === 'expired' ? { reason: 'expired' } : {},
   component: RouteComponent,
 })
 
@@ -13,8 +15,11 @@ function RouteComponent() {
   const navigateToForgotPassword = ForgotPasswordRoute.useNavigate()
   const navigateToTwoFactorChallenge = TwoFactorChallengeRoute.useNavigate()
 
+  const { reason } = Route.useSearch()
+
   return (
     <LoginPage
+      sessionExpired={reason === 'expired'}
       onAlreadyAuthenticated={() => navigate({ replace: true })}
       onForgotPassword={() => navigateToForgotPassword({})}
       onTwoFactorRequired={() => navigateToTwoFactorChallenge({})}

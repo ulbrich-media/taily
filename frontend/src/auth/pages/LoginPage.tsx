@@ -11,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/shadcn/components/ui/card'
+import { Alert, AlertDescription } from '@/shadcn/components/ui/alert'
 import { Input } from '@/shadcn/components/ui/input'
 import { Checkbox } from '@/shadcn/components/ui/checkbox'
 import { Button } from '@/shadcn/components/ui/button'
@@ -43,12 +44,15 @@ const loginSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>
 
 interface LoginPageProps {
+  /** Shows an info text that the previous session timed out. */
+  sessionExpired?: boolean
   onAlreadyAuthenticated: () => void
   onForgotPassword: () => void
   onTwoFactorRequired: () => void
 }
 
 export function LoginPage({
+  sessionExpired = false,
   onAlreadyAuthenticated,
   onForgotPassword,
   onTwoFactorRequired,
@@ -139,6 +143,13 @@ export function LoginPage({
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {sessionExpired && (
+              <Alert className="mb-4">
+                <AlertDescription>
+                  Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.
+                </AlertDescription>
+              </Alert>
+            )}
             <FieldGroup>
               <Controller
                 name={'email'}
