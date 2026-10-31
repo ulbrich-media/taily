@@ -11,6 +11,35 @@ export class ApiValidationError extends Error {
   }
 }
 
+/** Thrown when the API answers 401/419: the login session is gone. */
+export class UnauthenticatedError extends Error {
+  constructor(message = 'Unauthenticated.') {
+    super(message)
+    this.name = 'UnauthenticatedError'
+  }
+}
+
+type UnauthenticatedHandler = () => void
+
+let unauthenticatedHandler: UnauthenticatedHandler | null = null
+
+/**
+ * Registers the callback run when an API call answers 401/419. The handler
+ * decides whether a login session existed at all (public pages have none).
+ */
+export function setUnauthenticatedHandler(
+  handler: UnauthenticatedHandler | null
+): void {
+  unauthenticatedHandler = handler
+}
+
+// The profile check handles its own 401, and an explicit logout is no expiry.
+const UNAUTHENTICATED_HANDLER_SKIPPED_ENDPOINTS = ['profile', 'logout']
+
+// A 401 here means "wrong credentials/code", not an expired session; the
+// server's message is shown to the user instead.
+const CREDENTIAL_ENDPOINTS = ['login', 'two-factor-challenge']
+
 export async function csrfCookie(): Promise<void> {
   await fetch(`${API_URL_ROOT}/sanctum/csrf-cookie`, {
     credentials: 'include',
@@ -53,6 +82,16 @@ export async function apiRequest<T = unknown>(
     credentials: 'include',
     headers,
   })
+
+  if (
+    (response.status === 401 || response.status === 419) &&
+    !CREDENTIAL_ENDPOINTS.includes(endpoint)
+  ) {
+    if (!UNAUTHENTICATED_HANDLER_SKIPPED_ENDPOINTS.includes(endpoint)) {
+      unauthenticatedHandler?.()
+    }
+    throw new UnauthenticatedError()
+  }
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({
