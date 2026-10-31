@@ -105,16 +105,21 @@ final class CustomFieldDefinition
 
     /**
      * The value as shown to people: "Ja"/"Nein", the option label, a German
-     * date, a German decimal. Unset values are an empty string.
+     * date, a German decimal. Unset values are an empty string, except for
+     * switches.
      */
     public function display(mixed $value): string
     {
+        // A switch that is off is not stored, so unset reads as "Nein".
+        if ($this->type() === 'checkbox') {
+            return $value === true ? 'Ja' : 'Nein';
+        }
+
         if ($value === null || $value === '') {
             return '';
         }
 
         return match ($this->type()) {
-            'checkbox' => $value ? 'Ja' : 'Nein',
             'select', 'radio' => collect($this->options())->firstWhere('value', (string) $value)['label'] ?? (string) $value,
             'date' => $this->formatDate((string) $value),
             'number' => is_numeric($value) ? str_replace('.', ',', (string) $value) : (string) $value,

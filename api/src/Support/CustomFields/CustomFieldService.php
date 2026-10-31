@@ -49,7 +49,7 @@ class CustomFieldService
                 continue;
             }
 
-            if (CustomFieldValues::isEmpty($value)) {
+            if (CustomFieldValues::isEmpty($value) || ($field->type() === 'checkbox' && $value === false)) {
                 unset($values[$key]);
 
                 continue;

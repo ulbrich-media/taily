@@ -8,7 +8,12 @@ namespace Taily\Support\CustomFields;
  */
 final class CustomFieldValues
 {
-    /** Empty values are not stored: emptying a field removes its key. */
+    /**
+     * Empty values are not stored: emptying a field removes its key. A switch
+     * that is off is stored as absent too (CustomFieldService), since the UI
+     * cannot tell "off" from "never set" and an untouched switch must not
+     * keep a group visible.
+     */
     public static function isEmpty(mixed $value): bool
     {
         return $value === null || $value === '' || $value === [];

@@ -232,6 +232,16 @@ class CustomFieldsTest extends TestCase
         $this->assertSame(['expected_size' => 'small'], $animal->fresh()->custom_fields);
     }
 
+    public function test_a_switch_that_is_off_is_not_stored(): void
+    {
+        $this->group($this->template('Alltag', ['kids' => ['type' => 'boolean']]));
+        $animal = $this->animal(['kids' => true]);
+
+        $this->api()->putJson("/internal/animals/{$animal->id}", ['custom_fields' => ['kids' => false]])->assertOk();
+
+        $this->assertSame([], $animal->fresh()->custom_fields);
+    }
+
     // -------------------------------------------------------------------------
     // Person roles and scope
     // -------------------------------------------------------------------------

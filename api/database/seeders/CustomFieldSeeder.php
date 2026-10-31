@@ -75,7 +75,9 @@ class CustomFieldSeeder extends Seeder
 
             if (mt_rand(0, 2) === 0) {
                 $values['favourite_toy'] = $toys[mt_rand(0, count($toys) - 1)];
-                $values['good_with_children'] = (bool) mt_rand(0, 1);
+                if (mt_rand(0, 1)) {
+                    $values['good_with_children'] = true;
+                }
             }
 
             $this->store($animal, $values);
@@ -89,12 +91,16 @@ class CustomFieldSeeder extends Seeder
 
             if ($person->adoptions_as_applicant_exists && mt_rand(1, 10) > 3) {
                 $values['id_card_number'] = 'L'.strtoupper(substr(md5((string) mt_rand()), 0, 8));
-                $values['id_card_checked'] = (bool) mt_rand(0, 1);
+                if (mt_rand(0, 1)) {
+                    $values['id_card_checked'] = true;
+                }
             }
 
             if ($person->foster_animal_types_exists) {
                 $values['foster_capacity'] = mt_rand(1, 4);
-                $values['has_garden'] = (bool) mt_rand(0, 1);
+                if (mt_rand(0, 1)) {
+                    $values['has_garden'] = true;
+                }
             }
 
             $this->store($person, $values);
