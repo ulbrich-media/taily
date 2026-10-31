@@ -12,7 +12,7 @@ export class ApiValidationError extends Error {
 }
 
 /** Thrown when the API answers 401/419: the login session is gone. */
-export class UnauthenticatedError extends ApiValidationError {
+export class UnauthenticatedError extends Error {
   constructor(message = 'Unauthenticated.') {
     super(message)
     this.name = 'UnauthenticatedError'
