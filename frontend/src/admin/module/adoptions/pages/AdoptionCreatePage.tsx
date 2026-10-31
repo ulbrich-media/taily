@@ -14,6 +14,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { createAdoption } from '@/admin/module/adoptions/api/requests.ts'
 import { adoptionQueryKeys } from '@/admin/module/adoptions/api/queries.ts'
 import { customFieldQueryKeys } from '@/admin/module/custom-fields/api/queries'
+import { personQueryKeys } from '@/admin/module/people/api/queries'
 import { toast } from 'sonner'
 import { Button } from '@/shadcn/components/ui/button.tsx'
 import { AnimalSelect } from '@/components/field/AnimalSelect.tsx'
@@ -57,11 +58,15 @@ export function AdoptionCreatePage({
 
   const createMutation = useMutation({
     mutationFn: createAdoption,
-    onSuccess: (response) => {
+    onSuccess: (response, variables) => {
       queryClient.invalidateQueries({ queryKey: adoptionQueryKeys.list() })
-      // The applicant becomes an adopter, which brings adopter-scoped fields.
+      // The applicant becomes an adopter, which brings adopter-scoped fields
+      // and changes the person's `custom_fields_missing`.
       queryClient.invalidateQueries({
         queryKey: customFieldQueryKeys.definitions('person'),
+      })
+      queryClient.invalidateQueries({
+        queryKey: personQueryKeys.detail(variables.applicant_id),
       })
       toast.success(response.message || 'Vermittlung erfolgreich erstellt')
       onCreated(response.data.id)
