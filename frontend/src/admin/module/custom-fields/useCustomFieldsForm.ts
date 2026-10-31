@@ -1,17 +1,53 @@
 import { useEffect, useMemo, useRef } from 'react'
-import type { FieldValues, UseFormReturn } from 'react-hook-form'
+import type { FieldValues, Resolver, UseFormReturn } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import type { z } from 'zod'
 import type { CustomFieldDefinitionGroup } from '@/api/types/custom-fields'
+import { jsonSchemaToZod } from '@/components/form/jsonSchemaToZod'
 import {
   buildCustomFieldDefaults,
+  buildCustomFieldsEditSchema,
   CUSTOM_FIELDS_KEY,
   mergeCustomFieldSchemas,
 } from './custom-fields.schema'
 
-/** The merged JSON Schema of a section's groups, stable while the groups are. */
-export function useMergedCustomFieldSchema(
-  groups: CustomFieldDefinitionGroup[]
-) {
-  return useMemo(() => mergeCustomFieldSchemas(groups), [groups])
+/**
+ * The resolver of a form with a static zod schema plus the custom fields of
+ * `groups`. Without `stored` (create forms), every field is validated. With
+ * the record's stored values (edit forms), the schema is rebuilt from the
+ * current values on each validation, see buildCustomFieldsEditSchema.
+ */
+export function useCustomFieldResolver<T extends FieldValues>(
+  staticSchema: z.ZodObject<z.ZodRawShape>,
+  groups: CustomFieldDefinitionGroup[],
+  stored?: Record<string, unknown>
+): Resolver<T> {
+  return useMemo(() => {
+    if (!stored) {
+      return zodResolver(
+        staticSchema.extend({
+          [CUSTOM_FIELDS_KEY]: jsonSchemaToZod(mergeCustomFieldSchemas(groups)),
+        })
+      ) as never
+    }
+
+    const resolver: Resolver<T> = (values, context, options) => {
+      const current = (values[CUSTOM_FIELDS_KEY] ?? {}) as Record<
+        string,
+        unknown
+      >
+      return zodResolver(
+        staticSchema.extend({
+          [CUSTOM_FIELDS_KEY]: buildCustomFieldsEditSchema(
+            groups,
+            current,
+            stored
+          ),
+        })
+      )(values, context, options as never) as never
+    }
+    return resolver
+  }, [staticSchema, groups, stored])
 }
 
 function groupsSignature(groups: CustomFieldDefinitionGroup[]) {

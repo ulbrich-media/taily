@@ -1,6 +1,5 @@
 import { useEffect } from 'react'
 import { useForm, useWatch, FormProvider } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Button } from '@/shadcn/components/ui/button.tsx'
 import {
@@ -34,15 +33,13 @@ import {
   zFieldString,
 } from '@/components/field/TextInput.utils.ts'
 import type { CustomFieldDefinitionGroup } from '@/api/types/custom-fields'
-import { useDynamicFormSchema } from '@/components/form/useDynamicFormSchema'
 import { CustomFieldSections } from '@/admin/module/custom-fields/components/CustomFieldSections'
 import {
   buildCustomFieldDefaults,
-  CUSTOM_FIELDS_KEY,
 } from '@/admin/module/custom-fields/custom-fields.schema'
 import { applyCustomFieldErrors } from '@/admin/module/custom-fields/custom-fields.errors'
 import {
-  useMergedCustomFieldSchema,
+  useCustomFieldResolver,
   useSyncCustomFieldDefaults,
 } from '@/admin/module/custom-fields/useCustomFieldsForm'
 
@@ -108,15 +105,16 @@ export function AnimalFormBasic({
       ? animalTypes[0].id
       : defaultValues?.animal_type_id
 
-  const customFieldSchema = useMergedCustomFieldSchema(customFieldGroups)
-  const schema = useDynamicFormSchema(
+  // Edit forms validate custom fields against the stored values, see
+  // useCustomFieldResolver.
+  const resolver = useCustomFieldResolver<AnimalFormBasicData>(
     animalFormBasicSchema,
-    customFieldSchema,
-    CUSTOM_FIELDS_KEY
+    customFieldGroups,
+    defaultValues?.id ? defaultValues.custom_fields : undefined
   )
 
   const form = useForm<AnimalFormBasicData>({
-    resolver: zodResolver(schema) as never,
+    resolver,
     defaultValues: {
       animal_type_id: presetAnimalTypeId,
       animal_number: defaultValues?.animal_number ?? '',

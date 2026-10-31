@@ -79,6 +79,14 @@ export interface CustomFieldRemovalImpact {
   count: number
 }
 
+/** A field whose kept values the new template rules reject. */
+export interface CustomFieldInvalidValues {
+  key: string
+  label: string
+  /** Number of records holding such a value. */
+  count: number
+}
+
 /** Where a form template is bound as custom fields (on FormTemplateResource). */
 export interface FormTemplateCustomFieldGroupRef {
   id: string

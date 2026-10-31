@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { ApiValidationError } from '@/lib/api'
 import type { CustomFieldRemovalImpact } from '@/api/types/custom-fields'
 import {
+  describeInvalidValues,
   CustomFieldRemovalCancelledError,
   getRemovalImpact,
   runWithRemovalConfirm,
@@ -144,5 +145,16 @@ describe('useCustomFieldRemovalConfirm', () => {
       await screen.findByText('CustomFieldRemovalCancelledError')
     ).toBeInTheDocument()
     expect(request).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('describeInvalidValues', () => {
+  it('names the field and the number of records', () => {
+    expect(
+      describeInvalidValues({ key: 'coat', label: 'Fell', count: 3 })
+    ).toBe('Fell: 3 Einträge haben Werte, die nicht mehr gültig sind.')
+    expect(
+      describeInvalidValues({ key: 'coat', label: 'Fell', count: 1 })
+    ).toBe('Fell: Ein Eintrag hat einen Wert, der nicht mehr gültig ist.')
   })
 })

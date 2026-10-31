@@ -2,8 +2,12 @@ import type {
   CustomFieldDefinitionGroup,
   CustomFieldSection,
 } from '@/api/types/custom-fields'
+import { z } from 'zod'
 import type { JsonSchema } from '@/api/types/form-schemas'
-import { buildFormDataDefaults } from '@/components/form/jsonSchemaToZod'
+import {
+  buildFormDataDefaults,
+  buildPropertySchema,
+} from '@/components/form/jsonSchemaToZod'
 
 /** The form field namespace all custom fields share (keys are unique per entity). */
 export const CUSTOM_FIELDS_KEY = 'custom_fields'
@@ -46,6 +50,63 @@ export function mergeCustomFieldSchemas(
   }
 
   return { type: 'object', properties, required }
+}
+
+/**
+ * "No value", as the backend sees it: empty values are not stored, and a
+ * switch that is off is stored as absent.
+ */
+export function isEmptyCustomFieldValue(value: unknown): boolean {
+  return (
+    value === undefined ||
+    value === null ||
+    value === '' ||
+    value === false ||
+    (Array.isArray(value) && value.length === 0)
+  )
+}
+
+export function sameCustomFieldValue(value: unknown, stored: unknown) {
+  return (
+    value === stored ||
+    (isEmptyCustomFieldValue(value) && isEmptyCustomFieldValue(stored))
+  )
+}
+
+/**
+ * The zod schema of `custom_fields` on an edit form, mirroring the backend
+ * (see "Writing values" in docs/features/custom-fields.md): filled values
+ * that are unchanged are not validated, so a value an older template allowed
+ * does not block saving, and `required` only applies to groups with a
+ * changed value.
+ */
+export function buildCustomFieldsEditSchema(
+  groups: CustomFieldDefinitionGroup[],
+  values: Record<string, unknown>,
+  stored: Record<string, unknown>
+): z.ZodTypeAny {
+  const shape: Record<string, z.ZodTypeAny> = {}
+
+  for (const group of groups) {
+    const schema = effectiveGroupSchema(group)
+    const properties = schema.properties ?? {}
+    const keys = Object.keys(properties)
+    const changed = keys.some(
+      (key) => !sameCustomFieldValue(values[key], stored[key])
+    )
+    const required = changed ? (schema.required ?? []) : []
+
+    for (const key of keys) {
+      const keptAsStored =
+        sameCustomFieldValue(values[key], stored[key]) &&
+        !isEmptyCustomFieldValue(stored[key])
+      shape[key] = keptAsStored
+        ? z.unknown()
+        : buildPropertySchema(properties[key], required.includes(key))
+    }
+  }
+
+  return z.object(shape)
 }
 
 /** defaultValues for `custom_fields`: every key of the groups, see buildFormDataDefaults. */

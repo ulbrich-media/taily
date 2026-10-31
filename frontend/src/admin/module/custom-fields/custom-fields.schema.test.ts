@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { jsonSchemaToZod } from '@/components/form/jsonSchemaToZod'
 import {
   buildCustomFieldDefaults,
+  buildCustomFieldsEditSchema,
   effectiveGroupSchema,
   groupsForSection,
   mergeCustomFieldSchemas,
@@ -113,5 +114,62 @@ describe('groupsForSection', () => {
       groupsForSection([second, extra, first], 'basic').map((g) => g.id)
     ).toEqual(['g-1', 'g-2'])
     expect(groupsForSection(undefined, 'basic')).toEqual([])
+  })
+})
+
+describe('buildCustomFieldsEditSchema', () => {
+  const longGroup = makeGroup({
+    template: {
+      ...makeGroup().template,
+      schema: {
+        type: 'object',
+        properties: {
+          expected_size: { type: 'string', enum: ['small', 'large'] },
+          coat_notes: { type: 'string', maxLength: 5 },
+        },
+        required: ['expected_size'],
+      },
+    },
+  })
+
+  it('does not require fields of a group whose values are unchanged', () => {
+    const stored = { coat_notes: 'kurz' }
+    const schema = buildCustomFieldsEditSchema([longGroup], { ...stored }, stored)
+
+    expect(schema.safeParse({ coat_notes: 'kurz' }).success).toBe(true)
+  })
+
+  it('requires fields of a group with a changed value', () => {
+    const stored = { coat_notes: 'kurz' }
+    const values = { coat_notes: 'lang' }
+    const schema = buildCustomFieldsEditSchema([longGroup], values, stored)
+
+    expect(schema.safeParse(values).success).toBe(false)
+  })
+
+  it('keeps unchanged values that no longer pass the rules', () => {
+    const stored = { expected_size: 'large', coat_notes: 'mittellang' }
+    const schema = buildCustomFieldsEditSchema([longGroup], { ...stored }, stored)
+
+    expect(schema.safeParse(stored).success).toBe(true)
+  })
+
+  it('validates changed values against the rules', () => {
+    const stored = { expected_size: 'large', coat_notes: 'kurz' }
+    const values = { expected_size: 'large', coat_notes: 'mittellang' }
+    const schema = buildCustomFieldsEditSchema([longGroup], values, stored)
+
+    expect(schema.safeParse(values).success).toBe(false)
+  })
+
+  it('treats empty values and an unset switch as unchanged', () => {
+    const values = { id_card_number: '', verified: false }
+    const schema = buildCustomFieldsEditSchema(
+      [{ ...idCardGroup, in_scope: true }],
+      values,
+      {}
+    )
+
+    expect(schema.safeParse(values).success).toBe(true)
   })
 })

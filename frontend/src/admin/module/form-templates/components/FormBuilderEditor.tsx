@@ -24,7 +24,10 @@ import { Mark } from '@/components/typo/mark.tsx'
 import { Alert, AlertDescription } from '@/shadcn/components/ui/alert.tsx'
 import { customFieldQueryKeys } from '@/admin/module/custom-fields/api/queries'
 import { describeGroupPlacement } from '@/admin/module/custom-fields/custom-field-group.utils'
-import { isCustomFieldRemovalCancelled } from '@/admin/module/custom-fields/custom-field-removal'
+import {
+  describeInvalidValues,
+  isCustomFieldRemovalCancelled,
+} from '@/admin/module/custom-fields/custom-field-removal'
 import { useCustomFieldRemovalConfirm } from '@/admin/module/custom-fields/useCustomFieldRemovalConfirm'
 
 const templateNameSchema = z.object({
@@ -92,6 +95,13 @@ export function FormBuilderEditor({
         toast.success(`Neue Version v${data.data.version} wurde erstellt`)
       } else {
         toast.success(data.message)
+      }
+      const invalid = data.custom_field_invalid_values ?? []
+      if (invalid.length > 0) {
+        toast.warning('Einige gespeicherte Werte passen nicht mehr', {
+          description: `${invalid.map(describeInvalidValues).join(' ')} Sie bleiben erhalten und müssen beim nächsten Bearbeiten korrigiert werden.`,
+          duration: 15000,
+        })
       }
       onSaved(data.data.id)
     },

@@ -1,5 +1,4 @@
 import { useForm, FormProvider } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { Button } from '@/shadcn/components/ui/button.tsx'
@@ -20,15 +19,13 @@ import { OrganizationSelect } from '@/components/field/OrganizationSelect'
 import { listOrganizationsQuery } from '@/admin/module/organizations/api/queries'
 import { zFieldString } from '@/components/field/TextInput.utils.ts'
 import type { CustomFieldDefinitionGroup } from '@/api/types/custom-fields'
-import { useDynamicFormSchema } from '@/components/form/useDynamicFormSchema'
 import { CustomFieldSections } from '@/admin/module/custom-fields/components/CustomFieldSections'
 import {
   buildCustomFieldDefaults,
-  CUSTOM_FIELDS_KEY,
 } from '@/admin/module/custom-fields/custom-fields.schema'
 import { applyCustomFieldErrors } from '@/admin/module/custom-fields/custom-fields.errors'
 import {
-  useMergedCustomFieldSchema,
+  useCustomFieldResolver,
   useSyncCustomFieldDefaults,
 } from '@/admin/module/custom-fields/useCustomFieldsForm'
 
@@ -86,15 +83,16 @@ export function PersonFormBasic({
 }: PersonFormBasicProps) {
   const { data: organizations } = useSuspenseQuery(listOrganizationsQuery)
 
-  const customFieldSchema = useMergedCustomFieldSchema(customFieldGroups)
-  const schema = useDynamicFormSchema(
+  // Edit forms validate custom fields against the stored values, see
+  // useCustomFieldResolver.
+  const resolver = useCustomFieldResolver<PersonFormBasicData>(
     personFormBasicSchema,
-    customFieldSchema,
-    CUSTOM_FIELDS_KEY
+    customFieldGroups,
+    defaultValues?.id ? defaultValues.custom_fields : undefined
   )
 
   const form = useForm<PersonFormBasicData>({
-    resolver: zodResolver(schema) as never,
+    resolver,
     defaultValues: {
       first_name: defaultValues?.first_name ?? '',
       last_name: defaultValues?.last_name ?? '',

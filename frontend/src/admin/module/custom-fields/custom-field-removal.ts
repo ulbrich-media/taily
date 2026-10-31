@@ -1,5 +1,8 @@
 import { ApiValidationError } from '@/lib/api'
-import type { CustomFieldRemovalImpact } from '@/api/types/custom-fields'
+import type {
+  CustomFieldInvalidValues,
+  CustomFieldRemovalImpact,
+} from '@/api/types/custom-fields'
 
 /** Thrown when the user declines a removal; callers usually ignore it. */
 export class CustomFieldRemovalCancelledError extends Error {
@@ -46,6 +49,12 @@ export async function runWithRemovalConfirm<T>(
     }
     return await request(true)
   }
+}
+
+export function describeInvalidValues(invalid: CustomFieldInvalidValues) {
+  return invalid.count === 1
+    ? `${invalid.label}: Ein Eintrag hat einen Wert, der nicht mehr gültig ist.`
+    : `${invalid.label}: ${invalid.count} Einträge haben Werte, die nicht mehr gültig sind.`
 }
 
 export function describeRemovalImpact(impact: CustomFieldRemovalImpact) {

@@ -1,19 +1,14 @@
 import { FormProvider, useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { FieldGroup } from '@/shadcn/components/ui/field'
 import { Button } from '@/shadcn/components/ui/button'
 import { FormBlocker } from '@/components/form/FormBlocker'
-import { useDynamicFormSchema } from '@/components/form/useDynamicFormSchema'
 import type { CustomFieldDefinitionGroup } from '@/api/types/custom-fields'
 import { CustomFieldSections } from './CustomFieldSections'
-import {
-  buildCustomFieldDefaults,
-  CUSTOM_FIELDS_KEY,
-} from '../custom-fields.schema'
+import { buildCustomFieldDefaults } from '../custom-fields.schema'
 import { applyCustomFieldErrors } from '../custom-fields.errors'
 import {
-  useMergedCustomFieldSchema,
+  useCustomFieldResolver,
   useSyncCustomFieldDefaults,
 } from '../useCustomFieldsForm'
 
@@ -38,15 +33,8 @@ export function CustomFieldsForm({
   onSubmit,
   isSubmitting = false,
 }: CustomFieldsFormProps) {
-  const customFieldSchema = useMergedCustomFieldSchema(groups)
-  const schema = useDynamicFormSchema(
-    staticSchema,
-    customFieldSchema,
-    CUSTOM_FIELDS_KEY
-  )
-
   const form = useForm<CustomFieldsFormData>({
-    resolver: zodResolver(schema) as never,
+    resolver: useCustomFieldResolver(staticSchema, groups, values),
     defaultValues: {
       custom_fields: buildCustomFieldDefaults(groups, values),
     },

@@ -4,7 +4,10 @@
 
 import type { FormTemplateResource } from '@/api/types/form-templates'
 import type { FieldType } from '@/lib/form-schema/field-type.ts'
-import type { CustomFieldEntity } from '@/api/types/custom-fields'
+import type {
+  CustomFieldEntity,
+  CustomFieldInvalidValues,
+} from '@/api/types/custom-fields'
 
 export interface FormTemplatesResponse {
   data: FormTemplateResource[]
@@ -15,6 +18,8 @@ export interface FormTemplateResponse {
 export interface UpdateFormTemplateResponse {
   message: string
   new_version_created: boolean
+  /** Kept custom field values the new rules reject (bound templates only). */
+  custom_field_invalid_values: CustomFieldInvalidValues[]
   data: FormTemplateResource
 }
 export interface CreateFormTemplateResponse {
