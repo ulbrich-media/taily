@@ -9,6 +9,7 @@ import type {
   CustomFieldPersonRole,
   CustomFieldSection,
   CustomFieldSettings,
+  LinkableField,
 } from '@/api/types/custom-fields'
 
 export interface CustomFieldGroupsResponse {
@@ -26,6 +27,9 @@ export interface DeleteCustomFieldGroupResponse {
 }
 export interface CustomFieldDefinitionsResponse {
   data: CustomFieldDefinitionGroup[]
+}
+export interface LinkableFieldsResponse {
+  data: LinkableField[]
 }
 
 // ---------------------------------------------------------------------------

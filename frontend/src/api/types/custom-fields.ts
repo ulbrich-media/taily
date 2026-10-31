@@ -1,7 +1,7 @@
 // Mirrors: CustomFieldGroupResource, CustomFieldDefinitionResource and the
 //          409 removal impact payload (see docs/features/custom-fields.md).
 
-import type { JsonSchema, UiSchema } from './form-schemas'
+import type { JsonSchema, JsonSchemaProperty, UiSchema } from './form-schemas'
 import type { FieldType } from '@/lib/form-schema/field-type'
 
 export type CustomFieldEntity = 'animal' | 'person'
@@ -85,4 +85,21 @@ export interface FormTemplateCustomFieldGroupRef {
   entity: CustomFieldEntity
   section: CustomFieldSection
   title: string
+}
+
+// Returned by GET /custom-fields/linkable: a field a "Feld übernehmen" field
+// of a form template can link to. See "Linked fields" in custom-fields.md.
+export interface LinkableField {
+  /** `core.<column>` or `custom.<key>` */
+  field: string
+  label: string
+  kind: 'core' | 'custom'
+  /** Title of the custom field's group; null for core fields. */
+  group: string | null
+  /** Suggested (and locked) key in the template: `<entity>_<field>`. */
+  key: string
+  /** JSON Schema fragment copied into the template's property. */
+  schema: JsonSchemaProperty
+  /** ui_schema entry incl. `ui:title` and `ui:options.link`. */
+  ui_schema: Record<string, unknown>
 }

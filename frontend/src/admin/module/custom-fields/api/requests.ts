@@ -7,7 +7,9 @@ import type {
   CustomFieldGroupResponse,
   CustomFieldGroupsResponse,
   DeleteCustomFieldGroupResponse,
+  LinkableFieldsResponse,
 } from './types'
+import type { CustomFieldEntity } from '@/api/types/custom-fields'
 
 export async function getCustomFieldGroups(): Promise<CustomFieldGroupsResponse> {
   return apiRequest<CustomFieldGroupsResponse>('custom-field-groups')
@@ -73,5 +75,14 @@ export async function getCustomFieldDefinitions(
 ): Promise<CustomFieldDefinitionsResponse> {
   return apiRequest<CustomFieldDefinitionsResponse>(
     `custom-fields/definitions?${buildDefinitionsQuery(params)}`
+  )
+}
+
+/** Fields a "Feld übernehmen" field of a form template can link to. */
+export async function getLinkableFields(
+  entity: CustomFieldEntity
+): Promise<LinkableFieldsResponse> {
+  return apiRequest<LinkableFieldsResponse>(
+    `custom-fields/linkable?entity=${entity}`
   )
 }
