@@ -9,6 +9,7 @@ use Taily\Enums\CustomFieldEntity;
 use Taily\Http\Controllers\Controller;
 use Taily\Models\CustomFieldGroup;
 use Taily\Support\CustomFields\CustomFieldDefinitions;
+use Taily\Support\CustomFields\LinkableFields;
 
 class CustomFieldController extends Controller
 {
@@ -41,6 +42,17 @@ class CustomFieldController extends Controller
         return response()->json([
             'data' => array_values(array_map(fn (array $shown) => $this->definition($shown['group'], $shown['in_scope']), $groups)),
         ]);
+    }
+
+    /**
+     * Fields a form template can link to ("Feld übernehmen"), with the schema
+     * fragment and ui_schema entry the builder copies into the template.
+     */
+    public function linkable(Request $request, LinkableFields $linkable): JsonResponse
+    {
+        $validated = $request->validate(['entity' => ['required', Rule::enum(CustomFieldEntity::class)]]);
+
+        return response()->json(['data' => $linkable->for(CustomFieldEntity::from($validated['entity']))]);
     }
 
     private function definition(CustomFieldGroup $group, bool $inScope): array

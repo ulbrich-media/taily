@@ -223,6 +223,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // Custom fields: definitions for rendering (everyone), Field Groups (admins)
     Route::get('/custom-fields/definitions', [CustomFieldController::class, 'definitions']);
+    Route::get('/custom-fields/linkable', [CustomFieldController::class, 'linkable']);
     Route::apiResource('custom-field-groups', CustomFieldGroupController::class)->middleware('admin');
 
     // Pre-Inspections

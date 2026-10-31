@@ -90,5 +90,8 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $this->call(FormTemplateSeeder::class);
+
+        // Last: the example values depend on animal types, roles and adoptions.
+        $this->call(CustomFieldSeeder::class);
     }
 }

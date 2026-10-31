@@ -2,6 +2,7 @@
 
 namespace Taily\Tests\Feature;
 
+use Database\Seeders\CustomFieldSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\TestResponse;
 use Taily\Enums\UserRole;
@@ -12,6 +13,9 @@ use Taily\Models\CustomFieldGroup;
 use Taily\Models\FormTemplate;
 use Taily\Models\Person;
 use Taily\Models\User;
+use Taily\Support\CustomFields\CustomFieldDefinitions;
+use Taily\Support\CustomFields\CustomFieldService;
+use Taily\Support\CustomFields\LinkedFieldValues;
 use Taily\Tests\TestCase;
 
 /**
@@ -519,5 +523,74 @@ class CustomFieldsTest extends TestCase
 
         $this->assertSame('expected_size', $dogType['custom_fields'][0]['key']);
         $this->assertSame(['value' => 'small', 'label' => 'Klein'], $dogType['custom_fields'][0]['options'][0]);
+    }
+
+    // -------------------------------------------------------------------------
+    // Linked fields
+    // -------------------------------------------------------------------------
+
+    public function test_linkable_fields_list_core_and_custom_fields(): void
+    {
+        $this->group($this->idCardTemplate(), 'person', roles: ['adopter']);
+
+        $fields = collect($this->api()->getJson('/internal/custom-fields/linkable?entity=person')->assertOk()->json('data'))
+            ->keyBy('field');
+
+        $this->assertSame('core', $fields['core.email']['kind']);
+        $this->assertSame('person_email', $fields['core.email']['key']);
+        $this->assertSame('custom', $fields['custom.id_card_number']['kind']);
+        $this->assertSame('Ausweis', $fields['custom.id_card_number']['group']);
+        $this->assertSame(
+            ['entity' => 'person', 'field' => 'custom.id_card_number'],
+            $fields['custom.id_card_number']['ui_schema']['ui:options']['link'],
+        );
+    }
+
+    public function test_linked_values_are_extracted_by_entity_and_kind(): void
+    {
+        $ui = [
+            'ui:order' => ['person_email', 'person_id_card_number', 'motivation'],
+            'person_email' => ['ui:title' => 'E-Mail', 'ui:options' => ['link' => ['entity' => 'person', 'field' => 'core.email']]],
+            'person_id_card_number' => ['ui:title' => 'Ausweis', 'ui:options' => ['link' => ['entity' => 'person', 'field' => 'custom.id_card_number']]],
+            'motivation' => ['ui:title' => 'Motivation'],
+        ];
+
+        $this->assertSame(
+            ['person' => ['core' => ['email' => 'a@example.com'], 'custom' => ['id_card_number' => 'L01X']]],
+            LinkedFieldValues::fromData($ui, [
+                'person_email' => 'a@example.com',
+                'person_id_card_number' => 'L01X',
+                'motivation' => 'Liebe Hunde',
+            ]),
+        );
+    }
+
+    // -------------------------------------------------------------------------
+    // Seeder
+    // -------------------------------------------------------------------------
+
+    public function test_seeded_values_are_valid_and_complete_where_filled(): void
+    {
+        mt_srand(7);
+        foreach (range(1, 6) as $i) {
+            $person = $this->person();
+            Adoption::create(['animal_id' => $this->animal()->id, 'applicant_id' => $person->id]);
+        }
+
+        $this->seed(CustomFieldSeeder::class);
+
+        $this->assertSame(4, CustomFieldGroup::count());
+
+        $service = app(CustomFieldService::class);
+        foreach ([...Animal::all(), ...Person::all()] as $record) {
+            // Re-applying the stored values must pass their own validation.
+            $service->apply($record, $record->custom_fields);
+            foreach (array_keys($record->custom_fields) as $key) {
+                $this->assertNotNull(app(CustomFieldDefinitions::class)->field($record->customFieldEntity(), $key));
+            }
+        }
+
+        $this->assertTrue(Animal::all()->contains(fn (Animal $animal) => isset($animal->custom_fields['expected_size'])));
+        $this->assertTrue(Person::all()->contains(fn (Person $person) => isset($person->custom_fields['id_card_number'])));
     }
 }
