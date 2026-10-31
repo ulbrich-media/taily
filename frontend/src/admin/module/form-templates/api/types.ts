@@ -35,6 +35,8 @@ export interface UpdateFormTemplateRequest {
   name: string
   schema: Record<string, unknown>
   ui_schema: Record<string, unknown>
+  /** Required to save a bound template when the save deletes custom field values (409 otherwise). */
+  confirm_custom_field_removal?: boolean
 }
 
 // ---------------------------------------------------------------------------

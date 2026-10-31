@@ -13,6 +13,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { createAdoption } from '@/admin/module/adoptions/api/requests.ts'
 import { adoptionQueryKeys } from '@/admin/module/adoptions/api/queries.ts'
+import { customFieldQueryKeys } from '@/admin/module/custom-fields/api/queries'
 import { toast } from 'sonner'
 import { Button } from '@/shadcn/components/ui/button.tsx'
 import { AnimalSelect } from '@/components/field/AnimalSelect.tsx'
@@ -58,6 +59,10 @@ export function AdoptionCreatePage({
     mutationFn: createAdoption,
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: adoptionQueryKeys.list() })
+      // The applicant becomes an adopter, which brings adopter-scoped fields.
+      queryClient.invalidateQueries({
+        queryKey: customFieldQueryKeys.definitions('person'),
+      })
       toast.success(response.message || 'Vermittlung erfolgreich erstellt')
       onCreated(response.data.id)
     },

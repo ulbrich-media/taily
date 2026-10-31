@@ -9,12 +9,15 @@ interface BaseFieldsProps {
   control: Control<FieldValues>
   showRequired?: boolean
   isNew?: boolean
+  /** The key of a saved field of a template bound as custom fields can't change. */
+  nameLocked?: boolean
 }
 
 export function BaseFields({
   control,
   showRequired = true,
   isNew = false,
+  nameLocked = false,
 }: BaseFieldsProps) {
   return (
     <>
@@ -23,9 +26,11 @@ export function BaseFields({
         control={control}
         label="Feldname"
         description={
-          isNew
-            ? undefined
-            : 'Warnung: Wird bei bestehenden Formularen nicht nachträglich geändert!'
+          nameLocked
+            ? 'Die Vorlage wird als Zusatzfelder verwendet. Der Feldname gespeicherter Felder kann nicht mehr geändert werden.'
+            : isNew
+              ? undefined
+              : 'Warnung: Wird bei bestehenden Formularen nicht nachträglich geändert!'
         }
         required
         render={({ field, fieldState }) => (
@@ -34,6 +39,7 @@ export function BaseFields({
             id={field.name}
             aria-invalid={fieldState.invalid}
             autoComplete="off"
+            readOnly={nameLocked}
           />
         )}
       />

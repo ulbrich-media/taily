@@ -17,6 +17,7 @@ import {
 import { formatApiDate } from '@/lib/dates.utils.ts'
 import { Spinner } from '@/shadcn/components/ui/spinner.tsx'
 import { getTransportTitle } from '@/admin/module/transports/utils.ts'
+import { ContractMissingFieldsNotice } from '@/admin/module/custom-fields/components/ContractMissingFieldsNotice'
 
 interface AdoptionDetailPageProps {
   adoption: AdoptionDetailResource
@@ -138,6 +139,7 @@ export function AdoptionDetailPage({
           />
         }
       >
+        <ContractMissingFieldsNotice missing={adoption.custom_fields_missing} />
         <AdoptionContractSummary
           adoption={adoption}
           startContractAction={startContractAction}
