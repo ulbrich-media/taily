@@ -15,11 +15,14 @@ use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Taily\Enums\CustomFieldEntity;
+use Taily\Enums\CustomFieldPersonRole;
 use Taily\Models\Concerns\SearchesWithLike;
+use Taily\Traits\HasCustomFields;
 
 class Person extends Model implements HasMedia
 {
-    use HasFactory, HasUuids, SearchesWithLike;
+    use HasCustomFields, HasFactory, HasUuids, SearchesWithLike;
 
     /** Role filter value => pivot table holding the animal types of that role. */
     private const ROLE_TABLES = [
@@ -43,6 +46,7 @@ class Person extends Model implements HasMedia
         'phone' => '',
         'mobile' => '',
         'organization_role' => '',
+        'custom_fields' => '{}',
     ];
 
     /**
@@ -74,8 +78,44 @@ class Person extends Model implements HasMedia
     protected function casts(): array
     {
         return [
+            'custom_fields' => 'array',
             'date_of_birth' => 'date',
         ];
+    }
+
+    public function customFieldEntity(): CustomFieldEntity
+    {
+        return CustomFieldEntity::PERSON;
+    }
+
+    public function customFieldScope(): array
+    {
+        return [null, $this->customFieldRoles()];
+    }
+
+    /**
+     * The roles custom field groups can be scoped to. All of them are
+     * derived: `adopter` from being the applicant of any adoption, the others
+     * from the per-animal-type role assignments.
+     *
+     * @return list<string>
+     */
+    public function customFieldRoles(): array
+    {
+        if (! $this->exists) {
+            return [];
+        }
+
+        $has = fn (string $relation) => $this->relationLoaded($relation)
+            ? $this->getRelation($relation)->isNotEmpty()
+            : $this->{$relation}()->exists();
+
+        return array_values(array_filter([
+            $has('adoptionsAsApplicant') ? CustomFieldPersonRole::ADOPTER->value : null,
+            $has('mediatorAnimalTypes') ? CustomFieldPersonRole::MEDIATOR->value : null,
+            $has('inspectorAnimalTypes') ? CustomFieldPersonRole::INSPECTOR->value : null,
+            $has('fosterAnimalTypes') ? CustomFieldPersonRole::FOSTER->value : null,
+        ]));
     }
 
     public function registerMediaCollections(): void

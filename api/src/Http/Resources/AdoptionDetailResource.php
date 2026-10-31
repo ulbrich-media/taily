@@ -21,6 +21,12 @@ class AdoptionDetailResource extends AdoptionBaseResource
                 'url' => $contractMedia->getTemporaryUrl(now()->addHour()),
             ] : null,
             'contract_source' => $this->resource->contract_source,
+            // Missing required custom fields of the parties the contract is
+            // about. A notice on the contract step, never a gate.
+            'custom_fields_missing' => [
+                'animal' => $this->resource->animal?->customFieldsMissing() ?? [],
+                'applicant' => $this->resource->applicant?->customFieldsMissing() ?? [],
+            ],
             'contract_signing_process' => $this->whenLoaded(
                 'latestContractSigningProcess',
                 fn () => $this->resource->latestContractSigningProcess

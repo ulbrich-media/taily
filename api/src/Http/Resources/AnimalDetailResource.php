@@ -10,6 +10,7 @@ class AnimalDetailResource extends AnimalBaseResource
     public function toArray(Request $request): array
     {
         return array_merge(parent::toArray($request), [
+            'custom_fields_missing' => $this->resource->customFieldsMissing(),
             'pictures' => $this->resource->when(
                 $this->resource->relationLoaded('media'),
                 fn () => $this->resource->getMedia('pictures')

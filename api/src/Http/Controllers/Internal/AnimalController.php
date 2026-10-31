@@ -12,6 +12,7 @@ use Taily\Http\Resources\AnimalDetailResource;
 use Taily\Http\Resources\AnimalListResource;
 use Taily\Models\Animal;
 use Taily\Services\AnimalTraitService;
+use Taily\Support\CustomFields\CustomFieldService;
 
 class AnimalController extends Controller
 {
@@ -49,7 +50,7 @@ class AnimalController extends Controller
      * Store a newly created animal in storage.
      * Only Tab 1: Basic & Description fields are required for creation.
      */
-    public function store(Request $request): JsonResponse
+    public function store(Request $request, CustomFieldService $customFields): JsonResponse
     {
         $validated = $request->validate([
             'animal_type_id' => 'required|uuid|exists:animal_types,id',
@@ -68,11 +69,14 @@ class AnimalController extends Controller
             'character_description' => 'nullable|string',
             'contract_notes' => 'nullable|string',
             'internal_notes' => 'nullable|string',
+            'custom_fields' => 'sometimes|array',
         ]);
 
         $validated['is_boarding_animal'] = $request->boolean('is_boarding_animal');
 
-        $animal = Animal::create($validated);
+        $animal = new Animal($validated);
+        $customFields->apply($animal, $request->input('custom_fields', []), creating: true);
+        $animal->save();
 
         $animal->load(['animalType', 'vaccinations', 'medicalTests', 'assignedAgent', 'owner', 'sponsor', 'adoptions', 'media', 'compatibilities', 'personalityTraits']);
 
@@ -107,7 +111,7 @@ class AnimalController extends Controller
      * Update the specified animal in storage.
      * Accepts all fields.
      */
-    public function update(Request $request, Animal $animal): JsonResponse
+    public function update(Request $request, Animal $animal, CustomFieldService $customFields): JsonResponse
     {
         $validated = $request->validate([
             // Tab 1: Basic & Description
@@ -165,9 +169,15 @@ class AnimalController extends Controller
             'tests.*.medical_test_id' => ['required', 'uuid', Rule::exists('medical_tests', 'id')->where('animal_type_id', $animal->animal_type_id)],
             'tests.*.tested_at' => 'sometimes|nullable|date',
             'tests.*.result' => 'required|in:positive,negative',
+            // Custom fields (validated against their Field Groups)
+            'custom_fields' => 'sometimes|array',
         ]);
 
-        $animal->update($validated);
+        // Filled before the custom fields are applied, so a changed animal
+        // type already decides which groups are in scope.
+        $animal->fill($validated);
+        $customFields->apply($animal, $request->input('custom_fields', []));
+        $animal->save();
 
         // Sync traits if provided
         if ($request->has('compatibilities')) {

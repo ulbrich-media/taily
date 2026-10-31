@@ -13,11 +13,13 @@ use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Taily\Enums\CustomFieldEntity;
 use Taily\Models\Concerns\SearchesWithLike;
+use Taily\Traits\HasCustomFields;
 
 class Animal extends Model implements HasMedia
 {
-    use HasFactory, HasUuids, SearchesWithLike;
+    use HasCustomFields, HasFactory, HasUuids, SearchesWithLike;
 
     /** @use InteractsWithMedia<Media> */
     use InteractsWithMedia;
@@ -44,6 +46,7 @@ class Animal extends Model implements HasMedia
         'alternate_arrival_location' => '',
         'publish_description' => '',
         'application_url' => '',
+        'custom_fields' => '{}',
     ];
 
     /**
@@ -104,6 +107,7 @@ class Animal extends Model implements HasMedia
     protected function casts(): array
     {
         return [
+            'custom_fields' => 'array',
             'date_of_birth' => 'date:Y-m-d',
             'intake_date' => 'date:Y-m-d',
             'date_of_death' => 'date:Y-m-d',
@@ -116,6 +120,16 @@ class Animal extends Model implements HasMedia
             'monthly_boarding_cost' => 'decimal:2',
             'monthly_sponsorship' => 'decimal:2',
         ];
+    }
+
+    public function customFieldEntity(): CustomFieldEntity
+    {
+        return CustomFieldEntity::ANIMAL;
+    }
+
+    public function customFieldScope(): array
+    {
+        return [$this->animal_type_id, []];
     }
 
     public function registerMediaCollections(): void
