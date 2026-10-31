@@ -9,7 +9,7 @@ Custom fields are **defined with the existing form builder** ([form-templates.md
 
 The storage decision and the alternatives that were rejected are recorded in [ADR-015](../ADRs/ADR-015-custom-field-storage.md).
 
-> **Status:** planned. Nothing in this document is implemented yet. The [Implementation plan](#implementation-plan) at the end splits the work into phases.
+> **Status:** proof of concept. Phases 1 and 2 and the backend plus builder side of Phase 3 are implemented; the PR introducing them lists what is still open. The [Implementation plan](#implementation-plan) at the end splits the work into phases.
 
 ### Why not Adoptions
 
