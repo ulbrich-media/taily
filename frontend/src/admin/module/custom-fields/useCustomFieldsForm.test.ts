@@ -30,14 +30,20 @@ describe('useCustomFieldResolver', () => {
     )
 
     const unchanged = await result.current(
-      { name: 'Rex', custom_fields: { expected_size: undefined, coat_notes: 'kurz' } },
+      {
+        name: 'Rex',
+        custom_fields: { expected_size: undefined, coat_notes: 'kurz' },
+      },
       undefined,
       options
     )
     expect(unchanged.errors).toEqual({})
 
     const changed = await result.current(
-      { name: 'Rex', custom_fields: { expected_size: undefined, coat_notes: 'lang' } },
+      {
+        name: 'Rex',
+        custom_fields: { expected_size: undefined, coat_notes: 'lang' },
+      },
       undefined,
       options
     )

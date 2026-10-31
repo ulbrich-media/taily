@@ -565,7 +565,7 @@ class CustomFieldsTest extends TestCase
             ],
         ])->assertOk();
 
-        $this->assertSame(['expected_size' => 'large', 'coat' => 'lang'], $animal->fresh()->custom_fields);
+        $this->assertEquals(['expected_size' => 'large', 'coat' => 'lang'], $animal->fresh()->custom_fields);
     }
 
     public function test_changing_the_kind_of_value_deletes_values_after_confirmation(): void

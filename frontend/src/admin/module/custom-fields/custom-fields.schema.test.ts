@@ -134,7 +134,11 @@ describe('buildCustomFieldsEditSchema', () => {
 
   it('does not require fields of a group whose values are unchanged', () => {
     const stored = { coat_notes: 'kurz' }
-    const schema = buildCustomFieldsEditSchema([longGroup], { ...stored }, stored)
+    const schema = buildCustomFieldsEditSchema(
+      [longGroup],
+      { ...stored },
+      stored
+    )
 
     expect(schema.safeParse({ coat_notes: 'kurz' }).success).toBe(true)
   })
@@ -149,7 +153,11 @@ describe('buildCustomFieldsEditSchema', () => {
 
   it('keeps unchanged values that no longer pass the rules', () => {
     const stored = { expected_size: 'large', coat_notes: 'mittellang' }
-    const schema = buildCustomFieldsEditSchema([longGroup], { ...stored }, stored)
+    const schema = buildCustomFieldsEditSchema(
+      [longGroup],
+      { ...stored },
+      stored
+    )
 
     expect(schema.safeParse(stored).success).toBe(true)
   })

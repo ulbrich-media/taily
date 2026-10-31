@@ -34,9 +34,7 @@ import {
 } from '@/components/field/TextInput.utils.ts'
 import type { CustomFieldDefinitionGroup } from '@/api/types/custom-fields'
 import { CustomFieldSections } from '@/admin/module/custom-fields/components/CustomFieldSections'
-import {
-  buildCustomFieldDefaults,
-} from '@/admin/module/custom-fields/custom-fields.schema'
+import { buildCustomFieldDefaults } from '@/admin/module/custom-fields/custom-fields.schema'
 import { applyCustomFieldErrors } from '@/admin/module/custom-fields/custom-fields.errors'
 import {
   useCustomFieldResolver,
