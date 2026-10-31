@@ -19,6 +19,18 @@ import {
 import { OrganizationSelect } from '@/components/field/OrganizationSelect'
 import { listOrganizationsQuery } from '@/admin/module/organizations/api/queries'
 import { zFieldString } from '@/components/field/TextInput.utils.ts'
+import type { CustomFieldDefinitionGroup } from '@/api/types/custom-fields'
+import { useDynamicFormSchema } from '@/components/form/useDynamicFormSchema'
+import { CustomFieldSections } from '@/admin/module/custom-fields/components/CustomFieldSections'
+import {
+  buildCustomFieldDefaults,
+  CUSTOM_FIELDS_KEY,
+} from '@/admin/module/custom-fields/custom-fields.schema'
+import { applyCustomFieldErrors } from '@/admin/module/custom-fields/custom-fields.errors'
+import {
+  useMergedCustomFieldSchema,
+  useSyncCustomFieldDefaults,
+} from '@/admin/module/custom-fields/useCustomFieldsForm'
 
 const personFormBasicSchema = z.object({
   first_name: zFieldString({ required: true }),
@@ -44,7 +56,11 @@ const personFormBasicSchema = z.object({
     .or(z.literal('')),
 })
 
-export type PersonFormBasicData = z.infer<typeof personFormBasicSchema>
+export type PersonFormBasicData = z.infer<typeof personFormBasicSchema> & {
+  custom_fields: Record<string, unknown>
+}
+
+const NO_GROUPS: CustomFieldDefinitionGroup[] = []
 
 interface PersonFormBasicProps {
   defaultValues?: Partial<PersonDetailResource>
@@ -55,6 +71,8 @@ interface PersonFormBasicProps {
   showSecondaryButton?: boolean
   onSecondarySubmit?: () => void
   secondaryButtonLabel?: string
+  /** Field Groups of section `basic`, rendered after "Adresse". */
+  customFieldGroups?: CustomFieldDefinitionGroup[]
 }
 
 export function PersonFormBasic({
@@ -64,11 +82,19 @@ export function PersonFormBasic({
   isSubmitting = false,
   showSecondaryButton = false,
   onSecondarySubmit,
+  customFieldGroups = NO_GROUPS,
 }: PersonFormBasicProps) {
   const { data: organizations } = useSuspenseQuery(listOrganizationsQuery)
 
+  const customFieldSchema = useMergedCustomFieldSchema(customFieldGroups)
+  const schema = useDynamicFormSchema(
+    personFormBasicSchema,
+    customFieldSchema,
+    CUSTOM_FIELDS_KEY
+  )
+
   const form = useForm<PersonFormBasicData>({
-    resolver: zodResolver(personFormBasicSchema),
+    resolver: zodResolver(schema) as never,
     defaultValues: {
       first_name: defaultValues?.first_name ?? '',
       last_name: defaultValues?.last_name ?? '',
@@ -83,11 +109,27 @@ export function PersonFormBasic({
       postal_code: defaultValues?.postal_code || '',
       city: defaultValues?.city || '',
       country_code: defaultValues?.country_code || '',
+      custom_fields: buildCustomFieldDefaults(
+        customFieldGroups,
+        defaultValues?.custom_fields
+      ),
     },
   })
 
+  useSyncCustomFieldDefaults(
+    form,
+    customFieldGroups,
+    defaultValues?.custom_fields
+  )
+
   const handleFormSubmit = async (data: PersonFormBasicData) => {
-    await onSubmit(data)
+    try {
+      await onSubmit(data)
+    } catch (error) {
+      // Field errors are shown inline; the page reports the failure.
+      applyCustomFieldErrors(error, form.setError)
+      return
+    }
     form.reset(data)
   }
 
@@ -241,6 +283,11 @@ export function PersonFormBasic({
               />
             </FormGrid>
           </FormSection>
+
+          <CustomFieldSections
+            groups={customFieldGroups}
+            control={form.control}
+          />
         </FieldGroup>
 
         <div className="flex justify-end gap-3">

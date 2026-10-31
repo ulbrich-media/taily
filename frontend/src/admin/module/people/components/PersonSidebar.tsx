@@ -2,12 +2,23 @@ import { User } from 'lucide-react'
 import { Badge } from '@/shadcn/components/ui/badge.tsx'
 import { Card, CardContent } from '@/shadcn/components/ui/card.tsx'
 import type { PersonDetailResource } from '@/api/types/people'
+import type { ReactNode } from 'react'
+import type { CustomFieldSection } from '@/api/types/custom-fields'
+import { CustomFieldMissingList } from '@/admin/module/custom-fields/components/CustomFieldMissingList'
 
 interface PersonSidebarProps {
   person: PersonDetailResource
+  /** Links a missing custom field to the tab where it is edited. */
+  renderSectionLink?: (
+    section: CustomFieldSection,
+    children: ReactNode
+  ) => ReactNode
 }
 
-export function PersonSidebar({ person }: PersonSidebarProps) {
+export function PersonSidebar({
+  person,
+  renderSectionLink,
+}: PersonSidebarProps) {
   return (
     <aside>
       <Card>
@@ -94,6 +105,11 @@ export function PersonSidebar({ person }: PersonSidebarProps) {
                 </div>
               </div>
             )}
+
+            <CustomFieldMissingList
+              missing={person.custom_fields_missing}
+              renderSectionLink={renderSectionLink}
+            />
           </div>
         </CardContent>
       </Card>

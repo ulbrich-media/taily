@@ -1,4 +1,5 @@
-import { useForm, FormProvider } from 'react-hook-form'
+import { useEffect } from 'react'
+import { useForm, useWatch, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Button } from '@/shadcn/components/ui/button.tsx'
@@ -32,6 +33,18 @@ import {
   zFieldInt,
   zFieldString,
 } from '@/components/field/TextInput.utils.ts'
+import type { CustomFieldDefinitionGroup } from '@/api/types/custom-fields'
+import { useDynamicFormSchema } from '@/components/form/useDynamicFormSchema'
+import { CustomFieldSections } from '@/admin/module/custom-fields/components/CustomFieldSections'
+import {
+  buildCustomFieldDefaults,
+  CUSTOM_FIELDS_KEY,
+} from '@/admin/module/custom-fields/custom-fields.schema'
+import { applyCustomFieldErrors } from '@/admin/module/custom-fields/custom-fields.errors'
+import {
+  useMergedCustomFieldSchema,
+  useSyncCustomFieldDefaults,
+} from '@/admin/module/custom-fields/useCustomFieldsForm'
 
 const animalFormBasicSchema = z.object({
   animal_type_id: z.string().min(1, 'Pflichtfeld darf nicht leer sein'),
@@ -54,7 +67,11 @@ const animalFormBasicSchema = z.object({
   internal_notes: zFieldString({ maxLength: STRING_LENGTH_TEXTAREA }),
 })
 
-export type AnimalFormBasicData = z.infer<typeof animalFormBasicSchema>
+export type AnimalFormBasicData = z.infer<typeof animalFormBasicSchema> & {
+  custom_fields: Record<string, unknown>
+}
+
+const NO_GROUPS: CustomFieldDefinitionGroup[] = []
 
 interface AnimalFormBasicProps {
   animalTypes: AnimalTypeResource[]
@@ -66,6 +83,10 @@ interface AnimalFormBasicProps {
   showSecondaryButton?: boolean
   onSecondarySubmit?: () => void
   secondaryButtonLabel?: string
+  /** Field Groups of section `basic`, rendered after the core sections. */
+  customFieldGroups?: CustomFieldDefinitionGroup[]
+  /** Called when the selected animal type changes (create page re-queries definitions). */
+  onAnimalTypeChange?: (animalTypeId: string) => void
 }
 
 export function AnimalFormBasic({
@@ -76,6 +97,8 @@ export function AnimalFormBasic({
   isSubmitting = false,
   showSecondaryButton = false,
   onSecondarySubmit,
+  customFieldGroups = NO_GROUPS,
+  onAnimalTypeChange,
 }: AnimalFormBasicProps) {
   const isEditMode = !!defaultValues?.animal_type
 
@@ -85,8 +108,15 @@ export function AnimalFormBasic({
       ? animalTypes[0].id
       : defaultValues?.animal_type_id
 
+  const customFieldSchema = useMergedCustomFieldSchema(customFieldGroups)
+  const schema = useDynamicFormSchema(
+    animalFormBasicSchema,
+    customFieldSchema,
+    CUSTOM_FIELDS_KEY
+  )
+
   const form = useForm<AnimalFormBasicData>({
-    resolver: zodResolver(animalFormBasicSchema),
+    resolver: zodResolver(schema) as never,
     defaultValues: {
       animal_type_id: presetAnimalTypeId,
       animal_number: defaultValues?.animal_number ?? '',
@@ -104,11 +134,35 @@ export function AnimalFormBasic({
       character_description: defaultValues?.character_description || '',
       contract_notes: defaultValues?.contract_notes || '',
       internal_notes: defaultValues?.internal_notes || '',
+      custom_fields: buildCustomFieldDefaults(
+        customFieldGroups,
+        defaultValues?.custom_fields
+      ),
     },
   })
 
+  useSyncCustomFieldDefaults(
+    form,
+    customFieldGroups,
+    defaultValues?.custom_fields
+  )
+
+  const animalTypeId = useWatch({
+    control: form.control,
+    name: 'animal_type_id',
+  })
+  useEffect(() => {
+    if (animalTypeId) onAnimalTypeChange?.(animalTypeId)
+  }, [animalTypeId, onAnimalTypeChange])
+
   const handleFormSubmit = async (data: AnimalFormBasicData) => {
-    await onSubmit(data)
+    try {
+      await onSubmit(data)
+    } catch (error) {
+      // Field errors are shown inline; the page reports the failure.
+      applyCustomFieldErrors(error, form.setError)
+      return
+    }
     form.reset(data)
   }
 
@@ -260,6 +314,11 @@ export function AnimalFormBasic({
               />
             </FormGrid>
           </FormSection>
+
+          <CustomFieldSections
+            groups={customFieldGroups}
+            control={form.control}
+          />
         </FieldGroup>
 
         <div className="flex justify-end gap-3">

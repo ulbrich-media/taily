@@ -20,12 +20,16 @@ import {
 } from '@/shadcn/components/ui/dropdown-menu.tsx'
 import { Button } from '@/shadcn/components/ui/button.tsx'
 import { MoreVertical } from 'lucide-react'
+import { customFieldDefinitionsQuery } from '@/admin/module/custom-fields/api/queries'
 
 export const Route = createFileRoute('/admin/_authenticated/people/$id')({
   loader: async ({ params }) => {
     const [person] = await Promise.all([
       queryClient.ensureQueryData(getPersonQuery(params.id)),
       queryClient.ensureQueryData(listOrganizationsQuery),
+      queryClient.ensureQueryData(
+        customFieldDefinitionsQuery({ entity: 'person', record_id: params.id })
+      ),
     ])
     return { breadcrumb: person.full_name }
   },
@@ -92,7 +96,17 @@ function RouteComponent() {
       </div>
 
       <div className="lg:grid lg:grid-cols-[320px_1fr] lg:gap-6">
-        <PersonSidebar person={person} />
+        <PersonSidebar
+          person={person}
+          renderSectionLink={(_section, children) => (
+            <BasicRoute.Link
+              params={{ id }}
+              className="underline underline-offset-2 hover:text-primary"
+            >
+              {children}
+            </BasicRoute.Link>
+          )}
+        />
 
         <div className="space-y-6 mt-6 lg:mt-0">
           <Outlet />
