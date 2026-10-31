@@ -122,7 +122,7 @@ So nothing is ever stored that nobody can see. That is the GDPR property the [re
 The JSON Schema property key of a template field (e.g. `expected_size`) is the custom field's identity. The **key** is what the database stores, what contract templates reference, and what the Public API returns. Because of this:
 
 - **Keys are unique per entity.** A key exists in at most one group of an entity, so it always means the same field. This is checked when a group is created and when a bound template is saved: "Der Feldname `expected_size` wird bereits in der Gruppe ‚Größe' verwendet." Fields shared between animal types are shared by binding one group to several types, not by repeating the key.
-- **Keys are locked once a template is bound.** The builder already warns that renaming a key does not carry over existing data. For a bound template, the "Feldname" input of saved fields becomes read-only, and the backend rejects a save that renames a key (removal is a separate case, see below). A renamed key would silently break contract templates and website integrations.
+- **Keys are locked once a template is bound.** The builder already warns that renaming a key does not carry over existing data. For a bound template, the "Feldname" input of saved fields becomes read-only. The backend cannot tell a rename from a removal plus a new field, so a renamed key arrives as exactly that and goes through the [removal confirmation](#confirmation). A renamed key would silently break contract templates and website integrations.
 - The existing key rules apply unchanged: `^[a-z][a-z0-9_]*$`, at most 100 characters.
 
 Because a template is bound to at most one group per entity (`unique (entity, form_template_id)`), and keys are unique per entity, a key always identifies exactly one group.
@@ -186,7 +186,7 @@ Values live in a **`custom_fields` JSON column on the entity's own table** (`ani
 ```
 
 - Cast as `array`. Default `{}` is set in the model's `$attributes`, following the [empty-strings](../coding-patterns/empty-strings.md) convention of model-level defaults.
-- Values are JSON-native: string, number, boolean, `YYYY-MM-DD` string for dates. A key that is absent means "not set". Emptying a field removes its key, so there are no `''` or `null` entries.
+- Values are JSON-native: string, number, boolean, `YYYY-MM-DD` string for dates. A key that is absent means "not set". Emptying a field removes its key, so there are no `''` or `null` entries. A switch that is off counts as empty too: the UI cannot tell "off" from "never set", so only `true` is stored and an unset switch displays as "Nein".
 - Values are **not version-pinned**. Unlike a Form Submission, custom field data is live master data, edited many times. It is always rendered and validated against the **latest** version of the bound template. Templates bound as custom fields normally have no submissions, so `SchemaChangeAnalyzer` updates them in place anyway.
 - **Every stored key belongs to a field that exists.** When a field's definition goes away, its values are deleted, see [Removing values](#removing-values). Together with [filled fields stay visible](#filled-fields-stay-visible), this means every stored value is also visible.
 - Deleting the record deletes its values. No polymorphic cleanup is needed, which matters for the planned delete features ([#249](https://github.com/ulbrich-media/taily/issues/249), [#251](https://github.com/ulbrich-media/taily/issues/251)).

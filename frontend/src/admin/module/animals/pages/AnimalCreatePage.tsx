@@ -1,5 +1,10 @@
 import { useState } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
 import { PawPrint, ArrowLeft } from 'lucide-react'
 import { createAnimal } from '@/admin/module/animals/api/requests.ts'
 import { animalQueryKeys } from '@/admin/module/animals/api/queries.ts'
@@ -51,6 +56,9 @@ export function AnimalCreatePage({
       animal_type_id: animalTypeId ?? '',
     }),
     enabled: !!animalTypeId,
+    // Keep the previous type's groups while the next type loads, so values
+    // of a group both types share survive the switch.
+    placeholderData: keepPreviousData,
   })
   const customFieldGroups = groupsForSection(definitionsQuery.data, 'basic')
 
