@@ -216,18 +216,40 @@ class CustomFieldsTest extends TestCase
             ->assertJsonValidationErrors(['custom_fields.expected_size']);
     }
 
-    public function test_update_only_validates_touched_groups(): void
+    public function test_update_only_validates_changed_groups(): void
     {
         $this->group($this->sizeTemplate());
-        $animal = $this->animal();
+        $animal = $this->animal(['coat' => 'kurz']);
 
-        // Not touching the group: the missing required field does not block.
+        // Not sending the group: the missing required field does not block.
         $this->api()->putJson("/internal/animals/{$animal->id}", ['name' => 'Rex'])->assertOk();
 
-        // Touching it: the required field is enforced.
-        $this->api()->putJson("/internal/animals/{$animal->id}", ['custom_fields' => ['coat' => 'kurz']])
+        // Sending it unchanged, as the frontend does on every save of the tab.
+        $this->api()->putJson("/internal/animals/{$animal->id}", [
+            'name' => 'Rex',
+            'custom_fields' => ['expected_size' => null, 'coat' => 'kurz'],
+        ])->assertOk();
+
+        // Changing a value of the group: the required field is enforced.
+        $this->api()->putJson("/internal/animals/{$animal->id}", ['custom_fields' => ['expected_size' => null, 'coat' => 'lang']])
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['custom_fields.expected_size']);
+    }
+
+    public function test_unchanged_values_that_no_longer_pass_are_kept(): void
+    {
+        $this->group($this->sizeTemplate());
+        // Written before `coat` got its maxLength of 20.
+        $animal = $this->animal(['expected_size' => 'large', 'coat' => str_repeat('x', 30)]);
+
+        $this->api()->putJson("/internal/animals/{$animal->id}", [
+            'name' => 'Rex',
+            'custom_fields' => ['expected_size' => 'large', 'coat' => str_repeat('x', 30)],
+        ])->assertOk();
+
+        $this->api()->putJson("/internal/animals/{$animal->id}", [
+            'custom_fields' => ['expected_size' => 'large', 'coat' => str_repeat('y', 30)],
+        ])->assertUnprocessable()->assertJsonValidationErrors(['custom_fields.coat']);
     }
 
     public function test_emptying_a_field_removes_its_key(): void
@@ -272,9 +294,13 @@ class CustomFieldsTest extends TestCase
             ->assertOk()
             ->assertJsonPath('custom_fields_missing.0.key', 'id_card_number');
 
+        // Missing, but saving the tab unchanged is not blocked.
         $this->api()->putJson("/internal/persons/{$person->id}", ['custom_fields' => ['id_card_number' => '']])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors(['custom_fields.id_card_number']);
+            ->assertOk();
+
+        $this->api()->putJson("/internal/persons/{$person->id}", ['custom_fields' => ['id_card_number' => 'L01X00T47']])
+            ->assertOk()
+            ->assertJsonPath('data.custom_fields_missing', []);
     }
 
     public function test_filled_fields_stay_visible_after_leaving_scope(): void
@@ -517,6 +543,85 @@ class CustomFieldsTest extends TestCase
         $this->group($template);
 
         $this->updateTemplate($template, ['expected_size' => ['type' => 'string', 'enum' => ['small']]])->assertOk();
+    }
+
+    public function test_switching_between_types_of_the_same_kind_keeps_values(): void
+    {
+        $template = $this->sizeTemplate();
+        $this->group($template);
+        $animal = $this->animal(['expected_size' => 'large', 'coat' => 'lang']);
+
+        // Text to textarea, select to radio: only the widget changes.
+        $this->api()->putJson("/internal/form-templates/{$template->id}", [
+            'name' => $template->name,
+            'schema' => $this->schema([
+                'expected_size' => ['type' => 'string', 'enum' => ['small', 'medium', 'large']],
+                'coat' => ['type' => 'string', 'maxLength' => 20],
+            ]),
+            'ui_schema' => [
+                'ui:order' => ['expected_size', 'coat'],
+                'expected_size' => ['ui:widget' => 'radio'],
+                'coat' => ['ui:widget' => 'textarea'],
+            ],
+        ])->assertOk();
+
+        $this->assertSame(['expected_size' => 'large', 'coat' => 'lang'], $animal->fresh()->custom_fields);
+    }
+
+    public function test_changing_the_kind_of_value_deletes_values_after_confirmation(): void
+    {
+        $template = $this->sizeTemplate();
+        $this->group($template);
+        $this->animal(['expected_size' => 'large', 'coat' => 'lang']);
+
+        $this->updateTemplate($template, [
+            'expected_size' => ['type' => 'string', 'enum' => ['small', 'medium', 'large']],
+            'coat' => ['type' => 'integer'],
+        ])->assertStatus(409)->assertJsonPath('removal_impact.0.key', 'coat');
+    }
+
+    public function test_template_save_reports_values_the_new_rules_reject(): void
+    {
+        $template = $this->sizeTemplate();
+        $this->group($template);
+        $long = $this->animal(['expected_size' => 'large', 'coat' => 'mittellang']);
+        $this->animal(['expected_size' => 'small', 'coat' => 'kurz']);
+
+        $this->updateTemplate($template, [
+            'expected_size' => ['type' => 'string', 'enum' => ['small', 'medium', 'large']],
+            'coat' => ['type' => 'string', 'maxLength' => 5],
+        ])->assertOk()
+            ->assertJsonCount(1, 'custom_field_invalid_values')
+            ->assertJsonPath('custom_field_invalid_values.0.key', 'coat')
+            ->assertJsonPath('custom_field_invalid_values.0.count', 1);
+
+        // Reported, not deleted.
+        $this->assertSame('mittellang', $long->fresh()->custom_fields['coat']);
+    }
+
+    public function test_keys_outside_the_key_format_cannot_be_bound(): void
+    {
+        $template = $this->template('Alt', ['Bad Key' => ['type' => 'string']]);
+
+        $this->api()->postJson('/internal/custom-field-groups', [
+            'entity' => 'animal',
+            'section' => 'basic',
+            'animal_type_ids' => [],
+            'person_roles' => [],
+            'form_template_id' => $template->id,
+            'title' => 'Alt',
+            'position' => 0,
+            'field_settings' => [],
+        ])->assertUnprocessable()->assertJsonValidationErrors(['form_template_id']);
+
+        $bound = $this->sizeTemplate();
+        $this->group($bound);
+
+        $this->updateTemplate($bound, [
+            'expected_size' => ['type' => 'string', 'enum' => ['small', 'medium', 'large']],
+            'coat' => ['type' => 'string'],
+            "x') OR 1=1 --" => ['type' => 'string'],
+        ])->assertUnprocessable()->assertJsonValidationErrors(['schema']);
     }
 
     public function test_a_bound_template_cannot_take_a_key_of_another_group(): void

@@ -123,7 +123,7 @@ The JSON Schema property key of a template field (e.g. `expected_size`) is the c
 
 - **Keys are unique per entity.** A key exists in at most one group of an entity, so it always means the same field. This is checked when a group is created and when a bound template is saved: "Der Feldname `expected_size` wird bereits in der Gruppe ‚Größe' verwendet." Fields shared between animal types are shared by binding one group to several types, not by repeating the key.
 - **Keys are locked once a template is bound.** The builder already warns that renaming a key does not carry over existing data. For a bound template, the "Feldname" input of saved fields becomes read-only. The backend cannot tell a rename from a removal plus a new field, so a renamed key arrives as exactly that and goes through the [removal confirmation](#confirmation). A renamed key would silently break contract templates and website integrations.
-- The existing key rules apply unchanged: `^[a-z][a-z0-9_]*$`, at most 100 characters.
+- The existing key rules apply unchanged: `^[a-z][a-z0-9_]*$`, at most 100 characters. The backend enforces the pattern when a template is bound or a bound template is saved, because keys are used as JSON paths in queries.
 
 Because a template is bound to at most one group per entity (`unique (entity, form_template_id)`), and keys are unique per entity, a key always identifies exactly one group.
 
@@ -155,7 +155,8 @@ Keeping these settings on the group means a Form Template stays a plain, reusabl
 A required field **must be filled whenever its section is saved, for a record the group is in scope for**:
 
 - On **create**, the in-scope groups of the create section (`basic`) are validated in full. For animals, those are the groups of the chosen animal type. A new person holds no role yet, so only person groups without a role apply on create. Fields on the "Weitere Angaben" tab are not enforced on create, because that tab is not part of the create form.
-- On **update**, every group the request touches is validated. A request touches a group if it carries at least one of the group's keys. The frontend always sends every key of every group shown on the tab being saved, so saving a tab validates exactly the groups on that tab. For groups that are shown but no longer in scope, types and constraints are still validated, but `required` is not.
+- On **update**, only the groups with a **changed value** are checked: a request changes a group if one of the group's keys gets a value that differs from the stored one, including emptying it. The frontend sends every key of every group shown on the tab, but unchanged keys don't count. Editing an animal's name therefore never demands a field that was made required later. For groups that are shown but no longer in scope, `required` is not applied.
+- Only **changed values** are validated against the field's rules. A value that an older version of the template allowed (before a lower `maxLength`, say) does not block saving the tab. It has to pass once someone edits it.
 
 This fits the typical flow. The mediator creates a person by phone without knowing the ID card number, so nothing is required, because the person holds no role yet. The person becomes an applicant when the adoption is created. From then on, the ID card number is shown and required on their Basis tab.
 
@@ -166,7 +167,7 @@ A record can become incomplete without anyone saving it:
 - a template edit adds a required field
 - a record comes into scope of a group with required fields, e.g. a person is chosen as the applicant of a new adoption
 
-Nothing is blocked and nothing is migrated. The next save of the affected tab requires the fields. Until then, the missing fields are shown in exactly two places:
+Nothing is blocked and nothing is migrated. The fields are required as soon as someone changes a value of their group. Until then, the missing fields are shown in exactly two places:
 
 - **The animal sidebar and the person sidebar** (`AnimalSidebar`, `PersonSidebar`), as "Fehlende Angaben" with the field labels. Each links to the tab where the field is edited.
 - **The adoption's "Vertrag" step card**, listing the missing fields of the animal and the applicant, e.g. "Vor dem Vertrag fehlen: Ausweisnummer (Bewerber)". This is a notice, not a gate. Generating the contract stays possible.
@@ -196,9 +197,11 @@ Values live in a **`custom_fields` JSON column on the entity's own table** (`ani
 The internal store and update endpoints of both entities accept an optional `custom_fields` object next to the core fields. `CustomFieldService` then:
 
 1. Rejects keys that no group of the entity defines (422 on `custom_fields.<key>`).
-2. Determines the groups to validate: the in-scope groups of the create section on create, and the touched groups on update. On animal create, the animal type is taken from the request. For a person, the roles are taken from the stored record.
-3. For each of these groups, validates the existing values merged with the request's values, restricted to the group's keys, using `JsonSchemaValidator`. `required` is only applied to in-scope groups. Because the data is restricted to the group, the builder's `additionalProperties: false` works unchanged. Errors are returned as `custom_fields.<key>`.
+2. Validates each value that differs from the stored one against its field's JSON Schema fragment. Unchanged values are kept as they are.
+3. Determines the groups whose required fields are checked: the in-scope groups of the create section on create, and the in-scope groups with a changed value on update. On animal create, the animal type is taken from the request. For a person, the roles are taken from the stored record.
 4. Merges the request's values into the column, removing keys whose new value is empty, and saves in the same transaction as the core attributes.
+
+Errors are returned as `custom_fields.<key>`.
 
 ---
 
@@ -212,12 +215,14 @@ Custom fields can hold personal data, such as an ID card number. Data that no fi
 |---|---|---|
 | Field removed from a bound template | that key, in every record of the entity | form builder, on save |
 | Option removed from a select or radio field | values equal to the removed option | form builder, on save |
-| Field type changed | that key (treated as removed and re-added) | form builder, on save |
+| Field type changed to one that stores another kind of value | that key (treated as removed and re-added) | form builder, on save |
 | Field Group deleted | all its keys, in every record of the entity | delete dialog |
 
 Because keys are unique per entity, a removal never has to check whether another group still uses the key. It applies to every record of the entity.
 
-Changes that make a value *invalid* but not *obsolete* do not delete anything. Examples are a newly required field or a tightened `maxLength`. The value stays, and the next save of its tab requires fixing it.
+The kinds of value are options (select, radio), numbers, booleans (switch) and strings (text, textarea, date, email, phone). Switching between types of the same kind, such as text to textarea or select to radio, keeps the values.
+
+Changes that make a value *invalid* but not *obsolete* do not delete anything. Examples are a newly required field, a tightened `maxLength`, or text changed to date. The value stays and is still shown, see [Writing values](#writing-values). The save response of the template lists the affected fields as `custom_field_invalid_values: [{key, label, count}]`, and the form builder shows them as a warning: "Lieblingsspielzeug: 3 Einträge haben Werte, die nicht mehr gültig sind. Sie müssen beim nächsten Bearbeiten korrigiert werden."
 
 ### Confirmation
 
@@ -267,7 +272,7 @@ The Base resources (`AnimalBaseResource`, `PersonBaseResource`) add `custom_fiel
 Rendering reuses the existing dynamic form components:
 
 - A new `CustomFieldSections` component takes a section's groups and renders one `FormSection` per group, containing `DynamicFormFields` with `namePrefix="custom_fields"`. Groups with `in_scope: false` get the "Trifft nicht mehr zu" marker. All groups share the flat `custom_fields.<key>` namespace, which is possible because keys are unique per entity.
-- `useDynamicFormSchema` gains a key parameter (`form_data` stays the default), so a tab's static zod schema can be extended with `custom_fields`. The schemas of the section's groups are merged into one object before calling `jsonSchemaToZod`, with `required` removed for groups that are not in scope. `buildFormDataDefaults` builds the defaults, as described in form-templates.md for `FormBlocker` correctness.
+- `useDynamicFormSchema` gains a key parameter (`form_data` stays the default), so a tab's static zod schema can be extended with `custom_fields`. The schemas of the section's groups are merged into one object before calling `jsonSchemaToZod`, with `required` removed for groups that are not in scope. On edit forms, the resolver mirrors the backend: unchanged filled values are not validated, and `required` only applies to groups with a changed value. `buildFormDataDefaults` builds the defaults, as described in form-templates.md for `FormBlocker` correctness.
 - `DynamicFormFields` gets an optional `FormGrid` layout, so custom fields line up with the two-column core forms.
 - The animal create page re-queries the definitions when the selected animal type changes, and rebuilds the `custom_fields` defaults.
 - The definitions of an existing record are re-queried after saves that can change its scope: an animal's type on the Basis tab, a person's roles on the "Rollen" tab.
@@ -441,7 +446,7 @@ Frontend:
 - Hand-written types in `src/api/types/*` (`custom_fields: Record<string, unknown>`) and a `custom-fields` types module.
 
 Tests:
-- validation on create and update: touched groups, unknown keys, required only in scope, emptying removes the key
+- validation on create and update: changed groups, unchanged values not revalidated, unknown keys, required only in scope, emptying removes the key
 - scope resolution: animal types, each person role, multiple roles, gaining and losing scope
 - shown groups for out-of-scope values
 - key uniqueness

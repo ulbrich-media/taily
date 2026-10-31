@@ -96,14 +96,16 @@ class FormTemplateController extends Controller
         // entity, and removed fields, options or changed types delete values,
         // which needs the confirmation flag (409 with the impact otherwise).
         $removals = [];
+        $invalidValues = [];
         foreach ($formTemplate->customFieldGroups as $group) {
-            $newKeys = array_keys($data['schema']['properties'] ?? []);
+            $newKeys = array_map('strval', array_keys($data['schema']['properties'] ?? []));
 
-            if ($conflict = $keys->conflict($group->entity, $newKeys, $group->id)) {
-                throw ValidationException::withMessages(['schema' => [$conflict]]);
+            if ($error = $keys->invalid($newKeys) ?? $keys->conflict($group->entity, $newKeys, $group->id)) {
+                throw ValidationException::withMessages(['schema' => [$error]]);
             }
 
             array_push($removals, ...$cleanup->templateChangeImpact($group, $data['schema'], $data['ui_schema'] ?? null));
+            array_push($invalidValues, ...$cleanup->invalidValues($group, $data['schema'], $data['ui_schema'] ?? null));
         }
 
         if ($removals !== [] && ! $request->boolean(CustomFieldCleanup::CONFIRM_FLAG)) {
@@ -124,6 +126,9 @@ class FormTemplateController extends Controller
         return response()->json([
             'message' => $message,
             'new_version_created' => $newVersionCreated,
+            // Kept values the new rules reject: they must be corrected the
+            // next time the field is edited.
+            'custom_field_invalid_values' => $invalidValues,
             'data' => new FormTemplateResource($template),
         ]);
     }

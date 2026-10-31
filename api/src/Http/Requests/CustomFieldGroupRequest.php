@@ -57,9 +57,13 @@ class CustomFieldGroupRequest extends FormRequest
             }
 
             $template = FormTemplate::with('latestVersion')->find($this->input('form_template_id'));
-            $keys = array_keys($template?->latestVersion?->schema['properties'] ?? []);
+            $keys = array_map('strval', array_keys($template?->latestVersion?->schema['properties'] ?? []));
 
-            if ($conflict = app(CustomFieldKeys::class)->conflict($entity, $keys, $group?->id)) {
+            $customFieldKeys = app(CustomFieldKeys::class);
+
+            if ($invalid = $customFieldKeys->invalid($keys)) {
+                $validator->errors()->add('form_template_id', $invalid);
+            } elseif ($conflict = $customFieldKeys->conflict($entity, $keys, $group?->id)) {
                 $validator->errors()->add('form_template_id', $conflict);
             }
         }];

@@ -83,6 +83,22 @@ final class CustomFieldDefinition
     }
 
     /**
+     * The kind of value the field stores: `option` (select, radio), `number`,
+     * `boolean` or `string` (text, textarea, date, email, phone). Switching
+     * between field types of the same kind keeps the stored values, see
+     * CustomFieldCleanup.
+     */
+    public function valueKind(): string
+    {
+        return match ($this->type()) {
+            'select', 'radio' => 'option',
+            'number' => 'number',
+            'checkbox' => 'boolean',
+            default => 'string',
+        };
+    }
+
+    /**
      * Enum options with their labels, in builder order.
      *
      * @return list<array{value: string, label: string}>

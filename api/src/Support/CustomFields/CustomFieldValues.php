@@ -20,6 +20,19 @@ final class CustomFieldValues
     }
 
     /**
+     * Whether an input value equals the stored one. Numbers compare by value,
+     * since JSON may turn 2 into 2.0.
+     */
+    public static function same(mixed $value, mixed $stored): bool
+    {
+        if ((is_int($value) || is_float($value)) && (is_int($stored) || is_float($stored))) {
+            return (float) $value === (float) $stored;
+        }
+
+        return $value === $stored;
+    }
+
+    /**
      * A required checkbox must be checked, the same rule jsonSchemaToZod
      * applies in the frontend. Anything else just must not be empty.
      */

@@ -5,6 +5,7 @@ namespace Taily\Support\CustomFields;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Taily\Models\CustomFieldGroup;
+use Taily\Support\JsonSchemaValidator;
 
 /**
  * Deletes the values of custom field definitions that go away: a removed
@@ -18,6 +19,8 @@ class CustomFieldCleanup
 {
     /** Request flag that confirms a save deleting values. */
     public const CONFIRM_FLAG = 'confirm_custom_field_removal';
+
+    public function __construct(private JsonSchemaValidator $validator) {}
 
     /**
      * The impact of replacing the schema of a template bound to `$group`.
@@ -34,7 +37,9 @@ class CustomFieldCleanup
         foreach ($group->fieldDefinitions() as $old) {
             $replacement = $new->get($old->key);
 
-            if (! $replacement || $replacement->type() !== $old->type()) {
+            // Only a change of the stored value's kind deletes. Text to
+            // textarea or select to radio keeps the values.
+            if (! $replacement || $replacement->valueKind() !== $old->valueKind()) {
                 $removals[] = new CustomFieldRemoval($group->entity, $old->key, $old->label(), null);
 
                 continue;
@@ -49,6 +54,57 @@ class CustomFieldCleanup
         }
 
         return $this->withCounts($removals);
+    }
+
+    /**
+     * Fields kept by replacing the schema of a template bound to `$group`
+     * whose stored values no longer pass the new rules (a lower maximum
+     * length, a new date format, …), with the number of records affected.
+     * Such values are kept, see "Changing a field" in the feature doc.
+     *
+     * @param  array<string, mixed>  $schema
+     * @param  array<string, mixed>|null  $uiSchema
+     * @return list<array{key: string, label: string, count: int}>
+     */
+    public function invalidValues(CustomFieldGroup $group, array $schema, ?array $uiSchema): array
+    {
+        $old = collect($group->fieldDefinitions())->keyBy('key');
+        $invalid = [];
+
+        foreach (CustomFieldDefinition::fromSchema($group, $schema, $uiSchema ?? []) as $field) {
+            $previous = $old->get($field->key);
+
+            // New fields have no values. Removed options and changed kinds
+            // delete their values instead, see templateChangeImpact().
+            if (! $previous
+                || $previous->schema == $field->schema
+                || $previous->valueKind() !== $field->valueKind()
+                || $field->valueKind() === 'option') {
+                continue;
+            }
+
+            $count = 0;
+            $model = $group->entity->modelClass();
+            $model::query()->whereNotNull(CustomFieldKeys::jsonPath($field->key))
+                ->chunkById(200, function ($records) use ($field, &$count) {
+                    foreach ($records as $record) {
+                        $value = ($record->custom_fields ?? [])[$field->key] ?? null;
+
+                        if (! $this->validator->validate(
+                            ['type' => 'object', 'properties' => [$field->key => $field->schema]],
+                            [$field->key => $value],
+                        )['valid']) {
+                            $count++;
+                        }
+                    }
+                });
+
+            if ($count > 0) {
+                $invalid[] = ['key' => $field->key, 'label' => $field->label(), 'count' => $count];
+            }
+        }
+
+        return $invalid;
     }
 
     /**
@@ -112,7 +168,7 @@ class CustomFieldCleanup
     private function query(CustomFieldRemoval $removal): Builder
     {
         $model = $removal->entity->modelClass();
-        $path = "custom_fields->{$removal->key}";
+        $path = CustomFieldKeys::jsonPath($removal->key);
 
         return $removal->option === null
             ? $model::query()->whereNotNull($path)

@@ -25,9 +25,12 @@ class CustomFieldService
      * `custom_fields`, without saving. The record's scope (animal type,
      * roles) must already reflect the request.
      *
-     * On create, every in-scope group of the create section is validated, so
-     * its required fields are enforced even when no key was sent. On update,
-     * only the groups the input touches are validated.
+     * Only values that differ from the stored ones are validated, so a value
+     * that an older version of the template allowed does not block saving.
+     * Required fields are checked for the groups with a changed value, so
+     * editing an animal's name does not demand a field that was made
+     * required later. On create, every in-scope group of the create section
+     * is checked, even when no key was sent.
      *
      * @param  array<string, mixed>  $input
      *
@@ -39,6 +42,8 @@ class CustomFieldService
         [$animalTypeId, $roles] = $record->customFieldScope();
         $errors = [];
         $values = $record->getAttribute('custom_fields') ?? [];
+        $stored = $values;
+        $changed = [];
 
         foreach ($input as $key => $value) {
             $field = $this->definitions->field($entity, (string) $key);
@@ -53,7 +58,7 @@ class CustomFieldService
             // already holding a value. Out-of-scope fields can be edited or
             // emptied while filled, but not filled anew.
             if (! $field->group->isInScope($animalTypeId, $roles)
-                && array_intersect($field->group->keys(), array_keys($values)) === []
+                && array_intersect($field->group->keys(), array_keys($stored)) === []
                 && ! CustomFieldValues::isEmpty($value)) {
                 $errors["custom_fields.{$key}"] = ['Dieses Feld gilt nicht für diesen Datensatz.'];
 
@@ -61,12 +66,21 @@ class CustomFieldService
             }
 
             if (CustomFieldValues::isEmpty($value) || ($field->type() === 'checkbox' && $value === false)) {
+                if (array_key_exists($key, $stored)) {
+                    $changed[] = (string) $key;
+                }
                 unset($values[$key]);
 
                 continue;
             }
 
             $value = $this->coerce($field, $value);
+
+            if (array_key_exists($key, $stored) && CustomFieldValues::same($value, $stored[$key])) {
+                continue;
+            }
+
+            $changed[] = (string) $key;
 
             if (! $this->validator->validate(
                 ['type' => 'object', 'properties' => [$key => $field->schema]],
@@ -80,7 +94,7 @@ class CustomFieldService
             $values[$key] = $value;
         }
 
-        foreach ($this->groupsToValidate($entity, $input, $animalTypeId, $roles, $creating) as $group) {
+        foreach ($this->groupsToValidate($entity, $changed, $animalTypeId, $roles, $creating) as $group) {
             if (! $group->isInScope($animalTypeId, $roles)) {
                 continue;
             }
@@ -102,14 +116,14 @@ class CustomFieldService
     }
 
     /**
-     * @param  array<string, mixed>  $input
+     * @param  list<string>  $changed  the keys whose value changed
      * @param  list<string>  $roles
      * @return list<CustomFieldGroup>
      */
-    private function groupsToValidate(CustomFieldEntity $entity, array $input, ?string $animalTypeId, array $roles, bool $creating): array
+    private function groupsToValidate(CustomFieldEntity $entity, array $changed, ?string $animalTypeId, array $roles, bool $creating): array
     {
         return $this->definitions->groups($entity)
-            ->filter(fn (CustomFieldGroup $group) => array_intersect($group->keys(), array_map('strval', array_keys($input))) !== []
+            ->filter(fn (CustomFieldGroup $group) => array_intersect($group->keys(), $changed) !== []
                 || ($creating && $group->section === CustomFieldEntity::CREATE_SECTION && $group->isInScope($animalTypeId, $roles)))
             ->values()
             ->all();
