@@ -2,6 +2,7 @@ import type { EditorField } from './shared/EditorField'
 import { getFieldTypeDef } from './field-types'
 import { detectFieldType } from '@/lib/form-schema/detect-field-type'
 import { resolveFieldOrder } from '@/lib/form-schema/resolve-field-order'
+import { getFieldLink } from './linked-field'
 import type {
   JsonSchemaProperty,
   UiSchema,
@@ -30,7 +31,10 @@ export function parseJsonSchema(
   return keys.map((key) => {
     const schemaProp = (properties[key] ?? {}) as JsonSchemaProperty
     const uiProp = (ui[key] ?? {}) as UiSchemaFieldOptions
-    const fieldType = detectFieldType(schemaProp, uiProp)
+    // A link in ui:options marks a "Feld übernehmen" field; renderers ignore it.
+    const fieldType = getFieldLink(uiProp as Record<string, unknown>)
+      ? 'linked'
+      : detectFieldType(schemaProp, uiProp)
     const def = getFieldTypeDef(fieldType)
 
     return {

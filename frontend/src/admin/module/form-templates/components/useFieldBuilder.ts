@@ -14,6 +14,7 @@ import type { EditorField } from './shared/EditorField'
 import { getFieldTypeDef } from './field-types'
 import { DROPPABLE_ID } from './schema'
 import type { FieldType } from '@/lib/form-schema/field-type.ts'
+import type { LinkedSettings } from '../api/types'
 
 const PLACEHOLDER_ID = '__placeholder__'
 
@@ -52,6 +53,7 @@ export interface UseFieldBuilderReturn {
   handleDelete: (id: string) => void
   handleRestore: (id: string) => void
   handleSaveField: (updated: EditorField) => void
+  updateField: (updated: EditorField) => void
   restoreAll: () => void
   /** Reset fields to new data and clear dirty state (e.g. after successful save). */
   reset: (newFields: EditorField[]) => void
@@ -65,7 +67,7 @@ export function useFieldBuilder(
   const [activeDragId, setActiveDragId] = useState<UniqueIdentifier | null>(
     null
   )
-  const [editingField, setEditingField] = useState<EditorField | null>(null)
+  const [editingField, setEditingFieldRaw] = useState<EditorField | null>(null)
 
   // Track placeholder state to avoid redundant updates that cause infinite loops.
   // We track the index (not the overId) because inserting the placeholder shifts
@@ -207,17 +209,19 @@ export function useFieldBuilder(
         const def = getFieldTypeDef(type)
 
         if (over) {
-          setFields((prev) => {
-            const newField: EditorField = {
-              id: generateFieldName(type, prev),
-              type,
-              label: def.label,
-              required: false,
-              settings: def.defaultSettings(),
-              _isNew: true,
-            }
-            return prev.map((f) => (f.id === PLACEHOLDER_ID ? newField : f))
-          })
+          const newField: EditorField = {
+            id: generateFieldName(type, fields),
+            type,
+            label: def.label,
+            required: false,
+            settings: def.defaultSettings(),
+            _isNew: true,
+          }
+          setFields((prev) =>
+            prev.map((f) => (f.id === PLACEHOLDER_ID ? newField : f))
+          )
+          // A linked field is nothing until its source is picked.
+          if (type === 'linked') setEditingFieldRaw(newField)
         } else {
           // Dropped outside — just remove the placeholder
           setFieldsRaw((prev) => prev.filter((f) => f.id !== PLACEHOLDER_ID))
@@ -227,17 +231,16 @@ export function useFieldBuilder(
         // No placeholder (shouldn't happen normally) — fallback to append
         const type = activeId.replace('palette:', '') as FieldType
         const def = getFieldTypeDef(type)
-        setFields((prev) => {
-          const newField: EditorField = {
-            id: generateFieldName(type, prev),
-            type,
-            label: def.label,
-            required: false,
-            settings: def.defaultSettings(),
-            _isNew: true,
-          }
-          return [...prev, newField]
-        })
+        const newField: EditorField = {
+          id: generateFieldName(type, fields),
+          type,
+          label: def.label,
+          required: false,
+          settings: def.defaultSettings(),
+          _isNew: true,
+        }
+        setFields((prev) => [...prev, newField])
+        if (type === 'linked') setEditingFieldRaw(newField)
       }
     } else {
       // Reorder existing fields
@@ -274,10 +277,29 @@ export function useFieldBuilder(
     )
   }
 
+  /** Closing the dialog of a new linked field without a source drops it. */
+  function setEditingField(field: EditorField | null) {
+    const current = editingField
+    if (
+      !field &&
+      current?._isNew &&
+      current.type === 'linked' &&
+      !(current.settings as LinkedSettings).link
+    ) {
+      setFieldsRaw((prev) => prev.filter((f) => f.id !== current.id))
+    }
+    setEditingFieldRaw(field)
+  }
+
+  /** Replace a field in place, e.g. a linked field re-copied from its source. */
+  function updateField(updated: EditorField) {
+    setFields((prev) => prev.map((f) => (f.id === updated.id ? updated : f)))
+  }
+
   function handleSaveField(updated: EditorField) {
     const oldId = editingField?.id
     setFields((prev) => prev.map((f) => (f.id === oldId ? updated : f)))
-    setEditingField(null)
+    setEditingFieldRaw(null)
   }
 
   function restoreAll() {
@@ -309,6 +331,7 @@ export function useFieldBuilder(
     handleDelete,
     handleRestore,
     handleSaveField,
+    updateField,
     restoreAll,
     reset,
   }

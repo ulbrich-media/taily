@@ -12,6 +12,7 @@ import type { EditorField } from './shared/EditorField'
 import { BaseFields } from './shared/BaseFields'
 import { FormFooter } from './shared/FormFooter'
 import { getFieldTypeDef } from './field-types'
+import { LinkedFieldForm } from './LinkedFieldForm'
 
 function buildBaseSchema(existingNames: Set<string>, currentName: string) {
   return z.object({
@@ -126,7 +127,16 @@ export function EditFieldDialog({
         </DialogHeader>
 
         {/* key forces full remount (and form reset) when the edited field changes */}
-        {field && (
+        {field?.type === 'linked' && (
+          <LinkedFieldForm
+            key={field.id}
+            field={field}
+            existingNames={existingNames}
+            onClose={onClose}
+            onSave={onSave}
+          />
+        )}
+        {field && field.type !== 'linked' && (
           <GenericFieldForm
             key={field.id}
             field={field}

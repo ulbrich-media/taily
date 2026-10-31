@@ -9,3 +9,4 @@ export type FieldType =
   | 'phone'
   | 'radio'
   | 'heading'
+  | 'linked'

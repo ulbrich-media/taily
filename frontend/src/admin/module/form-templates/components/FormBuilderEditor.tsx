@@ -163,6 +163,9 @@ export function FormBuilderEditor({
             onDelete={fb.handleDelete}
             onRestore={fb.handleRestore}
             onRestoreAll={fb.restoreAll}
+            onUpdate={fb.updateField}
+            // Field Groups store values on the record itself, so no links.
+            hiddenTypes={isBound ? ['linked'] : undefined}
           />
 
           {/* Footer */}

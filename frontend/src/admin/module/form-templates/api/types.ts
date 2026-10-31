@@ -4,6 +4,7 @@
 
 import type { FormTemplateResource } from '@/api/types/form-templates'
 import type { FieldType } from '@/lib/form-schema/field-type.ts'
+import type { CustomFieldEntity } from '@/api/types/custom-fields'
 
 export interface FormTemplatesResponse {
   data: FormTemplateResource[]
@@ -82,6 +83,27 @@ export interface PhoneSettings {
   placeholder?: string
 }
 
+export interface FieldLink {
+  entity: CustomFieldEntity
+  /** `core.<column>` or `custom.<key>` */
+  field: string
+}
+
+/**
+ * A "Feld übernehmen" field: a copy of a person or animal field. `schema` and
+ * `ui` are the copied fragments and are emitted unchanged; only the
+ * placeholder (plus label, description, required) is editable.
+ */
+export interface LinkedSettings {
+  /** Unset only while a newly inserted field has not been picked yet. */
+  link?: FieldLink
+  /** Copied JSON Schema property, without `description`. */
+  schema: Record<string, unknown>
+  /** Copied ui_schema entry, without `ui:title`, `ui:placeholder` and the link. */
+  ui: Record<string, unknown>
+  placeholder?: string
+}
+
 export type FieldSettings =
   | TextSettings
   | NumberSettings
@@ -89,6 +111,7 @@ export type FieldSettings =
   | DateSettings
   | EmailSettings
   | PhoneSettings
+  | LinkedSettings
   | Record<string, never>
 
 export interface FormField {
