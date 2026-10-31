@@ -89,3 +89,14 @@ _Avoid_: Schema version, Template revision, Form version
 
 **Form Submission**: The data a user submitted against a specific Form Template Version. A Submission is permanently pinned to the Version that was active when it was first submitted.
 _Avoid_: Form response, Form data, Form entry
+
+### Custom fields
+
+**Custom Field**: A field defined by the Operating Organization on an Animal or Person, in addition to the fields Taily ships with. Its identity is its key. Its value is stored on the record itself and is not version-pinned.
+_Avoid_: Extra field, Additional attribute, Dynamic field
+
+**Field Group**: The binding of one Form Template to an entity, a section of its UI and a scope: a set of Animal Types for Animals, a set of roles for Persons (e.g. only Adopters). Filled fields stay visible outside the scope; the scope only decides where a field is offered and required. It also holds the per-field settings (e.g. whether a field is public).
+_Avoid_: Field set, Custom form, Field assignment
+
+**Linked Field**: A field in a Form Template that copies the definition of a core or Custom Field of an entity. Its submitted value pre-fills that entity when a Mediator acts on the submission (e.g. accepts an application).
+_Avoid_: Mapped field, Reference field

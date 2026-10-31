@@ -5,6 +5,9 @@ namespace Taily\Http\Resources\Api;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Taily\Support\CustomFields\CustomFieldDefinition;
+use Taily\Support\CustomFields\CustomFieldDefinitions;
+use Taily\Support\CustomFields\CustomFieldValue;
 
 class PublicAnimalResource extends JsonResource
 {
@@ -53,6 +56,11 @@ class PublicAnimalResource extends JsonResource
             ),
             'personality_traits' => $this->whenLoaded('personalityTraits', fn () => $this->resource->personalityTraits->pluck('value')->values()->all(), []
             ),
+            'custom_fields' => (object) collect(app(CustomFieldDefinitions::class)->publicAnimalFields($this->resource->animal_type_id))
+                ->mapWithKeys(fn (CustomFieldDefinition $field) => [$field->key => (new CustomFieldValue(
+                    $field, $this->resource->customFieldValue($field->key), true,
+                ))->toPublicArray()])
+                ->all(),
             // Metadata
             'created_at' => $this->resource->created_at,
             'updated_at' => $this->resource->updated_at,
@@ -62,7 +70,7 @@ class PublicAnimalResource extends JsonResource
             'media' => $this->resource->getMedia('pictures')
                 ->sortBy('order_column')
                 ->values()
-                ->map(fn (Media $media) => $this->resource->formatMedia($media)),
+                ->map(fn (Media $media) => $this->formatMedia($media)),
         ];
     }
 }

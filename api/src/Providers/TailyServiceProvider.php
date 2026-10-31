@@ -20,6 +20,7 @@ use Taily\Http\Middleware\EnsureUserIsAdmin;
 use Taily\Http\Middleware\ForceJsonResponse;
 use Taily\Http\Middleware\PublicApiCors;
 use Taily\Models\User;
+use Taily\Support\CustomFields\CustomFieldDefinitions;
 use Taily\Support\MediaUrlGenerator;
 
 class TailyServiceProvider extends ServiceProvider
@@ -30,6 +31,9 @@ class TailyServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->mergeConfigFrom(__DIR__.'/../../config/taily.php', 'taily');
+
+        // Custom field definitions are memoized for the duration of a request.
+        $this->app->scoped(CustomFieldDefinitions::class);
 
         // Set as early as possible so anything that reads this config key
         // gets the right value. This alone does NOT fix laravel/fortify's

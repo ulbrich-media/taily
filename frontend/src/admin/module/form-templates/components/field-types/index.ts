@@ -9,6 +9,7 @@ import { emailFieldType } from './email'
 import { phoneFieldType } from './phone'
 import { radioFieldType } from './radio'
 import { headingFieldType } from './heading'
+import { linkedFieldType } from './linked'
 
 export type { FieldTypeDefinition }
 
@@ -23,6 +24,7 @@ const fieldTypeRegistry = new Map<FieldType, FieldTypeDefinition>([
   ['phone', phoneFieldType],
   ['radio', radioFieldType],
   ['heading', headingFieldType],
+  ['linked', linkedFieldType],
 ])
 
 export function getFieldTypeDef(type: FieldType): FieldTypeDefinition {

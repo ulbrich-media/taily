@@ -2,12 +2,23 @@ import { PawPrint } from 'lucide-react'
 import { Badge } from '@/shadcn/components/ui/badge.tsx'
 import { Card, CardContent } from '@/shadcn/components/ui/card.tsx'
 import type { AnimalDetailResource } from '@/api/types/animals'
+import type { ReactNode } from 'react'
+import type { CustomFieldSection } from '@/api/types/custom-fields'
+import { CustomFieldMissingList } from '@/admin/module/custom-fields/components/CustomFieldMissingList'
 
 interface AnimalSidebarProps {
   animal: AnimalDetailResource
+  /** Links a missing custom field to the tab where it is edited. */
+  renderSectionLink?: (
+    section: CustomFieldSection,
+    children: ReactNode
+  ) => ReactNode
 }
 
-export function AnimalSidebar({ animal }: AnimalSidebarProps) {
+export function AnimalSidebar({
+  animal,
+  renderSectionLink,
+}: AnimalSidebarProps) {
   const profilePicture = animal.pictures?.find((p) => p.type === 'image')
 
   return (
@@ -86,6 +97,11 @@ export function AnimalSidebar({ animal }: AnimalSidebarProps) {
                 </div>
               </div>
             )}
+
+            <CustomFieldMissingList
+              missing={animal.custom_fields_missing}
+              renderSectionLink={renderSectionLink}
+            />
           </div>
         </CardContent>
       </Card>

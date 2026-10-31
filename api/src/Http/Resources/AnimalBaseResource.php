@@ -53,6 +53,7 @@ class AnimalBaseResource extends JsonResource
             'application_url' => $this->resource->application_url,
             'is_deceased' => $this->resource->is_deceased,
             'date_of_death' => $this->resource->date_of_death,
+            'custom_fields' => (object) ($this->resource->custom_fields ?? []),
             'compatibilities' => $this->whenLoaded('compatibilities', fn () => $this->resource->compatibilities->pluck('value')->values()->all(), []
             ),
             'personality_traits' => $this->whenLoaded('personalityTraits', fn () => $this->resource->personalityTraits->pluck('value')->values()->all(), []

@@ -15,12 +15,23 @@ import {
 import { toast } from 'sonner'
 import type { UpdatePersonRequest } from '@/admin/module/people/api/types.ts'
 import { toApiDate } from '@/components/field/DateInput.utils.ts'
+import type { CustomFieldDefinitionGroup } from '@/api/types/custom-fields'
+import { customFieldQueryKeys } from '@/admin/module/custom-fields/api/queries'
+import {
+  groupsForSection,
+  toCustomFieldsPayload,
+} from '@/admin/module/custom-fields/custom-fields.schema'
 
 interface PersonEditBasicPageProps {
   person: PersonDetailResource
+  /** Definitions shown for this person (all sections). */
+  customFieldGroups: CustomFieldDefinitionGroup[]
 }
 
-export function PersonEditBasicPage({ person }: PersonEditBasicPageProps) {
+export function PersonEditBasicPage({
+  person,
+  customFieldGroups,
+}: PersonEditBasicPageProps) {
   const queryClient = useQueryClient()
 
   const updateMutation = useMutation({
@@ -29,6 +40,10 @@ export function PersonEditBasicPage({ person }: PersonEditBasicPageProps) {
       queryClient.invalidateQueries({ queryKey: personQueryKeys.list })
       queryClient.invalidateQueries({
         queryKey: personQueryKeys.detail(person.id),
+      })
+      // Emptied out-of-scope groups disappear.
+      queryClient.invalidateQueries({
+        queryKey: customFieldQueryKeys.definitions('person'),
       })
       toast.success(response.message || 'Person erfolgreich aktualisiert')
     },
@@ -42,6 +57,7 @@ export function PersonEditBasicPage({ person }: PersonEditBasicPageProps) {
       ...data,
       date_of_birth: toApiDate(data.date_of_birth),
       organization_id: data.organization_id || null,
+      custom_fields: toCustomFieldsPayload(data.custom_fields),
     })
   }
 
@@ -53,6 +69,7 @@ export function PersonEditBasicPage({ person }: PersonEditBasicPageProps) {
       <CardContent>
         <PersonFormBasic
           defaultValues={person}
+          customFieldGroups={groupsForSection(customFieldGroups, 'basic')}
           onSubmit={handleSubmit}
           isSubmitting={updateMutation.isPending}
         />

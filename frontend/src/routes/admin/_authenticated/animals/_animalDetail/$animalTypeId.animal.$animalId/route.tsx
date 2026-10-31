@@ -9,6 +9,8 @@ import { Route as PlacementRoute } from './placement'
 import { Route as StatusRoute } from './status'
 import { Route as HistoryRoute } from './history'
 import { Route as PicturesRoute } from './pictures'
+import { Route as ExtraRoute } from './extra'
+import { customFieldDefinitionsQuery } from '@/admin/module/custom-fields/api/queries'
 import { PageHeader, tabLinkClass } from '@/components/layout/PageHeader.tsx'
 import { useBreadcrumbs } from '@/router/useBreadcrumbs'
 import { BreadcrumbNav } from '@/router/BreadcrumbNav'
@@ -25,9 +27,15 @@ export const Route = createFileRoute(
   '/admin/_authenticated/animals/_animalDetail/$animalTypeId/animal/$animalId'
 )({
   loader: async ({ params }) => {
-    const animal = await queryClient.ensureQueryData(
-      getAnimalQuery(params.animalId)
-    )
+    const [animal] = await Promise.all([
+      queryClient.ensureQueryData(getAnimalQuery(params.animalId)),
+      queryClient.ensureQueryData(
+        customFieldDefinitionsQuery({
+          entity: 'animal',
+          record_id: params.animalId,
+        })
+      ),
+    ])
     return { breadcrumb: animal.name }
   },
   component: RouteComponent,
@@ -37,6 +45,12 @@ function RouteComponent() {
   const breadcrumbs = useBreadcrumbs()
   const { animalId, animalTypeId } = Route.useParams()
   const { data: animal } = useSuspenseQuery(getAnimalQuery(animalId))
+  const { data: customFieldGroups } = useSuspenseQuery(
+    customFieldDefinitionsQuery({ entity: 'animal', record_id: animalId })
+  )
+  const hasExtraTab = customFieldGroups.some(
+    (group) => group.section === 'extra'
+  )
 
   return (
     <>
@@ -74,6 +88,14 @@ function RouteComponent() {
               >
                 Status
               </StatusRoute.Link>
+              {hasExtraTab && (
+                <ExtraRoute.Link
+                  params={{ animalTypeId, animalId }}
+                  className={tabLinkClass}
+                >
+                  Weitere Angaben
+                </ExtraRoute.Link>
+              )}
               <HistoryRoute.Link
                 params={{ animalTypeId, animalId }}
                 className={tabLinkClass}
@@ -109,7 +131,26 @@ function RouteComponent() {
       </div>
 
       <div className="lg:grid lg:grid-cols-[320px_1fr] lg:gap-6">
-        <AnimalSidebar animal={animal} />
+        <AnimalSidebar
+          animal={animal}
+          renderSectionLink={(section, children) =>
+            section === 'extra' ? (
+              <ExtraRoute.Link
+                params={{ animalTypeId, animalId }}
+                className="underline underline-offset-2 hover:text-primary"
+              >
+                {children}
+              </ExtraRoute.Link>
+            ) : (
+              <BasicRoute.Link
+                params={{ animalTypeId, animalId }}
+                className="underline underline-offset-2 hover:text-primary"
+              >
+                {children}
+              </BasicRoute.Link>
+            )
+          }
+        />
 
         <div className="space-y-6 mt-6 lg:mt-0">
           <Outlet />

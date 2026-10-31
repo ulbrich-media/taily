@@ -12,6 +12,7 @@ import type { EditorField } from './shared/EditorField'
 import { BaseFields } from './shared/BaseFields'
 import { FormFooter } from './shared/FormFooter'
 import { getFieldTypeDef } from './field-types'
+import { LinkedFieldForm } from './LinkedFieldForm'
 
 function buildBaseSchema(existingNames: Set<string>, currentName: string) {
   return z.object({
@@ -36,6 +37,7 @@ function buildBaseSchema(existingNames: Set<string>, currentName: string) {
 interface GenericFieldFormProps {
   field: EditorField
   existingNames: Set<string>
+  lockSavedKeys: boolean
   onClose: () => void
   onSave: (updated: EditorField) => void
 }
@@ -43,6 +45,7 @@ interface GenericFieldFormProps {
 function GenericFieldForm({
   field,
   existingNames,
+  lockSavedKeys,
   onClose,
   onSave,
 }: GenericFieldFormProps) {
@@ -88,6 +91,7 @@ function GenericFieldForm({
         control={form.control}
         showRequired={def.showRequired !== false}
         isNew={!!field._isNew}
+        nameLocked={lockSavedKeys && !field._isNew}
       />
       {def.SettingsSection && <def.SettingsSection control={form.control} />}
       <FormFooter onClose={onClose} />
@@ -98,6 +102,8 @@ function GenericFieldForm({
 interface EditFieldDialogProps {
   field: EditorField | null
   existingNames: Set<string>
+  /** Bound as custom fields: keys of already saved fields are read-only. */
+  lockSavedKeys?: boolean
   open: boolean
   onClose: () => void
   onSave: (updated: EditorField) => void
@@ -106,6 +112,7 @@ interface EditFieldDialogProps {
 export function EditFieldDialog({
   field,
   existingNames,
+  lockSavedKeys = false,
   open,
   onClose,
   onSave,
@@ -120,11 +127,21 @@ export function EditFieldDialog({
         </DialogHeader>
 
         {/* key forces full remount (and form reset) when the edited field changes */}
-        {field && (
+        {field?.type === 'linked' && (
+          <LinkedFieldForm
+            key={field.id}
+            field={field}
+            existingNames={existingNames}
+            onClose={onClose}
+            onSave={onSave}
+          />
+        )}
+        {field && field.type !== 'linked' && (
           <GenericFieldForm
             key={field.id}
             field={field}
             existingNames={existingNames}
+            lockSavedKeys={lockSavedKeys}
             onClose={onClose}
             onSave={onSave}
           />

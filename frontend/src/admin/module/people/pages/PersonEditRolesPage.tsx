@@ -14,6 +14,7 @@ import {
   CardTitle,
 } from '@/shadcn/components/ui/card.tsx'
 import { toast } from 'sonner'
+import { customFieldQueryKeys } from '@/admin/module/custom-fields/api/queries'
 
 interface PersonEditRolesPageProps {
   person: PersonDetailResource
@@ -32,6 +33,10 @@ export function PersonEditRolesPage({
       queryClient.invalidateQueries({ queryKey: personQueryKeys.list })
       queryClient.invalidateQueries({
         queryKey: personQueryKeys.detail(person.id),
+      })
+      // Roles decide which person groups are in scope.
+      queryClient.invalidateQueries({
+        queryKey: customFieldQueryKeys.definitions('person'),
       })
       toast.success(response.message || 'Rollen erfolgreich aktualisiert')
     },

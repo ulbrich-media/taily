@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { DndContext, DragOverlay } from '@dnd-kit/core'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { Save } from 'lucide-react'
+import { Info, Save } from 'lucide-react'
 import { Button } from '@/shadcn/components/ui/button'
 import { TextInput } from '@/components/field/TextInput'
 import { updateFormTemplate } from '../api/requests'
@@ -21,6 +21,14 @@ import { PageHeader } from '@/components/layout/PageHeader.tsx'
 import { FormGrid } from '@/components/form/FormGrid.tsx'
 import { Card, CardContent } from '@/shadcn/components/ui/card.tsx'
 import { Mark } from '@/components/typo/mark.tsx'
+import { Alert, AlertDescription } from '@/shadcn/components/ui/alert.tsx'
+import { customFieldQueryKeys } from '@/admin/module/custom-fields/api/queries'
+import { describeGroupPlacement } from '@/admin/module/custom-fields/custom-field-group.utils'
+import {
+  describeInvalidValues,
+  isCustomFieldRemovalCancelled,
+} from '@/admin/module/custom-fields/custom-field-removal'
+import { useCustomFieldRemovalConfirm } from '@/admin/module/custom-fields/useCustomFieldRemovalConfirm'
 
 const templateNameSchema = z.object({
   name: z.string().min(1, 'Name ist erforderlich').max(255),
@@ -42,6 +50,9 @@ export function FormBuilderEditor({
   breadcrumb,
 }: FormBuilderEditorProps) {
   const queryClient = useQueryClient()
+  const removal = useCustomFieldRemovalConfirm()
+  const customFieldGroups = template.custom_field_groups ?? []
+  const isBound = customFieldGroups.length > 0
 
   const nameForm = useForm<TemplateNameFormData>({
     resolver: zodResolver(templateNameSchema),
@@ -60,26 +71,44 @@ export function FormBuilderEditor({
   const saveMutation = useMutation({
     mutationFn: (data: TemplateNameFormData) => {
       const { schema, uiSchema } = buildJsonSchema(fb.fields, data.name)
-      return updateFormTemplate(template.id, {
-        name: data.name,
-        schema,
-        ui_schema: uiSchema,
-      })
+      // A bound template answers 409 when the save deletes values.
+      return removal.run((confirm) =>
+        updateFormTemplate(template.id, {
+          name: data.name,
+          schema,
+          ui_schema: uiSchema,
+          confirm_custom_field_removal: confirm,
+        })
+      )
     },
     onSuccess: async (data) => {
       await queryClient.invalidateQueries({
         queryKey: formTemplateQueryKeys.all,
       })
+      if (isBound) {
+        await queryClient.invalidateQueries({
+          queryKey: customFieldQueryKeys.all,
+        })
+      }
 
       if (data.new_version_created) {
         toast.success(`Neue Version v${data.data.version} wurde erstellt`)
       } else {
         toast.success(data.message)
       }
+      const invalid = data.custom_field_invalid_values ?? []
+      if (invalid.length > 0) {
+        toast.warning('Einige gespeicherte Werte passen nicht mehr', {
+          description: `${invalid.map(describeInvalidValues).join(' ')} Sie bleiben erhalten und müssen beim nächsten Bearbeiten korrigiert werden.`,
+          duration: 15000,
+        })
+      }
       onSaved(data.data.id)
     },
-    onError: () => {
-      toast.error('Fehler beim Speichern der Formularvorlage')
+    onError: (error) => {
+      if (isCustomFieldRemovalCancelled(error)) return
+      // e.g. a key collision with another Field Group (422 on `schema`)
+      toast.error(error.message || 'Fehler beim Speichern der Formularvorlage')
     },
   })
 
@@ -108,6 +137,18 @@ export function FormBuilderEditor({
             breadcrumb={breadcrumb}
           />
 
+          {isBound && (
+            <Alert>
+              <Info />
+              <AlertDescription>
+                Verwendet als Zusatzfelder:{' '}
+                {customFieldGroups.map(describeGroupPlacement).join(', ')}.
+                Feldnamen gespeicherter Felder sind gesperrt; entfernte Felder
+                oder Optionen löschen die erfassten Werte.
+              </AlertDescription>
+            </Alert>
+          )}
+
           <Card>
             <CardContent>
               <FormGrid>
@@ -132,6 +173,9 @@ export function FormBuilderEditor({
             onDelete={fb.handleDelete}
             onRestore={fb.handleRestore}
             onRestoreAll={fb.restoreAll}
+            onUpdate={fb.updateField}
+            // Field Groups store values on the record itself, so no links.
+            hiddenTypes={isBound ? ['linked'] : undefined}
           />
 
           {/* Footer */}
@@ -164,10 +208,12 @@ export function FormBuilderEditor({
         <EditFieldDialog
           field={fb.editingField}
           existingNames={existingNames}
+          lockSavedKeys={isBound}
           open={!!fb.editingField}
           onClose={() => fb.setEditingField(null)}
           onSave={fb.handleSaveField}
         />
+        {removal.dialog}
       </DndContext>
     </FormProvider>
   )

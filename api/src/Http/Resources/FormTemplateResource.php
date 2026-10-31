@@ -21,6 +21,13 @@ class FormTemplateResource extends JsonResource
             'submissions_count' => $this->resource->form_submissions_count ?? 0,
             'created_at' => $this->resource->created_at,
             'updated_at' => $version?->updated_at ?? $this->resource->updated_at,
+            'custom_field_groups' => $this->whenLoaded('customFieldGroups', fn () => $this->resource->customFieldGroups
+                ->map(fn ($group) => [
+                    'id' => $group->id,
+                    'entity' => $group->entity->value,
+                    'section' => $group->section,
+                    'title' => $group->title,
+                ])->values()->all(), []),
             'versions' => $this->whenLoaded(
                 'versions',
                 fn () => FormTemplateVersionResource::collection($this->resource->versions)

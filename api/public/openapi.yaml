@@ -174,7 +174,7 @@ components:
     Animal:
       type: object
       required: [id, do_publish, is_reserved, compatibilities, personality_traits,
-                 created_at, updated_at, vaccinations, medical_tests, media]
+                 custom_fields, created_at, updated_at, vaccinations, medical_tests, media]
       properties:
         id:
           type: integer
@@ -223,9 +223,6 @@ components:
           type: string
           nullable: true
         contract_notes:
-          type: string
-          nullable: true
-        internal_notes:
           type: string
           nullable: true
         is_neutered:
@@ -282,6 +279,17 @@ components:
           items:
             $ref: '#/components/schemas/Media'
           description: Images and videos, ordered by display order.
+        custom_fields:
+          type: object
+          description: >
+            Custom fields the organisation marked as public, keyed by their stable field key.
+            Every public field of the animal's type is present, with `value: null` when unset,
+            so the shape is the same for all animals of a type. The definitions are listed on
+            the animal type.
+          additionalProperties:
+            $ref: '#/components/schemas/CustomFieldValue'
+          example:
+            expected_size: { label: Erwartete Größe, type: select, value: large, display: Groß }
         created_at:
           type: string
           format: date-time
@@ -372,6 +380,59 @@ components:
           items:
             $ref: '#/components/schemas/MedicalTestTemplate'
           description: Medical test types defined as templates for this animal type.
+        custom_fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/CustomFieldDefinition'
+          description: Public custom fields of animals of this type, in display order.
+
+    CustomFieldValue:
+      type: object
+      required: [label, type, value, display]
+      properties:
+        label:
+          type: string
+        type:
+          $ref: '#/components/schemas/CustomFieldType'
+        value:
+          description: >
+            Raw value: string, number, boolean, `YYYY-MM-DD` for dates, the stable option key
+            for select/radio. `null` when unset.
+          nullable: true
+        display:
+          type: string
+          description: Human readable German value (option label, `Ja`/`Nein`, `d.m.Y`). Empty when unset.
+
+    CustomFieldDefinition:
+      type: object
+      required: [key, label, type]
+      properties:
+        key:
+          type: string
+          description: Stable key, also used in `Animal.custom_fields`.
+        label:
+          type: string
+        type:
+          $ref: '#/components/schemas/CustomFieldType'
+        options:
+          type: array
+          description: For select/radio fields, in the organisation's order (e.g. small → large).
+          items:
+            type: object
+            required: [value, label]
+            properties:
+              value:
+                type: string
+              label:
+                type: string
+        minimum:
+          type: number
+        maximum:
+          type: number
+
+    CustomFieldType:
+      type: string
+      enum: [text, textarea, number, checkbox, select, radio, date, email, phone]
 
     VaccinationTemplate:
       type: object

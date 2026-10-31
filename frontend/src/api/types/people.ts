@@ -4,6 +4,7 @@
 
 import type { AnimalTypeResource } from './animal-types'
 import type { OrganizationResource } from './organizations'
+import type { CustomFieldMissing } from './custom-fields'
 
 export interface PersonPicture {
   id: string
@@ -35,6 +36,8 @@ export interface PersonBaseResource {
   created_at: string
   updated_at: string
   roles: string[]
+  // Custom fields: flat key → value, {} when empty
+  custom_fields: Record<string, unknown>
 }
 
 // Relations loaded in both list and detail person endpoints.
@@ -55,4 +58,5 @@ export interface PersonListResource extends PersonWithRelations {
 // Relations loaded: organization, *AnimalTypes, media.
 export interface PersonDetailResource extends PersonWithRelations {
   pictures: PersonPicture[]
+  custom_fields_missing: CustomFieldMissing[]
 }
