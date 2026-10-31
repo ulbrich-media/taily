@@ -74,7 +74,7 @@ class CustomFieldGroup extends Model
         $version = $this->formTemplate?->latestVersion;
 
         return $version
-            ? CustomFieldDefinition::fromSchema($this, $version->schema ?? [], $version->ui_schema ?? [])
+            ? CustomFieldDefinition::fromSchema($this, $version->schema, $version->ui_schema ?? [])
             : [];
     }
 
@@ -100,7 +100,7 @@ class CustomFieldGroup extends Model
             return $typeIds === [] || in_array($animalTypeId, $typeIds, true);
         }
 
-        $roles = $this->person_roles ?? [];
+        $roles = $this->person_roles;
 
         return $roles === [] || array_intersect($roles, $personRoles) !== [];
     }

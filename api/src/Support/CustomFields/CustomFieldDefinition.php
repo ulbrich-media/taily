@@ -35,10 +35,12 @@ final class CustomFieldDefinition
 
         // ui:order first (it also lists headings, which have no property),
         // then any property the order does not mention.
-        $keys = array_values(array_filter(
-            $uiSchema['ui:order'] ?? [],
-            fn ($key) => is_string($key) && array_key_exists($key, $properties),
-        ));
+        $keys = [];
+        foreach ((array) ($uiSchema['ui:order'] ?? []) as $key) {
+            if (is_string($key) && array_key_exists($key, $properties)) {
+                $keys[] = $key;
+            }
+        }
         foreach (array_keys($properties) as $key) {
             if (! in_array($key, $keys, true)) {
                 $keys[] = $key;

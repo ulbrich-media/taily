@@ -2,12 +2,12 @@
 
 namespace Taily\Support\CustomFields;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Validation\ValidationException;
 use Taily\Enums\CustomFieldEntity;
+use Taily\Models\Animal;
 use Taily\Models\CustomFieldGroup;
+use Taily\Models\Person;
 use Taily\Support\JsonSchemaValidator;
-use Taily\Traits\HasCustomFields;
 
 /**
  * Validates custom field input and merges it into a record. See "Writing
@@ -29,17 +29,16 @@ class CustomFieldService
      * its required fields are enforced even when no key was sent. On update,
      * only the groups the input touches are validated.
      *
-     * @param  Model&HasCustomFields  $record
      * @param  array<string, mixed>  $input
      *
      * @throws ValidationException
      */
-    public function apply(Model $record, array $input, bool $creating = false): void
+    public function apply(Animal|Person $record, array $input, bool $creating = false): void
     {
         $entity = $record->customFieldEntity();
         [$animalTypeId, $roles] = $record->customFieldScope();
         $errors = [];
-        $values = $record->custom_fields ?? [];
+        $values = $record->getAttribute('custom_fields') ?? [];
 
         foreach ($input as $key => $value) {
             $field = $this->definitions->field($entity, (string) $key);
@@ -88,7 +87,7 @@ class CustomFieldService
             throw ValidationException::withMessages($errors);
         }
 
-        $record->custom_fields = $values;
+        $record->setAttribute('custom_fields', $values);
     }
 
     /**
@@ -109,7 +108,7 @@ class CustomFieldService
     private function coerce(CustomFieldDefinition $field, mixed $value): mixed
     {
         if ($field->type() === 'number' && is_string($value) && is_numeric($value)) {
-            return ($field->schema['type'] ?? null) === 'integer' ? (int) $value : $value + 0;
+            return str_contains($value, '.') || str_contains(strtolower($value), 'e') ? (float) $value : (int) $value;
         }
 
         return $value;

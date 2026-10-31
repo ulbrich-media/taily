@@ -7,7 +7,9 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Taily\Enums\CustomFieldEntity;
 use Taily\Http\Controllers\Controller;
+use Taily\Models\Animal;
 use Taily\Models\CustomFieldGroup;
+use Taily\Models\Person;
 use Taily\Support\CustomFields\CustomFieldDefinitions;
 use Taily\Support\CustomFields\LinkableFields;
 
@@ -31,7 +33,9 @@ class CustomFieldController extends Controller
         $entity = CustomFieldEntity::from($validated['entity']);
 
         if (! empty($validated['record_id'])) {
-            $record = $entity->modelClass()::findOrFail($validated['record_id']);
+            $record = $entity === CustomFieldEntity::ANIMAL
+                ? Animal::findOrFail($validated['record_id'])
+                : Person::findOrFail($validated['record_id']);
             $groups = $this->definitions->shownFor($record);
         } else {
             $groups = $this->definitions->inScope($entity, $validated['animal_type_id'] ?? null)
@@ -65,7 +69,7 @@ class CustomFieldController extends Controller
             'section' => $group->section,
             'position' => $group->position,
             'in_scope' => $inScope,
-            'field_settings' => (object) ($group->field_settings ?? []),
+            'field_settings' => (object) $group->field_settings,
             'template' => [
                 'id' => $group->form_template_id,
                 'version_id' => $version?->id,

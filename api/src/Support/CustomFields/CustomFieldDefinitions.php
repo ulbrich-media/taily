@@ -3,10 +3,10 @@
 namespace Taily\Support\CustomFields;
 
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Eloquent\Model;
 use Taily\Enums\CustomFieldEntity;
+use Taily\Models\Animal;
 use Taily\Models\CustomFieldGroup;
-use Taily\Traits\HasCustomFields;
+use Taily\Models\Person;
 
 /**
  * The Field Groups of each entity, loaded once per request and memoized, so
@@ -96,13 +96,12 @@ class CustomFieldDefinitions
      * Groups shown for a record: in scope, or holding a value for at least
      * one of their keys ("filled fields stay visible").
      *
-     * @param  Model&HasCustomFields  $record
      * @return list<array{group: CustomFieldGroup, in_scope: bool}>
      */
-    public function shownFor(Model $record): array
+    public function shownFor(Animal|Person $record): array
     {
         [$animalTypeId, $roles] = $record->customFieldScope();
-        $values = $record->custom_fields ?? [];
+        $values = $record->getAttribute('custom_fields') ?? [];
         $shown = [];
 
         foreach ($this->groups($record->customFieldEntity()) as $group) {

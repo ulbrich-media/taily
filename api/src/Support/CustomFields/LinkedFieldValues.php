@@ -18,7 +18,7 @@ class LinkedFieldValues
     {
         $version = $submission->formTemplateVersion;
 
-        return self::fromData($version?->ui_schema ?? [], $submission->data ?? []);
+        return self::fromData($version?->ui_schema ?? [], $submission->data);
     }
 
     /**

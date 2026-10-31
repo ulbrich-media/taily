@@ -96,6 +96,6 @@ class CustomFieldGroupController extends Controller
 
     private function fresh(CustomFieldGroup $group): CustomFieldGroup
     {
-        return $group->fresh(['formTemplate.latestVersion', 'animalTypes']);
+        return $group->load(['formTemplate.latestVersion', 'animalTypes']);
     }
 }

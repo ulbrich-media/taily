@@ -31,7 +31,7 @@ trait HasCustomFields
      */
     public function customFields(): array
     {
-        $values = $this->custom_fields ?? [];
+        $values = $this->getAttribute('custom_fields') ?? [];
         $result = [];
 
         foreach (app(CustomFieldDefinitions::class)->shownFor($this) as ['group' => $group, 'in_scope' => $inScope]) {
@@ -53,7 +53,7 @@ trait HasCustomFields
 
     public function customFieldValue(string $key): mixed
     {
-        return ($this->custom_fields ?? [])[$key] ?? null;
+        return ($this->getAttribute('custom_fields') ?? [])[$key] ?? null;
     }
 
     /**
