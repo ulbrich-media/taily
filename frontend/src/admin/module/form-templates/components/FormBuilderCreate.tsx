@@ -104,6 +104,7 @@ export function FormBuilderCreate({
           onDelete={fb.handleDelete}
           onRestore={fb.handleRestore}
           onRestoreAll={fb.restoreAll}
+          onUpdate={fb.updateField}
         />
 
         {/* Footer */}

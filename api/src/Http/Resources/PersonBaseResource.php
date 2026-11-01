@@ -27,6 +27,7 @@ class PersonBaseResource extends JsonResource
             'mobile' => $this->resource->mobile,
             'created_at' => $this->resource->created_at,
             'updated_at' => $this->resource->updated_at,
+            'custom_fields' => (object) ($this->resource->custom_fields ?? []),
             'roles' => $this->resource->roles,
             // Relations (only included when eager-loaded)
             'organization' => $this->whenLoaded('organization', fn ($v) => $v ? new OrganizationResource($v) : null),

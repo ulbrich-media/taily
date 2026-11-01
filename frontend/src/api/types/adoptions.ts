@@ -5,6 +5,7 @@
 import type { AnimalListResource, AnimalDetailResource } from './animals'
 import type { PersonListResource, PersonDetailResource } from './people'
 import type { TransportListResource } from '@/api/types/transports.ts'
+import type { CustomFieldMissing } from './custom-fields'
 
 export type AdoptionStepStatus = 'not_started' | 'pending' | 'finished'
 export type AdoptionStatus = 'pending' | 'in_progress' | 'canceled' | 'done'
@@ -100,4 +101,9 @@ export interface AdoptionDetailResource extends AdoptionBaseResource {
   contract_source: ContractSource | null
   contract_signing_process: ContractSigningProcess | null
   transport: TransportListResource | null
+  // Missing required custom fields of the animal and the applicant
+  custom_fields_missing: {
+    animal: CustomFieldMissing[]
+    applicant: CustomFieldMissing[]
+  }
 }

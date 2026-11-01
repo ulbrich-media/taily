@@ -33,7 +33,14 @@ interface DynamicFormFieldsProps {
   control: Control<FieldValues>
   disabled?: boolean
   namePrefix?: string
+  /**
+   * `stack` (default): one field per row. `grid`: two columns like FormGrid,
+   * with headings, textareas and radio groups spanning the full width.
+   */
+  layout?: 'stack' | 'grid'
 }
+
+const FULL_WIDTH_TYPES = new Set(['heading', 'textarea', 'radio'])
 
 function buildRules(
   key: string,
@@ -100,6 +107,7 @@ export function DynamicFormFields({
   control,
   disabled = false,
   namePrefix = 'form_data',
+  layout = 'stack',
 }: DynamicFormFieldsProps) {
   const uiSchema = rawUiSchema ?? {}
 
@@ -109,334 +117,353 @@ export function DynamicFormFields({
   const uiOrder = uiSchema['ui:order'] as string[] | undefined
   const orderedKeys = resolveFieldOrder(schema.properties, uiOrder, uiSchema)
 
-  return (
-    <div className="space-y-4">
-      {orderedKeys.map((key) => {
-        const prop = schema.properties?.[key] ?? {}
-        const fieldName = `${namePrefix}.${key}`
-        const uiOptions = (uiSchema[key] ?? {}) as UiSchemaFieldOptions
-        const title = uiOptions['ui:title'] ?? prop.title ?? key
-        const placeholder = uiOptions['ui:placeholder']
-        const isRequired = required.includes(key)
-        const rules = buildRules(key, prop, required)
-        const fieldType = detectFieldType(prop, uiOptions)
+  const renderField = (key: string) => {
+    const prop = schema.properties?.[key] ?? {}
+    const fieldName = `${namePrefix}.${key}`
+    const uiOptions = (uiSchema[key] ?? {}) as UiSchemaFieldOptions
+    const title = uiOptions['ui:title'] ?? prop.title ?? key
+    const placeholder = uiOptions['ui:placeholder']
+    const isRequired = required.includes(key)
+    const rules = buildRules(key, prop, required)
+    const fieldType = detectFieldType(prop, uiOptions)
 
-        switch (fieldType) {
-          case 'heading':
-            return (
-              <h3 key={key} className="text-lg font-heading pt-2">
-                {title}
-              </h3>
-            )
+    switch (fieldType) {
+      case 'heading':
+        return (
+          <h3 key={key} className="text-lg font-heading pt-2">
+            {title}
+          </h3>
+        )
 
-          case 'checkbox':
-            return (
-              <Controller
-                key={key}
-                name={fieldName}
-                control={control}
-                rules={rules}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldSet>
-                      <Field orientation="horizontal">
-                        <Switch
-                          id={fieldName}
-                          checked={!!field.value}
-                          onCheckedChange={field.onChange}
-                          disabled={disabled}
-                        />
-                        <FieldLabel htmlFor={fieldName}>
-                          {title}
-                          {isRequired && <RequiredBadge />}
-                        </FieldLabel>
-                      </Field>
-                    </FieldSet>
-                    {prop.description && (
-                      <FieldDescription>{prop.description}</FieldDescription>
-                    )}
-                    <FieldError errors={[fieldState.error]} />
-                  </Field>
-                )}
-              />
-            )
-
-          case 'radio': {
-            const labelMap = uiOptions['ui:options']?.labels
-            const options = (prop.enum ?? []).map((val) => ({
-              value: val,
-              label: labelMap?.find((l) => l.value === val)?.label ?? val,
-            }))
-            return (
-              <Controller
-                key={key}
-                name={fieldName}
-                control={control}
-                rules={rules}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel>
-                      {title}
-                      {isRequired && <RequiredBadge />}
-                    </FieldLabel>
-                    <RadioGroup
-                      value={field.value ?? ''}
-                      onValueChange={field.onChange}
-                      disabled={disabled}
-                    >
-                      {options.map((opt) => (
-                        <Field key={opt.value} orientation="horizontal">
-                          <RadioGroupItem
-                            value={opt.value}
-                            id={`${fieldName}-${opt.value}`}
-                          />
-                          <FieldLabel htmlFor={`${fieldName}-${opt.value}`}>
-                            {opt.label}
-                          </FieldLabel>
-                        </Field>
-                      ))}
-                    </RadioGroup>
-                    {prop.description && (
-                      <FieldDescription>{prop.description}</FieldDescription>
-                    )}
-                    <FieldError errors={[fieldState.error]} />
-                  </Field>
-                )}
-              />
-            )
-          }
-
-          case 'select': {
-            const labelMap = uiOptions['ui:options']?.labels
-            const options = (prop.enum ?? []).map((val) => ({
-              value: val,
-              label: labelMap?.find((l) => l.value === val)?.label ?? val,
-            }))
-            return (
-              <Controller
-                key={key}
-                name={fieldName}
-                control={control}
-                rules={rules}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor={fieldName}>
-                      {title}
-                      {isRequired && <RequiredBadge />}
-                    </FieldLabel>
-                    <Select
-                      value={field.value ?? ''}
-                      onValueChange={field.onChange}
-                      disabled={disabled}
-                    >
-                      <SelectTrigger id={fieldName}>
-                        <SelectValue
-                          placeholder={placeholder ?? 'Bitte wählen...'}
-                        />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {options.map((opt) => (
-                          <SelectItem key={opt.value} value={opt.value}>
-                            {opt.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {prop.description && (
-                      <FieldDescription>{prop.description}</FieldDescription>
-                    )}
-                    <FieldError errors={[fieldState.error]} />
-                  </Field>
-                )}
-              />
-            )
-          }
-
-          case 'textarea': {
-            const rows = uiOptions['ui:options']?.rows ?? 4
-            return (
-              <Controller
-                key={key}
-                name={fieldName}
-                control={control}
-                rules={rules}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor={fieldName}>
-                      {title}
-                      {isRequired && <RequiredBadge />}
-                    </FieldLabel>
-                    <Textarea
-                      {...field}
+      case 'checkbox':
+        return (
+          <Controller
+            key={key}
+            name={fieldName}
+            control={control}
+            rules={rules}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldSet>
+                  <Field orientation="horizontal">
+                    <Switch
                       id={fieldName}
-                      disabled={disabled}
-                      rows={rows}
-                      placeholder={placeholder}
-                    />
-                    {prop.description && (
-                      <FieldDescription>{prop.description}</FieldDescription>
-                    )}
-                    <FieldError errors={[fieldState.error]} />
-                  </Field>
-                )}
-              />
-            )
-          }
-
-          case 'number':
-            return (
-              <Controller
-                key={key}
-                name={fieldName}
-                control={control}
-                rules={rules}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor={fieldName}>
-                      {title}
-                      {isRequired && <RequiredBadge />}
-                    </FieldLabel>
-                    <Input
-                      {...field}
-                      id={fieldName}
-                      type="number"
-                      disabled={disabled}
-                      min={prop.minimum}
-                      max={prop.maximum}
-                      placeholder={placeholder}
-                      onChange={(e) =>
-                        field.onChange(
-                          e.target.value === ''
-                            ? undefined
-                            : e.target.valueAsNumber
-                        )
-                      }
-                    />
-                    {prop.description && (
-                      <FieldDescription>{prop.description}</FieldDescription>
-                    )}
-                    <FieldError errors={[fieldState.error]} />
-                  </Field>
-                )}
-              />
-            )
-
-          case 'date':
-            return (
-              <Controller
-                key={key}
-                name={fieldName}
-                control={control}
-                rules={rules}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor={fieldName}>
-                      {title}
-                      {isRequired && <RequiredBadge />}
-                    </FieldLabel>
-                    <Input
-                      {...field}
-                      id={fieldName}
-                      type="date"
+                      checked={!!field.value}
+                      onCheckedChange={field.onChange}
                       disabled={disabled}
                     />
-                    {prop.description && (
-                      <FieldDescription>{prop.description}</FieldDescription>
-                    )}
-                    <FieldError errors={[fieldState.error]} />
-                  </Field>
-                )}
-              />
-            )
-
-          case 'email':
-            return (
-              <Controller
-                key={key}
-                name={fieldName}
-                control={control}
-                rules={rules}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor={fieldName}>
                       {title}
                       {isRequired && <RequiredBadge />}
                     </FieldLabel>
-                    <Input
-                      {...field}
-                      id={fieldName}
-                      type="email"
-                      disabled={disabled}
-                      placeholder={placeholder}
-                    />
-                    {prop.description && (
-                      <FieldDescription>{prop.description}</FieldDescription>
-                    )}
-                    <FieldError errors={[fieldState.error]} />
                   </Field>
+                </FieldSet>
+                {prop.description && (
+                  <FieldDescription>{prop.description}</FieldDescription>
                 )}
-              />
-            )
+                <FieldError errors={[fieldState.error]} />
+              </Field>
+            )}
+          />
+        )
 
-          case 'phone':
-            return (
-              <Controller
-                key={key}
-                name={fieldName}
-                control={control}
-                rules={rules}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor={fieldName}>
-                      {title}
-                      {isRequired && <RequiredBadge />}
-                    </FieldLabel>
-                    <Input
-                      {...field}
-                      id={fieldName}
-                      type="tel"
-                      disabled={disabled}
-                      placeholder={placeholder}
-                    />
-                    {prop.description && (
-                      <FieldDescription>{prop.description}</FieldDescription>
-                    )}
-                    <FieldError errors={[fieldState.error]} />
-                  </Field>
+      case 'radio': {
+        const labelMap = uiOptions['ui:options']?.labels
+        const options = (prop.enum ?? []).map((val) => ({
+          value: val,
+          label: labelMap?.find((l) => l.value === val)?.label ?? val,
+        }))
+        return (
+          <Controller
+            key={key}
+            name={fieldName}
+            control={control}
+            rules={rules}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel>
+                  {title}
+                  {isRequired && <RequiredBadge />}
+                </FieldLabel>
+                <RadioGroup
+                  value={field.value ?? ''}
+                  onValueChange={field.onChange}
+                  disabled={disabled}
+                >
+                  {options.map((opt) => (
+                    <Field key={opt.value} orientation="horizontal">
+                      <RadioGroupItem
+                        value={opt.value}
+                        id={`${fieldName}-${opt.value}`}
+                      />
+                      <FieldLabel htmlFor={`${fieldName}-${opt.value}`}>
+                        {opt.label}
+                      </FieldLabel>
+                    </Field>
+                  ))}
+                </RadioGroup>
+                {prop.description && (
+                  <FieldDescription>{prop.description}</FieldDescription>
                 )}
-              />
-            )
+                <FieldError errors={[fieldState.error]} />
+              </Field>
+            )}
+          />
+        )
+      }
 
-          case 'text':
-            return (
-              <Controller
-                key={key}
-                name={fieldName}
-                control={control}
-                rules={rules}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor={fieldName}>
-                      {title}
-                      {isRequired && <RequiredBadge />}
-                    </FieldLabel>
-                    <Input
-                      {...field}
-                      id={fieldName}
-                      type="text"
-                      disabled={disabled}
-                      placeholder={placeholder}
+      case 'select': {
+        const labelMap = uiOptions['ui:options']?.labels
+        const options = (prop.enum ?? []).map((val) => ({
+          value: val,
+          label: labelMap?.find((l) => l.value === val)?.label ?? val,
+        }))
+        return (
+          <Controller
+            key={key}
+            name={fieldName}
+            control={control}
+            rules={rules}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor={fieldName}>
+                  {title}
+                  {isRequired && <RequiredBadge />}
+                </FieldLabel>
+                <Select
+                  value={field.value ?? ''}
+                  onValueChange={field.onChange}
+                  disabled={disabled}
+                >
+                  <SelectTrigger id={fieldName}>
+                    <SelectValue
+                      placeholder={placeholder ?? 'Bitte wählen...'}
                     />
-                    {prop.description && (
-                      <FieldDescription>{prop.description}</FieldDescription>
-                    )}
-                    <FieldError errors={[fieldState.error]} />
-                  </Field>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {options.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {prop.description && (
+                  <FieldDescription>{prop.description}</FieldDescription>
                 )}
-              />
-            )
-        }
-      })}
-    </div>
-  )
+                <FieldError errors={[fieldState.error]} />
+              </Field>
+            )}
+          />
+        )
+      }
+
+      case 'textarea': {
+        const rows = uiOptions['ui:options']?.rows ?? 4
+        return (
+          <Controller
+            key={key}
+            name={fieldName}
+            control={control}
+            rules={rules}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor={fieldName}>
+                  {title}
+                  {isRequired && <RequiredBadge />}
+                </FieldLabel>
+                <Textarea
+                  {...field}
+                  id={fieldName}
+                  disabled={disabled}
+                  rows={rows}
+                  placeholder={placeholder}
+                />
+                {prop.description && (
+                  <FieldDescription>{prop.description}</FieldDescription>
+                )}
+                <FieldError errors={[fieldState.error]} />
+              </Field>
+            )}
+          />
+        )
+      }
+
+      case 'number':
+        return (
+          <Controller
+            key={key}
+            name={fieldName}
+            control={control}
+            rules={rules}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor={fieldName}>
+                  {title}
+                  {isRequired && <RequiredBadge />}
+                </FieldLabel>
+                <Input
+                  {...field}
+                  id={fieldName}
+                  type="number"
+                  disabled={disabled}
+                  min={prop.minimum}
+                  max={prop.maximum}
+                  placeholder={placeholder}
+                  onChange={(e) =>
+                    field.onChange(
+                      e.target.value === '' ? undefined : e.target.valueAsNumber
+                    )
+                  }
+                />
+                {prop.description && (
+                  <FieldDescription>{prop.description}</FieldDescription>
+                )}
+                <FieldError errors={[fieldState.error]} />
+              </Field>
+            )}
+          />
+        )
+
+      case 'date':
+        return (
+          <Controller
+            key={key}
+            name={fieldName}
+            control={control}
+            rules={rules}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor={fieldName}>
+                  {title}
+                  {isRequired && <RequiredBadge />}
+                </FieldLabel>
+                <Input
+                  {...field}
+                  id={fieldName}
+                  type="date"
+                  disabled={disabled}
+                />
+                {prop.description && (
+                  <FieldDescription>{prop.description}</FieldDescription>
+                )}
+                <FieldError errors={[fieldState.error]} />
+              </Field>
+            )}
+          />
+        )
+
+      case 'email':
+        return (
+          <Controller
+            key={key}
+            name={fieldName}
+            control={control}
+            rules={rules}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor={fieldName}>
+                  {title}
+                  {isRequired && <RequiredBadge />}
+                </FieldLabel>
+                <Input
+                  {...field}
+                  id={fieldName}
+                  type="email"
+                  disabled={disabled}
+                  placeholder={placeholder}
+                />
+                {prop.description && (
+                  <FieldDescription>{prop.description}</FieldDescription>
+                )}
+                <FieldError errors={[fieldState.error]} />
+              </Field>
+            )}
+          />
+        )
+
+      case 'phone':
+        return (
+          <Controller
+            key={key}
+            name={fieldName}
+            control={control}
+            rules={rules}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor={fieldName}>
+                  {title}
+                  {isRequired && <RequiredBadge />}
+                </FieldLabel>
+                <Input
+                  {...field}
+                  id={fieldName}
+                  type="tel"
+                  disabled={disabled}
+                  placeholder={placeholder}
+                />
+                {prop.description && (
+                  <FieldDescription>{prop.description}</FieldDescription>
+                )}
+                <FieldError errors={[fieldState.error]} />
+              </Field>
+            )}
+          />
+        )
+
+      case 'text':
+        return (
+          <Controller
+            key={key}
+            name={fieldName}
+            control={control}
+            rules={rules}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor={fieldName}>
+                  {title}
+                  {isRequired && <RequiredBadge />}
+                </FieldLabel>
+                <Input
+                  {...field}
+                  id={fieldName}
+                  type="text"
+                  disabled={disabled}
+                  placeholder={placeholder}
+                />
+                {prop.description && (
+                  <FieldDescription>{prop.description}</FieldDescription>
+                )}
+                <FieldError errors={[fieldState.error]} />
+              </Field>
+            )}
+          />
+        )
+    }
+  }
+
+  if (layout === 'grid') {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {orderedKeys.map((key) => {
+          const fieldType = detectFieldType(
+            schema.properties?.[key] ?? {},
+            (uiSchema[key] ?? {}) as UiSchemaFieldOptions
+          )
+          return (
+            <div
+              key={key}
+              className={
+                FULL_WIDTH_TYPES.has(fieldType) ? 'md:col-span-2' : undefined
+              }
+            >
+              {renderField(key)}
+            </div>
+          )
+        })}
+      </div>
+    )
+  }
+
+  return <div className="space-y-4">{orderedKeys.map(renderField)}</div>
 }

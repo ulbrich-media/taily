@@ -7,6 +7,7 @@ import {
   Building2,
   ClipboardList,
   PawPrint,
+  ListPlus,
 } from 'lucide-react'
 import {
   Alert,
@@ -15,7 +16,10 @@ import {
 } from '@/shadcn/components/ui/alert.tsx'
 import { useAuth } from '@/lib/auth.hook.tsx'
 import { PageHeader } from '@/components/layout/PageHeader'
-import { NavigationCards } from '@/components/navigation/NavigationCards'
+import {
+  NavigationCards,
+  type NavigationCard,
+} from '@/components/navigation/NavigationCards'
 
 interface SettingsPageProps {
   usersAction: ReactNode
@@ -24,6 +28,7 @@ interface SettingsPageProps {
   medicalTestsAction: ReactNode
   organizationsAction: ReactNode
   formTemplatesAction: ReactNode
+  customFieldsAction: ReactNode
   breadcrumb?: ReactNode
 }
 
@@ -34,6 +39,7 @@ export function SettingsPage({
   medicalTestsAction,
   organizationsAction,
   formTemplatesAction,
+  customFieldsAction,
   breadcrumb,
 }: SettingsPageProps) {
   const { isAdmin } = useAuth()
@@ -105,6 +111,19 @@ export function SettingsPage({
               'Erstelle und verwalte Formularvorlagen für Inspektionen, Bewerbungen und andere dynamische Formulare.',
             actions: formTemplatesAction,
           },
+          // The Field Group admin is not readable for non-admins.
+          ...(isAdmin
+            ? [
+                {
+                  icon: ListPlus,
+                  title: 'Zusatzfelder',
+                  subtitle: 'Eigene Felder für Tiere und Personen',
+                  description:
+                    'Binde Formularvorlagen als zusätzliche Felder an Tiere und Personen und lege fest, für wen sie gelten.',
+                  actions: customFieldsAction,
+                } satisfies NavigationCard,
+              ]
+            : []),
         ]}
       />
     </div>

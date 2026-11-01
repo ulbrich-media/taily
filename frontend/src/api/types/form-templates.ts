@@ -1,4 +1,5 @@
 import type { JsonSchema, UiSchema } from './form-schemas'
+import type { FormTemplateCustomFieldGroupRef } from './custom-fields'
 
 export type { JsonSchema, UiSchema } from './form-schemas'
 
@@ -24,6 +25,8 @@ export interface FormTemplateResource {
   schema: JsonSchema
   ui_schema: UiSchema | null
   submissions_count: number
+  // Field Groups this template is bound to as custom fields ([] if none)
+  custom_field_groups: FormTemplateCustomFieldGroupRef[]
   created_at: string
   updated_at: string
   versions?: FormTemplateVersionResource[]

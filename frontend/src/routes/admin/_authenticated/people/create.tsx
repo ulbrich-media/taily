@@ -4,10 +4,17 @@ import { queryClient } from '@/lib/queryClient'
 import { listOrganizationsQuery } from '@/admin/module/organizations/api/queries'
 import { Route as PeopleListRoute } from '@/routes/admin/_authenticated/people/index'
 import { Route as PersonDetailRoute } from '@/routes/admin/_authenticated/people/$id/index'
+import { useSuspenseQuery } from '@tanstack/react-query'
+import { customFieldDefinitionsQuery } from '@/admin/module/custom-fields/api/queries'
 
 export const Route = createFileRoute('/admin/_authenticated/people/create')({
   loader: async () => {
-    await queryClient.ensureQueryData(listOrganizationsQuery)
+    await Promise.all([
+      queryClient.ensureQueryData(listOrganizationsQuery),
+      queryClient.ensureQueryData(
+        customFieldDefinitionsQuery({ entity: 'person' })
+      ),
+    ])
   },
   component: RouteComponent,
 })
@@ -15,6 +22,9 @@ export const Route = createFileRoute('/admin/_authenticated/people/create')({
 function RouteComponent() {
   const navigateToList = PeopleListRoute.useNavigate()
   const navigateToDetail = PersonDetailRoute.useNavigate()
+  const { data: customFieldGroups } = useSuspenseQuery(
+    customFieldDefinitionsQuery({ entity: 'person' })
+  )
 
   const handleCreated = (id: string) => {
     navigateToDetail({ params: { id } })
@@ -24,5 +34,11 @@ function RouteComponent() {
     navigateToList({})
   }
 
-  return <PersonCreatePage onCreated={handleCreated} onCancel={handleCancel} />
+  return (
+    <PersonCreatePage
+      customFieldGroups={customFieldGroups}
+      onCreated={handleCreated}
+      onCancel={handleCancel}
+    />
+  )
 }

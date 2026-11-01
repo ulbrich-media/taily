@@ -11,6 +11,7 @@ use Taily\Http\Requests\PersonIndexRequest;
 use Taily\Http\Resources\PersonDetailResource;
 use Taily\Http\Resources\PersonListResource;
 use Taily\Models\Person;
+use Taily\Support\CustomFields\CustomFieldService;
 
 class PersonController extends Controller
 {
@@ -103,7 +104,7 @@ class PersonController extends Controller
     /**
      * Store a newly created person in storage.
      */
-    public function store(Request $request): JsonResponse
+    public function store(Request $request, CustomFieldService $customFields): JsonResponse
     {
         $validated = $request->validate([
             'first_name' => 'required|string|max:255',
@@ -119,9 +120,12 @@ class PersonController extends Controller
             'phone' => 'string|max:255',
             'mobile' => 'string|max:255',
             'date_of_birth' => 'nullable|date',
+            'custom_fields' => 'sometimes|array',
         ]);
 
-        $person = Person::create($validated);
+        $person = new Person($validated);
+        $customFields->apply($person, $request->input('custom_fields', []), creating: true);
+        $person->save();
         $person->load(['organization', 'inspectorAnimalTypes', 'mediatorAnimalTypes', 'fosterAnimalTypes', 'media']);
 
         return response()->json([
@@ -143,7 +147,7 @@ class PersonController extends Controller
     /**
      * Update the specified person in storage.
      */
-    public function update(Request $request, Person $person): JsonResponse
+    public function update(Request $request, Person $person, CustomFieldService $customFields): JsonResponse
     {
         $validated = $request->validate([
             'first_name' => 'sometimes|required|string|max:255',
@@ -165,9 +169,12 @@ class PersonController extends Controller
             'mediator_animal_type_ids.*' => 'uuid|exists:animal_types,id',
             'foster_animal_type_ids' => 'sometimes|array',
             'foster_animal_type_ids.*' => 'uuid|exists:animal_types,id',
+            'custom_fields' => 'sometimes|array',
         ]);
 
-        $person->update($validated);
+        $person->fill($validated);
+        $customFields->apply($person, $request->input('custom_fields', []));
+        $person->save();
 
         // Sync inspector animal types if provided
         if ($request->has('inspector_animal_type_ids')) {

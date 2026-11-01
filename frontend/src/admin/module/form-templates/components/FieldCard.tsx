@@ -7,6 +7,7 @@ import type { FieldType } from '@/lib/form-schema/field-type.ts'
 import { cn } from '@/shadcn/lib/utils'
 import type { EditorField } from './shared/EditorField'
 import { getFieldTypeDef } from './field-types'
+import { LinkedSourceBadge } from './LinkedSourceBadge'
 
 export type { EditorField }
 
@@ -15,6 +16,8 @@ interface FieldCardProps {
   onEdit: (field: EditorField) => void
   onDelete: (id: string) => void
   onRestore: (id: string) => void
+  /** Replace the field in place (re-copying a linked field). */
+  onUpdate?: (field: EditorField) => void
 }
 
 export function SortableFieldCard({
@@ -22,6 +25,7 @@ export function SortableFieldCard({
   onEdit,
   onDelete,
   onRestore,
+  onUpdate,
 }: FieldCardProps) {
   const {
     attributes,
@@ -126,6 +130,9 @@ export function SortableFieldCard({
               {chip}
             </Badge>
           ))}
+          {field.type === 'linked' && !field._deleted && (
+            <LinkedSourceBadge field={field} onUpdate={onUpdate} />
+          )}
         </div>
       </div>
 

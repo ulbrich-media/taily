@@ -40,7 +40,8 @@ export function jsonSchemaToZod(
 
 const REQUIRED_MSG = 'Dieses Feld ist erforderlich'
 
-function buildPropertySchema(
+/** The Zod schema of a single property, as used by jsonSchemaToZod. */
+export function buildPropertySchema(
   prop: JsonSchemaProperty,
   isRequired: boolean
 ): z.ZodTypeAny {

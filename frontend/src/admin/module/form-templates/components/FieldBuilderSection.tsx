@@ -10,6 +10,7 @@ import { SortableFieldCard } from './FieldCard'
 import type { EditorField } from './shared/EditorField'
 import { getFieldTypeDef } from './field-types'
 import { DROPPABLE_ID } from './schema'
+import type { FieldType } from '@/lib/form-schema/field-type'
 
 const PLACEHOLDER_ID = '__placeholder__'
 
@@ -82,6 +83,9 @@ interface FieldBuilderSectionProps {
   onDelete: (id: string) => void
   onRestore: (id: string) => void
   onRestoreAll: () => void
+  onUpdate?: (field: EditorField) => void
+  /** Field types left out of the palette. */
+  hiddenTypes?: FieldType[]
 }
 
 export function FieldBuilderSection({
@@ -92,6 +96,8 @@ export function FieldBuilderSection({
   onDelete,
   onRestore,
   onRestoreAll,
+  onUpdate,
+  hiddenTypes,
 }: FieldBuilderSectionProps) {
   const activeCount = fields.filter(
     (f) => !f._deleted && f.id !== PLACEHOLDER_ID
@@ -101,7 +107,7 @@ export function FieldBuilderSection({
     <div className="flex flex-col gap-6">
       {/* Two-column builder */}
       <div className="grid grid-cols-1 md:grid-cols-[220px_1fr] gap-6 items-start">
-        <FieldPalette />
+        <FieldPalette hiddenTypes={hiddenTypes} />
 
         <div className="flex flex-col gap-3">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
@@ -128,6 +134,7 @@ export function FieldBuilderSection({
                     onEdit={onEdit}
                     onDelete={onDelete}
                     onRestore={onRestore}
+                    onUpdate={onUpdate}
                   />
                 )
               )}

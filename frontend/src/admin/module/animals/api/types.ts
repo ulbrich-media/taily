@@ -30,6 +30,8 @@ export interface CreateAnimalRequest {
   character_description?: string
   contract_notes?: string
   internal_notes?: string
+  // Custom fields of the groups shown on the saved tab; null/'' clears a value
+  custom_fields?: Record<string, unknown>
 }
 
 export interface UpdateAnimalRequest extends CreateAnimalRequest {

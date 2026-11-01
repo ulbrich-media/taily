@@ -8,7 +8,7 @@ import type { ReactNode } from 'react'
 import { cn } from '@/shadcn/lib/utils.ts'
 
 interface FormSectionProps {
-  title: string
+  title: ReactNode
   titleHidden?: boolean
   description?: string
   children: ReactNode

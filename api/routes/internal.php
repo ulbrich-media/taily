@@ -23,6 +23,8 @@ use Taily\Http\Controllers\Internal\AnimalTypeController;
 use Taily\Http\Controllers\Internal\ApiTokenController;
 use Taily\Http\Controllers\Internal\ContractSigningController;
 use Taily\Http\Controllers\Internal\ContractSigningSubmissionController;
+use Taily\Http\Controllers\Internal\CustomFieldController;
+use Taily\Http\Controllers\Internal\CustomFieldGroupController;
 use Taily\Http\Controllers\Internal\FormTemplateController;
 use Taily\Http\Controllers\Internal\InvitationController;
 use Taily\Http\Controllers\Internal\MediaController;
@@ -218,6 +220,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/form-templates/{formTemplate}', [FormTemplateController::class, 'show']);
     Route::put('/form-templates/{formTemplate}', [FormTemplateController::class, 'update']);
     Route::post('/form-templates/{formTemplate}/validate', [FormTemplateController::class, 'validateData']);
+
+    // Custom fields: definitions for rendering (everyone), Field Groups (admins)
+    Route::get('/custom-fields/definitions', [CustomFieldController::class, 'definitions']);
+    Route::get('/custom-fields/linkable', [CustomFieldController::class, 'linkable']);
+    Route::apiResource('custom-field-groups', CustomFieldGroupController::class)->middleware('admin');
 
     // Pre-Inspections
     Route::apiResource('pre-inspections', PreInspectionController::class);

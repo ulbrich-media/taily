@@ -15,6 +15,11 @@ class FormTemplate extends Model
 
     protected $fillable = ['name'];
 
+    public function customFieldGroups(): HasMany
+    {
+        return $this->hasMany(CustomFieldGroup::class);
+    }
+
     public function versions(): HasMany
     {
         return $this->hasMany(FormTemplateVersion::class);

@@ -7,6 +7,7 @@ import type { PersonBaseResource } from './people'
 import type { AnimalVaccinationResource } from './vaccinations'
 import type { AnimalMedicalTestResource } from './medical-tests'
 import type { AdoptionBaseResource } from './adoptions'
+import type { CustomFieldMissing } from './custom-fields'
 
 export interface AnimalPicture {
   id: string
@@ -65,6 +66,8 @@ export interface AnimalBaseResource {
   application_url: string | null
   is_deceased: boolean
   date_of_death: string | null
+  // Custom fields: flat key → value, {} when empty
+  custom_fields: Record<string, unknown>
   // Metadata
   created_at: string
   updated_at: string
@@ -88,4 +91,5 @@ export interface AnimalDetailResource extends AnimalBaseResource {
   vaccinations: AnimalVaccinationResource[]
   medical_tests: AnimalMedicalTestResource[]
   pictures: AnimalPicture[]
+  custom_fields_missing: CustomFieldMissing[]
 }

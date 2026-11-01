@@ -15,13 +15,21 @@ import {
 import { toast } from 'sonner'
 import { UserPlus } from 'lucide-react'
 import { useFormSaveAndResetHook } from '@/lib/form.hook.tsx'
+import type { CustomFieldDefinitionGroup } from '@/api/types/custom-fields'
+import {
+  groupsForSection,
+  toCustomFieldsPayload,
+} from '@/admin/module/custom-fields/custom-fields.schema'
 
 interface PersonCreatePageProps {
+  /** Definitions for a new person (groups without a role). */
+  customFieldGroups: CustomFieldDefinitionGroup[]
   onCreated: (id: string) => void
   onCancel: () => void
 }
 
 export function PersonCreatePage({
+  customFieldGroups,
   onCreated,
   onCancel,
 }: PersonCreatePageProps) {
@@ -51,6 +59,7 @@ export function PersonCreatePage({
     await createMutation.mutateAsync({
       ...data,
       organization_id: data.organization_id || null,
+      custom_fields: toCustomFieldsPayload(data.custom_fields),
     })
   }
 
@@ -81,6 +90,7 @@ export function PersonCreatePage({
         <CardContent>
           <PersonFormBasic
             key={saveAndReset.formKey}
+            customFieldGroups={groupsForSection(customFieldGroups, 'basic')}
             onSubmit={handleSubmit}
             onCancel={onCancel}
             isSubmitting={createMutation.isPending}

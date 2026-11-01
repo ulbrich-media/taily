@@ -1,4 +1,10 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useState } from 'react'
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
 import { PawPrint, ArrowLeft } from 'lucide-react'
 import { createAnimal } from '@/admin/module/animals/api/requests.ts'
 import { animalQueryKeys } from '@/admin/module/animals/api/queries.ts'
@@ -17,6 +23,11 @@ import { toast } from 'sonner'
 import { useFormSaveAndResetHook } from '@/lib/form.hook.tsx'
 import type { AnimalTypeResource } from '@/api/types/animal-types'
 import { toApiDate } from '@/components/field/DateInput.utils.ts'
+import { customFieldDefinitionsQuery } from '@/admin/module/custom-fields/api/queries'
+import {
+  groupsForSection,
+  toCustomFieldsPayload,
+} from '@/admin/module/custom-fields/custom-fields.schema'
 
 interface AnimalCreatePageProps {
   defaultAnimalTypeId?: string
@@ -33,6 +44,23 @@ export function AnimalCreatePage({
 }: AnimalCreatePageProps) {
   const queryClient = useQueryClient()
   const saveAndReset = useFormSaveAndResetHook()
+
+  // The custom fields on the create form depend on the chosen animal type,
+  // which is form state — so this query lives here, not in the route.
+  const [animalTypeId, setAnimalTypeId] = useState<string | null>(
+    defaultAnimalTypeId ?? null
+  )
+  const definitionsQuery = useQuery({
+    ...customFieldDefinitionsQuery({
+      entity: 'animal',
+      animal_type_id: animalTypeId ?? '',
+    }),
+    enabled: !!animalTypeId,
+    // Keep the previous type's groups while the next type loads, so values
+    // of a group both types share survive the switch.
+    placeholderData: keepPreviousData,
+  })
+  const customFieldGroups = groupsForSection(definitionsQuery.data, 'basic')
 
   const createMutation = useMutation({
     mutationFn: createAnimal,
@@ -69,6 +97,7 @@ export function AnimalCreatePage({
       character_description: data.character_description || undefined,
       contract_notes: data.contract_notes || undefined,
       internal_notes: data.internal_notes || undefined,
+      custom_fields: toCustomFieldsPayload(data.custom_fields),
     })
   }
 
@@ -108,7 +137,11 @@ export function AnimalCreatePage({
             }
             onSubmit={handleSubmit}
             onCancel={onCancel}
-            isSubmitting={createMutation.isPending}
+            isSubmitting={
+              createMutation.isPending || definitionsQuery.isFetching
+            }
+            customFieldGroups={customFieldGroups}
+            onAnimalTypeChange={setAnimalTypeId}
             submitLabel="Erstellen"
             showSecondaryButton={true}
             onSecondarySubmit={handleSubmitAndNew}

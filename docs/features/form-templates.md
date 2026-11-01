@@ -267,6 +267,12 @@ To add a new field type: create a file under `field-types/`, implement the `Fiel
 
 ---
 
+## Use as custom fields (planned)
+
+Form Templates also define the Custom Fields of Animals and Persons. They are bound through Field Groups, with values stored on the record and not pinned. A planned "Feld übernehmen" Field Type (linked field) copies an entity field into a form so that submitted values can pre-fill that entity. See [custom-fields.md](./custom-fields.md) and [ADR-015](../ADRs/ADR-015-custom-field-storage.md).
+
+---
+
 ## Known constraints and open issues
 
 - **No conditional logic** — fields cannot be conditionally shown or hidden based on other field values. All fields are always present in the schema.

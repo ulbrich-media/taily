@@ -15,15 +15,24 @@ import { toast } from 'sonner'
 import type { AnimalTypeResource } from '@/api/types/animal-types'
 import type { AnimalDetailResource } from '@/api/types/animals'
 import { toApiDate } from '@/components/field/DateInput.utils.ts'
+import type { CustomFieldDefinitionGroup } from '@/api/types/custom-fields'
+import { customFieldQueryKeys } from '@/admin/module/custom-fields/api/queries'
+import {
+  groupsForSection,
+  toCustomFieldsPayload,
+} from '@/admin/module/custom-fields/custom-fields.schema'
 
 interface AnimalEditBasicPageProps {
   animal: AnimalDetailResource
   animalTypes: AnimalTypeResource[]
+  /** Definitions shown for this animal (all sections). */
+  customFieldGroups: CustomFieldDefinitionGroup[]
 }
 
 export function AnimalEditBasicPage({
   animal,
   animalTypes,
+  customFieldGroups,
 }: AnimalEditBasicPageProps) {
   const queryClient = useQueryClient()
 
@@ -33,6 +42,10 @@ export function AnimalEditBasicPage({
       queryClient.invalidateQueries({ queryKey: animalQueryKeys.list() })
       queryClient.invalidateQueries({
         queryKey: animalQueryKeys.detail(animal.id),
+      })
+      // The animal type may have changed, and with it the groups in scope.
+      queryClient.invalidateQueries({
+        queryKey: customFieldQueryKeys.definitions('animal'),
       })
       toast.success(response.message || 'Tier erfolgreich aktualisiert')
     },
@@ -50,11 +63,13 @@ export function AnimalEditBasicPage({
         <AnimalFormBasic
           animalTypes={animalTypes}
           defaultValues={animal}
+          customFieldGroups={groupsForSection(customFieldGroups, 'basic')}
           onSubmit={async (data) => {
             await updateMutation.mutateAsync({
               ...data,
               date_of_birth: toApiDate(data.date_of_birth),
               intake_date: toApiDate(data.intake_date),
+              custom_fields: toCustomFieldsPayload(data.custom_fields),
             })
           }}
           isSubmitting={updateMutation.isPending}

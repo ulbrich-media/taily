@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Taily\Support\CustomFields\CustomFieldDefinitions;
 
 class FormTemplateVersion extends Model
 {
@@ -25,6 +26,13 @@ class FormTemplateVersion extends Model
             'ui_schema' => 'array',
             'version' => 'integer',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        // Custom field definitions read the latest version; keep the per-request
+        // memo in sync when a bound template changes.
+        static::saved(fn () => app(CustomFieldDefinitions::class)->flush());
     }
 
     public function formTemplate(): BelongsTo

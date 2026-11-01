@@ -3,11 +3,22 @@ const API_URL = `${API_URL_ROOT}/internal`
 
 export class ApiValidationError extends Error {
   errors?: Record<string, string[]>
+  /** HTTP status of the failed response (undefined for errors built by hand). */
+  status?: number
+  /** Parsed JSON body of the failed response, for endpoint-specific payloads (e.g. a 409 removal_impact). */
+  body?: Record<string, unknown>
 
-  constructor(message: string, errors?: Record<string, string[]>) {
+  constructor(
+    message: string,
+    errors?: Record<string, string[]>,
+    status?: number,
+    body?: Record<string, unknown>
+  ) {
     super(message)
     this.name = 'ApiValidationError'
     this.errors = errors
+    this.status = status
+    this.body = body
   }
 }
 
@@ -60,7 +71,9 @@ export async function apiRequest<T = unknown>(
     }))
     throw new ApiValidationError(
       error.message || 'An error occurred',
-      error.errors
+      error.errors,
+      response.status,
+      error
     )
   }
 

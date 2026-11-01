@@ -41,6 +41,8 @@ export interface CreatePersonRequest {
   phone?: string
   mobile?: string
   date_of_birth?: string | null
+  // Custom fields of the groups shown on the saved tab; null/'' clears a value
+  custom_fields?: Record<string, unknown>
 }
 
 export interface UpdatePersonRequest {
@@ -60,4 +62,5 @@ export interface UpdatePersonRequest {
   inspector_animal_type_ids?: string[]
   mediator_animal_type_ids?: string[]
   foster_animal_type_ids?: string[]
+  custom_fields?: Record<string, unknown>
 }

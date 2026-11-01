@@ -2,6 +2,7 @@ import { useDraggable } from '@dnd-kit/core'
 import { GripVertical } from 'lucide-react'
 import { cn } from '@/shadcn/lib/utils'
 import { allFieldTypes, type FieldTypeDefinition } from './field-types'
+import type { FieldType } from '@/lib/form-schema/field-type'
 
 function PaletteItem({
   type,
@@ -38,16 +39,22 @@ function PaletteItem({
   )
 }
 
-export function FieldPalette() {
+export function FieldPalette({
+  hiddenTypes = [],
+}: {
+  hiddenTypes?: FieldType[]
+}) {
   return (
     <aside>
       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-0.5">
         Feldtypen
       </p>
       <div className="grid grid-cols-2 gap-1.5 md:grid-cols-1">
-        {allFieldTypes.map((item) => (
-          <PaletteItem key={item.type} {...item} />
-        ))}
+        {allFieldTypes
+          .filter((item) => !hiddenTypes.includes(item.type))
+          .map((item) => (
+            <PaletteItem key={item.type} {...item} />
+          ))}
       </div>
       <p className="text-xs text-muted-foreground mt-2 px-0.5 leading-relaxed hidden md:block">
         Felder in die Liste ziehen um sie hinzuzufügen.
