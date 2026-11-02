@@ -48,6 +48,8 @@ The Person keeps name, email, address, phone and date of birth. These columns ar
 
 Editing a built-in field from an adoption writes to the Person, because identity is shared across adoptions.
 
+**An email address belongs to exactly one Person.** Public applications are confirmed by email; until then the adoption has no applicant and its identity data waits in a pending payload, so a public form can never change an existing Person. On confirmation the adoption is linked to the Person with that email (created if needed). The applicant portal logs in by email and magic link on the same basis. Duplicates by design (one Person per application, merged by the mediator) were considered and rejected: email confirmation makes linking safe, and a unique email keeps the portal login trivial. Sharing one mailbox between several people is not supported. See [adoption.md](../features/adoption.md#application-planned) and [applicant-portal.md](../features/applicant-portal.md).
+
 ### 3. Field Definitions, Field Groups and Field Values
 
 - A **Field Definition** describes one field: key, label, type, options, animal types it applies to, `collect_at`, `required_for`, `requires_review`, `visible_to_applicant`, `visible_to_inspector`.

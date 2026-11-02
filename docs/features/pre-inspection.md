@@ -34,7 +34,7 @@ pre_inspections
   (+ access token via HasAccessToken)
 ```
 
-An adoption can have several pre-inspections (e.g. a second visit). The mediator's own decision on the step stays on the adoption (see [adoption.md](./adoption.md#pre-inspection)).
+An adoption can have several pre-inspections (e.g. a second visit). The inspector's verdict is a recommendation. The step is closed by the mediator's confirmation on the adoption (see [adoption.md](./adoption.md#pre-inspection)).
 
 ## Process
 
@@ -48,7 +48,7 @@ The memo and verdict are internal: visible to the inspector and the mediator, ne
 
 ## Video instead of a pre-inspection
 
-When finding an appointment is hard, or something in the application seems off, the mediator can require the **home video** for this adoption (a [Requirement Override](./case-file.md#requirement-overrides)). Based on the video, the mediator can decide the pre-inspection step without any pre-inspection record. Whether a pre-inspection, a video, both or neither is needed is decided case by case.
+When finding an appointment is hard, or something in the application seems off, the mediator can require the **home video** for this adoption (a [Requirement Override](./case-file.md#requirement-overrides)). Based on the video, the mediator confirms the pre-inspection step without any pre-inspection record. Whether a pre-inspection, a video, both or neither is needed is decided case by case.
 
 ## Naming: pre-inspection vs. follow-up inspection
 

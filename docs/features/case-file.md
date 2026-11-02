@@ -78,6 +78,8 @@ Two settings are needed because "asked" and "needed" are often different:
 
 Labels, help, group, position, steps and flags can always be changed. The **type and key cannot**: a field whose meaning or type changes gets a new key and the old one is archived. Archived fields keep their existing values and stay visible on old adoptions, but are no longer asked. This replaces the schema versioning the form builder needs.
 
+**Changes apply live to all active adoptions** (`unconfirmed`, `pending`, `in_progress`). Requirements are derived, never snapshotted per adoption, so a new required application field immediately shows up as missing on every running adoption — and as an open request in the portal of applicants whose requested step already covers it. No emails are sent automatically; the mediator sees it on the checklist and requests or waives it. Done and canceled adoptions have no checklist and keep their values. Archiving a field removes it from every checklist.
+
 ---
 
 ## Field Groups and Info Blocks — structuring 30+ fields
@@ -194,6 +196,8 @@ For `requires_review` fields, a value only counts as present once a mediator has
 
 A value the mediator enters themselves is confirmed implicitly.
 
+Rejecting a value sends the applicant **one email per rejection**: the field's label, the mediator's note and a portal link — never the value itself, since personal data doesn't belong in an email.
+
 ### Replacing files
 
 Replacing a file never deletes the old one. It is detached from the current value and stays reachable from the audit trail. Otherwise a replaced landlord confirmation with different wording could not be told apart from the original. Permanent removal (a mediator cleanup action, GDPR erasure) is planned separately and not part of this design.
@@ -237,8 +241,19 @@ Each adoption tracks how far data collection has been opened, in `adoptions.requ
 - Submitting the application sets it to `application`.
 - The mediator advances it with an action such as **"Angaben für den Vertrag anfordern"**. Taily emails the applicant a link to a form that contains exactly the fields that are visible to the applicant, have `collect_at` up to that step, and are still missing or rejected — plus any fields made required by an override.
 - The portal shows every applicant-visible field with `collect_at` up to `requested_step`.
+- `requested_step` only moves forward.
 
 So the applicant is only asked for what is needed now, and a short application lowers the barrier to apply.
+
+**Manual, with suggestions.** Requests are never sent automatically — the mediator controls when the applicant hears from the organization. At the natural points Taily suggests the next request:
+
+| Mediator action | Suggestion |
+|---|---|
+| Confirms the pre-inspection | *"Angaben für den Vertrag jetzt anfordern? (2 fehlen)"* |
+| Assigns a transport | *"Angaben für den Transport anfordern? (Foto Sicherheitsgeschirr, Telefonnummer)"* |
+| Makes a field required through an override | Sent immediately |
+
+If nothing is missing for that step, there is no suggestion and `requested_step` moves forward silently, so the portal shows those fields. *"Erneut erinnern"* resends the request for open items; there are no automatic reminders.
 
 ---
 
@@ -277,7 +292,14 @@ Other steps are not blocked by the checklist; the mediator decides.
 - Fields that apply but haven't been requested yet are shown greyed: *"noch nicht angefragt"*.
 - A filter toggle: **all / only missing / only for step X**.
 - Per field: require, waive or move the due step (Requirement Override).
-- A **"changes since your last visit"** marker for values the applicant changed.
+- A **marker for applicant changes**: *"3 Änderungen durch Bewerber seit 12.11."* with a jump to the audit trail and a **"Gesehen"** button. Changes to fields printed in an already generated contract are highlighted.
+
+#### Change notifications
+
+The marker is **per adoption, not per user**: `adoptions.applicant_changes_seen_at`. Every applicant change after the application was submitted counts until someone clicks "Gesehen". Since each adoption has one responsible mediator, one user's "Gesehen" clearing it for everyone is accepted.
+
+- The adoption list shows a badge and offers the filter *"Ungesehene Änderungen"*.
+- The **assigned mediator** gets a **daily summary email** of unseen changes (applicants often change several fields in a row, so not one email per change). Without an assigned mediator there is only the badge. The summary runs through the scheduler, like the contract signing reminders.
 
 ### Applicant — forms and portal
 

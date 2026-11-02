@@ -34,6 +34,8 @@ An animal that is or was open for adoption, with all information about it.
 
 A person identifies a human: first and last name, email, phone, mobile, address, date of birth, picture, and optionally the **Organization** they represent (an external club or partner).
 
+*(planned)* **An email address belongs to exactly one Person**: `email` becomes nullable and unique, where `null` means "no email" (an allowed exception to the [empty-strings](./coding-patterns/empty-strings.md) pattern). This is what makes the applicant portal's email login and the application confirmation work.
+
 A person holds roles:
 
 - **Mediator** — per animal type
@@ -54,14 +56,17 @@ The adoption process is started by an application. The mediator guides it throug
 | `id` | uuid | Primary key |
 | `animal_id` | uuid FK → animals | The animal being adopted |
 | `mediator_id` | uuid FK → people, nullable | The mediator handling the adoption |
-| `applicant_id` | uuid FK → people | The person applying to adopt |
+| `applicant_id` | uuid FK → people | The person applying to adopt. *(planned)* Null while the application is `unconfirmed` |
+| `pending_applicant` | json, nullable | *(planned)* Identity data of an unconfirmed application, applied to the Person on confirmation |
 | `transport_id` | uuid FK → transports, nullable | The transport the animal is assigned to |
 | `requested_step` | enum, nullable | *(planned)* How far data collection has been opened to the applicant |
-| `status` | enum | `pending`, `in_progress`, `canceled`, `done` |
+| `status` | enum | `pending`, `in_progress`, `canceled`, `done`; *(planned)* `unconfirmed` |
 | `canceled_at` | timestamp, nullable | When the adoption was canceled |
 | `canceled_reason` | text | Why the adoption was canceled |
 | `notes` | text | General mediator notes |
 | `pre_inspection_notes` | text | Mediator notes on the pre-inspection step |
+| `pre_inspection_confirmed_at`, `pre_inspection_confirmed_by` | timestamp / FK → users, nullable | *(planned)* The mediator's confirmation that closes the pre-inspection step |
+| `applicant_changes_seen_at` | timestamp, nullable | *(planned)* When a user last acknowledged the applicant's changes |
 | `contract_signed` | boolean | Whether the contract has been signed by both parties |
 | `contract_signed_at` | timestamp, nullable | When the contract was signed |
 | `handed_over_at` | timestamp, nullable | When the animal was handed over |
@@ -72,7 +77,7 @@ Steps are optional and can be taken in any order. Each derives its status from i
 
 | Step | not_started / pending | in_progress | finished |
 |---|---|---|---|
-| Pre-inspection | no pre-inspection exists for the adoption | at least one pre-inspection is not yet submitted | all pre-inspections are submitted (regardless of verdict) |
+| Pre-inspection | *(planned)* neither confirmed nor a pre-inspection or home-video request exists | a pre-inspection exists or the home video was requested | `pre_inspection_confirmed_at` is set |
 | Contract | `not_started`: no signing process, or the latest is `cancelled`/`expired`. `pending`: the latest is awaiting a signature | — | `contract_signed` is true |
 | Transport | `transport_id` is null | transport assigned, not done | transport done |
 | Handover | `handed_over_at` is null | — | `handed_over_at` is set |

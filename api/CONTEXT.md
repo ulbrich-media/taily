@@ -137,5 +137,11 @@ _Avoid_: Todo list, Requirements list
 **Audit Trail**: The recorded history of changes to Animals, Persons, Adoptions and their Case Files — who, what, when, old and new value. Distinct from the contract signing audit events.
 _Avoid_: Changelog, History, Activity log
 
-**Applicant Portal**: The token-accessed page where an Applicant follows their Adoption and sees and edits their Case File.
+**Applicant Portal**: The page where an Applicant, logged in by email and Magic Link, follows their Adoptions and sees and edits their Case File.
 _Avoid_: Customer portal, Applicant login
+
+**Magic Link**: A single-use, short-lived emailed link that logs a Person into the Applicant Portal or confirms an application. No password, no account.
+_Avoid_: Login link, Token link
+
+**Unconfirmed Application**: An Adoption from the public form whose email has not been confirmed yet. Has no Applicant; its identity data waits in a pending payload.
+_Avoid_: Draft, Lead
