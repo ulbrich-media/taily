@@ -6,13 +6,13 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Taily\Enums\AdoptionStep;
 use Taily\Enums\FieldType;
 use Taily\Support\CaseFile\FieldSpec;
 
 /**
- * One field of the Case File catalogue. Built-in fields carry a
+ * One field of an animal type's Case File catalogue; keys are unique per
+ * animal type. Built-in fields carry a
  * `person_attribute`: their value lives on the applicant's Person instead of
  * in an AdoptionFieldValue.
  */
@@ -25,6 +25,7 @@ class FieldDefinition extends Model
     ];
 
     protected $fillable = [
+        'animal_type_id',
         'key',
         'field_group_id',
         'position',
@@ -62,9 +63,9 @@ class FieldDefinition extends Model
         return $this->belongsTo(FieldGroup::class);
     }
 
-    public function animalTypes(): BelongsToMany
+    public function animalType(): BelongsTo
     {
-        return $this->belongsToMany(AnimalType::class);
+        return $this->belongsTo(AnimalType::class);
     }
 
     public function scopeActive(Builder $query): void
@@ -102,7 +103,6 @@ class FieldDefinition extends Model
             collectAt: $this->collect_at,
             requiredFor: $this->required_for,
             requiresReview: $this->requires_review,
-            animalTypeIds: $this->animalTypes->pluck('id')->all(),
             condition: $this->condition,
         );
     }

@@ -25,6 +25,7 @@ use Taily\Http\Controllers\Internal\ApiTokenController;
 use Taily\Http\Controllers\Internal\CaseFileController;
 use Taily\Http\Controllers\Internal\ContractSigningController;
 use Taily\Http\Controllers\Internal\ContractSigningSubmissionController;
+use Taily\Http\Controllers\Internal\FieldCatalogueController;
 use Taily\Http\Controllers\Internal\FormTemplateController;
 use Taily\Http\Controllers\Internal\InvitationController;
 use Taily\Http\Controllers\Internal\MediaController;
@@ -178,6 +179,19 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Animal Types
     Route::get('/animal-types/{animalType}/trait-suggestions', [AnimalTypeController::class, 'traitSuggestions']);
     Route::apiResource('animal-types', AnimalTypeController::class);
+
+    // Case File catalogue per animal type (docs/features/case-file.md)
+    Route::get('/animal-types/{animalType}/catalogue', [FieldCatalogueController::class, 'show']);
+    Route::post('/animal-types/{animalType}/catalogue/copy', [FieldCatalogueController::class, 'copy']);
+    Route::post('/animal-types/{animalType}/field-groups', [FieldCatalogueController::class, 'storeGroup']);
+    Route::put('/animal-types/{animalType}/field-groups/order', [FieldCatalogueController::class, 'reorderGroups']);
+    Route::put('/field-groups/{fieldGroup}', [FieldCatalogueController::class, 'updateGroup']);
+    Route::delete('/field-groups/{fieldGroup}', [FieldCatalogueController::class, 'destroyGroup']);
+    Route::post('/field-groups/{fieldGroup}/fields', [FieldCatalogueController::class, 'storeField']);
+    Route::put('/field-groups/{fieldGroup}/fields/order', [FieldCatalogueController::class, 'reorderFields']);
+    Route::put('/field-definitions/{fieldDefinition}', [FieldCatalogueController::class, 'updateField']);
+    Route::post('/field-definitions/{fieldDefinition}/archive', [FieldCatalogueController::class, 'archiveField']);
+    Route::delete('/field-definitions/{fieldDefinition}/archive', [FieldCatalogueController::class, 'restoreField']);
 
     // Vaccinations and Medical Tests
     Route::apiResource('vaccinations', VaccinationController::class);

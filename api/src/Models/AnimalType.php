@@ -21,6 +21,16 @@ class AnimalType extends Model
         'title',
     ];
 
+    public function fieldGroups(): HasMany
+    {
+        return $this->hasMany(FieldGroup::class)->orderBy('position');
+    }
+
+    public function fieldDefinitions(): HasMany
+    {
+        return $this->hasMany(FieldDefinition::class);
+    }
+
     public function vaccinations(): HasMany
     {
         return $this->hasMany(Vaccination::class);

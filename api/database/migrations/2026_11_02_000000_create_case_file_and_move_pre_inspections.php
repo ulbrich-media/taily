@@ -42,8 +42,11 @@ return new class extends Migration
                 ->constrained('users')->nullOnDelete();
         });
 
+        // Every animal type has its own catalogue (docs/features/case-file.md):
+        // what is configured on "Hund" is exactly what a dog adoption asks.
         Schema::create('field_groups', function (Blueprint $table) {
             $table->uuid('id')->primary();
+            $table->foreignUuid('animal_type_id')->constrained('animal_types')->cascadeOnDelete();
             $table->string('title');
             $table->text('intro');
             $table->unsignedInteger('position');
@@ -52,8 +55,9 @@ return new class extends Migration
 
         Schema::create('field_definitions', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->string('key')->unique();
-            $table->foreignUuid('field_group_id')->constrained('field_groups')->restrictOnDelete();
+            $table->foreignUuid('animal_type_id')->constrained('animal_types')->cascadeOnDelete();
+            $table->string('key');
+            $table->foreignUuid('field_group_id')->constrained('field_groups')->cascadeOnDelete();
             $table->unsignedInteger('position');
             $table->string('type');
             $table->string('label');
@@ -69,12 +73,7 @@ return new class extends Migration
             $table->json('condition')->nullable();
             $table->timestamp('archived_at')->nullable();
             $table->timestamps();
-        });
-
-        Schema::create('animal_type_field_definition', function (Blueprint $table) {
-            $table->foreignUuid('field_definition_id')->constrained('field_definitions')->cascadeOnDelete();
-            $table->foreignUuid('animal_type_id')->constrained('animal_types')->cascadeOnDelete();
-            $table->primary(['field_definition_id', 'animal_type_id']);
+            $table->unique(['animal_type_id', 'key']);
         });
 
         Schema::create('adoption_field_values', function (Blueprint $table) {
@@ -105,7 +104,6 @@ return new class extends Migration
     {
         Schema::dropIfExists('adoption_requirements');
         Schema::dropIfExists('adoption_field_values');
-        Schema::dropIfExists('animal_type_field_definition');
         Schema::dropIfExists('field_definitions');
         Schema::dropIfExists('field_groups');
 

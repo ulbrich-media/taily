@@ -35,10 +35,19 @@ class CaseFileTest extends TestCase
         $this->cats = AnimalType::create(['title' => 'Katze']);
         $this->user = User::factory()->create(['name' => 'Mia Mediator', 'email' => 'mia@example.com']);
 
-        $about = FieldGroup::create(['title' => 'Über dich', 'position' => 0]);
-        $home = FieldGroup::create(['title' => 'Wohnsituation', 'position' => 1]);
-        $contract = FieldGroup::create(['title' => 'Für den Vertrag', 'position' => 2]);
-        $arrival = FieldGroup::create(['title' => 'Ankunft', 'position' => 3]);
+        $this->catalogue($this->dogs, withHarness: true);
+        $this->catalogue($this->cats, withHarness: false);
+    }
+
+    /**
+     * Each animal type has its own catalogue; only dogs need a harness.
+     */
+    private function catalogue(AnimalType $type, bool $withHarness): void
+    {
+        $about = FieldGroup::create(['animal_type_id' => $type->id, 'title' => 'Über dich', 'position' => 0]);
+        $home = FieldGroup::create(['animal_type_id' => $type->id, 'title' => 'Wohnsituation', 'position' => 1]);
+        $contract = FieldGroup::create(['animal_type_id' => $type->id, 'title' => 'Für den Vertrag', 'position' => 2]);
+        $arrival = FieldGroup::create(['animal_type_id' => $type->id, 'title' => 'Ankunft', 'position' => 3]);
 
         $this->define($about, 'first_name', 'text', 'Vorname', ['person_attribute' => 'first_name', 'required_for' => 'application']);
         $this->define($about, 'date_of_birth', 'date', 'Geburtsdatum', ['person_attribute' => 'date_of_birth', 'required_for' => 'contract']);
@@ -54,12 +63,13 @@ class CaseFileTest extends TestCase
         ]);
         $this->define($home, 'home_video', 'video', 'Hausvideo');
         $this->define($contract, 'id_card_number', 'text', 'Ausweisnummer', ['collect_at' => 'contract', 'required_for' => 'contract', 'visible_to_inspector' => false]);
-        $harness = $this->define($arrival, 'harness_photo', 'photo', 'Foto Sicherheitsgeschirr', ['collect_at' => 'transport', 'required_for' => 'transport', 'requires_review' => true]);
-        $harness->animalTypes()->sync([$this->dogs->id]);
+        if ($withHarness) {
+            $this->define($arrival, 'harness_photo', 'photo', 'Foto Sicherheitsgeschirr', ['collect_at' => 'transport', 'required_for' => 'transport', 'requires_review' => true]);
+        }
         $this->define($arrival, 'transport_day_phone', 'phone', 'Telefon am Transporttag', ['collect_at' => 'transport', 'required_for' => 'transport']);
     }
 
-    public function test_show_groups_the_fields_that_apply_to_the_animals_type(): void
+    public function test_show_uses_the_catalogue_of_the_animals_type(): void
     {
         $catAdoption = $this->adoption($this->cats);
 
@@ -302,6 +312,7 @@ class CaseFileTest extends TestCase
     private function define(FieldGroup $group, string $key, string $type, string $label, array $attributes = []): FieldDefinition
     {
         return FieldDefinition::create(array_merge([
+            'animal_type_id' => $group->animal_type_id,
             'key' => $key,
             'field_group_id' => $group->id,
             'position' => FieldDefinition::where('field_group_id', $group->id)->count(),

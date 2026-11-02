@@ -10,6 +10,7 @@ use Taily\Models\AdoptionFieldValue;
 use Taily\Models\AnimalType;
 use Taily\Models\FieldDefinition;
 use Taily\Models\FieldGroup;
+use Taily\Support\CaseFile\FieldCatalogue;
 
 /**
  * The example dog catalogue from docs/features/case-file.md, and values for
@@ -97,38 +98,52 @@ class CaseFileSeeder extends Seeder
         $this->seedValues();
     }
 
+    /**
+     * Every animal type gets its own copy of the catalogue, without the
+     * fields that are meant for other types only.
+     */
     private function seedCatalogue(): void
     {
-        $animalTypes = AnimalType::pluck('id', 'title');
+        foreach (AnimalType::all() as $animalType) {
+            foreach (self::CATALOGUE as $groupPosition => $group) {
+                $fields = array_values(array_filter(
+                    $group['fields'],
+                    fn (array $field) => ! isset($field['types']) || in_array($animalType->title, $field['types'], true),
+                ));
 
-        foreach (self::CATALOGUE as $groupPosition => $group) {
-            $fieldGroup = FieldGroup::create([
-                'title' => $group['title'],
-                'intro' => $group['intro'],
-                'position' => $groupPosition,
-            ]);
+                if ($fields === []) {
+                    continue;
+                }
 
-            foreach ($group['fields'] as $position => $field) {
-                $definition = FieldDefinition::create([
-                    'key' => $field['key'],
-                    'field_group_id' => $fieldGroup->id,
-                    'position' => $position,
-                    'type' => $field['type'],
-                    'label' => $field['label'],
-                    'help' => $field['help'] ?? '',
-                    'options' => $field['options'] ?? null,
-                    'person_attribute' => $field['person'] ?? null,
-                    'collect_at' => $field['collect_at'],
-                    'required_for' => $field['required_for'] ?? null,
-                    'requires_review' => $field['review'] ?? false,
-                    'visible_to_applicant' => true,
-                    'visible_to_inspector' => $field['inspector'] ?? true,
-                    'condition' => $field['condition'] ?? null,
+                $fieldGroup = FieldGroup::create([
+                    'animal_type_id' => $animalType->id,
+                    'title' => $group['title'],
+                    'intro' => $group['intro'],
+                    'position' => $groupPosition,
                 ]);
 
-                $types = collect($field['types'] ?? [])->map(fn (string $title) => $animalTypes->get($title))->filter();
-                $definition->animalTypes()->sync($types->all());
+                foreach ($fields as $position => $field) {
+                    FieldDefinition::create([
+                        'animal_type_id' => $animalType->id,
+                        'key' => $field['key'],
+                        'field_group_id' => $fieldGroup->id,
+                        'position' => $position,
+                        'type' => $field['type'],
+                        'label' => $field['label'],
+                        'help' => $field['help'] ?? '',
+                        'options' => $field['options'] ?? null,
+                        'person_attribute' => $field['person'] ?? null,
+                        'collect_at' => $field['collect_at'],
+                        'required_for' => $field['required_for'] ?? null,
+                        'requires_review' => $field['review'] ?? false,
+                        'visible_to_applicant' => true,
+                        'visible_to_inspector' => $field['inspector'] ?? true,
+                        'condition' => $field['condition'] ?? null,
+                    ]);
+                }
             }
+
+            app(FieldCatalogue::class)->ensureBuiltIns($animalType);
         }
     }
 
@@ -139,9 +154,11 @@ class CaseFileSeeder extends Seeder
      */
     private function seedValues(): void
     {
-        $definitions = FieldDefinition::whereNull('person_attribute')->get()->keyBy('key');
+        $catalogues = FieldDefinition::whereNull('person_attribute')->get()->groupBy('animal_type_id')
+            ->map(fn ($definitions) => $definitions->keyBy('key'));
 
-        Adoption::with(['animal.animalType', 'applicant'])->each(function (Adoption $adoption) use ($definitions) {
+        Adoption::with(['animal.animalType', 'applicant'])->each(function (Adoption $adoption) use ($catalogues) {
+            $definitions = $catalogues->get($adoption->animal?->animal_type_id, collect());
             $isDog = $adoption->animal?->animalType?->title === 'Hund';
             $signed = $adoption->contract_signed;
 

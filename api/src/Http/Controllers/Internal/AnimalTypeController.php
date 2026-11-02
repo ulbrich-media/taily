@@ -11,6 +11,7 @@ use Taily\Http\Requests\CatalogIndexRequest;
 use Taily\Http\Resources\AnimalTypeResource;
 use Taily\Models\AnimalType;
 use Taily\Services\AnimalTraitService;
+use Taily\Support\CaseFile\FieldCatalogue;
 
 class AnimalTypeController extends Controller
 {
@@ -58,6 +59,7 @@ class AnimalTypeController extends Controller
         ]);
 
         $animalType = AnimalType::create($validated);
+        app(FieldCatalogue::class)->ensureBuiltIns($animalType);
 
         return response()->json([
             'message' => 'Tierart erfolgreich angelegt.',

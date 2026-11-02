@@ -4,10 +4,11 @@ namespace Taily\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * A titled section of the Case File catalogue. Groups decide *where* a field
+ * A titled section of an animal type's Case File catalogue. Groups decide *where* a field
  * appears; the field's steps decide *when* (docs/features/case-file.md).
  */
 class FieldGroup extends Model
@@ -19,10 +20,16 @@ class FieldGroup extends Model
     ];
 
     protected $fillable = [
+        'animal_type_id',
         'title',
         'intro',
         'position',
     ];
+
+    public function animalType(): BelongsTo
+    {
+        return $this->belongsTo(AnimalType::class);
+    }
 
     public function fieldDefinitions(): HasMany
     {

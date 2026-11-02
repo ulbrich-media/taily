@@ -293,8 +293,9 @@ class AdoptionIndexTest extends TestCase
         $this->assertSame('not_started', $adoption->fresh()->pre_inspection_status);
         $this->assertSame([$adoption->id], $this->ids($this->list('filter[pre_inspection_status]=not_started')));
 
-        $group = FieldGroup::create(['title' => 'Wohnsituation', 'position' => 0]);
+        $group = FieldGroup::create(['animal_type_id' => $this->dogs->id, 'title' => 'Wohnsituation', 'position' => 0]);
         $video = FieldDefinition::create([
+            'animal_type_id' => $this->dogs->id,
             'key' => 'home_video', 'field_group_id' => $group->id, 'position' => 0, 'type' => 'video',
             'label' => 'Hausvideo', 'collect_at' => 'application',
         ]);

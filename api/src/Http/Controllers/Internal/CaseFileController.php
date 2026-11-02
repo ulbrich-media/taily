@@ -41,7 +41,7 @@ class CaseFileController extends Controller
 
     public function setRequirement(Request $request, Adoption $adoption, string $fieldKey): JsonResponse
     {
-        $definition = $this->caseFile->definition($fieldKey) ?? abort(404);
+        $definition = $this->caseFile->definition($adoption, $fieldKey) ?? abort(404);
 
         $validated = $request->validate([
             'waived' => ['required', 'boolean'],
@@ -63,7 +63,7 @@ class CaseFileController extends Controller
 
     public function clearRequirement(Adoption $adoption, string $fieldKey): JsonResponse
     {
-        $definition = $this->caseFile->definition($fieldKey) ?? abort(404);
+        $definition = $this->caseFile->definition($adoption, $fieldKey) ?? abort(404);
 
         $this->caseFile->clearRequirement($adoption, $definition);
 

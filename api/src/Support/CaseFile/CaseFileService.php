@@ -26,27 +26,47 @@ class CaseFileService
 {
     private const ADDRESS_PARTS = ['street_line', 'street_line_additional', 'postal_code', 'city', 'country_code'];
 
-    /** @var Collection<int, FieldDefinition>|null */
-    private ?Collection $definitions = null;
+    /** @var array<string, Collection<int, FieldDefinition>> keyed by animal type id */
+    private array $definitions = [];
 
     /**
-     * The active catalogue, in display order. Changes apply live to every
-     * running adoption — nothing is snapshotted per adoption.
+     * The active catalogue of an animal type, in display order. Changes apply
+     * live to every running adoption — nothing is snapshotted per adoption.
      *
      * @return Collection<int, FieldDefinition>
      */
-    public function definitions(): Collection
+    public function definitions(?string $animalTypeId): Collection
     {
-        return $this->definitions ??= FieldDefinition::active()
-            ->with(['animalTypes:id', 'fieldGroup'])
+        if ($animalTypeId === null) {
+            return collect();
+        }
+
+        return $this->definitions[$animalTypeId] ??= FieldDefinition::active()
+            ->where('animal_type_id', $animalTypeId)
+            ->with('fieldGroup')
             ->get()
             ->sortBy(fn (FieldDefinition $definition) => [$definition->fieldGroup->position, $definition->position])
             ->values();
     }
 
-    public function definition(string $key): ?FieldDefinition
+    public function definition(Adoption $adoption, string $key): ?FieldDefinition
     {
-        return $this->definitions()->firstWhere('key', $key);
+        return $this->definitions($this->animalTypeId($adoption))->firstWhere('key', $key);
+    }
+
+    /**
+     * Forgets the loaded catalogues, e.g. after the configuration changed.
+     */
+    public function flush(): void
+    {
+        $this->definitions = [];
+    }
+
+    private function animalTypeId(Adoption $adoption): ?string
+    {
+        $adoption->loadMissing('animal');
+
+        return $adoption->animal?->animal_type_id;
     }
 
     /**
@@ -64,9 +84,9 @@ class CaseFileService
             ->all();
     }
 
-    public function calculator(): ChecklistCalculator
+    public function calculator(?string $animalTypeId): ChecklistCalculator
     {
-        $specs = $this->definitions()->map(fn (FieldDefinition $definition) => $definition->toSpec())->all();
+        $specs = $this->definitions($animalTypeId)->map(fn (FieldDefinition $definition) => $definition->toSpec())->all();
 
         foreach ($this->contractFieldKeys() as $key) {
             if (ContractFieldRegistry::has($key)) {
@@ -81,11 +101,12 @@ class CaseFileService
     {
         $adoption->loadMissing(['animal', 'mediator', 'applicant', 'fieldValues', 'requirements']);
 
-        $definitionsById = $this->definitions()->keyBy('id');
+        $definitions = $this->definitions($this->animalTypeId($adoption));
+        $definitionsById = $definitions->keyBy('id');
         $values = [];
         $reviews = [];
 
-        foreach ($this->definitions() as $definition) {
+        foreach ($definitions as $definition) {
             if ($definition->isBuiltIn()) {
                 $values[$definition->key] = $this->builtInValue($definition, $adoption->applicant);
             }
@@ -127,7 +148,7 @@ class CaseFileService
 
     public function checklist(Adoption $adoption, AdoptionStep $step): Checklist
     {
-        return $this->calculator()->forStep($this->state($adoption), $step);
+        return $this->calculator($this->animalTypeId($adoption))->forStep($this->state($adoption), $step);
     }
 
     /**
@@ -141,17 +162,15 @@ class CaseFileService
     public function present(Adoption $adoption): array
     {
         $state = $this->state($adoption);
-        $calculator = $this->calculator();
+        $calculator = $this->calculator($state->animalTypeId);
         $everything = $calculator->forStep($state, AdoptionStep::HANDOVER);
         $statuses = collect($everything->items)->mapWithKeys(fn (ChecklistItem $item) => [$item->key => $item->status]);
         $requirements = $adoption->requirements->keyBy('field_definition_id');
         $fieldValues = $adoption->fieldValues->keyBy('field_definition_id');
 
-        $groups = FieldGroup::orderBy('position')->get()->map(function (FieldGroup $group) use ($state, $calculator, $statuses, $requirements, $fieldValues) {
-            $fields = $this->definitions()
+        $groups = FieldGroup::where('animal_type_id', $state->animalTypeId)->orderBy('position')->get()->map(function (FieldGroup $group) use ($state, $calculator, $statuses, $requirements, $fieldValues) {
+            $fields = $this->definitions($state->animalTypeId)
                 ->where('field_group_id', $group->id)
-                ->filter(fn (FieldDefinition $definition) => $definition->animalTypes->isEmpty()
-                    || $definition->animalTypes->contains('id', $state->animalTypeId))
                 ->map(function (FieldDefinition $definition) use ($state, $calculator, $statuses, $requirements, $fieldValues) {
                     $spec = $definition->toSpec();
                     $requirement = $requirements->get($definition->id);
@@ -256,7 +275,7 @@ class CaseFileService
      */
     public function update(Adoption $adoption, array $values, User $user): void
     {
-        $definitions = $this->definitions()->keyBy('key');
+        $definitions = $this->definitions($this->animalTypeId($adoption))->keyBy('key');
 
         $unknown = array_diff(array_keys($values), $definitions->keys()->all());
         $rules = [];
