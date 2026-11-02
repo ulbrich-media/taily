@@ -5,10 +5,10 @@ import { useBreadcrumbs } from '@/router/useBreadcrumbs'
 import { BreadcrumbNav } from '@/router/BreadcrumbNav'
 import { getCaseFileQuery } from '@/admin/module/case-file/api/queries'
 import { CaseFileGroupEditDialog } from '@/admin/module/case-file/pages/CaseFileGroupEditDialog'
-import { Route as AdoptionDetailRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/route'
+import { Route as CaseFileRoute } from './index'
 
 export const Route = createFileRoute(
-  '/admin/_authenticated/adoptions/$adoptionId/adoption/case-file/$groupId'
+  '/admin/_authenticated/adoptions/$adoptionId/case-file/group/$groupId'
 )({
   loader: async ({ params }) => {
     const caseFile = await queryClient.ensureQueryData(
@@ -29,7 +29,7 @@ export const Route = createFileRoute(
 function RouteComponent() {
   const breadcrumbs = useBreadcrumbs()
   const { adoptionId, groupId } = Route.useParams()
-  const navigate = AdoptionDetailRoute.useNavigate()
+  const navigate = CaseFileRoute.useNavigate()
   const { data: caseFile } = useSuspenseQuery(getCaseFileQuery(adoptionId))
   const group = caseFile.groups.find((g) => g.id === groupId)!
 

@@ -5,6 +5,7 @@ import { getAdoptionQuery } from '@/admin/module/adoptions/api/queries'
 import { AdoptionSidebar } from '@/admin/module/adoptions/components/AdoptionSidebar'
 import { Route as AdoptionDetailRoute } from './adoption/route'
 import { Route as HistoryRoute } from './history'
+import { Route as CaseFileRoute } from './case-file/index'
 import { Route as MediatorEditRoute } from './adoption/mediator.tsx'
 import { Edit, MoreVertical } from 'lucide-react'
 import { PageHeader, tabLinkClass } from '@/components/layout/PageHeader.tsx'
@@ -59,8 +60,14 @@ function RouteComponent() {
                 params={{ adoptionId }}
                 className={tabLinkClass}
               >
-                Vermittlung
+                Übersicht
               </AdoptionDetailRoute.Link>
+              <CaseFileRoute.Link
+                params={{ adoptionId }}
+                className={tabLinkClass}
+              >
+                Angaben
+              </CaseFileRoute.Link>
               <HistoryRoute.Link
                 params={{ adoptionId }}
                 className={tabLinkClass}

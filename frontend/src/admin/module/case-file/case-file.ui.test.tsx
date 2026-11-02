@@ -11,7 +11,8 @@ import type {
 } from '@/api/types/case-file'
 import { ApiValidationError } from '@/lib/api'
 import { CaseFileGroupEditDialog } from './pages/CaseFileGroupEditDialog'
-import { CaseFileCard } from './components/CaseFileCard'
+import { CaseFileView } from './components/CaseFileView'
+import { CaseFileSummaryCard } from './components/CaseFileSummaryCard'
 import { updateCaseFile } from './api/requests'
 
 vi.mock('./api/requests', () => ({ updateCaseFile: vi.fn() }))
@@ -198,7 +199,7 @@ describe('CaseFileGroupEditDialog', () => {
   })
 })
 
-describe('CaseFileCard', () => {
+describe('CaseFileView and CaseFileSummaryCard', () => {
   const caseFile: CaseFileResource = {
     groups: [
       homeGroup,
@@ -227,9 +228,15 @@ describe('CaseFileCard', () => {
     },
   }
 
-  function renderCard() {
+  it('opens the checklist on the first incomplete step', () => {
+    render(<CaseFileSummaryCard caseFile={caseFile} showAllAction={null} />)
+
+    expect(screen.getByText(/Für Vertrag fehlen 1 Angabe/)).toBeInTheDocument()
+  })
+
+  function renderView() {
     return render(
-      <CaseFileCard
+      <CaseFileView
         caseFile={caseFile}
         renderEditGroupAction={() => null}
         renderRequirementAction={() => null}
@@ -237,31 +244,33 @@ describe('CaseFileCard', () => {
     )
   }
 
-  it('opens the checklist on the first incomplete step', () => {
-    renderCard()
-
-    expect(screen.getByText(/Für Vertrag fehlen 1 Angabe/)).toBeInTheDocument()
-  })
-
   it('hides fields whose condition is not met', () => {
-    renderCard()
+    renderView()
 
     expect(screen.getByText('Wohnfläche (m²)')).toBeInTheDocument()
     expect(screen.queryByText('Größe des Gartens (m²)')).toBeNull()
   })
 
-  it('filters down to open fields', async () => {
-    renderCard()
+  it('counts open fields per group in the menu', () => {
+    renderView()
 
-    await userEvent.click(screen.getByLabelText('Nur offene Angaben'))
+    const menu = screen.getByRole('navigation', { name: 'Abschnitte' })
+    expect(
+      within(menu).getByRole('link', { name: /Für den Vertrag\s*1/ })
+    ).toBeInTheDocument()
+  })
+
+  it('filters down to open fields', async () => {
+    renderView()
+
+    await userEvent.click(screen.getByLabelText('Nur offene'))
 
     expect(screen.queryByText('Wohnfläche (m²)')).toBeNull()
-    const contractSection = screen
+    const contractCard = screen
       .getByRole('heading', { name: 'Für den Vertrag' })
-      .closest('section')!
-    expect(within(contractSection).getByText('Fehlt')).toBeInTheDocument()
+      .closest('[data-slot=card]')!
     expect(
-      within(contractSection).getByText('Nicht für Kontrolleure')
+      within(contractCard as HTMLElement).getByText('Fehlt')
     ).toBeInTheDocument()
   })
 })

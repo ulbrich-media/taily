@@ -99,7 +99,6 @@ export function CaseFileGroupEditDialog({
       queryClient.invalidateQueries({
         queryKey: adoptionQueryKeys.detail(adoptionId),
       })
-      form.reset(form.getValues())
       toast.success(response.message)
       onClose()
     },
@@ -125,7 +124,15 @@ export function CaseFileGroupEditDialog({
         </DialogHeader>
         <FormProvider {...form}>
           <form
-            onSubmit={form.handleSubmit((data) => mutation.mutate(data))}
+            onSubmit={form.handleSubmit(async (data) => {
+              // Awaited, so FormBlocker lets the closing navigation pass.
+              try {
+                await mutation.mutateAsync(data)
+                form.reset(data)
+              } catch {
+                // Shown on the fields by onError.
+              }
+            })}
             className="space-y-4"
           >
             <FormBlocker />

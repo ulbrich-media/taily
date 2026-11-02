@@ -7,6 +7,7 @@ import {
   Building2,
   ClipboardList,
   PawPrint,
+  ListChecks,
 } from 'lucide-react'
 import {
   Alert,
@@ -20,6 +21,7 @@ import { NavigationCards } from '@/components/navigation/NavigationCards'
 interface SettingsPageProps {
   usersAction: ReactNode
   animalTypesAction: ReactNode
+  caseFileAction: ReactNode
   vaccinationsAction: ReactNode
   medicalTestsAction: ReactNode
   organizationsAction: ReactNode
@@ -30,6 +32,7 @@ interface SettingsPageProps {
 export function SettingsPage({
   usersAction,
   animalTypesAction,
+  caseFileAction,
   vaccinationsAction,
   medicalTestsAction,
   organizationsAction,
@@ -70,10 +73,17 @@ export function SettingsPage({
           {
             icon: PawPrint,
             title: 'Tierarten',
-            subtitle: 'Tierarten und Formularvorlagen',
-            description:
-              'Verwalte die verfügbaren Tierarten und weise Formularvorlagen für Vorkontrollen zu.',
+            subtitle: 'Verfügbare Tierarten',
+            description: 'Verwalte die Tierarten, die vermittelt werden.',
             actions: animalTypesAction,
+          },
+          {
+            icon: ListChecks,
+            title: 'Angaben',
+            subtitle: 'Was eine Vermittlung je Tierart erfragt',
+            description:
+              'Lege fest, welche Angaben Bewerber:innen machen, wann sie gebraucht werden und wer sie sieht.',
+            actions: caseFileAction,
           },
           {
             icon: Syringe,
