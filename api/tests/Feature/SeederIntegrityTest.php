@@ -124,7 +124,6 @@ class SeederIntegrityTest extends TestCase
             );
 
             $submitted = $adoption->preInspections
-                ->where('animal_type_id', $adoption->animal->animal_type_id)
                 ->whereNotNull('submitted_at')
                 ->max('submitted_at');
 
@@ -266,7 +265,7 @@ class SeederIntegrityTest extends TestCase
 
     public function test_an_inspection_is_only_carried_out_by_someone_qualified_for_the_type(): void
     {
-        $inspections = PreInspection::with('inspector.inspectorAnimalTypes')->get();
+        $inspections = PreInspection::with(['inspector.inspectorAnimalTypes', 'adoption.animal'])->get();
 
         $this->assertNotEmpty($inspections);
 
@@ -274,12 +273,12 @@ class SeederIntegrityTest extends TestCase
             $this->assertNotNull($inspection->inspector, "inspection {$inspection->id}: nobody was assigned to carry it out");
 
             $this->assertTrue(
-                $inspection->inspector->inspectorAnimalTypes->contains('id', $inspection->animal_type_id),
+                $inspection->inspector->inspectorAnimalTypes->contains('id', $inspection->adoption->animal->animal_type_id),
                 "inspection {$inspection->id}: inspector does not handle this animal type"
             );
 
             $this->assertNotSame(
-                $inspection->person_id,
+                $inspection->adoption->applicant_id,
                 $inspection->inspector_id,
                 "inspection {$inspection->id}: the applicant inspected their own home"
             );

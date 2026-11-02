@@ -25,11 +25,10 @@ class PreInspectionBaseResource extends JsonResource
 
         return [
             'id' => $this->resource->id,
-            'person_id' => $this->resource->person_id,
-            'animal_type_id' => $this->resource->animal_type_id,
+            'adoption_id' => $this->resource->adoption_id,
             'inspector_id' => $this->resource->inspector_id,
             'verdict' => $this->resource->verdict,
-            'notes' => $this->resource->notes,
+            'memo' => $this->resource->memo,
             'token' => $token?->token,
             'expires_at' => $token?->expires_at,
             'submitted_at' => $this->resource->submitted_at,

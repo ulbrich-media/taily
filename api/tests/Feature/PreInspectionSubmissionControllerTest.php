@@ -3,6 +3,8 @@
 namespace Taily\Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Taily\Models\Adoption;
+use Taily\Models\Animal;
 use Taily\Models\AnimalType;
 use Taily\Models\Person;
 use Taily\Models\PreInspection;
@@ -15,17 +17,14 @@ class PreInspectionSubmissionControllerTest extends TestCase
 
     private function createInspection(): PreInspection
     {
-        $person = Person::create([
-            'first_name' => 'Jane',
-            'last_name' => 'Doe',
-        ]);
-
         $animalType = AnimalType::create(['title' => 'Hund']);
 
-        $inspection = PreInspection::create([
-            'person_id' => $person->id,
-            'animal_type_id' => $animalType->id,
+        $adoption = Adoption::create([
+            'animal_id' => Animal::create(['animal_type_id' => $animalType->id, 'name' => 'Bello', 'gender' => 'male'])->id,
+            'applicant_id' => Person::create(['first_name' => 'Jane', 'last_name' => 'Doe'])->id,
         ]);
+
+        $inspection = PreInspection::create(['adoption_id' => $adoption->id]);
 
         $inspection->issueToken(now()->addDays(7));
 

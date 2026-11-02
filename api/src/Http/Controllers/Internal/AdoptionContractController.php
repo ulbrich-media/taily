@@ -13,6 +13,7 @@ use Taily\Enums\ContractSigningStatus;
 use Taily\Http\Controllers\Controller;
 use Taily\Http\Resources\AdoptionDetailResource;
 use Taily\Models\Adoption;
+use Taily\Support\CaseFile\CaseFileService;
 use Taily\Support\ContractPdfService;
 
 class AdoptionContractController extends Controller
@@ -110,11 +111,13 @@ class AdoptionContractController extends Controller
      * recognize it as a stateful frontend request, which isn't guaranteed
      * (e.g. rel="noreferrer", strict referrer policies, some extensions).
      */
-    public function generate(Request $request, Adoption $adoption): JsonResponse
+    public function generate(Request $request, Adoption $adoption, CaseFileService $caseFile): JsonResponse
     {
         $validated = $request->validate([
             'template' => ['required', 'string', Rule::in(array_keys(config('taily.contracts')))],
         ]);
+
+        $caseFile->assertContractComplete($adoption, $validated['template']);
 
         $url = URL::temporarySignedRoute('adoptions.contract.download', now()->addHour(), [
             'adoption' => $adoption->id,

@@ -17,10 +17,12 @@ use Laravel\Passkeys\Http\Controllers\PasskeyLoginController;
 use Laravel\Passkeys\Http\Controllers\PasskeyRegistrationController;
 use Taily\Http\Controllers\Internal\AdoptionContractController;
 use Taily\Http\Controllers\Internal\AdoptionController;
+use Taily\Http\Controllers\Internal\AdoptionPreInspectionController;
 use Taily\Http\Controllers\Internal\AnimalController;
 use Taily\Http\Controllers\Internal\AnimalPictureController;
 use Taily\Http\Controllers\Internal\AnimalTypeController;
 use Taily\Http\Controllers\Internal\ApiTokenController;
+use Taily\Http\Controllers\Internal\CaseFileController;
 use Taily\Http\Controllers\Internal\ContractSigningController;
 use Taily\Http\Controllers\Internal\ContractSigningSubmissionController;
 use Taily\Http\Controllers\Internal\FormTemplateController;
@@ -193,6 +195,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Transports
     Route::apiResource('transports', TransportController::class)->except('show');
     Route::post('/transports/{transport}/mark-done', [TransportController::class, 'markDone']);
+    Route::get('/transports/{transport}/checklist', [TransportController::class, 'checklist']);
 
     // Adoptions
     Route::get('/adoptions/options', [AdoptionController::class, 'options']);
@@ -205,6 +208,16 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/adoptions/{adoption}/contract/signing', [ContractSigningController::class, 'store']);
     Route::post('/adoptions/{adoption}/contract/signing/cancel', [ContractSigningController::class, 'cancel']);
     Route::post('/adoptions/{adoption}/contract/signing/resend', [ContractSigningController::class, 'resend']);
+
+    // Case File (docs/features/case-file.md)
+    Route::get('/adoptions/{adoption}/case-file', [CaseFileController::class, 'show']);
+    Route::put('/adoptions/{adoption}/case-file', [CaseFileController::class, 'update']);
+    Route::put('/adoptions/{adoption}/requirements/{fieldKey}', [CaseFileController::class, 'setRequirement']);
+    Route::delete('/adoptions/{adoption}/requirements/{fieldKey}', [CaseFileController::class, 'clearRequirement']);
+
+    // The mediator's confirmation that closes the pre-inspection step
+    Route::post('/adoptions/{adoption}/pre-inspection/confirm', [AdoptionPreInspectionController::class, 'confirm']);
+    Route::delete('/adoptions/{adoption}/pre-inspection/confirm', [AdoptionPreInspectionController::class, 'unconfirm']);
 
     // API Tokens
     Route::get('/api-tokens/abilities', [ApiTokenController::class, 'abilities']);

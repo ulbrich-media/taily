@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Taily\Enums\AdoptionStep;
 use Taily\Enums\ContractSigningStatus;
 use Taily\Models\Concerns\SearchesWithLike;
 
@@ -38,6 +39,8 @@ class Adoption extends Model implements HasMedia
         'canceled_reason',
         'notes',
         'pre_inspection_notes',
+        'pre_inspection_confirmed_at',
+        'pre_inspection_confirmed_by',
         'contract_signed',
         'contract_signed_at',
         'transport_id',
@@ -51,6 +54,7 @@ class Adoption extends Model implements HasMedia
             'contract_signed_at' => 'datetime',
             'canceled_at' => 'datetime',
             'handed_over_at' => 'datetime',
+            'pre_inspection_confirmed_at' => 'datetime',
         ];
     }
 
@@ -74,11 +78,24 @@ class Adoption extends Model implements HasMedia
         return $this->belongsTo(Transport::class);
     }
 
-    // All pre-inspections for this adoption's applicant, keyed on person_id.
-    // Filter by animal_type_id in application code (see getPreInspectionStatusAttribute).
     public function preInspections(): HasMany
     {
-        return $this->hasMany(PreInspection::class, 'person_id', 'applicant_id');
+        return $this->hasMany(PreInspection::class)->orderBy('created_at');
+    }
+
+    public function preInspectionConfirmedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'pre_inspection_confirmed_by');
+    }
+
+    public function fieldValues(): HasMany
+    {
+        return $this->hasMany(AdoptionFieldValue::class);
+    }
+
+    public function requirements(): HasMany
+    {
+        return $this->hasMany(AdoptionRequirement::class);
     }
 
     public function contractSigningProcesses(): HasMany
@@ -159,26 +176,23 @@ class Adoption extends Model implements HasMedia
     }
 
     /**
-     * Mirrors getPreInspectionStatusAttribute(): the pre-inspections of the
-     * applicant for the animal's animal type decide the status.
+     * Mirrors getPreInspectionStatusAttribute().
      *
      * @param  list<string>  $statuses
      */
     public function scopeWherePreInspectionStatus(Builder $query, array $statuses): void
     {
-        $inspections = fn (bool $unsubmittedOnly): Closure => function ($sub) use ($unsubmittedOnly) {
-            $sub->selectRaw('1')
-                ->from('pre_inspections')
-                ->join('animals', 'animals.animal_type_id', '=', 'pre_inspections.animal_type_id')
-                ->whereColumn('animals.id', 'adoptions.animal_id')
-                ->whereColumn('pre_inspections.person_id', 'adoptions.applicant_id')
-                ->when($unsubmittedOnly, fn ($q) => $q->whereNull('pre_inspections.submitted_at'));
+        $started = function (Builder $q) {
+            $q->whereHas('preInspections')
+                ->orWhereHas('requirements', fn (Builder $requirement) => $requirement
+                    ->where('waived', false)
+                    ->where('required_for', AdoptionStep::PRE_INSPECTION->value));
         };
 
         self::whereAnyStatus($query, $statuses, fn (Builder $q, string $status) => match ($status) {
-            'not_started' => $q->whereNotExists($inspections(false)),
-            'pending' => $q->whereExists($inspections(true)),
-            'finished' => $q->whereExists($inspections(false))->whereNotExists($inspections(true)),
+            'finished' => $q->whereNotNull('pre_inspection_confirmed_at'),
+            'pending' => $q->whereNull('pre_inspection_confirmed_at')->where($started),
+            'not_started' => $q->whereNull('pre_inspection_confirmed_at')->whereNot($started),
         });
     }
 
@@ -322,30 +336,26 @@ class Adoption extends Model implements HasMedia
         return $this->handed_over_at !== null ? 'finished' : 'not_started';
     }
 
+    /**
+     * The mediator closes the step with a confirmation — with or without a
+     * pre-inspection, and regardless of its verdict. Until then the step is
+     * under way once a pre-inspection exists or a field (e.g. the home
+     * video) was made required for it (docs/features/adoption.md#pre-inspection).
+     */
     public function getPreInspectionStatusAttribute(): string
     {
-        $animalTypeId = $this->animal?->animal_type_id;
-
-        if (! $animalTypeId) {
-            return 'not_started';
+        if ($this->pre_inspection_confirmed_at !== null) {
+            return 'finished';
         }
 
-        if ($this->relationLoaded('preInspections')) {
-            $inspections = $this->preInspections->where('animal_type_id', $animalTypeId);
-        } else {
-            $inspections = PreInspection::where('person_id', $this->applicant_id)
-                ->where('animal_type_id', $animalTypeId)
-                ->get();
-        }
+        $hasInspections = $this->relationLoaded('preInspections')
+            ? $this->preInspections->isNotEmpty()
+            : $this->preInspections()->exists();
 
-        if ($inspections->isEmpty()) {
-            return 'not_started';
-        }
+        $requested = $this->relationLoaded('requirements')
+            ? $this->requirements->contains(fn (AdoptionRequirement $r) => ! $r->waived && $r->required_for === AdoptionStep::PRE_INSPECTION)
+            : $this->requirements()->where('waived', false)->where('required_for', AdoptionStep::PRE_INSPECTION->value)->exists();
 
-        if ($inspections->whereNull('submitted_at')->isNotEmpty()) {
-            return 'pending';
-        }
-
-        return 'finished';
+        return $hasInspections || $requested ? 'pending' : 'not_started';
     }
 }

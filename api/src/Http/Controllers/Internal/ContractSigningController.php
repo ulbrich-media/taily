@@ -16,6 +16,7 @@ use Taily\Http\Resources\AdoptionDetailResource;
 use Taily\Mail\ContractSignerInviteMail;
 use Taily\Mail\ContractSigningCancelledMail;
 use Taily\Models\Adoption;
+use Taily\Support\CaseFile\CaseFileService;
 use Taily\Support\ContractPdfService;
 use Taily\Support\ContractSigningService;
 use Throwable;
@@ -34,6 +35,7 @@ class ContractSigningController extends Controller
     public function __construct(
         private ContractPdfService $pdfService,
         private ContractSigningService $signingService,
+        private CaseFileService $caseFile,
     ) {}
 
     /**
@@ -63,6 +65,8 @@ class ContractSigningController extends Controller
                 'template' => ['Der Adoptant hat keine E-Mail-Adresse hinterlegt.'],
             ]);
         }
+
+        $this->caseFile->assertContractComplete($adoption, $validated['template']);
 
         // The contract_signed check, the active-process check, and the
         // process creation all run against the same row-locked instance, and

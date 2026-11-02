@@ -6,6 +6,8 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Taily\Models\Adoption;
+use Taily\Models\Animal;
 use Taily\Models\AnimalType;
 use Taily\Models\Person;
 use Taily\Models\PreInspection;
@@ -17,17 +19,14 @@ class AccessTokenTest extends TestCase
 
     private function createInspection(): PreInspection
     {
-        $person = Person::create([
-            'first_name' => 'Jane',
-            'last_name' => 'Doe',
-        ]);
-
         $animalType = AnimalType::create(['title' => 'Hund']);
 
-        return PreInspection::create([
-            'person_id' => $person->id,
-            'animal_type_id' => $animalType->id,
+        $adoption = Adoption::create([
+            'animal_id' => Animal::create(['animal_type_id' => $animalType->id, 'name' => 'Bello', 'gender' => 'male'])->id,
+            'applicant_id' => Person::create(['first_name' => 'Jane', 'last_name' => 'Doe'])->id,
         ]);
+
+        return PreInspection::create(['adoption_id' => $adoption->id]);
     }
 
     public function test_issued_token_is_never_stored_in_plaintext(): void

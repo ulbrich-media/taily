@@ -18,6 +18,7 @@ use Taily\Models\Animal;
 use Taily\Models\ContractSigner;
 use Taily\Models\ContractSigningAuditEvent;
 use Taily\Models\ContractSigningProcess;
+use Taily\Support\CaseFile\CaseFileService;
 
 class ContractPdfService
 {
@@ -220,6 +221,8 @@ class ContractPdfService
             'applicant' => $adoption->applicant,
             'mediator' => $adoption->mediator,
             'organization' => $adoption->mediator?->organization,
+            // Case File values by key, e.g. $caseFile['id_card_number'].
+            'caseFile' => app(CaseFileService::class)->values($adoption),
         ]];
     }
 

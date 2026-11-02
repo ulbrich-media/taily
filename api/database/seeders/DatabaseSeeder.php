@@ -85,9 +85,9 @@ class DatabaseSeeder extends Seeder
             'count' => $profile->int('empty_transports'),
         ]);
 
-        $this->call(PreInspectionSeeder::class, false, [
-            'count' => $profile->int('standalone_pre_inspections'),
-        ]);
+        // After the adoptions: values are filled in according to how far
+        // each adoption has come.
+        $this->call(CaseFileSeeder::class);
 
         $this->call(FormTemplateSeeder::class);
     }

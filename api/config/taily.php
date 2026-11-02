@@ -47,10 +47,24 @@ return [
     |
     */
 
+    // `fields` lists what a template prints: built-in animal and mediator
+    // fields (`animal.*`, `mediator.*`, see ContractFieldRegistry) and keys of
+    // the Case File catalogue. Every one of them is required for the contract
+    // step (ADR-016), so a contract can't be generated with blanks.
     'contracts' => [
         'default' => [
             'label' => 'Schutzvertrag (Beispielvorlage)',
             'view' => 'contracts.default',
+            'fields' => [
+                'animal.name',
+                'animal.animal_number',
+                'mediator.full_name',
+                'first_name',
+                'last_name',
+                'date_of_birth',
+                'address',
+                'id_card_number',
+            ],
         ],
     ],
 

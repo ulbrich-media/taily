@@ -21,6 +21,10 @@ class AdoptionDetailResource extends AdoptionBaseResource
                 'url' => $contractMedia->getTemporaryUrl(now()->addHour()),
             ] : null,
             'contract_source' => $this->resource->contract_source,
+            'pre_inspection_confirmed_by' => $this->whenLoaded(
+                'preInspectionConfirmedBy',
+                fn ($user) => $user ? ['id' => $user->id, 'name' => $user->name] : null
+            ),
             'contract_signing_process' => $this->whenLoaded(
                 'latestContractSigningProcess',
                 fn () => $this->resource->latestContractSigningProcess

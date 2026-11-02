@@ -17,7 +17,7 @@ use Taily\Models\Person;
 
 class AdoptionController extends Controller
 {
-    private const DETAIL_RELATIONS = [
+    public const DETAIL_RELATIONS = [
         'animal', 'animal.animalType', 'animal.media',
         'mediator', 'mediator.media',
         'applicant', 'applicant.media',
@@ -25,6 +25,7 @@ class AdoptionController extends Controller
         'media',
         'latestContractSigningProcess.signers.person',
         'latestContractSigningProcess.signers.latestInviteEvent',
+        'preInspections', 'requirements', 'preInspectionConfirmedBy',
     ];
 
     // What an adoption row of the list renders, including its derived step statuses.
@@ -33,7 +34,7 @@ class AdoptionController extends Controller
         'mediator.media', 'applicant.media',
         'transport',
         'latestContractSigningProcess',
-        'preInspections',
+        'preInspections', 'requirements',
     ];
 
     /**

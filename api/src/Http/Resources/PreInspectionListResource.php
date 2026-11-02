@@ -14,9 +14,17 @@ class PreInspectionListResource extends PreInspectionBaseResource
         return array_merge(parent::toArray($request), [
             'status' => $this->resource->status,
             'submission_url' => $token ? FrontendUriBuilder::inspect($token->token) : null,
-            'person' => $this->whenLoaded('person', fn ($v) => new PersonBaseResource($v)),
-            'animal_type' => $this->whenLoaded('animalType', fn ($v) => new AnimalTypeResource($v)),
             'inspector' => $this->whenLoaded('inspector', fn ($v) => $v ? new PersonBaseResource($v) : null),
+            // Enough of the adoption to tell earlier pre-inspections apart.
+            'adoption' => $this->whenLoaded('adoption', fn ($adoption) => [
+                'id' => $adoption->id,
+                'applicant_id' => $adoption->applicant_id,
+                'animal' => $adoption->animal ? [
+                    'id' => $adoption->animal->id,
+                    'name' => $adoption->animal->name,
+                    'animal_type' => $adoption->animal->animalType?->title,
+                ] : null,
+            ]),
         ]);
     }
 }

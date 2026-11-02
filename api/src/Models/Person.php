@@ -256,7 +256,8 @@ class Person extends Model implements HasMedia
     {
         $inspections = fn ($sub) => $sub->selectRaw('1')
             ->from('pre_inspections')
-            ->whereColumn('pre_inspections.person_id', 'people.id');
+            ->join('adoptions', 'adoptions.id', '=', 'pre_inspections.adoption_id')
+            ->whereColumn('adoptions.applicant_id', 'people.id');
 
         $has ? $query->whereExists($inspections) : $query->whereNotExists($inspections);
     }

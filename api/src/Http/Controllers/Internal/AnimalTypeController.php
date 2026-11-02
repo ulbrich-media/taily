@@ -28,7 +28,7 @@ class AnimalTypeController extends Controller
     public function index(CatalogIndexRequest $request): AnonymousResourceCollection|JsonResponse
     {
         if (! $request->wantsListView()) {
-            $animalTypes = AnimalType::with('preInspectionFormTemplate')->get();
+            $animalTypes = AnimalType::all();
 
             return response()->json([
                 'data' => AnimalTypeResource::collection($animalTypes),
@@ -41,7 +41,7 @@ class AnimalTypeController extends Controller
         }
 
         return AnimalTypeResource::collection(
-            AnimalType::with('preInspectionFormTemplate')
+            AnimalType::query()
                 ->orderBy('title')
                 ->orderBy('id')
                 ->paginate($request->perPage())
@@ -55,11 +55,9 @@ class AnimalTypeController extends Controller
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255|unique:animal_types,title',
-            'pre_inspection_form_template_id' => 'nullable|uuid|exists:form_templates,id',
         ]);
 
         $animalType = AnimalType::create($validated);
-        $animalType->load('preInspectionFormTemplate');
 
         return response()->json([
             'message' => 'Tierart erfolgreich angelegt.',
@@ -72,8 +70,6 @@ class AnimalTypeController extends Controller
      */
     public function show(AnimalType $animalType): JsonResponse
     {
-        $animalType->load('preInspectionFormTemplate');
-
         return response()->json([
             'message' => 'Tierart gefunden.',
             'data' => new AnimalTypeResource($animalType),
@@ -87,11 +83,9 @@ class AnimalTypeController extends Controller
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255|unique:animal_types,title,'.$animalType->id,
-            'pre_inspection_form_template_id' => 'nullable|uuid|exists:form_templates,id',
         ]);
 
         $animalType->update($validated);
-        $animalType->load('preInspectionFormTemplate');
 
         return response()->json([
             'message' => 'Tierart erfolgreich aktualisiert.',

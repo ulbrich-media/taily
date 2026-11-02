@@ -5,7 +5,6 @@ namespace Taily\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -20,21 +19,7 @@ class AnimalType extends Model
      */
     protected $fillable = [
         'title',
-        'pre_inspection_form_template_id',
     ];
-
-    public function preInspectionFormTemplate(): BelongsTo
-    {
-        return $this->belongsTo(FormTemplate::class, 'pre_inspection_form_template_id');
-    }
-
-    /**
-     * Get the pre-inspections for this animal type.
-     */
-    public function preInspections(): HasMany
-    {
-        return $this->hasMany(PreInspection::class);
-    }
 
     public function vaccinations(): HasMany
     {

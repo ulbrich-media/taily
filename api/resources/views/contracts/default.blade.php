@@ -88,6 +88,12 @@
                 {{ $applicant->postal_code }} {{ $applicant->city }}
             </td>
         </tr>
+        @if(! empty($caseFile['id_card_number']))
+            <tr>
+                <td class="label">Ausweisnummer</td>
+                <td>{{ $caseFile['id_card_number'] }}</td>
+            </tr>
+        @endif
         <tr>
             <td class="label">E-Mail</td>
             <td>{{ $applicant->email }}</td>
