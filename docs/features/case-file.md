@@ -1,6 +1,6 @@
 # Case File
 
-> **Status: planned, not implemented.** This describes the target design from [ADR-015](../ADRs/ADR-015-adoption-case-file.md). The code does not reflect it yet.
+> **Status: prototype on branch `prototype/adoption-based-structure`.** This describes the target design from [ADR-015](../ADRs/ADR-015-adoption-case-file.md). Implemented so far: field groups, Field Definitions (incl. built-in fields and conditions), Field Values, Requirement Overrides, the Checklist (adoption page, transport page, contract blocking) and mediator editing. The catalogue is seeded (`CaseFileSeeder`), there is no catalogue editor yet. Not implemented: file fields and review actions, requesting data (`requested_step`), the applicant portal, the audit trail and notifications.
 
 The Case File (German UI: *Angaben*) is everything an adoption knows about *if and how* it can happen: the applicant's living situation, their experience, documents, photos, contract data, transport details. It belongs to the **adoption**, not to the person. The person only identifies a human (see [data-scheme.md](../data-scheme.md#person)).
 
