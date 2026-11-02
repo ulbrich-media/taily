@@ -85,7 +85,7 @@ _Avoid_: Shipment, Delivery run
 **Handover**: The moment the Animal is physically transferred to the Adopter. Completing a Handover transitions the Adoption to status `done` and the Applicant becomes an Adopter.
 _Avoid_: Transfer, Delivery, Pickup
 
-**Contract Template**: A configured contract: title, wording and three data sections (animal, mediator, adopter) of fields. An Animal Type can have several; the Mediator picks one at generation. The fields printed by an Animal Type's templates are required for the contract Step. See ADR-016.
+**Contract Template**: A configured contract: title, wording and three data sections (animal, mediator, adopter) of fields. An Animal Type can have several; the Mediator picks one at generation. Fields a template marks as required are required for the contract Step of its Animal Types; optional ones are printed when present. See ADR-016.
 _Avoid_: Contract layout, Contract form
 
 ### Form templates (under review — see docs/features/form-templates.md)

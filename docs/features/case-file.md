@@ -1,6 +1,6 @@
 # Case File
 
-> **Status: prototype on branch `prototype/adoption-based-structure`.** This describes the target design from [ADR-015](../ADRs/ADR-015-adoption-case-file.md). Implemented so far: the catalogue per animal type with its settings UI (*Einstellungen → Angaben*), Field Values, Requirement Overrides, the Checklist (adoption overview, transport page, contract blocking) and mediator editing in the adoption's *Angaben* tab. Not implemented: file fields and review actions, requesting data (`requested_step`), the applicant portal, the audit trail and notifications.
+> **Status: prototype on branch `prototype/adoption-based-structure`.** This describes the target design from [ADR-015](../ADRs/ADR-015-adoption-case-file.md). Implemented so far: the catalogue per animal type with its settings UI (*Einstellungen → Angaben*), Field Values, Requirement Overrides, the Checklist (adoption overview, transport page, contract blocking) mediator editing in the adoption's *Angaben* tab, and contract templates as configuration (*Einstellungen → Verträge*). Not implemented: file fields and review actions, requesting data (`requested_step`), the applicant portal, the audit trail and notifications.
 
 The Case File (German UI: *Angaben*) is everything an adoption knows about *if and how* it can happen: the applicant's living situation, their experience, documents, photos, contract data, transport details. It belongs to the **adoption**, not to the person. The person only identifies a human (see [data-scheme.md](../data-scheme.md#person)).
 
@@ -236,7 +236,7 @@ Making a field required for a step that has already been requested sends it to t
 **Effective requirement** for a field on an adoption, in order of precedence:
 
 1. The adoption's override, if any.
-2. Otherwise the stricter (earlier) of the definition's `required_for` and the contract templates of the animal's type (every field they print is required for `contract`; see [ADR-016](../ADRs/ADR-016-contract-templates-as-configuration.md#several-templates-requirements-per-animal-type)).
+2. Otherwise the stricter (earlier) of the definition's `required_for` and the active contract templates of the animal's type (every field they mark as required is required for `contract`; see [ADR-016](../ADRs/ADR-016-contract-templates-as-configuration.md#several-templates-requirements-per-animal-type)).
 
 Fields that don't apply — a [condition](#conditional-fields) that isn't met — are never required.
 
@@ -283,7 +283,7 @@ It covers Case File fields, the built-in Person fields of the applicant, and —
 Where it is used:
 
 - **Adoption page** — the summary at the top, e.g. *"Für den Vertrag fehlen 2 Angaben, 1 Prüfung offen"*.
-- **Contract generation** — blocked while contract items are missing (waived items don't count).
+- **Contract generation** — blocked while a field the chosen template requires is missing (waived items don't count).
 - **Transport page** — aggregates the transport checklist over all assigned adoptions: *"Tour Süd: 3 von 8 Adoptionen vollständig"* with the missing items per adoption. No more checking every animal and person by hand. See [transport.md](./transport.md#checklist).
 
 Other steps are not blocked by the checklist; the mediator decides.

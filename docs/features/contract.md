@@ -8,20 +8,20 @@ The Schutzvertrag defines the rights and responsibilities of both parties. It en
 
 ## Contract templates
 
-> **Status: planned, not implemented.** Today templates are Blade views registered in `config('taily.contracts')` ([ADR-013](../ADRs/ADR-013-contract-template-rendering.md)). The target design is [ADR-016](../ADRs/ADR-016-contract-templates-as-configuration.md).
+> **Status: prototype on branch `prototype/adoption-based-structure`.** Templates are configured under *Einstellungen → Verträge* and rendered through `contracts/configured.blade.php` ([ADR-016](../ADRs/ADR-016-contract-templates-as-configuration.md)). Not implemented yet: header/footer settings (still the Blade layout) and the download *"zur manuellen Unterschrift"*.
 
 A contract template is configuration, not code. It consists of:
 
 - **Title** — e.g. *Schutzvertrag*
 - **Animal types** it is offered for; an animal type can have several templates
-- **Three data sections** — *Tier*, *Vermittler:in*, *Adoptant:in* — each an ordered list of fields chosen from a registry: built-in animal columns (`animal.name`, `animal.tasso_id`, …), built-in person columns of the mediator and the adopter, and Case File fields (`id_card_number`)
+- **Three data sections** — *Tier*, *Vermittler:in*, *Adoptant:in* — each an ordered list of fields, each marked *required* or not. Animal and mediator fields come from a registry of built-in columns (`animal.name`, `animal.tasso_id`, `animal.photo`, `mediator.organization`, …); adopter fields are fields of the Case File catalogue (built-in like `address` or custom like `id_card_number`) that exist in the catalogue of every animal type the template is offered for. Files and Info Blocks can't be printed.
 - **Wording** — the contract text, plain text with Markdown paragraphs and headings, no placeholders
 
 Header and footer (logo, organization text) are configured once for all documents in the contract settings.
 
 One generic view, `contracts/configured.blade.php`, renders every template. An organization that needs more — inline placeholders, a different layout — overrides that view through the package-view convention.
 
-**Every field printed by the templates of an animal type is required for the contract step** of adoptions of that type — the templates of one type are expected to differ in wording, not in data. Taily therefore knows what a contract needs, and the [Checklist](./case-file.md#checklist) shows it long before generation: *"Für den Vertrag fehlen: Ausweisnummer, Tasso-ID des Tieres"*.
+**Every field a template of an animal type marks as required is required for the contract step** of adoptions of that type — the templates of one type are expected to differ in wording, not in data. Optional fields are printed when they have a value and left out otherwise; a field the catalogue no longer defines prints nothing. A catalogue field a template prints can't be archived until it is removed from the template. Taily therefore knows what a contract needs, and the [Checklist](./case-file.md#checklist) shows it long before generation: *"Für den Vertrag fehlen: Ausweisnummer, Tasso-ID des Tieres"*.
 
 **Manual signing:** any generated contract can be downloaded *"zur manuellen Unterschrift"* — Taily appends a page with signature lines to the frozen PDF, leaving the frozen document itself untouched. This replaces copying a Blade template to add signature lines.
 

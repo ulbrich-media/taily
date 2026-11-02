@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed — supersedes the template-authoring parts of [ADR-013](ADR-013-contract-template-rendering.md)
+Proposed — supersedes the template-authoring parts of [ADR-013](ADR-013-contract-template-rendering.md). Prototyped on `prototype/adoption-based-structure`, with the amendments under [Prototype notes](#prototype-notes).
 
 ## Context
 
@@ -76,6 +76,17 @@ Editing a template does not need versioning, for the same reason given in ADR-01
 ### Changes after generation
 
 Applicants keep being able to edit their data through the portal. If they change a field that is part of a generated contract, the mediator's change notification says so explicitly ("changed after contract generation — the contract shows the old value"). There is no lock; see [ADR-015](ADR-015-adoption-case-file.md#lock-fields-once-they-are-in-a-generated-contract).
+
+## Prototype notes
+
+The prototype keeps the decision and settles some details:
+
+- **Required or optional per field.** Each section entry is `{key, required}`. Only required entries become contract requirements and block generation; optional ones are printed when they have a value (a phone number, the animal's breed) and left out otherwise. Requiring every printed field made a template either too strict or too sparse.
+- **Adopter fields are catalogue fields.** There is no `adopter.*` prefix: built-in Person fields are Field Definitions of every catalogue (`first_name`, `address`, …). A template may only print a catalogue field that exists in the catalogue of *every* animal type it is offered for, and such a field can't be archived while a template prints it.
+- **Registry additions:** `animal.animal_type`, `animal.gender`, `animal.contract_notes`, `animal.photo` (printed beside the animal table) and `mediator.organization`.
+- **Templates are archived, not deleted** — signing processes keep the template id in `template_key`.
+- **Header and footer** still come from `contracts/layout.blade.php`; there are no contract settings yet. The manual-signing download isn't built yet either.
+- The example Schutzvertrag is a seeded record (`ContractTemplateSeeder`), offered for every animal type.
 
 ## Consequences
 
