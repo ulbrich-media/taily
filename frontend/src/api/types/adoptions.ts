@@ -56,7 +56,7 @@ export interface ContractFile {
   url: string
 }
 
-// Returned by GET /adoptions/contract-templates.
+// Returned by GET /adoptions/{id}/contract-templates; `key` is the template id.
 export interface ContractTemplate {
   key: string
   label: string

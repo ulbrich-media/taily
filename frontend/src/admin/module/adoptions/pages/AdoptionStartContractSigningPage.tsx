@@ -224,7 +224,7 @@ export function AdoptionStartContractSigningPage({
               disabled={templates.length === 0}
               description={
                 templates.length === 0
-                  ? 'Keine Vertragsvorlagen verfügbar.'
+                  ? 'Für diese Tierart gibt es keine Vertragsvorlage. Vorlagen werden unter Einstellungen → Verträge angelegt.'
                   : undefined
               }
               additionalAction={

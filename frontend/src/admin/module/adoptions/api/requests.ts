@@ -113,8 +113,11 @@ export async function updateContract(
   })
 }
 
-export async function getContractTemplates(): Promise<ContractTemplate[]> {
-  return apiRequest<ContractTemplate[]>('adoptions/contract-templates')
+// The templates offered for the adoption's animal type.
+export async function getContractTemplates(
+  id: string
+): Promise<ContractTemplate[]> {
+  return apiRequest<ContractTemplate[]>(`adoptions/${id}/contract-templates`)
 }
 
 export async function generateContract(
