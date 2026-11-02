@@ -22,6 +22,7 @@ class PreInspectionListResource extends PreInspectionBaseResource
                 'animal' => $adoption->animal ? [
                     'id' => $adoption->animal->id,
                     'name' => $adoption->animal->name,
+                    'animal_type_id' => $adoption->animal->animal_type_id,
                     'animal_type' => $adoption->animal->animalType?->title,
                 ] : null,
             ]),

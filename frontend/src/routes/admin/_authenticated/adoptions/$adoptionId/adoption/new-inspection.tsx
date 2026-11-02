@@ -56,8 +56,7 @@ function RouteComponent() {
     <TriggerPreInspectionDialog
       open
       onOpenChange={handleClose}
-      applicantId={applicantId}
-      animalTypeId={animalTypeId}
+      adoptionId={adoptionId}
       inspectors={inspectors}
       onCreated={(preInspectionId) =>
         navigateToInspection({

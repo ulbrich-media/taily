@@ -88,7 +88,7 @@ export function PreInspectionList({
       <TableHeader>
         <TableRow>
           <TableHead>Datum</TableHead>
-          <TableHead>Tierart</TableHead>
+          <TableHead>Tier</TableHead>
           <TableHead>Kontrolleur</TableHead>
           <TableHead>Bewertung</TableHead>
           <TableHead></TableHead>
@@ -99,7 +99,13 @@ export function PreInspectionList({
           <TableRow key={inspection.id}>
             <TableCell>{formatApiDate(inspection.created_at)}</TableCell>
             <TableCell className="font-medium">
-              {inspection.animal_type.title}
+              {inspection.adoption.animal?.name}
+              {inspection.adoption.animal?.animal_type && (
+                <span className="text-muted-foreground font-normal">
+                  {' '}
+                  ({inspection.adoption.animal.animal_type})
+                </span>
+              )}
             </TableCell>
             <TableCell>
               {inspection.inspector?.full_name ?? (
@@ -111,10 +117,9 @@ export function PreInspectionList({
             </TableCell>
             <TableCell className="text-right">
               <div className="flex justify-end gap-2">
-                {inspection.submission_url &&
-                  inspection.verdict === 'pending' && (
-                    <CopyLinkButton url={inspection.submission_url} />
-                  )}
+                {inspection.submission_url && !inspection.submitted_at && (
+                  <CopyLinkButton url={inspection.submission_url} />
+                )}
                 {renderDetailLink && (
                   <Button size="sm" variant="outline" asChild>
                     {renderDetailLink(inspection)}

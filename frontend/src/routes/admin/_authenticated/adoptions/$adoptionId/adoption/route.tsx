@@ -1,7 +1,13 @@
 import { createFileRoute, Outlet } from '@tanstack/react-router'
 import { useSuspenseQuery, useQuery } from '@tanstack/react-query'
 import { getAdoptionQuery } from '@/admin/module/adoptions/api/queries'
-import { listPreInspectionsByPersonAndAnimalTypeQuery } from '@/admin/module/pre-inspections/api/queries'
+import {
+  listPreInspectionsByAdoptionQuery,
+  listPreInspectionsByPersonQuery,
+} from '@/admin/module/pre-inspections/api/queries'
+import { getCaseFileQuery } from '@/admin/module/case-file/api/queries'
+import { CaseFileCard } from '@/admin/module/case-file/components/CaseFileCard'
+import { PreInspectionConfirmAction } from '@/admin/module/case-file/components/PreInspectionConfirmAction'
 import { AdoptionDetailPage } from '@/admin/module/adoptions/pages/AdoptionDetailPage'
 import { Button } from '@/shadcn/components/ui/button'
 import {
@@ -10,6 +16,7 @@ import {
   Edit,
   FileUp,
   PlusCircle,
+  SlidersHorizontal,
   RotateCcw,
   Send,
   Truck,
@@ -33,7 +40,13 @@ import { Route as ReopenRoute } from '@/routes/admin/_authenticated/adoptions/$a
 import { Route as TransportAssignRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/transport-assign'
 import { Route as TransportRemoveRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/transport-remove'
 import { Route as InspectionDetailRoute } from '@/routes/admin/_authenticated/people/$id/adoptions/pre-inspections/$preInspectionId/index'
+import { Route as CaseFileGroupRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/case-file.$groupId'
+import { Route as RequirementRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/requirement.$fieldKey'
+import { Route as AnimalRoute } from '@/routes/admin/_authenticated/animals/_animalDetail/$animalTypeId.animal.$animalId/index'
+import { Route as PersonRoute } from '@/routes/admin/_authenticated/people/$id/index'
 import type { PreInspectionResource } from '@/api/types/pre-inspections'
+import type { ChecklistItem } from '@/api/types/case-file'
+import { Spinner } from '@/shadcn/components/ui/spinner'
 
 export const Route = createFileRoute(
   '/admin/_authenticated/adoptions/$adoptionId/adoption'
@@ -45,15 +58,94 @@ function RouteComponent() {
   const { adoptionId } = Route.useParams()
   const { data: adoption } = useSuspenseQuery(getAdoptionQuery(adoptionId))
 
-  const animalTypeId = adoption.animal.animal_type_id
   const applicantId = adoption.applicant_id
 
   const {
     data: inspectionsData,
     isLoading: inspectionsLoading,
     isError: inspectionsError,
-  } = useQuery(
-    listPreInspectionsByPersonAndAnimalTypeQuery(applicantId, animalTypeId)
+  } = useQuery(listPreInspectionsByAdoptionQuery(adoptionId))
+
+  // What this person already went through for other animals.
+  const { data: personInspections } = useQuery(
+    listPreInspectionsByPersonQuery(applicantId)
+  )
+  const earlierInspections = personInspections?.filter(
+    (inspection) => inspection.adoption_id !== adoptionId
+  )
+
+  const { data: caseFile, isError: caseFileError } = useQuery(
+    getCaseFileQuery(adoptionId)
+  )
+
+  const renderChecklistItemAction = (item: ChecklistItem) => {
+    if (item.subject === 'animal') {
+      return (
+        <AnimalRoute.Link
+          params={{
+            animalTypeId: adoption.animal.animal_type_id,
+            animalId: adoption.animal_id,
+          }}
+          className="text-xs underline underline-offset-4"
+        >
+          Beim Tier ergänzen
+        </AnimalRoute.Link>
+      )
+    }
+    if (item.subject === 'mediator' && adoption.mediator_id) {
+      return (
+        <PersonRoute.Link
+          params={{ id: adoption.mediator_id }}
+          className="text-xs underline underline-offset-4"
+        >
+          Bei der Vermittler:in ergänzen
+        </PersonRoute.Link>
+      )
+    }
+    return null
+  }
+
+  const caseFileSection = caseFile ? (
+    <CaseFileCard
+      caseFile={caseFile}
+      renderChecklistItemAction={renderChecklistItemAction}
+      renderEditGroupAction={(group) =>
+        group.fields.some(
+          (field) =>
+            field.type !== 'info' &&
+            !['photo', 'video', 'document'].includes(field.type)
+        ) ? (
+          <Button size="sm" variant="outline" asChild>
+            <CaseFileGroupRoute.Link params={{ adoptionId, groupId: group.id }}>
+              <Edit />
+              Bearbeiten
+            </CaseFileGroupRoute.Link>
+          </Button>
+        ) : null
+      }
+      renderRequirementAction={(field) => (
+        <Button
+          size="icon-sm"
+          variant="ghost"
+          asChild
+          title="Anforderung für diese Vermittlung anpassen"
+        >
+          <RequirementRoute.Link params={{ adoptionId, fieldKey: field.key }}>
+            <SlidersHorizontal />
+            <span className="sr-only">
+              Anforderung für {field.label} anpassen
+            </span>
+          </RequirementRoute.Link>
+        </Button>
+      )}
+    />
+  ) : caseFileError ? (
+    <p className="text-sm text-destructive">Fehler beim Laden der Angaben.</p>
+  ) : (
+    <p className="text-sm text-muted-foreground flex gap-2 items-baseline">
+      <Spinner className="size-3" />
+      Lade Angaben...
+    </p>
   )
 
   const editInternalNotesAction = (hasNote: boolean) => (
@@ -171,7 +263,7 @@ function RouteComponent() {
     <InspectionDetailRoute.Link
       params={{ id: applicantId, preInspectionId: inspection.id }}
     >
-      {inspection.verdict !== 'pending' ? (
+      {inspection.submitted_at ? (
         <>
           <span>Öffnen</span>
         </>
@@ -209,6 +301,11 @@ function RouteComponent() {
         inspectionsData={inspectionsData}
         inspectionsLoading={inspectionsLoading}
         inspectionsError={inspectionsError}
+        earlierInspections={earlierInspections}
+        caseFileSection={caseFileSection}
+        confirmPreInspectionAction={
+          <PreInspectionConfirmAction adoption={adoption} />
+        }
         editInternalNotesAction={editInternalNotesAction}
         startContractAction={startContractAction}
         editContractAction={editContractAction}

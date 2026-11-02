@@ -40,7 +40,7 @@ function RouteComponent() {
 
   const renderInspectionDetailLink = (inspection: PreInspectionResource) => (
     <InspectionDetailRoute.Link params={{ id, preInspectionId: inspection.id }}>
-      {inspection.verdict !== 'pending' ? (
+      {inspection.submitted_at ? (
         <>
           <span>Öffnen</span>
         </>

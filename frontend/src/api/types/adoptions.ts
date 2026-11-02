@@ -26,6 +26,8 @@ export interface AdoptionBaseResource {
   notes: string
   // Pre-inspection step
   pre_inspection_notes: string
+  // The mediator's confirmation that closes the step.
+  pre_inspection_confirmed_at: string | null
   // Contract step
   contract_signed: boolean
   contract_signed_at: string | null
@@ -99,5 +101,6 @@ export interface AdoptionDetailResource extends AdoptionBaseResource {
   // 'manual' = confirmed by hand, null = no signed contract yet.
   contract_source: ContractSource | null
   contract_signing_process: ContractSigningProcess | null
+  pre_inspection_confirmed_by: { id: string; name: string } | null
   transport: TransportListResource | null
 }

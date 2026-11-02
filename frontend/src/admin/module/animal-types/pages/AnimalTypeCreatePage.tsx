@@ -5,7 +5,6 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { animalTypeQueryKeys } from '@/admin/module/animal-types/api/queries'
 import { createAnimalType } from '@/admin/module/animal-types/api/requests'
-import type { FormTemplateResource } from '@/api/types/form-templates'
 import {
   Dialog,
   DialogContent,
@@ -21,23 +20,19 @@ import { toast } from 'sonner'
 import { FormBlocker } from '@/components/form/FormBlocker'
 import { TextInput } from '@/components/field/TextInput'
 import { zFieldString } from '@/components/field/TextInput.utils.ts'
-import { FormTemplateSelect } from '@/components/field/FormTemplateSelect.tsx'
 
 const createAnimalTypeSchema = z.object({
   title: zFieldString({ required: true }),
-  pre_inspection_form_template_id: z.string().nullable(),
 })
 
 type CreateAnimalTypeFormData = z.infer<typeof createAnimalTypeSchema>
 
 interface AnimalTypeCreatePageProps {
-  formTemplates: FormTemplateResource[]
   onClose: () => void
   breadcrumb?: ReactNode
 }
 
 export function AnimalTypeCreatePage({
-  formTemplates,
   onClose,
   breadcrumb,
 }: AnimalTypeCreatePageProps) {
@@ -47,7 +42,6 @@ export function AnimalTypeCreatePage({
     resolver: zodResolver(createAnimalTypeSchema),
     defaultValues: {
       title: '',
-      pre_inspection_form_template_id: null,
     },
   })
 
@@ -70,7 +64,6 @@ export function AnimalTypeCreatePage({
   const onSubmit = async (data: CreateAnimalTypeFormData) => {
     await createMutation.mutateAsync({
       title: data.title,
-      pre_inspection_form_template_id: data.pre_inspection_form_template_id,
     })
   }
 
@@ -79,10 +72,7 @@ export function AnimalTypeCreatePage({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Neue Tierart erstellen</DialogTitle>
-          <DialogDescription>
-            Erstelle eine neue Tierart und weise optional eine Formularvorlage
-            zu.
-          </DialogDescription>
+          <DialogDescription>Erstelle eine neue Tierart.</DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -94,14 +84,6 @@ export function AnimalTypeCreatePage({
                 control={form.control}
                 label="Name"
                 required
-              />
-
-              <FormTemplateSelect
-                name="pre_inspection_form_template_id"
-                control={form.control}
-                label="Formular für Vorkontrollen"
-                formTemplates={formTemplates}
-                canRemove
               />
             </FieldGroup>
 

@@ -7,7 +7,7 @@ import type {
   PreInspectionVerdict,
 } from '@/api/types/pre-inspections'
 
-/** Single pre-inspection (backwards compat alias). */
+/** Single pre-inspection. */
 export type PreInspection = PreInspectionResource
 export type PreInspectionsResponse = PreInspectionResource[]
 export interface PreInspectionResponse {
@@ -23,15 +23,13 @@ export interface DeletePreInspectionResponse {
 // ---------------------------------------------------------------------------
 
 export interface CreatePreInspectionRequest {
-  person_id: string
-  animal_type_id: string
+  adoption_id: string
   inspector_id?: string | null
 }
 
 export interface UpdatePreInspectionRequest {
-  notes?: string | null
-  verdict?: 'approved' | 'rejected'
-  form_data?: Record<string, unknown>
+  memo?: string | null
+  verdict?: 'approved' | 'rejected' | null
 }
 
 export interface UpdateInspectorRequest {

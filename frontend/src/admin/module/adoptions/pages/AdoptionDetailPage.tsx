@@ -23,6 +23,10 @@ interface AdoptionDetailPageProps {
   inspectionsData: PreInspectionResource[] | undefined
   inspectionsLoading: boolean
   inspectionsError: boolean
+  // Pre-inspections of the same applicant for other adoptions.
+  earlierInspections?: PreInspectionResource[]
+  caseFileSection: ReactNode
+  confirmPreInspectionAction: ReactNode
   editInternalNotesAction: (hasNote: boolean) => ReactNode
   startContractAction: ReactNode
   editContractAction: ReactNode
@@ -41,6 +45,9 @@ export function AdoptionDetailPage({
   inspectionsData,
   inspectionsLoading,
   inspectionsError,
+  earlierInspections,
+  caseFileSection,
+  confirmPreInspectionAction,
   editInternalNotesAction,
   startContractAction,
   editContractAction,
@@ -82,6 +89,8 @@ export function AdoptionDetailPage({
         </div>
       </StepCard>
 
+      {caseFileSection}
+
       <StepCard
         title="Vorkontrolle"
         status={
@@ -89,7 +98,7 @@ export function AdoptionDetailPage({
             set={{
               not_started: { label: 'Offen', variant: 'outline' },
               pending: { label: 'In Bearbeitung', variant: 'info' },
-              finished: { label: 'Abgeschlossen', variant: 'success' },
+              finished: { label: 'Bestätigt', variant: 'success' },
             }}
             value={adoption.pre_inspection_status}
           />
@@ -114,13 +123,30 @@ export function AdoptionDetailPage({
             )}
           </InfoRow>
 
+          {!!earlierInspections?.length && (
+            <InfoRow label="Frühere Vorkontrollen dieser Person">
+              <PreInspectionList inspections={earlierInspections} />
+            </InfoRow>
+          )}
+
           {adoption.pre_inspection_notes && (
             <InfoRow label="Notizen">{adoption.pre_inspection_notes}</InfoRow>
           )}
 
-          <div className="flex justify-end gap-2">
+          {adoption.pre_inspection_confirmed_at && (
+            <InfoRow label="Bestätigt">
+              {`${formatApiDate(adoption.pre_inspection_confirmed_at)}${
+                adoption.pre_inspection_confirmed_by
+                  ? ` von ${adoption.pre_inspection_confirmed_by.name}`
+                  : ''
+              }`}
+            </InfoRow>
+          )}
+
+          <div className="flex flex-wrap justify-end gap-2">
             {editPreInspectionAction(!!adoption.pre_inspection_notes)}
             {newInspectionAction}
+            {confirmPreInspectionAction}
           </div>
         </div>
       </StepCard>

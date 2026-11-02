@@ -6,7 +6,6 @@ import { z } from 'zod'
 import { animalTypeQueryKeys } from '@/admin/module/animal-types/api/queries'
 import { updateAnimalType } from '@/admin/module/animal-types/api/requests'
 import type { AnimalTypeResource } from '@/api/types/animal-types'
-import type { FormTemplateResource } from '@/api/types/form-templates'
 import {
   Dialog,
   DialogContent,
@@ -22,26 +21,22 @@ import { toast } from 'sonner'
 import { FormBlocker } from '@/components/form/FormBlocker'
 import { TextInput } from '@/components/field/TextInput'
 import { zFieldString } from '@/components/field/TextInput.utils.ts'
-import { FormTemplateSelect } from '@/components/field/FormTemplateSelect.tsx'
 import { Mark } from '@/components/typo/mark.tsx'
 
 const updateAnimalTypeSchema = z.object({
   title: zFieldString({ required: true }),
-  pre_inspection_form_template_id: z.string().nullable(),
 })
 
 type UpdateAnimalTypeFormData = z.infer<typeof updateAnimalTypeSchema>
 
 interface AnimalTypeEditPageProps {
   animalType: AnimalTypeResource
-  formTemplates: FormTemplateResource[]
   onClose: () => void
   breadcrumb?: ReactNode
 }
 
 export function AnimalTypeEditPage({
   animalType,
-  formTemplates,
   onClose,
   breadcrumb,
 }: AnimalTypeEditPageProps) {
@@ -51,8 +46,6 @@ export function AnimalTypeEditPage({
     resolver: zodResolver(updateAnimalTypeSchema),
     defaultValues: {
       title: animalType.title,
-      pre_inspection_form_template_id:
-        animalType.pre_inspection_form_template_id ?? null,
     },
   })
 
@@ -60,8 +53,6 @@ export function AnimalTypeEditPage({
     mutationFn: (data: UpdateAnimalTypeFormData) =>
       updateAnimalType(animalType.id, {
         title: data.title,
-        pre_inspection_form_template_id:
-          data.pre_inspection_form_template_id || null,
       }),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: animalTypeQueryKeys.list })
@@ -91,9 +82,7 @@ export function AnimalTypeEditPage({
           <DialogTitle>
             <Mark>{animalType.title}</Mark> bearbeiten
           </DialogTitle>
-          <DialogDescription>
-            Bearbeite die Tierart und ihre Formularvorlage.
-          </DialogDescription>
+          <DialogDescription>Bearbeite die Tierart.</DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -105,14 +94,6 @@ export function AnimalTypeEditPage({
                 control={form.control}
                 label="Name"
                 required
-              />
-
-              <FormTemplateSelect
-                name="pre_inspection_form_template_id"
-                control={form.control}
-                label="Formular für Vorkontrollen"
-                formTemplates={formTemplates}
-                canRemove
               />
             </FieldGroup>
 

@@ -16,13 +16,13 @@ export const Route = createFileRoute(
       getPreInspectionQuery(params.preInspectionId)
     )
 
-    if (inspection.person_id !== params.id) {
+    if (inspection.adoption.applicant_id !== params.id) {
       throw notFound()
     }
     await queryClient.ensureQueryData(
       listPeopleFilteredQuery({
         role: 'inspector',
-        animal_type_id: inspection.animal_type_id,
+        animal_type_id: inspection.adoption.animal?.animal_type_id,
       })
     )
   },
@@ -38,7 +38,7 @@ function RouteComponent() {
   const { data: inspectors = [] } = useSuspenseQuery(
     listPeopleFilteredQuery({
       role: 'inspector',
-      animal_type_id: inspection.animal_type_id,
+      animal_type_id: inspection.adoption.animal?.animal_type_id,
     })
   )
 

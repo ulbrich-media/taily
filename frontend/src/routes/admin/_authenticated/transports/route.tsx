@@ -11,6 +11,7 @@ import { Route as MarkDoneRoute } from '@/routes/admin/_authenticated/transports
 import { Route as DeleteRoute } from '@/routes/admin/_authenticated/transports/$transportId/delete'
 import { Route as AdoptionDetailRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/index'
 import type { TransportListResource } from '@/api/types/transports'
+import { TransportChecklistPanel } from '@/admin/module/case-file/components/TransportChecklistPanel'
 import type { AdoptionListResource } from '@/api/types/adoptions.ts'
 import { Button } from '@/shadcn/components/ui/button'
 import { CheckCircle2, Pencil, Plus, Trash2, ExternalLink } from 'lucide-react'
@@ -98,6 +99,19 @@ function RouteComponent() {
         createActionForEmpty={createActionForEmpty}
         renderActions={renderActions}
         renderAdoptionDetailLink={renderAdoptionDetailLink}
+        renderChecklist={(transport) => (
+          <TransportChecklistPanel
+            transportId={transport.id}
+            renderAdoptionLink={(adoptionId, label) => (
+              <AdoptionDetailRoute.Link
+                params={{ adoptionId }}
+                className="underline-offset-4 hover:underline"
+              >
+                {label}
+              </AdoptionDetailRoute.Link>
+            )}
+          />
+        )}
         breadcrumb={<BreadcrumbNav items={breadcrumbs} />}
       />
       <Outlet />
