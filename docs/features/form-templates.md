@@ -1,5 +1,7 @@
 # Form Templates
 
+> **Status: under review.** The form builder's only current consumer, the pre-inspection form, is removed by [ADR-015](../ADRs/ADR-015-adoption-case-file.md) (inspections get a verdict and a memo instead). The builder is **kept until it is decided how animal custom fields are built** — see [Future of the form builder](#future-of-the-form-builder). The rest of this page describes the current implementation.
+
 Form templates are reusable, versioned schemas that define the structure of dynamic forms used throughout Taily — for example a veterinary inspection report or an adoption application. They decouple the _shape_ of a form from any specific feature, so the same builder infrastructure can power any form-based workflow.
 
 ---
@@ -266,6 +268,25 @@ Usage:
 To add a new field type: create a file under `field-types/`, implement the `FieldTypeDefinition` interface, and register it in the map.
 
 ---
+
+## Future of the form builder
+
+Animals need custom fields: marketing fields for the website, notes about the animal, fully customizable by the organization. Two ways to build them:
+
+**A — Keep the form builder.** Attach a form template to animals (per animal type), store the values as a `FormSubmission` on the animal.
+
+**B — Extend the Field Definition catalogue of the [Case File](./case-file.md) to animals.** Field Definitions and Field Groups get a `subject` (`adoption` or `animal`); animal fields have no steps or requirements, but a visibility setting of their own (e.g. *published* — shown on the website and in the public API).
+
+The current leaning is **B**, to be confirmed before the builder is touched:
+
+- Animal fields are **current state**, edited over time — not a one-off submission pinned to a schema version. The builder's main complexity (versioning, `SchemaChangeAnalyzer`, version pinning) exists for submissions and would have no use left.
+- Two systems for "configurable fields" would mean two editors, two renderers and two integrations with the [audit trail](./audit-trail.md).
+- Animal custom fields could be printed in contracts through the same field registry ([ADR-016](../ADRs/ADR-016-contract-templates-as-configuration.md#the-field-registry)).
+- The builder's frontend parts — the per-type `field-types/` registry, `DynamicFormFields`, `DynamicFormDisplay` — are reusable by B either way.
+
+Arguments for A: it exists and works, and animal fields would not need anything the catalogue adds (steps, review, per-adoption overrides).
+
+Publishing custom fields on the website means exposing them in the public API, which requires updating `api/public/openapi.yaml`.
 
 ## Known constraints and open issues
 

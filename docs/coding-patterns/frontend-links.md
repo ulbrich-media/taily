@@ -1,6 +1,6 @@
 # Frontend Links via Callback
 
-The frontend exposes a single `/callback` route that dispatches to the correct page based on an `action` query parameter. All backend-generated frontend links must go through [`FrontendUriBuilder`](../../api/app/Support/FrontendUriBuilder.php) — never construct frontend URLs inline.
+The frontend exposes a single `/callback` route that dispatches to the correct page based on an `action` query parameter. All backend-generated frontend links must go through [`FrontendUriBuilder`](../../api/src/Support/FrontendUriBuilder.php) — never construct frontend URLs inline.
 
 ```
 /callback?action=<action>&token=<token>

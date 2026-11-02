@@ -6,9 +6,30 @@ The contract step is part of the adoption process. Once the mediator is satisfie
 
 The Schutzvertrag defines the rights and responsibilities of both parties. It ensures the adopter commits to providing a suitable home and allows the organisation to verify this. The exact content depends on the organisation's template.
 
+## Contract templates
+
+> **Status: planned, not implemented.** Today templates are Blade views registered in `config('taily.contracts')` ([ADR-013](../ADRs/ADR-013-contract-template-rendering.md)). The target design is [ADR-016](../ADRs/ADR-016-contract-templates-as-configuration.md).
+
+A contract template is configuration, not code. It consists of:
+
+- **Title** — e.g. *Schutzvertrag*
+- **Animal types** it is offered for; an animal type can have several templates
+- **Three data sections** — *Tier*, *Vermittler:in*, *Adoptant:in* — each an ordered list of fields chosen from a registry: built-in animal columns (`animal.name`, `animal.tasso_id`, …), built-in person columns of the mediator and the adopter, and Case File fields (`id_card_number`)
+- **Wording** — the contract text, plain text with Markdown paragraphs and headings, no placeholders
+
+Header and footer (logo, organization text) are configured once for all documents in the contract settings.
+
+One generic view, `contracts/configured.blade.php`, renders every template. An organization that needs more — inline placeholders, a different layout — overrides that view through the package-view convention.
+
+**Every field printed by the templates of an animal type is required for the contract step** of adoptions of that type — the templates of one type are expected to differ in wording, not in data. Taily therefore knows what a contract needs, and the [Checklist](./case-file.md#checklist) shows it long before generation: *"Für den Vertrag fehlen: Ausweisnummer, Tasso-ID des Tieres"*.
+
+**Manual signing:** any generated contract can be downloaded *"zur manuellen Unterschrift"* — Taily appends a page with signature lines to the frozen PDF, leaving the frozen document itself untouched. This replaces copying a Blade template to add signature lines.
+
+If the applicant changes a printed field after the contract was generated, the mediator is notified with an explicit warning — the frozen PDF keeps the old value. There is no lock (see [ADR-015](../ADRs/ADR-015-adoption-case-file.md#lock-fields-once-they-are-in-a-generated-contract)).
+
 ## Process
 
-### Simple Version (current)
+### Simple Version
 
 In the simple version, the contract is handled outside of Taily:
 
@@ -18,17 +39,17 @@ In the simple version, the contract is handled outside of Taily:
 
 The contract step is considered done when it is marked as signed.
 
-### Advanced Version (planned)
+### Advanced Version
 
-Generation and signing are both handled natively in Taily, in PHP, targeting the SES (Simple Electronic Signature) eIDAS tier — no external document tool is used. See [ADR-012](../ADRs/ADR-012-contract-generation-and-signing.md) for the full reasoning and the legal questions this decision accepts as risk rather than as a legally confirmed answer, and [ADR-013](../ADRs/ADR-013-contract-template-rendering.md) for how templates are authored and rendered to PDF.
+Generation and signing are both handled natively in Taily, in PHP, targeting the SES (Simple Electronic Signature) eIDAS tier — no external document tool is used. See [ADR-012](../ADRs/ADR-012-contract-generation-and-signing.md) for the full reasoning and the legal questions this decision accepts as risk rather than as a legally confirmed answer, [ADR-013](../ADRs/ADR-013-contract-template-rendering.md) for how contracts are rendered to PDF, and [ADR-016](../ADRs/ADR-016-contract-templates-as-configuration.md) for how templates are configured.
 
 The Advanced Version does not replace the Simple Version — both exist side by side, chosen **per adoption**, not as a global instance setting. A mediator can start the automated flow for one adoption and handle another entirely by hand, and can drop out of the automated flow back to manual handling at any point before it completes (see [Escape to manual handling](#escape-to-manual-handling) below).
 
 #### Flow
 
-1. **Generate.** The mediator picks which contract template to use (Taily supports several at once — see [ADR-013](../ADRs/ADR-013-contract-template-rendering.md#decision) — e.g. one per animal type, or a variant for a specific situation; there's no auto-suggestion in this first version, the mediator always chooses explicitly) and triggers generation from the adoption. Taily renders that template with the animal's, adopter's, mediator's, and organization's data filled in, producing an unsigned PDF. This unsigned PDF is preserved unchanged for the rest of the flow: it is what both parties review, and at [Completion](#completion) its pages are carried into the final document rather than re-rendered from the template — see [Document integrity](#document-integrity).
+1. **Generate.** The mediator picks one of the [contract templates](#contract-templates) offered for the animal's type (e.g. the standard Schutzvertrag or a variant for a specific situation) and triggers generation. Generation is blocked while a field the chosen template prints is missing (see the [Checklist](./case-file.md#checklist)). Taily renders the template with the animal's, adopter's and mediator's data and the adoption's [Case File](./case-file.md), producing an unsigned PDF. This unsigned PDF is preserved unchanged for the rest of the flow: it is what both parties review, and at [Completion](#flow) its pages are carried into the final document rather than re-rendered from the template — see [Document integrity](#document-integrity).
 2. **Choose a path.** With the unsigned PDF in hand, the mediator either:
-   - downloads it and handles signing entirely outside Taily, then comes back and uploads the (now-signed) document and marks the contract signed — i.e. the [Simple Version](#simple-version-current)'s two actions, just seeded with a Taily-generated PDF instead of one authored elsewhere; or
+   - downloads it and handles signing entirely outside Taily, then comes back and uploads the (now-signed) document and marks the contract signed — i.e. the [Simple Version](#simple-version)'s two actions, just seeded with a Taily-generated PDF instead of one authored elsewhere; or
    - starts the native signing process (next step).
 3. **Mediator signs.** The mediator receives an email with a signed, single-purpose link (same token mechanism as the [pre-inspection public link](./pre-inspection.md), hardened further — see [Access and security](#access-and-security)). Opening it shows a review page presenting the unsigned PDF as generated in step 1. After reviewing, the mediator types their full name and checks a set of consent checkboxes (see [Signature capture](#signature-capture)) and submits. This is recorded as a signing event in the audit trail — see [Audit trail](#audit-trail).
 
@@ -36,7 +57,7 @@ The Advanced Version does not replace the Simple Version — both exist side by 
 4. **Adopter signs.** Once the mediator has signed, the adopter receives the equivalent email and link. Their review page shows the same frozen PDF from step 1, plus the audit information recorded for the mediator's signature (who signed, when, and that they did). The adopter goes through the identical typed-name-and-checkboxes flow.
 5. **Completion.** Once the adopter submits, Taily takes the frozen PDF from step 1 — the exact document both parties reviewed — and appends a signature-and-audit-trail appendix to it: both typed signatures with their timestamps and consent boxes, the hash of the contract document itself, and a certificate-of-completion-style audit trail (see [Audit trail](#audit-trail)). The contract body is never re-rendered; its pages are carried over unchanged, so neither a template edit nor a change to the adoption's data between generation and signing can alter what was agreed to. Before the appendix is attached, the frozen document is re-hashed and checked against the value recorded at generation — a mismatch aborts completion rather than producing a contract Taily can't vouch for. The result is a single PDF, not the original plus a separate file, and it is stored as the adoption's signed contract. All participants (mediator and adopter) are notified by email with a link to download it. The contract step is marked done — same end state as the Simple Version reaching "signed", just reached automatically.
 
-   Because the contract body is generated before anyone has signed, the default template carries no signature line at all — the signatures only ever appear on the appended page, never inline beneath the contract text. That is a deliberate trade — a document with no visual place to sign by hand, in exchange for being able to prove the pages that were signed are the pages that were delivered — and it is the same shape DocuSign, Yousign and DocuSeal produce. An organisation that wants a print-and-manually-sign fallback can copy the template and add their own signature lines; Taily doesn't need to support that beyond allowing the copy. See [ADR-013](../ADRs/ADR-013-contract-template-rendering.md).
+   Because the contract body is generated before anyone has signed, the default template carries no signature line at all — the signatures only ever appear on the appended page, never inline beneath the contract text. That is a deliberate trade — a document with no visual place to sign by hand, in exchange for being able to prove the pages that were signed are the pages that were delivered — and it is the same shape DocuSign, Yousign and DocuSeal produce. For a print-and-manually-sign fallback, the generated contract can be downloaded with an appended signature-lines page (see [Contract templates](#contract-templates)). See [ADR-013](../ADRs/ADR-013-contract-template-rendering.md).
 
 At any point before step 5, the mediator can cancel — see [Cancellation](#cancellation).
 
@@ -146,7 +167,7 @@ The endpoint renders an adoption's full personal data, so it sits behind three i
 
 #### Customization and other accepted scope decisions
 
-- **Customization** — contract templates are Blade views, overridable per Laravel's standard package-view convention, not a DB-stored/versioned schema like [form templates](./form-templates.md) — see [ADR-013](../ADRs/ADR-013-contract-template-rendering.md) for the full reasoning, including why this doesn't need form-templates-style version pinning. An external tool with a ready-made non-technical template editor (e.g. DocuSeal) was considered but is deferred — it requires a second, non-PHP service, which conflicts with the self-hosted, fully-contained distribution model — see [ADR-012](../ADRs/ADR-012-contract-generation-and-signing.md#docuseal-as-a-combined-generation-customization-and-signing-option). It may be added later as an optional integration. Contract templates carry only the contract itself — a plain signature line, no signature-block logic and no audit-trail include — because signatures and the audit trail are appended afterwards as separate pages rather than rendered into the body (see [ADR-013](../ADRs/ADR-013-contract-template-rendering.md)). The appendix has its own template, `contracts/signature-appendix.blade.php`, overridable by the same package-view convention. Both it and the contract body extend `contracts/layout.blade.php`, which draws the shared frame — header band with the document's title, footer band with the organisation's details, and the base styling — so branding an installation's documents means overriding that one layout rather than every template. This means the same contract template works unchanged for both the Simple and the Advanced Version.
+- **Customization** — see [Contract templates](#contract-templates) below and [ADR-016](../ADRs/ADR-016-contract-templates-as-configuration.md). An external tool with a ready-made template editor (e.g. DocuSeal) was considered but is deferred — it requires a second, non-PHP service, which conflicts with the self-hosted, fully-contained distribution model — see [ADR-012](../ADRs/ADR-012-contract-generation-and-signing.md#docuseal-as-a-combined-generation-customization-and-signing-option). It may be added later as an optional integration. Templates carry only the contract itself — no signature block and no audit trail — because signatures and the audit trail are appended afterwards as separate pages (see [ADR-013](../ADRs/ADR-013-contract-template-rendering.md)). The appendix has its own view, `contracts/signature-appendix.blade.php`. Both extend `contracts/layout.blade.php`, the shared frame (header band, footer band, base styling). The same template works unchanged for both the Simple and the Advanced Version.
 - **PDF output** — the end artifact is a PDF regardless of which path is chosen; see [ADR-013](../ADRs/ADR-013-contract-template-rendering.md) for the rendering library.
 - **No withdrawal-right (Widerrufsrecht) handling.** Same as the status quo — not implemented, on the basis that there is no indicator this organization needs to support it. See [ADR-012](../ADRs/ADR-012-contract-generation-and-signing.md#legal-questions-and-accepted-risk) for the accepted risk this carries.
 - **GDPR deletion/retention** is out of scope of the application for now, though the feature will integrate with a future deletion workflow once one exists — see [ADR-012](../ADRs/ADR-012-contract-generation-and-signing.md#legal-questions-and-accepted-risk).

@@ -24,9 +24,8 @@ $table->string('my_field');  // NOT ->nullable(), NOT ->default('')
 
 ## Examples
 
-**Non-nullable text with empty string default** — `pre_inspection_summary` defaults to `''`, never null:
-[`api/app/Models/Adoption.php:19`](../../api/app/Models/Adoption.php)
-[`api/database/migrations/2026_01_19_000001_create_adoptions_table.php:23`](../../api/database/migrations/2026_01_19_000001_create_adoptions_table.php)
+**Non-nullable text with empty string default** — the adoption's `notes` default to `''`, never null:
+[`api/src/Models/Adoption.php:27`](../../api/src/Models/Adoption.php)
 
-**Nullable with semantic meaning** — `transfer_planned_at` is nullable because `null` means "no transfer planned yet" (distinct from a planned date):
-[`api/database/migrations/2026_01_19_000001_create_adoptions_table.php:30`](../../api/database/migrations/2026_01_19_000001_create_adoptions_table.php)
+**Nullable with semantic meaning** — `handed_over_at` is nullable because `null` means "not handed over yet" (distinct from a handover date):
+[`api/database/migrations/2026_05_05_000000_rework_adoption_process_schema.php:51`](../../api/database/migrations/2026_05_05_000000_rework_adoption_process_schema.php)

@@ -1,32 +1,57 @@
-# Pre-Inspections
+# Pre-Inspection
 
-A pre inspection is done right after an applicant was approved as a potential adopter. The key goal is to find out whether the adopters home and living conditions are actually suitable for the animal in question. 
+> **Status: planned, not implemented.** Replaces the previous design (attached to Person + Animal Type, using a form template). See [ADR-015](../ADRs/ADR-015-adoption-case-file.md#6-pre-inspections-move-to-the-adoption-and-no-longer-use-a-form-template).
 
-For this, someone is visiting the adopter at their home or does a video call. In the end the inspector gives their recommendation for or against the adoption. The mediator can decide whether to go on with the application or not.
+A pre-inspection (German UI: *Vorkontrolle*) is a visit or video call in which an inspector checks whether the applicant's home and living conditions are suitable for **the animal of this adoption**. At the end, the inspector gives a verdict for or against the adoption; the mediator decides whether to proceed.
 
-## Process 
+## Why it belongs to the adoption
 
-Within the adoption, the pre-inspection is the first step. 
+Previously, pre-inspections were attached to a Person and an Animal Type and reused across adoptions. But a pre-inspection is strongly tied to the specific animal: a Chihuahua has different requirements than a Husky, even though both are dogs. Attached to the adoption, the pre-inspection knows the animal, and the inspector sees exactly what the applicant sent in for it.
 
-The mediator can see all existing inspections, no matter the animal type or actual status. That way they can get a good summary about what we already now and may be able to decide without triggering a new inspection. 
+Earlier pre-inspections of the same person are still visible as a cross-reference on the adoption page (see [case-file.md](./case-file.md#second-adoption-by-the-same-person)).
 
-At any point, the mediator can trigger a new inspection. No information is needed for this, but an inspector can be assigned directly. 
+## Why pre-inspections have no form anymore
 
-After the inspection was created, an inspection-specific link will be available. The link routes to a publicly accessible page showing information about the adopter and animal. That page also provides a form for writing down the inspections result. 
-The link will become invalid once the inspection has a verdict. 
+The inspector's job is to check what the applicant sent in, not to collect a second data set. So the pre-inspection has:
 
-At any point can the mediator edit all information within the inspection via the admin interface. Adding a verdict invalidates the public link as well.
+- **Verdict** — approved / rejected (*geeignet* / *nicht geeignet*)
+- **Memo** — free text for everything else, including mismatches
 
-The mediator can accept or deny the pre-inspection part of the application at any point. They are able to add a summary as well, so they can add context to their decision. Both summary and decision can be changed at any point as well. 
+> **Example.** The applicant said 200 m². The inspector writes in the memo: *"Die 200 m² enthalten den Dachboden, der nicht bewohnbar ist. Tatsächlich ca. 120 m²."* The mediator reads the memo and corrects the field value. The [audit trail](./audit-trail.md) records the correction. If the applicant changes it back through the portal, the mediator is notified.
 
-## Additional features
+Organizations whose inspectors gather information themselves can configure Case File fields hidden from the applicant, which the mediator fills from the memo.
 
-- All inspections are listed on the persons page and can be opened from there 
-- An inspection can always be deleted
+## Data
 
-## Future features
+```
+pre_inspections
+  id
+  adoption_id      the adoption (and so the animal) it is about
+  inspector_id     person, nullable
+  verdict          null | approved | rejected
+  memo             text, default ''
+  submitted_at     nullable
+  (+ access token via HasAccessToken)
+```
 
-- Inspectors can be notified via mail about their new assigned adoption 
-- Inspectors get a login and can access all available and past adoptions they were assigned to 
-- Adopters get a status page where they can access information about the adoption (like their inspection status)
-- The inspection submission form can be extended with custom fields depending on the animal type
+An adoption can have several pre-inspections (e.g. a second visit). The mediator's own decision on the step stays on the adoption (see [adoption.md](./adoption.md#pre-inspection)).
+
+## Process
+
+1. The mediator creates a pre-inspection from the adoption, optionally assigning an inspector.
+2. A pre-inspection-specific link becomes available, to copy or send to the inspector.
+3. The link opens a public page showing the animal and the applicant's Case File — **only fields with `visible_to_inspector`**, in the catalogue's groups, read-only. Contract data like the Ausweisnummer stays hidden. Uploaded files (home video, landlord confirmation) are shown if their field is visible to the inspector.
+4. The inspector submits verdict and memo. The link becomes invalid.
+5. The mediator can edit verdict and memo in the admin at any time, and can delete a pre-inspection.
+
+The memo and verdict are internal: visible to the inspector and the mediator, never to the applicant.
+
+## Video instead of a pre-inspection
+
+When finding an appointment is hard, or something in the application seems off, the mediator can require the **home video** for this adoption (a [Requirement Override](./case-file.md#requirement-overrides)). Based on the video, the mediator can decide the pre-inspection step without any pre-inspection record. Whether a pre-inspection, a video, both or neither is needed is decided case by case.
+
+## Naming: pre-inspection vs. follow-up inspection
+
+The full name *pre-inspection* is deliberate, even though "inspection" is used in conversation. A **follow-up inspection** — e.g. a checkup a year after the adoption — is a planned, separate feature. Keeping the names distinct in code and docs (`PreInspection`, `pre_inspections`) avoids ambiguity once both exist. *Inspection* on its own is only the general concept of a visit or check.
+
+How follow-up inspections are modeled is not designed yet. It does not change the adoption status.

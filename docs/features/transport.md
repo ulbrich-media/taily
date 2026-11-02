@@ -76,6 +76,26 @@ From the adoption detail page, the *Transport* step card shows the currently ass
 - **Transport zuweisen / Transport ändern** — opens a dialog to select any open (not yet done) transport; the dropdown shows the transport title and the number of animals already on that run
 - **Transport entfernen** — removes the transport reference from the adoption after confirmation
 
+## Checklist
+
+> **Status: planned, not implemented.** See [case-file.md](./case-file.md#checklist).
+
+Before a transport, many things have to be in place for every animal on it: the adopter's Sicherheitsgeschirr photo confirmed, the phone number for the transport day, the animal's Tasso ID. Because a field required for the contract stays required for transport, contract data shows up here as well. Today this means opening every adoption, animal and person by hand.
+
+The transport page aggregates the transport-step [Checklist](./case-file.md#checklist) of every assigned adoption:
+
+```
+Tour Süd · 23.11.2026 · 3 von 8 Adoptionen vollständig
+
+Bello → Anna Schmidt        ✓ vollständig
+Luna  → Max Weber           ✗ Telefonnummer am Transporttag fehlt
+                            ⧗ Foto Sicherheitsgeschirr: Prüfung offen
+Rex   → Jana Koch           ✗ Tasso-ID des Tieres fehlt
+…
+```
+
+From there the mediator can request the missing data from the applicant (see [case-file.md](./case-file.md#requesting-data--split-collection)) or jump to the adoption. The checklist does not block assigning or completing a transport. Whether the contract is signed is shown by the contract step's status, not by the checklist.
+
 ## Relation to Handover
 
 Transport and handover are separate steps. A transport delivers the animal to a location (which may be the adopter's home or a temporary staging point). The handover marks the moment the adopter actually receives the animal. In many cases these happen at the same time, but not always — for example when the animal stays briefly at a foster home after arriving.

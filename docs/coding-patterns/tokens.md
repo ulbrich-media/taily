@@ -10,7 +10,7 @@ Two patterns exist for token-based access depending on whether the token is a ga
 
 Tokens are stored in the shared `access_tokens` table (polymorphic). No token columns are added to the model's own table.
 
-**Real-world example:** [`PreInspection`](../../api/app/Models/PreInspection.php) — an admin creates an inspection record, then issues a link so an inspector can submit their verdict via [`PreInspectionSubmissionController`](../../api/app/Http/Controllers/PreInspectionSubmissionController.php).
+**Real-world example:** [`PreInspection`](../../api/src/Models/PreInspection.php) — an admin creates an inspection record, then issues a link so an inspector can submit their verdict via [`PreInspectionSubmissionController`](../../api/src/Http/Controllers/Internal/PreInspectionSubmissionController.php).
 
 ### Usage
 
@@ -60,7 +60,7 @@ Always pass an explicit expiration — the method signature enforces it. Choose 
 
 **Use when** the token record *is* the business object — it has its own meaningful state, lifecycle, and relations independent of any other model.
 
-**Real-world example:** [`UserInvitation`](../../api/app/Models/UserInvitation.php) owns its `token` and `expires_at` columns directly. The invitation has no meaning without the token; there is no pre-existing record being gated.
+**Real-world example:** [`UserInvitation`](../../api/src/Models/UserInvitation.php) owns its `token` and `expires_at` columns directly. The invitation has no meaning without the token; there is no pre-existing record being gated.
 
 This pattern keeps everything in one table, one model, and one `findByToken()` query with no joins.
 
