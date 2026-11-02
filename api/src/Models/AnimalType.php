@@ -31,6 +31,11 @@ class AnimalType extends Model
         return $this->hasMany(FieldDefinition::class);
     }
 
+    public function contractTemplates(): BelongsToMany
+    {
+        return $this->belongsToMany(ContractTemplate::class);
+    }
+
     public function vaccinations(): HasMany
     {
         return $this->hasMany(Vaccination::class);

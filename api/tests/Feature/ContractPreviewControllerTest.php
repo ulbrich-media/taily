@@ -14,10 +14,12 @@ use Taily\Models\ContractSigningAuditEvent;
 use Taily\Models\ContractSigningProcess;
 use Taily\Models\Person;
 use Taily\Models\User;
+use Taily\Tests\Concerns\CreatesContractTemplates;
 use Taily\Tests\TestCase;
 
 class ContractPreviewControllerTest extends TestCase
 {
+    use CreatesContractTemplates;
     use RefreshDatabase;
 
     private const URL = '/dev/contracts/preview';
@@ -33,6 +35,8 @@ class ContractPreviewControllerTest extends TestCase
             'name' => 'Bello',
             'gender' => 'male',
         ]);
+
+        $this->contractTemplate($animalType);
 
         return Adoption::create([
             'animal_id' => $animal->id,

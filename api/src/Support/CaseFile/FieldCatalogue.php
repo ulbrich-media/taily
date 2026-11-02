@@ -11,6 +11,7 @@ use Taily\Enums\FieldType;
 use Taily\Models\AdoptionFieldValue;
 use Taily\Models\AdoptionRequirement;
 use Taily\Models\AnimalType;
+use Taily\Models\ContractTemplate;
 use Taily\Models\FieldDefinition;
 use Taily\Models\FieldGroup;
 
@@ -169,6 +170,16 @@ class FieldCatalogue
         if ($dependents->isNotEmpty()) {
             throw ValidationException::withMessages([
                 'field' => ['Andere Felder hängen von diesem Feld ab: '.$dependents->pluck('label')->join(', ').'.'],
+            ]);
+        }
+
+        $templates = ContractTemplate::offeredFor($field->animal_type_id)
+            ->get()
+            ->filter(fn (ContractTemplate $template) => in_array($field->key, $template->printedKeys(), true));
+
+        if ($templates->isNotEmpty()) {
+            throw ValidationException::withMessages([
+                'field' => ['Vertragsvorlagen drucken dieses Feld: '.$templates->pluck('name')->join(', ').'.'],
             ]);
         }
 

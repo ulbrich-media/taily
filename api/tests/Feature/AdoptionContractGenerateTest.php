@@ -2,18 +2,22 @@
 
 namespace Taily\Tests\Feature;
 
+use Database\Seeders\ContractTemplateSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\URL;
 use Taily\Models\Adoption;
 use Taily\Models\Animal;
 use Taily\Models\AnimalType;
+use Taily\Models\ContractTemplate;
 use Taily\Models\Organization;
 use Taily\Models\Person;
 use Taily\Models\User;
+use Taily\Tests\Concerns\CreatesContractTemplates;
 use Taily\Tests\TestCase;
 
 class AdoptionContractGenerateTest extends TestCase
 {
+    use CreatesContractTemplates;
     use RefreshDatabase;
 
     private function createAdoption(): Adoption
@@ -56,22 +60,40 @@ class AdoptionContractGenerateTest extends TestCase
         ]);
     }
 
-    public function test_templates_lists_configured_templates(): void
+    public function test_templates_lists_the_templates_offered_for_the_animal_type(): void
     {
         $user = $this->createUser();
         $adoption = $this->createAdoption();
+        $template = $this->contractTemplate($adoption);
+
+        // Archived templates and templates for other animal types aren't offered.
+        ContractTemplate::create([...ContractTemplateSeeder::DEFAULT, 'name' => 'Alt', 'archived_at' => now()])
+            ->animalTypes()->attach($adoption->animal->animal_type_id);
+        $this->contractTemplate(AnimalType::create(['title' => 'Katze']));
+        ContractTemplate::create([...ContractTemplateSeeder::DEFAULT, 'name' => 'Nur Katzen'])
+            ->animalTypes()->attach(AnimalType::firstWhere('title', 'Katze')->id);
 
         $response = $this->actingAs($user)
             ->withHeader('referer', 'http://localhost')
-            ->getJson('/internal/adoptions/contract-templates');
+            ->getJson("/internal/adoptions/{$adoption->id}/contract-templates");
 
         $response->assertOk();
-        $response->assertJson([
-            ['key' => 'default', 'label' => 'Schutzvertrag (Beispielvorlage)'],
+        $response->assertExactJson([
+            ['key' => $template->id, 'label' => 'Schutzvertrag (Beispielvorlage)'],
         ]);
+    }
 
-        // Doesn't accidentally hit /adoptions/{adoption} (resource show route).
-        $this->assertNotEquals($adoption->id, $response->json('0.key'));
+    public function test_generate_rejects_a_template_not_offered_for_the_animal_type(): void
+    {
+        $user = $this->createUser();
+        $adoption = $this->createAdoption();
+        $template = $this->contractTemplate(AnimalType::create(['title' => 'Katze']));
+
+        $this->actingAs($user)
+            ->withHeader('referer', 'http://localhost')
+            ->getJson("/internal/adoptions/{$adoption->id}/contract/generate?template={$template->id}")
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('template');
     }
 
     public function test_generate_returns_a_signed_download_url(): void
@@ -81,7 +103,7 @@ class AdoptionContractGenerateTest extends TestCase
 
         $response = $this->actingAs($user)
             ->withHeader('referer', 'http://localhost')
-            ->getJson("/internal/adoptions/{$adoption->id}/contract/generate?template=default");
+            ->getJson("/internal/adoptions/{$adoption->id}/contract/generate?template={$this->contractTemplate($adoption)->id}");
 
         $response->assertOk();
         $url = $response->json('url');
@@ -114,7 +136,7 @@ class AdoptionContractGenerateTest extends TestCase
 
         $this->actingAs($user)
             ->withHeader('referer', 'http://localhost')
-            ->get("/internal/adoptions/{$adoption->id}/contract/generate?template=default")
+            ->get("/internal/adoptions/{$adoption->id}/contract/generate?template={$this->contractTemplate($adoption)->id}")
             ->assertOk();
 
         $adoption->refresh();
@@ -159,7 +181,7 @@ class AdoptionContractGenerateTest extends TestCase
         // unauthenticated-redirect behaviour to target.
         $response = $this
             ->withHeader('referer', 'http://localhost')
-            ->get("/internal/adoptions/{$adoption->id}/contract/generate?template=default");
+            ->get("/internal/adoptions/{$adoption->id}/contract/generate?template={$this->contractTemplate($adoption)->id}");
 
         $response->assertStatus(401);
         $response->assertJson(['message' => 'Unauthenticated.']);
@@ -169,7 +191,7 @@ class AdoptionContractGenerateTest extends TestCase
     {
         $adoption = $this->createAdoption();
 
-        $response = $this->get("/internal/adoptions/{$adoption->id}/contract/download?template=default");
+        $response = $this->get("/internal/adoptions/{$adoption->id}/contract/download?template={$this->contractTemplate($adoption)->id}");
 
         $response->assertForbidden();
     }
@@ -180,10 +202,10 @@ class AdoptionContractGenerateTest extends TestCase
 
         $signedUrl = URL::temporarySignedRoute('adoptions.contract.download', now()->addHour(), [
             'adoption' => $adoption->id,
-            'template' => 'default',
+            'template' => $this->contractTemplate($adoption)->id,
         ]);
 
-        $tamperedUrl = str_replace('template=default', 'template=unknown', $signedUrl);
+        $tamperedUrl = str_replace('template=', 'template=0', $signedUrl);
 
         $response = $this->get($tamperedUrl);
 
@@ -196,7 +218,7 @@ class AdoptionContractGenerateTest extends TestCase
 
         $signedUrl = URL::temporarySignedRoute('adoptions.contract.download', now()->addHour(), [
             'adoption' => $adoption->id,
-            'template' => 'default',
+            'template' => $this->contractTemplate($adoption)->id,
         ]);
 
         // The limiter allows 10 requests per minute for a given signature.
@@ -214,11 +236,11 @@ class AdoptionContractGenerateTest extends TestCase
 
         $urlA = URL::temporarySignedRoute('adoptions.contract.download', now()->addHour(), [
             'adoption' => $adoptionA->id,
-            'template' => 'default',
+            'template' => $this->contractTemplate($adoptionA)->id,
         ]);
         $urlB = URL::temporarySignedRoute('adoptions.contract.download', now()->addHour(), [
             'adoption' => $adoptionB->id,
-            'template' => 'default',
+            'template' => $this->contractTemplate($adoptionB)->id,
         ]);
 
         for ($i = 0; $i < 10; $i++) {

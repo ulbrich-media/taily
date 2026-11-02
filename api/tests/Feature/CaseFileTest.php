@@ -15,10 +15,12 @@ use Taily\Models\PreInspection;
 use Taily\Models\Transport;
 use Taily\Models\User;
 use Taily\Support\ContractPdfService;
+use Taily\Tests\Concerns\CreatesContractTemplates;
 use Taily\Tests\TestCase;
 
 class CaseFileTest extends TestCase
 {
+    use CreatesContractTemplates;
     use RefreshDatabase;
 
     private AnimalType $dogs;
@@ -37,6 +39,8 @@ class CaseFileTest extends TestCase
 
         $this->catalogue($this->dogs, withHarness: true);
         $this->catalogue($this->cats, withHarness: false);
+        $this->contractTemplate($this->dogs);
+        $this->contractTemplate($this->cats);
     }
 
     /**
@@ -195,11 +199,11 @@ class CaseFileTest extends TestCase
         $adoption = $this->adoption($this->dogs);
 
         $this->actingAs($this->user)->withHeader('referer', 'http://localhost')
-            ->getJson("/internal/adoptions/{$adoption->id}/contract/generate?template=default")
+            ->getJson("/internal/adoptions/{$adoption->id}/contract/generate?template={$this->contractTemplate($adoption)->id}")
             ->assertUnprocessable()
             ->assertJsonValidationErrors('template');
 
-        $message = $this->getJson("/internal/adoptions/{$adoption->id}/contract/generate?template=default")->json('errors.template.0');
+        $message = $this->getJson("/internal/adoptions/{$adoption->id}/contract/generate?template={$this->contractTemplate($adoption)->id}")->json('errors.template.0');
         $this->assertStringContainsString('Ausweisnummer', $message);
         $this->assertStringContainsString('Tiernummer', $message);
         // Required for the application, but not printed — informs, doesn't block.
@@ -212,7 +216,7 @@ class CaseFileTest extends TestCase
         ]])->assertOk();
         $this->putJson("/internal/adoptions/{$adoption->id}/requirements/id_card_number", ['waived' => true])->assertOk();
 
-        $this->getJson("/internal/adoptions/{$adoption->id}/contract/generate?template=default")->assertOk();
+        $this->getJson("/internal/adoptions/{$adoption->id}/contract/generate?template={$this->contractTemplate($adoption)->id}")->assertOk();
     }
 
     public function test_the_contract_prints_case_file_values(): void
@@ -220,7 +224,7 @@ class CaseFileTest extends TestCase
         $adoption = $this->adoption($this->dogs);
         $this->api('put', $adoption, ['values' => ['id_card_number' => 'L01X00T47']])->assertOk();
 
-        $html = app(ContractPdfService::class)->renderBody($adoption->fresh(), 'default');
+        $html = app(ContractPdfService::class)->renderBody($adoption->fresh(), $this->contractTemplate($adoption));
 
         $this->assertStringContainsString('L01X00T47', $html);
     }

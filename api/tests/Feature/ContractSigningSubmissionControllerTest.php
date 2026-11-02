@@ -14,11 +14,13 @@ use Taily\Models\ContractSigner;
 use Taily\Models\Person;
 use Taily\Support\ContractPdfService;
 use Taily\Support\ContractSigningService;
+use Taily\Tests\Concerns\CreatesContractTemplates;
 use Taily\Tests\Concerns\EnforcesCsrfProtection;
 use Taily\Tests\TestCase;
 
 class ContractSigningSubmissionControllerTest extends TestCase
 {
+    use CreatesContractTemplates;
     use EnforcesCsrfProtection, RefreshDatabase;
 
     protected function setUp(): void
@@ -61,7 +63,7 @@ class ContractSigningSubmissionControllerTest extends TestCase
 
     private function startProcess(Adoption $adoption): ContractSigner
     {
-        $pdf = (new ContractPdfService)->generate($adoption, 'default');
+        $pdf = (new ContractPdfService)->generate($adoption, $this->contractTemplate($adoption));
         $process = (new ContractSigningService)->start($adoption, 'default', $pdf);
 
         return $process->signers->first();

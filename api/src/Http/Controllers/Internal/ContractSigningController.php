@@ -7,7 +7,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Taily\Enums\ContractSignerRole;
 use Taily\Enums\ContractSigningStatus;
@@ -19,6 +18,7 @@ use Taily\Models\Adoption;
 use Taily\Support\CaseFile\CaseFileService;
 use Taily\Support\ContractPdfService;
 use Taily\Support\ContractSigningService;
+use Taily\Support\ContractTemplateService;
 use Throwable;
 
 class ContractSigningController extends Controller
@@ -36,6 +36,7 @@ class ContractSigningController extends Controller
         private ContractPdfService $pdfService,
         private ContractSigningService $signingService,
         private CaseFileService $caseFile,
+        private ContractTemplateService $templates,
     ) {}
 
     /**
@@ -44,9 +45,7 @@ class ContractSigningController extends Controller
      */
     public function store(Request $request, Adoption $adoption): JsonResponse
     {
-        $validated = $request->validate([
-            'template' => ['required', 'string', Rule::in(array_keys(config('taily.contracts')))],
-        ]);
+        $template = $this->templates->chosen($adoption, $request->input('template'));
 
         if (! $adoption->mediator_id) {
             throw ValidationException::withMessages([
@@ -66,7 +65,7 @@ class ContractSigningController extends Controller
             ]);
         }
 
-        $this->caseFile->assertContractComplete($adoption, $validated['template']);
+        $this->caseFile->assertContractComplete($adoption, $template);
 
         // The contract_signed check, the active-process check, and the
         // process creation all run against the same row-locked instance, and
@@ -74,7 +73,7 @@ class ContractSigningController extends Controller
         // takes. This closes two races: two concurrent requests both passing
         // the active-process check, and a request starting a new process for
         // an adoption whose completion is concurrently in flight.
-        $process = DB::transaction(function () use ($adoption, $validated, $request) {
+        $process = DB::transaction(function () use ($adoption, $template, $request) {
             $lockedAdoption = Adoption::whereKey($adoption->id)->lockForUpdate()->firstOrFail();
 
             if ($lockedAdoption->contract_signed) {
@@ -93,11 +92,11 @@ class ContractSigningController extends Controller
                 ]);
             }
 
-            $unsignedPdf = $this->pdfService->generate($adoption, $validated['template']);
+            $unsignedPdf = $this->pdfService->generate($adoption, $template);
 
             return $this->signingService->start(
                 $adoption,
-                $validated['template'],
+                $template->id,
                 $unsignedPdf,
                 $request->user(),
                 (string) $request->ip(),

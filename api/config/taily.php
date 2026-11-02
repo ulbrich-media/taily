@@ -30,42 +30,8 @@ return [
         explode(',', env('TAILY_CORS_ALLOWED_ORIGINS', ''))
     ),
 
-    /*
-    |--------------------------------------------------------------------------
-    | Contract Templates
-    |--------------------------------------------------------------------------
-    |
-    | Templates available for generating a Schutzvertrag PDF for an adoption.
-    | Each entry's `view` is resolved as `taily::{$view}`, so overriding a
-    | template means publishing the `taily-views` tag and editing the file at
-    | the corresponding `resources/views/vendor/taily/...` path. See ADR-013.
-    |
-    | Every template extends `contracts/layout.blade.php`, which holds the
-    | header and footer bands and the shared styling — override that one file
-    | to put an installation's own logo and organisation details on all of
-    | them at once.
-    |
-    */
-
-    // `fields` lists what a template prints: built-in animal and mediator
-    // fields (`animal.*`, `mediator.*`, see ContractFieldRegistry) and keys of
-    // the Case File catalogue. Every one of them is required for the contract
-    // step (ADR-016), so a contract can't be generated with blanks.
-    'contracts' => [
-        'default' => [
-            'label' => 'Schutzvertrag (Beispielvorlage)',
-            'view' => 'contracts.default',
-            'fields' => [
-                'animal.name',
-                'animal.animal_number',
-                'mediator.full_name',
-                'first_name',
-                'last_name',
-                'date_of_birth',
-                'address',
-                'id_card_number',
-            ],
-        ],
-    ],
+    // Contract templates are configured in the admin UI (ADR-016) and stored
+    // in `contract_templates`; every template renders through
+    // `contracts/configured.blade.php`.
 
 ];

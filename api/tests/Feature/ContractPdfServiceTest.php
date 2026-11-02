@@ -7,19 +7,21 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use setasign\Fpdi\Fpdi;
 use setasign\Fpdi\PdfParser\StreamReader;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Taily\Models\Adoption;
 use Taily\Models\Animal;
 use Taily\Models\AnimalType;
 use Taily\Models\ContractSigningProcess;
 use Taily\Models\Organization;
 use Taily\Models\Person;
+use Taily\Support\CaseFile\FieldCatalogue;
 use Taily\Support\ContractPdfService;
 use Taily\Support\ContractSigningService;
+use Taily\Tests\Concerns\CreatesContractTemplates;
 use Taily\Tests\TestCase;
 
 class ContractPdfServiceTest extends TestCase
 {
+    use CreatesContractTemplates;
     use RefreshDatabase;
 
     private function createAdoption(bool $withMediator = true, bool $withOrganization = true): Adoption
@@ -63,7 +65,7 @@ class ContractPdfServiceTest extends TestCase
     {
         $adoption = $this->createAdoption(withMediator: true, withOrganization: true);
 
-        $pdf = (new ContractPdfService)->generate($adoption, 'default');
+        $pdf = (new ContractPdfService)->generate($adoption, $this->contractTemplate($adoption));
 
         $this->assertStringStartsWith('%PDF', $pdf);
     }
@@ -72,7 +74,7 @@ class ContractPdfServiceTest extends TestCase
     {
         $adoption = $this->createAdoption(withMediator: false);
 
-        $pdf = (new ContractPdfService)->generate($adoption, 'default');
+        $pdf = (new ContractPdfService)->generate($adoption, $this->contractTemplate($adoption));
 
         $this->assertStringStartsWith('%PDF', $pdf);
     }
@@ -81,33 +83,35 @@ class ContractPdfServiceTest extends TestCase
     {
         $adoption = $this->createAdoption(withMediator: true, withOrganization: false);
 
-        $pdf = (new ContractPdfService)->generate($adoption, 'default');
+        $pdf = (new ContractPdfService)->generate($adoption, $this->contractTemplate($adoption));
 
         $this->assertStringStartsWith('%PDF', $pdf);
     }
 
-    public function test_generate_throws_for_an_unknown_template_key(): void
+    public function test_the_configured_sections_and_wording_are_rendered(): void
     {
-        $adoption = $this->createAdoption();
+        [$adoption] = $this->createAdoptionWithFullDetails();
+        $template = $this->contractTemplate($adoption);
+        $template->update([
+            'title' => 'Übernahmevertrag',
+            'body' => "## Pflichten\n\nDas Tier wird **artgerecht** gehalten.\n\n<script>alert(1)</script>",
+            'animal_fields' => [['key' => 'animal.color', 'required' => true], ['key' => 'animal.breed', 'required' => false]],
+            'mediator_fields' => [],
+            'adopter_fields' => [['key' => 'date_of_birth', 'required' => true]],
+        ]);
 
-        $this->expectException(NotFoundHttpException::class);
+        $html = (new ContractPdfService)->renderBody($adoption, $template->fresh());
 
-        (new ContractPdfService)->generate($adoption, 'unknown');
-    }
-
-    public function test_generate_resolves_a_template_key_containing_a_dot(): void
-    {
-        // A key like "regional.v1" must be looked up literally, not treated
-        // as a nested config path ("contracts.regional.v1") by config().
-        config(['taily.contracts' => array_merge(config('taily.contracts'), [
-            'regional.v1' => ['label' => 'Regional', 'view' => 'contracts.default'],
-        ])]);
-
-        $adoption = $this->createAdoption();
-
-        $pdf = (new ContractPdfService)->generate($adoption, 'regional.v1');
-
-        $this->assertStringStartsWith('%PDF', $pdf);
+        $this->assertStringContainsString('<span class="doc-title">Übernahmevertrag</span>', $html);
+        $this->assertStringContainsString('Braun-Weiß', $html);
+        $this->assertStringContainsString('15.03.1990', $html);
+        $this->assertStringContainsString('<h2>Pflichten</h2>', $html);
+        $this->assertStringContainsString('<strong>artgerecht</strong>', $html);
+        // HTML in the wording is dropped, not rendered.
+        $this->assertStringNotContainsString('<script>', $html);
+        // An optional field without a value is left out; an empty section too.
+        $this->assertStringNotContainsString('Rasse', $html);
+        $this->assertStringNotContainsString('Vermittler:in', $html);
     }
 
     public function test_filename_includes_a_slugified_animal_name_and_the_adoption_id(): void
@@ -123,7 +127,7 @@ class ContractPdfServiceTest extends TestCase
     {
         $adoption = $this->createAdoption();
 
-        $pdf = (new ContractPdfService)->generate($adoption, 'default');
+        $pdf = (new ContractPdfService)->generate($adoption, $this->contractTemplate($adoption));
 
         $this->assertStringStartsWith('%PDF', $pdf);
     }
@@ -133,7 +137,7 @@ class ContractPdfServiceTest extends TestCase
         $adoption = $this->createAdoption();
         $adoption->animal->addMedia(UploadedFile::fake()->image('bello.jpg', 400, 300))->toMediaCollection('pictures');
 
-        $pdf = (new ContractPdfService)->generate($adoption->fresh(), 'default');
+        $pdf = (new ContractPdfService)->generate($adoption->fresh(), $this->contractTemplate($adoption));
 
         $this->assertStringStartsWith('%PDF', $pdf);
         $this->assertStringContainsString('/Subtype /Image', $pdf);
@@ -144,7 +148,7 @@ class ContractPdfServiceTest extends TestCase
         $adoption = $this->createAdoption();
         $adoption->animal->addMedia(UploadedFile::fake()->create('bello.mp4', 10, 'video/mp4'))->toMediaCollection('pictures');
 
-        $pdf = (new ContractPdfService)->generate($adoption->fresh(), 'default');
+        $pdf = (new ContractPdfService)->generate($adoption->fresh(), $this->contractTemplate($adoption));
 
         $this->assertStringStartsWith('%PDF', $pdf);
         $this->assertStringNotContainsString('/Subtype /Image', $pdf);
@@ -159,7 +163,7 @@ class ContractPdfServiceTest extends TestCase
         $adoption = $this->createAdoption();
         $adoption->animal->addMedia(UploadedFile::fake()->image('bello.webp', 400, 300))->toMediaCollection('pictures');
 
-        $pdf = (new ContractPdfService)->generate($adoption->fresh(), 'default');
+        $pdf = (new ContractPdfService)->generate($adoption->fresh(), $this->contractTemplate($adoption));
 
         // Whether the environment's GD build can decode webp or not, this
         // must never throw — no photo (missing GD webp support) is an
@@ -173,6 +177,7 @@ class ContractPdfServiceTest extends TestCase
     private function createAdoptionWithFullDetails(): array
     {
         $animalType = AnimalType::create(['title' => 'Hund']);
+        app(FieldCatalogue::class)->ensureBuiltIns($animalType);
 
         $organization = Organization::create([
             'name' => 'Tierheim Musterstadt',
@@ -218,7 +223,7 @@ class ContractPdfServiceTest extends TestCase
     {
         [$adoption] = $this->createAdoptionWithFullDetails();
 
-        $pdf = (new ContractPdfService)->generate($adoption, 'default');
+        $pdf = (new ContractPdfService)->generate($adoption, $this->contractTemplate($adoption));
         $text = $this->extractText($pdf);
 
         $this->assertStringContainsString('Braun-Wei', $text); // "ß" is dropped by the core-font-only extraction regex
@@ -239,7 +244,7 @@ class ContractPdfServiceTest extends TestCase
     {
         $adoption = $this->createAdoption();
 
-        $pdf = (new ContractPdfService)->generate($adoption, 'default');
+        $pdf = (new ContractPdfService)->generate($adoption, $this->contractTemplate($adoption));
 
         // dompdf falls back to its default font without a word when a
         // registered face cannot be read — a wrong path, an unreadable font
@@ -255,7 +260,7 @@ class ContractPdfServiceTest extends TestCase
         [$process] = $this->completedProcessWithFrozenPdf();
         $service = new ContractPdfService;
 
-        $body = $service->renderBody($process->adoption, 'default');
+        $body = $service->renderBody($process->adoption, $this->contractTemplate($process->adoption));
         $appendix = $service->renderAppendix($process);
 
         // Both documents extend contracts/layout.blade.php, which is what
@@ -274,7 +279,7 @@ class ContractPdfServiceTest extends TestCase
     {
         [$adoption] = $this->createAdoptionWithFullDetails();
 
-        $pdf = (new ContractPdfService)->generate($adoption, 'default');
+        $pdf = (new ContractPdfService)->generate($adoption, $this->contractTemplate($adoption));
         $text = $this->extractText($pdf);
 
         $this->assertStringNotContainsString('Unterschrift', $text);
@@ -291,7 +296,7 @@ class ContractPdfServiceTest extends TestCase
         $pdfService = new ContractPdfService;
         $signingService = new ContractSigningService;
 
-        $unsigned = $pdfService->generate($adoption, 'default');
+        $unsigned = $pdfService->generate($adoption, $this->contractTemplate($adoption));
         $process = $signingService->start($adoption, 'default', $unsigned);
         $signingService->recordMediatorSignature($process, 'Maria Vermittlerin', true, true, true);
         $signingService->recordAdopterSignature($process, 'Anna Übernehmerin', true, true, true);
@@ -320,7 +325,7 @@ class ContractPdfServiceTest extends TestCase
     {
         $adoption = $this->createAdoption();
 
-        $pdf = (new ContractPdfService)->generate($adoption, 'default');
+        $pdf = (new ContractPdfService)->generate($adoption, $this->contractTemplate($adoption));
 
         // Normalised through FPDI on the way out, so the bytes signers review
         // are already the post-import rendering — see appendSignaturePages().

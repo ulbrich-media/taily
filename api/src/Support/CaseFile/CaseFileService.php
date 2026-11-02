@@ -12,6 +12,7 @@ use Taily\Enums\FieldType;
 use Taily\Models\Adoption;
 use Taily\Models\AdoptionFieldValue;
 use Taily\Models\AdoptionRequirement;
+use Taily\Models\ContractTemplate;
 use Taily\Models\FieldDefinition;
 use Taily\Models\FieldGroup;
 use Taily\Models\Person;
@@ -28,6 +29,9 @@ class CaseFileService
 
     /** @var array<string, Collection<int, FieldDefinition>> keyed by animal type id */
     private array $definitions = [];
+
+    /** @var array<string, list<string>> keyed by animal type id */
+    private array $contractFieldKeys = [];
 
     /**
      * The active catalogue of an animal type, in display order. Changes apply
@@ -60,6 +64,7 @@ class CaseFileService
     public function flush(): void
     {
         $this->definitions = [];
+        $this->contractFieldKeys = [];
     }
 
     private function animalTypeId(Adoption $adoption): ?string
@@ -70,15 +75,21 @@ class CaseFileService
     }
 
     /**
-     * Every field printed by a contract template. All templates are offered
-     * for every animal type today, so this is their union (ADR-016).
+     * The fields the active contract templates of an animal type require.
+     * Each of them is required for the contract step of every adoption of
+     * that type (ADR-016).
      *
      * @return list<string>
      */
-    public function contractFieldKeys(): array
+    public function contractFieldKeys(?string $animalTypeId): array
     {
-        return collect(config('taily.contracts', []))
-            ->flatMap(fn (array $template) => $template['fields'] ?? [])
+        if ($animalTypeId === null) {
+            return [];
+        }
+
+        return $this->contractFieldKeys[$animalTypeId] ??= ContractTemplate::offeredFor($animalTypeId)
+            ->get()
+            ->flatMap(fn (ContractTemplate $template) => $template->requiredKeys())
             ->unique()
             ->values()
             ->all();
@@ -88,7 +99,7 @@ class CaseFileService
     {
         $specs = $this->definitions($animalTypeId)->map(fn (FieldDefinition $definition) => $definition->toSpec())->all();
 
-        foreach ($this->contractFieldKeys() as $key) {
+        foreach ($this->contractFieldKeys($animalTypeId) as $key) {
             if (ContractFieldRegistry::has($key)) {
                 $specs[] = ContractFieldRegistry::spec($key);
             }
@@ -101,7 +112,9 @@ class CaseFileService
     {
         $adoption->loadMissing(['animal', 'mediator', 'applicant', 'fieldValues', 'requirements']);
 
-        $definitions = $this->definitions($this->animalTypeId($adoption));
+        $animalTypeId = $this->animalTypeId($adoption);
+        $definitions = $this->definitions($animalTypeId);
+        $contractFieldKeys = $this->contractFieldKeys($animalTypeId);
         $definitionsById = $definitions->keyBy('id');
         $values = [];
         $reviews = [];
@@ -121,7 +134,7 @@ class CaseFileService
             }
         }
 
-        foreach ($this->contractFieldKeys() as $key) {
+        foreach ($contractFieldKeys as $key) {
             if (ContractFieldRegistry::has($key)) {
                 $values[$key] = ContractFieldRegistry::value($key, $adoption);
             }
@@ -138,11 +151,11 @@ class CaseFileService
         }
 
         return new CaseFileState(
-            animalTypeId: $adoption->animal?->animal_type_id,
+            animalTypeId: $animalTypeId,
             values: $values,
             reviewStatuses: $reviews,
             overrides: $overrides,
-            contractFieldKeys: $this->contractFieldKeys(),
+            contractFieldKeys: $contractFieldKeys,
         );
     }
 
@@ -235,15 +248,15 @@ class CaseFileService
 
     /**
      * A contract can't be generated with blanks: every field the chosen
-     * template prints has to be present, unless the mediator waived it for
+     * template requires has to be present, unless the mediator waived it for
      * this adoption (ADR-016). The rest of the contract checklist informs
      * but doesn't block.
      *
      * @throws ValidationException listing what is missing, under `template`
      */
-    public function assertContractComplete(Adoption $adoption, string $templateKey): void
+    public function assertContractComplete(Adoption $adoption, ContractTemplate $template): void
     {
-        $printed = config('taily.contracts', [])[$templateKey]['fields'] ?? [];
+        $printed = $template->requiredKeys();
 
         $missing = collect($this->checklist($adoption, AdoptionStep::CONTRACT)->open())
             ->filter(fn (ChecklistItem $item) => in_array($item->key, $printed, true))

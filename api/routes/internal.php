@@ -25,6 +25,7 @@ use Taily\Http\Controllers\Internal\ApiTokenController;
 use Taily\Http\Controllers\Internal\CaseFileController;
 use Taily\Http\Controllers\Internal\ContractSigningController;
 use Taily\Http\Controllers\Internal\ContractSigningSubmissionController;
+use Taily\Http\Controllers\Internal\ContractTemplateController;
 use Taily\Http\Controllers\Internal\FieldCatalogueController;
 use Taily\Http\Controllers\Internal\FormTemplateController;
 use Taily\Http\Controllers\Internal\InvitationController;
@@ -193,6 +194,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/field-definitions/{fieldDefinition}/archive', [FieldCatalogueController::class, 'archiveField']);
     Route::delete('/field-definitions/{fieldDefinition}/archive', [FieldCatalogueController::class, 'restoreField']);
 
+    // Contract templates (ADR-016)
+    Route::get('/contract-templates/field-options', [ContractTemplateController::class, 'fieldOptions']);
+    Route::apiResource('contract-templates', ContractTemplateController::class)->except('destroy');
+    Route::post('/contract-templates/{contractTemplate}/archive', [ContractTemplateController::class, 'archive']);
+    Route::delete('/contract-templates/{contractTemplate}/archive', [ContractTemplateController::class, 'restore']);
+
     // Vaccinations and Medical Tests
     Route::apiResource('vaccinations', VaccinationController::class);
     Route::apiResource('medical-tests', MedicalTestController::class);
@@ -213,10 +220,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // Adoptions
     Route::get('/adoptions/options', [AdoptionController::class, 'options']);
-    // Registered before the apiResource below so "contract-templates" isn't
-    // swallowed by the resource's /adoptions/{adoption} show route.
-    Route::get('/adoptions/contract-templates', [AdoptionContractController::class, 'templates']);
     Route::apiResource('adoptions', AdoptionController::class);
+    Route::get('/adoptions/{adoption}/contract-templates', [AdoptionContractController::class, 'templates']);
     Route::put('/adoptions/{adoption}/contract', [AdoptionContractController::class, 'store']);
     Route::get('/adoptions/{adoption}/contract/generate', [AdoptionContractController::class, 'generate']);
     Route::post('/adoptions/{adoption}/contract/signing', [ContractSigningController::class, 'store']);

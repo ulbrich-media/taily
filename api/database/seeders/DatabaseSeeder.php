@@ -88,6 +88,7 @@ class DatabaseSeeder extends Seeder
         // After the adoptions: values are filled in according to how far
         // each adoption has come.
         $this->call(CaseFileSeeder::class);
+        $this->call(ContractTemplateSeeder::class);
 
         $this->call(FormTemplateSeeder::class);
     }
