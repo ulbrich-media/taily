@@ -1,6 +1,6 @@
 # Case File
 
-> **Status: prototype on branch `prototype/adoption-based-structure`.** This describes the target design from [ADR-015](../ADRs/ADR-015-adoption-case-file.md). Implemented so far: field groups, Field Definitions (incl. built-in fields and conditions), Field Values, Requirement Overrides, the Checklist (adoption page, transport page, contract blocking) and mediator editing. The catalogue is seeded (`CaseFileSeeder`), there is no catalogue editor yet. Not implemented: file fields and review actions, requesting data (`requested_step`), the applicant portal, the audit trail and notifications.
+> **Status: prototype on branch `prototype/adoption-based-structure`.** This describes the target design from [ADR-015](../ADRs/ADR-015-adoption-case-file.md). Implemented so far: the catalogue per animal type with its settings UI (*Einstellungen → Angaben*), Field Values, Requirement Overrides, the Checklist (adoption overview, transport page, contract blocking) and mediator editing in the adoption's *Angaben* tab. Not implemented: file fields and review actions, requesting data (`requested_step`), the applicant portal, the audit trail and notifications.
 
 The Case File (German UI: *Angaben*) is everything an adoption knows about *if and how* it can happen: the applicant's living situation, their experience, documents, photos, contract data, transport details. It belongs to the **adoption**, not to the person. The person only identifies a human (see [data-scheme.md](../data-scheme.md#person)).
 
@@ -22,18 +22,26 @@ Organizations configure which fields exist and when they are needed. Taily's cod
 
 ---
 
+## One catalogue per animal type
+
+Every animal type has its **own** catalogue of groups and fields, configured under *Einstellungen → Angaben → [Tierart]*. What is configured on *Hund* is exactly what a dog adoption asks; editing *Hund* never changes *Katze*. The price is some duplication between animal types, which **"Von anderer Tierart kopieren"** keeps cheap: it replaces a catalogue with a copy of another one, as long as no adoption holds data for it yet.
+
+Keys are unique per animal type, so the same key (e.g. `has_garden`) can exist on several types. A new animal type starts with the built-in fields in a group *Über dich*.
+
+The settings show each group as a card with its fields: type, when it is asked and required, its condition and flags. Groups and fields are reordered with up/down buttons; a field moves to another group from its edit page. A group can only be deleted when it is empty, and fields are archived rather than deleted.
+
 ## Field Definitions
 
 ```
 field_definitions
   id
-  key                   stable identifier, never changes: "living_space_sqm"
+  animal_type_id        the catalogue it belongs to
+  key                   stable identifier, unique per animal type, never changes: "living_space_sqm"
   field_group_id        where it is shown
   position              order inside the group
   type                  see below
   label, help           German UI text
   options               enum values, min/max, max files, …
-  animal_type_ids       pivot; empty = all animal types
   collect_at            step at which the field is first asked
   required_for          step from which it is required; null = optional
   requires_review       a mediator has to confirm the value
@@ -93,7 +101,7 @@ Every form and view is "all groups, in order, filtered to the fields relevant he
 
 ```
 field_groups
-  id, title, intro (optional text), position
+  id, animal_type_id, title, intro (optional text), position
 ```
 
 Info Blocks are entries of type `info` inside a group, ordered like fields. They are shown wherever their group is shown, and their `collect_at` controls from which step on they appear.
@@ -155,7 +163,7 @@ Deliberately limited:
 - **The controlling field must come earlier** in the catalogue order. That rules out cycles and keeps forms readable top to bottom. Chains are allowed (C depends on B depends on A).
 - No AND/OR, no number comparisons. If that is ever needed, it extends this column; it doesn't replace it.
 
-A field whose condition is not met is treated exactly like a field for another animal type: **it doesn't apply**. It is not asked, not shown, not required and not on the checklist. Its value is kept if it was filled in earlier (the audit trail shows it), but it is not displayed or printed while the condition is not met. A Requirement Override cannot make a non-applying field required.
+A field whose condition is not met **doesn't apply**. It is not asked, not shown, not required and not on the checklist. Its value is kept if it was filled in earlier (the audit trail shows it), but it is not displayed or printed while the condition is not met. A Requirement Override cannot make a non-applying field required.
 
 Where it touches the code — each is small, which is why this is not hard to add if the column is planned from the start:
 
@@ -230,7 +238,7 @@ Making a field required for a step that has already been requested sends it to t
 1. The adoption's override, if any.
 2. Otherwise the stricter (earlier) of the definition's `required_for` and the contract templates of the animal's type (every field they print is required for `contract`; see [ADR-016](../ADRs/ADR-016-contract-templates-as-configuration.md#several-templates-requirements-per-animal-type)).
 
-Fields that don't apply — wrong animal type, or a [condition](#conditional-fields) that isn't met — are never required.
+Fields that don't apply — a [condition](#conditional-fields) that isn't met — are never required.
 
 ---
 
@@ -286,9 +294,11 @@ Other steps are not blocked by the checklist; the mediator decides.
 
 ### Mediator — adoption page
 
-- **Checklist summary** at the top for the next relevant step, with a jump to each missing item.
-- **Groups as collapsible sections**, in catalogue order, with a section navigation for long files. Each section can be edited as a whole.
-- Each field shows its value, a review badge, and the last change (*"vom Bewerber geändert am 12.11."*) linked to the audit trail.
+The adoption page has three tabs: **Übersicht**, **Angaben**, **Verlauf**. The adoption only shows and edits information; how fields are configured lives in the settings.
+
+- **Übersicht**: the steps, plus a compact **Checkliste** per step that opens on the first incomplete one, with links where missing animal or mediator data has to be fixed.
+- **Angaben**: every group in catalogue order, with a group menu (and the number of open items per group) and a filter **"Nur offene"**. Each group is edited as a whole in a dialog, where conditional fields appear and disappear while typing.
+- Each field shows its value first; badges only flag what needs attention (*Fehlt*, *Prüfung offen*, *Für diese Vermittlung angepasst*), and the requirement is a short grey note. Later: the last change (*"vom Bewerber geändert am 12.11."*) linked to the audit trail.
 - Fields that apply but haven't been requested yet are shown greyed: *"noch nicht angefragt"*.
 - A filter toggle: **all / only missing / only for step X**.
 - Per field: require, waive or move the due step (Requirement Override).

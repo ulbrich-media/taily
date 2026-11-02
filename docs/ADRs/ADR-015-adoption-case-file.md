@@ -52,7 +52,8 @@ Editing a built-in field from an adoption writes to the Person, because identity
 
 ### 3. Field Definitions, Field Groups and Field Values
 
-- A **Field Definition** describes one field: key, label, type, options, animal types it applies to, `collect_at`, `required_for`, `requires_review`, `visible_to_applicant`, `visible_to_inspector`.
+- **Every animal type has its own catalogue** of groups and fields, configured in the settings. What is configured on *Hund* is exactly what a dog adoption asks. A shared catalogue with per-type switches was considered and rejected: editing a shared field on one animal type would silently change it for the others. Duplication is kept cheap by copying a catalogue from another animal type.
+- A **Field Definition** describes one field: key (unique per animal type), label, type, options, `collect_at`, `required_for`, `requires_review`, `visible_to_applicant`, `visible_to_inspector`, condition.
 - A **Field Group** is a titled section with optional intro text. Fields and Info Blocks are ordered inside groups. Groups decide *where* a field appears; `collect_at`/`required_for` decide *when*.
 - A **Field Value** is one row per adoption and field, holding the current value (and files, via Spatie media) and a review status.
 

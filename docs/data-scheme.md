@@ -92,8 +92,8 @@ The adoption's configurable data. Full description in [features/case-file.md](./
 
 | Table | Content |
 |---|---|
-| `field_groups` | Titled sections with an optional intro, ordered |
-| `field_definitions` | The catalogue: key, type, group, `collect_at`, `required_for`, `requires_review`, `visible_to_applicant`, `visible_to_inspector`, `condition`, animal types |
+| `field_groups` | Titled sections with an optional intro, ordered — per animal type |
+| `field_definitions` | The catalogue: key, type, group, `collect_at`, `required_for`, `requires_review`, `visible_to_applicant`, `visible_to_inspector`, `condition`; per animal type, keys unique per type |
 | `adoption_field_values` | One row per adoption and field: current value (files via media), review status |
 | `adoption_requirements` | Per-adoption overrides: require, waive or move a field's due step |
 

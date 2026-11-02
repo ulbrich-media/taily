@@ -41,7 +41,7 @@ _Avoid_: Evaluator, Assessor, Prüfer (outside German UI strings)
 **Animal**: An individual animal that is or was available for adoption.
 _Avoid_: Pet
 
-**Animal Type**: A category of animal (e.g. dog, cat) that determines which Vaccinations, Medical Tests and Field Definitions apply to animals of that type, and the default Contract Template.
+**Animal Type**: A category of animal (e.g. dog, cat). Has its own Vaccinations, Medical Tests and Case File catalogue (Field Groups and Field Definitions).
 _Avoid_: Species, Category, Kind
 
 **Vaccination**: A vaccination type that can be recorded for an Animal. Vaccinations are defined per Animal Type and linked to Animals with a date (`vaccinated_at`).
@@ -104,7 +104,7 @@ _Avoid_: Form response, Form data, Form entry
 **Case File**: Everything an Adoption knows about *if and how* it can happen — the Field Values of that Adoption plus the Applicant's Built-in Fields. German UI: *Angaben*.
 _Avoid_: Application data, Applicant data, Dossier
 
-**Field Definition**: One configurable field of the Case File catalogue: key, type, Field Group, `collect_at`, `required_for`, review and visibility flags, Animal Types, an optional Condition.
+**Field Definition**: One configurable field of an Animal Type's Case File catalogue: key, type, Field Group, `collect_at`, `required_for`, review and visibility flags, an optional Condition. Keys are unique per Animal Type.
 _Avoid_: Custom field, Form field, Attribute
 
 **Built-in Field**: A Field Definition backed by a Person column (name, email, address, …). Configurable like any field, but not deletable; its value is stored on the Person.
