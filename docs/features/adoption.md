@@ -52,11 +52,11 @@ The application asks only what is needed to decide whether the applicant fits. L
 
 A public application creates an adoption for **one animal**. Every public application has to be **confirmed by email** (double opt-in):
 
-1. The applicant submits the form. The adoption is stored with status `unconfirmed`, **without an applicant** (`applicant_id` is null). The submitted identity data waits in a pending payload on the adoption; the Case File values are stored on the adoption as usual.
+1. The applicant submits the form. The adoption is stored with status `unconfirmed`, with the applicant's data and Case File values on the adoption as usual ([ADR-017](../ADRs/ADR-017-applicant-data-on-the-adoption.md)).
 2. Taily sends a confirmation link. Mediators already see the application, marked *"E-Mail nicht bestätigt"*.
-3. On confirmation, Taily finds the Person with that email — **an email belongs to exactly one Person** — or creates one, updates the identity data from the payload (the mailbox proves it's them; the audit trail records it), links the adoption and sets it to `pending`.
+3. On confirmation the adoption is set to `pending`. The confirmed email now links it to the applicant's earlier adoptions and to the portal.
 
-An unconfirmed application never touches an existing Person, so a public form can't be used to change someone else's data. Unconfirmed applications may be cleaned up after a number of days later on.
+An application never touches a Person or another adoption, so a public form can't be used to change someone else's data. Unconfirmed applications may be cleaned up after a number of days later on.
 
 Adoptions created by a mediator (e.g. after a phone call) need no confirmation; the emails mediators enter are trusted.
 

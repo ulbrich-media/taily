@@ -34,16 +34,16 @@ An animal that is or was open for adoption, with all information about it.
 
 A person identifies a human: first and last name, email, phone, mobile, address, date of birth, picture, and optionally the **Organization** they represent (an external club or partner).
 
-*(planned)* **An email address belongs to exactly one Person**: `email` becomes nullable and unique, where `null` means "no email" (an allowed exception to the [empty-strings](./coding-patterns/empty-strings.md) pattern). This is what makes the applicant portal's email login and the application confirmation work.
-
 A person holds roles:
 
 - **Mediator** — per animal type
 - **Foster** — per animal type
 - **Inspector** — per animal type
-- **Applicant / Adopter** — implicitly, through their adoptions
+- **Applicant / Adopter** — only when an adoption references them (optional, see below)
 
-The person deliberately holds **no** adoption-specific data. Their identity columns appear as **built-in fields** in the Case File catalogue, so the same requirement rules apply to them (e.g. the address is only required for the contract). Editing them from an adoption edits the person.
+Applicants are **not** Persons by default: an adoption holds its applicant's data itself ([ADR-017](./ADRs/ADR-017-applicant-data-on-the-adoption.md)). An adoption can *reference* a Person Taily already manages — a foster carer adopting their foster animal, an inspector — but the Person is never the source of the adoption's data.
+
+The person deliberately holds **no** adoption-specific data.
 
 ## Adoption
 
@@ -56,8 +56,12 @@ The adoption process is started by an application. The mediator guides it throug
 | `id` | uuid | Primary key |
 | `animal_id` | uuid FK → animals | The animal being adopted |
 | `mediator_id` | uuid FK → people, nullable | The mediator handling the adoption |
-| `applicant_id` | uuid FK → people | The person applying to adopt. *(planned)* Null while the application is `unconfirmed` |
-| `pending_applicant` | json, nullable | *(planned)* Identity data of an unconfirmed application, applied to the Person on confirmation |
+| `applicant_first_name`, `applicant_last_name` | string | The applicant's name |
+| `applicant_email` | string, indexed | Stored trimmed and lowercased; links the applicant's adoptions and is the portal login |
+| `applicant_phone`, `applicant_mobile` | string | |
+| `applicant_date_of_birth` | date, nullable | |
+| `applicant_street_line`, `applicant_street_line_additional`, `applicant_postal_code`, `applicant_city`, `applicant_country_code` | string | The applicant's address |
+| `applicant_person_id` | uuid FK → people, nullable | Optional reference to a Person Taily manages; never a data source. Data is copied once when an adoption is started from a Person |
 | `transport_id` | uuid FK → transports, nullable | The transport the animal is assigned to |
 | `requested_step` | enum, nullable | *(planned)* How far data collection has been opened to the applicant |
 | `status` | enum | `pending`, `in_progress`, `canceled`, `done`; *(planned)* `unconfirmed` |
@@ -65,11 +69,13 @@ The adoption process is started by an application. The mediator guides it throug
 | `canceled_reason` | text | Why the adoption was canceled |
 | `notes` | text | General mediator notes |
 | `pre_inspection_notes` | text | Mediator notes on the pre-inspection step |
-| `pre_inspection_confirmed_at`, `pre_inspection_confirmed_by` | timestamp / FK → users, nullable | *(planned)* The mediator's confirmation that closes the pre-inspection step |
+| `pre_inspection_confirmed_at`, `pre_inspection_confirmed_by` | timestamp / FK → users, nullable | The mediator's confirmation that closes the pre-inspection step |
 | `applicant_changes_seen_at` | timestamp, nullable | *(planned)* When a user last acknowledged the applicant's changes |
 | `contract_signed` | boolean | Whether the contract has been signed by both parties |
 | `contract_signed_at` | timestamp, nullable | When the contract was signed |
 | `handed_over_at` | timestamp, nullable | When the animal was handed over |
+
+The applicant columns are exposed as **built-in fields** of every Case File catalogue, so the same requirement rules apply to them (e.g. the address is only required for the contract). They belong to this adoption only: a correction never changes another adoption or a Person. Adoptions of the same applicant are found by `applicant_email` or `applicant_person_id`.
 
 ### Per-step status
 

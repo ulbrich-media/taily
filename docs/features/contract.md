@@ -75,6 +75,8 @@ No canvas-drawn signature. Both mediator and adopter sign by typing their full n
 
 #### Audit trail
 
+Each signer keeps the name and email they were invited with; invitations, reminders and the appendix use those, never the adoption's or a Person's current data ([ADR-017](../ADRs/ADR-017-applicant-data-on-the-adoption.md#4-contract-signers-keep-their-own-name-and-email)).
+
 Every step of the native flow is recorded, not just the final "signed" state:
 
 - Process started (timestamp, and the signed-in user who started it with their IP address and user agent) — this is an administrator's action, not the mediator's: whoever starts a signing process need not be the adoption's mediator, so the event is recorded against the acting user rather than borrowing the mediator's identity. The mediator's own signing link is issued as part of this step, but enters the trail with the invite below rather than as an event of its own

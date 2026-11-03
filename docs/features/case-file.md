@@ -1,6 +1,6 @@
 # Case File
 
-> **Status: prototype on branch `prototype/adoption-based-structure`.** This describes the target design from [ADR-015](../ADRs/ADR-015-adoption-case-file.md). Implemented so far: the catalogue per animal type with its settings UI (*Einstellungen → Angaben*), Field Values, Requirement Overrides, the Checklist (adoption overview, transport page, contract blocking) mediator editing in the adoption's *Angaben* tab, and contract templates as configuration (*Einstellungen → Verträge*). Not implemented: file fields and review actions, requesting data (`requested_step`), the applicant portal, the audit trail and notifications.
+> **Status: prototype on branch `prototype/adoption-based-structure`.** This describes the target design from [ADR-015](../ADRs/ADR-015-adoption-case-file.md). Implemented so far: the catalogue per animal type with its settings UI (*Einstellungen → Angaben*), Field Values, Requirement Overrides, the Checklist (adoption overview, transport page, contract blocking) mediator editing in the adoption's *Angaben* tab, contract templates as configuration (*Einstellungen → Verträge*), and applicant data on the adoption with earlier adoptions and taking over their data ([ADR-017](../ADRs/ADR-017-applicant-data-on-the-adoption.md)). Not implemented: file fields and review actions, requesting data (`requested_step`), the applicant portal, the audit trail and notifications.
 
 The Case File (German UI: *Angaben*) is everything an adoption knows about *if and how* it can happen: the applicant's living situation, their experience, documents, photos, contract data, transport details. It belongs to the **adoption**, not to the person. The person only identifies a human (see [data-scheme.md](../data-scheme.md#person)).
 
@@ -13,7 +13,7 @@ Organizations configure which fields exist and when they are needed. Taily's cod
 | Concept | German UI | What it is |
 |---|---|---|
 | **Field Definition** | Feld | One configurable field: type, label, when it is asked, when it is required, who sees it |
-| **Built-in Field** | Standardfeld | A Field Definition backed by a Person column (name, address, …). Configurable, not deletable |
+| **Built-in Field** | Standardfeld | A Field Definition backed by one of the adoption's applicant columns (name, email, address, …). Configurable, not deletable |
 | **Field Group** | Abschnitt | A titled section that orders fields and Info Blocks |
 | **Info Block** | Hinweis | Informative text placed between fields; collects no data |
 | **Field Value** | Angabe | The value of one field for one adoption |
@@ -278,7 +278,7 @@ status per item:
   done             value present (and confirmed, if review is required)
 ```
 
-It covers Case File fields, the built-in Person fields of the applicant, and — through the contract templates of the animal's type — the animal and mediator fields that the contract prints.
+It covers Case File fields, the applicant's built-in fields, and — through the contract templates of the animal's type — the animal and mediator fields that the contract prints.
 
 Where it is used:
 
@@ -324,10 +324,10 @@ The same groups, read-only, limited to fields with `visible_to_inspector`. Contr
 
 ## Second adoption by the same person
 
-Values belong to the adoption — a snapshot of what was true for that decision. Reuse is explicit:
+Values belong to the adoption — a snapshot of what was true for that decision — including the applicant's name, email and address ([ADR-017](../ADRs/ADR-017-applicant-data-on-the-adoption.md)). Adoptions of the same applicant are those with the same email or the same referenced Person. Reuse is explicit:
 
-- **Cross-reference** — the adoption page lists the person's earlier adoptions and pre-inspections (read-only), e.g. *"Bereits eine Vorkontrolle für Bello (Hund) am 03.04., Ergebnis: geeignet"*.
-- **Import** — *"Aus früherer Adoption übernehmen"*: the mediator in the admin, or the applicant in the portal, picks an earlier adoption and the values to copy. Files are copied (Spatie `copyMedia`); the duplicates are an accepted cost. Imported values of `requires_review` fields start as `pending` again — a landlord confirmation from half a year ago gets reviewed again, not trusted blindly. Every imported value is recorded in the audit trail as an import.
+- **Cross-reference** — the adoption overview lists the applicant's earlier adoptions (*Frühere Vermittlungen*, with why they match) and their pre-inspections (read-only), e.g. *"Bereits eine Vorkontrolle für Bello (Hund) am 03.04., Ergebnis: geeignet"*.
+- **Import** — *"Angaben übernehmen"*: the mediator in the admin, or the applicant in the portal, picks an earlier adoption. *Prototype:* everything that is empty here is filled from it, matched by field key; nothing is overwritten, and file fields aren't copied yet. *Target:* picking the values to copy. Files are copied (Spatie `copyMedia`); the duplicates are an accepted cost. Imported values of `requires_review` fields start as `pending` again — a landlord confirmation from half a year ago gets reviewed again, not trusted blindly. Every imported value is recorded in the audit trail as an import.
 
 ---
 

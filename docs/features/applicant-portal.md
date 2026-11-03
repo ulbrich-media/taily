@@ -6,7 +6,7 @@ The applicant portal (German UI: *Mein Bewerbungsstatus*) shows an applicant the
 
 ## Access: email plus magic link
 
-Applicants have no account and no password. **Whoever controls the mailbox is the person** — the same trust the contract signing emails already rely on. Since an email belongs to exactly one Person, logging in is simple:
+Applicants have no account and no password. **Whoever controls the mailbox is the person** — the same trust the contract signing emails already rely on. The portal shows every adoption whose applicant email matches ([ADR-017](../ADRs/ADR-017-applicant-data-on-the-adoption.md)), so logging in is simple:
 
 1. The applicant enters their email. The page always answers *"Falls es Bewerbungen zu dieser Adresse gibt, haben wir dir einen Link geschickt."* — whether or not the address exists (no account enumeration).
 2. The emailed **magic link is valid for 4 hours and single-use**.

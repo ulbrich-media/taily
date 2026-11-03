@@ -6,7 +6,7 @@ The core domain: finding and confirming a new owner for an animal, from initial 
 
 ### People
 
-**Person**: Anyone relevant to the adoption process who can hold one or more roles (Mediator, Applicant/Adopter, Foster, Inspector). A Person only identifies a human (name, contact, address, date of birth); data about *if and how* an adoption happens belongs to the Adoption's Case File.
+**Person**: Someone Taily manages — Mediator, Foster, Inspector, organization contact — identified by name, contact, address and date of birth. Applicants are not Persons by default; an Adoption may reference one. Data about *if and how* an adoption happens belongs to the Adoption's Case File.
 _Avoid_: Contact, Individual, Human
 
 **Member**: A Person who is affiliated with the Operating Organization. May or may not have login credentials.
@@ -24,10 +24,10 @@ _Avoid_: Partner, External organization, Club
 **Mediator**: A Member who supervises and guides an Adoption from application through handover or cancellation.
 _Avoid_: Handler, Manager, Coordinator
 
-**Applicant**: A Person who has applied to adopt an Animal but whose Adoption has not yet been accepted (status: pending). Once the Mediator starts working on the Adoption, the person becomes an Adopter.
+**Applicant**: Whoever applied to adopt an Animal and whose Adoption has not yet been accepted (status: pending). Their data — name, contact, address, date of birth — is stored on the Adoption itself, not as a Person; an Adoption may reference a Person Taily already manages. Adoptions with the same applicant email belong to the same applicant (ADR-017). Once the Mediator starts working on the Adoption, the applicant becomes an Adopter.
 _Avoid_: Potential adopter, Candidate, Interested party
 
-**Adopter**: A Person whose Adoption is actively being worked on or has completed (status: in_progress or done). The term applies from the moment the Mediator accepts the application, not only after the Handover.
+**Adopter**: An Applicant whose Adoption is actively being worked on or has completed (status: in_progress or done). The term applies from the moment the Mediator accepts the application, not only after the Handover.
 _Avoid_: Owner (until handover is confirmed), Applicant (once the adoption is in_progress)
 
 **Foster**: A Person who temporarily houses an Animal until handover to the Adopter.
@@ -107,7 +107,7 @@ _Avoid_: Application data, Applicant data, Dossier
 **Field Definition**: One configurable field of an Animal Type's Case File catalogue: key, type, Field Group, `collect_at`, `required_for`, review and visibility flags, an optional Condition. Keys are unique per Animal Type.
 _Avoid_: Custom field, Form field, Attribute
 
-**Built-in Field**: A Field Definition backed by a Person column (name, email, address, …). Configurable like any field, but not deletable; its value is stored on the Person.
+**Built-in Field**: A Field Definition backed by one of the Adoption's applicant columns (name, email, address, …). Configurable like any field, but not deletable; its value belongs to that Adoption only.
 _Avoid_: System field, Standard field
 
 **Condition**: A Field Definition's single rule that it only applies when an earlier boolean/select/radio field has a given value. A field whose Condition is not met doesn't apply: not asked, not required, not shown.
@@ -143,5 +143,5 @@ _Avoid_: Customer portal, Applicant login
 **Magic Link**: A single-use, short-lived emailed link that logs a Person into the Applicant Portal or confirms an application. No password, no account.
 _Avoid_: Login link, Token link
 
-**Unconfirmed Application**: An Adoption from the public form whose email has not been confirmed yet. Has no Applicant; its identity data waits in a pending payload.
+**Unconfirmed Application**: An Adoption from the public form whose email has not been confirmed yet. Its applicant data is stored on it like any other Adoption, but it isn't linked to earlier Adoptions or the portal until the email is confirmed.
 _Avoid_: Draft, Lead

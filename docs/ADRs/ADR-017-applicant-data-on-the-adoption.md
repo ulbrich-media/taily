@@ -65,7 +65,7 @@ For applicants Taily already manages — a foster carer adopting their foster an
 
 ### 4. Contract signers keep their own name and email
 
-Each `contract_signers` row stores the `name` and `email` valid when the signing process starts. Invitations, reminders, the signing page, the signature appendix and audit events use them. `person_id` becomes an optional reference (set for the mediator; for the adopter only when the adoption references a Person) and is nulled when the Person is deleted.
+Each `contract_signers` row stores the `name` and `email` valid when that signer is invited — the mediator when the process starts, the adopter once the mediator has signed. Invitations, reminders, the signing page, the signature appendix and audit events use them. `person_id` becomes an optional reference (set for the mediator; for the adopter only when the adoption references a Person) and is nulled when the Person is deleted.
 
 What was signed, by whom and at which address stays fixed — like the frozen PDF. A corrected email during a running process is a deliberate step (cancel and restart), not a silent switch.
 
