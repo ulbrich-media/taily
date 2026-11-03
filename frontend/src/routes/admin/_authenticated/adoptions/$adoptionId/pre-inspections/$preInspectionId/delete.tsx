@@ -3,11 +3,11 @@ import { queryClient } from '@/lib/queryClient'
 import { getPreInspectionQuery } from '@/admin/module/pre-inspections/api/queries'
 import { PreInspectionDeletePage } from '@/admin/module/pre-inspections/pages/PreInspectionDeletePage'
 import { useSuspenseQuery } from '@tanstack/react-query'
-import { Route as PersonAdoptionsRoute } from '@/routes/admin/_authenticated/people/$id/adoptions/index'
-import { Route as PreInspectionDetailRoute } from '@/routes/admin/_authenticated/people/$id/adoptions/pre-inspections/$preInspectionId/route'
+import { Route as AdoptionOverviewRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/route'
+import { Route as PreInspectionDetailRoute } from './route'
 
 export const Route = createFileRoute(
-  '/admin/_authenticated/people/$id/adoptions/pre-inspections/$preInspectionId/delete'
+  '/admin/_authenticated/adoptions/$adoptionId/pre-inspections/$preInspectionId/delete'
 )({
   staticData: { dialog: true },
   loader: async ({ params }) => {
@@ -23,19 +23,19 @@ export const Route = createFileRoute(
 })
 
 function RouteComponent() {
-  const { id, preInspectionId } = Route.useParams()
-  const navigateToPersonAdoptions = PersonAdoptionsRoute.useNavigate()
+  const { adoptionId, preInspectionId } = Route.useParams()
+  const navigateToAdoption = AdoptionOverviewRoute.useNavigate()
   const navigateToDetail = PreInspectionDetailRoute.useNavigate()
   const { data: inspection } = useSuspenseQuery(
     getPreInspectionQuery(preInspectionId)
   )
 
   const handleDeleted = () => {
-    navigateToPersonAdoptions({ params: { id } })
+    navigateToAdoption({ params: { adoptionId } })
   }
 
   const handleClose = () => {
-    navigateToDetail({ params: { id, preInspectionId } })
+    navigateToDetail({ params: { adoptionId, preInspectionId } })
   }
 
   return (

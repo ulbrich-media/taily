@@ -2,6 +2,7 @@ import { apiRequest } from '@/lib/api'
 import type {
   AdoptionListResource,
   ContractTemplate,
+  RelatedAdoption,
 } from '@/api/types/adoptions'
 import type { PaginatedResponse } from '@/api/types/pagination'
 import {
@@ -20,7 +21,8 @@ import type {
 
 export interface AdoptionsFilters {
   animal_id?: string
-  applicant_id?: string
+  // Adoptions referencing the person or carrying their email.
+  applicant_person_id?: string
   mediator_id?: string
 }
 
@@ -51,8 +53,8 @@ export async function getAdoptions(
       page: String(page),
     })
     if (filters?.animal_id) params.set('filter[animal_id]', filters.animal_id)
-    if (filters?.applicant_id)
-      params.set('filter[applicant_id]', filters.applicant_id)
+    if (filters?.applicant_person_id)
+      params.set('filter[applicant_person_id]', filters.applicant_person_id)
     if (filters?.mediator_id)
       params.set('filter[mediator_id]', filters.mediator_id)
 
@@ -111,6 +113,13 @@ export async function updateContract(
     method: 'POST',
     body: formData,
   })
+}
+
+// The applicant's other adoptions: same email or same referenced Person.
+export async function getRelatedAdoptions(
+  id: string
+): Promise<RelatedAdoption[]> {
+  return apiRequest<RelatedAdoption[]>(`adoptions/${id}/related`)
 }
 
 // The templates offered for the adoption's animal type.

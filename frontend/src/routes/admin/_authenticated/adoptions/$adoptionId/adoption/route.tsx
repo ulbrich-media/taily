@@ -1,9 +1,13 @@
 import { createFileRoute, Outlet } from '@tanstack/react-router'
 import { useSuspenseQuery, useQuery } from '@tanstack/react-query'
-import { getAdoptionQuery } from '@/admin/module/adoptions/api/queries'
+import {
+  getAdoptionQuery,
+  getRelatedAdoptionsQuery,
+} from '@/admin/module/adoptions/api/queries'
+import { RelatedAdoptionsCard } from '@/admin/module/adoptions/components/RelatedAdoptionsCard'
 import {
   listPreInspectionsByAdoptionQuery,
-  listPreInspectionsByPersonQuery,
+  listRelatedPreInspectionsQuery,
 } from '@/admin/module/pre-inspections/api/queries'
 import { getCaseFileQuery } from '@/admin/module/case-file/api/queries'
 import { CaseFileSummaryCard } from '@/admin/module/case-file/components/CaseFileSummaryCard'
@@ -13,6 +17,7 @@ import { Button } from '@/shadcn/components/ui/button'
 import {
   Ban,
   ChevronDown,
+  CopyPlus,
   Edit,
   FileUp,
   PlusCircle,
@@ -39,7 +44,9 @@ import { Route as CancelRoute } from '@/routes/admin/_authenticated/adoptions/$a
 import { Route as ReopenRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/reopen'
 import { Route as TransportAssignRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/transport-assign'
 import { Route as TransportRemoveRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/transport-remove'
-import { Route as InspectionDetailRoute } from '@/routes/admin/_authenticated/people/$id/adoptions/pre-inspections/$preInspectionId/index'
+import { Route as InspectionDetailRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/pre-inspections/$preInspectionId/index'
+import { Route as ImportRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/import.$fromAdoptionId'
+import { Route as AdoptionOverviewRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/index'
 import { Route as CaseFileRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/case-file/index'
 import { Route as AnimalRoute } from '@/routes/admin/_authenticated/animals/_animalDetail/$animalTypeId.animal.$animalId/index'
 import { Route as PersonRoute } from '@/routes/admin/_authenticated/people/$id/index'
@@ -57,21 +64,40 @@ function RouteComponent() {
   const { adoptionId } = Route.useParams()
   const { data: adoption } = useSuspenseQuery(getAdoptionQuery(adoptionId))
 
-  const applicantId = adoption.applicant_id
-
   const {
     data: inspectionsData,
     isLoading: inspectionsLoading,
     isError: inspectionsError,
   } = useQuery(listPreInspectionsByAdoptionQuery(adoptionId))
 
-  // What this person already went through for other animals.
-  const { data: personInspections } = useQuery(
-    listPreInspectionsByPersonQuery(applicantId)
+  // What the applicant already went through for other animals: their
+  // adoptions with the same email or the same referenced Person (ADR-017).
+  const { data: earlierInspections } = useQuery(
+    listRelatedPreInspectionsQuery(adoptionId)
   )
-  const earlierInspections = personInspections?.filter(
-    (inspection) => inspection.adoption_id !== adoptionId
-  )
+
+  const { data: related } = useQuery(getRelatedAdoptionsQuery(adoptionId))
+
+  const relatedSection = related ? (
+    <RelatedAdoptionsCard
+      related={related}
+      renderOpenLink={(other) => (
+        <Button size="sm" variant="outline" asChild>
+          <AdoptionOverviewRoute.Link params={{ adoptionId: other.id }}>
+            Öffnen
+          </AdoptionOverviewRoute.Link>
+        </Button>
+      )}
+      renderImportAction={(other) => (
+        <Button size="sm" variant="ghost" asChild>
+          <ImportRoute.Link params={{ adoptionId, fromAdoptionId: other.id }}>
+            <CopyPlus />
+            Angaben übernehmen
+          </ImportRoute.Link>
+        </Button>
+      )}
+    />
+  ) : null
 
   const { data: caseFile, isError: caseFileError } = useQuery(
     getCaseFileQuery(adoptionId)
@@ -239,7 +265,10 @@ function RouteComponent() {
 
   const renderInspectionDetailLink = (inspection: PreInspectionResource) => (
     <InspectionDetailRoute.Link
-      params={{ id: applicantId, preInspectionId: inspection.id }}
+      params={{
+        adoptionId: inspection.adoption_id,
+        preInspectionId: inspection.id,
+      }}
     >
       {inspection.submitted_at ? (
         <>
@@ -281,6 +310,7 @@ function RouteComponent() {
         inspectionsError={inspectionsError}
         earlierInspections={earlierInspections}
         caseFileSection={caseFileSection}
+        relatedSection={relatedSection}
         confirmPreInspectionAction={
           <PreInspectionConfirmAction adoption={adoption} />
         }

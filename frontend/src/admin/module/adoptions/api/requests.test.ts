@@ -20,7 +20,7 @@ describe('getAdoptions', () => {
       .mockResolvedValueOnce(page(['c'], 2, 3))
       .mockResolvedValueOnce(page(['d'], 3, 3))
 
-    const adoptions = await getAdoptions({ applicant_id: 'person-1' })
+    const adoptions = await getAdoptions({ applicant_person_id: 'person-1' })
 
     expect(adoptions.map((adoption) => adoption.id)).toEqual([
       'a',
@@ -34,7 +34,9 @@ describe('getAdoptions', () => {
     expect(urls[0]).toContain('page=1')
     expect(urls[2]).toContain('page=3')
     for (const url of urls) {
-      expect(decodeURIComponent(url)).toContain('filter[applicant_id]=person-1')
+      expect(decodeURIComponent(url)).toContain(
+        'filter[applicant_person_id]=person-1'
+      )
       expect(url).toContain('per_page=100')
     }
   })

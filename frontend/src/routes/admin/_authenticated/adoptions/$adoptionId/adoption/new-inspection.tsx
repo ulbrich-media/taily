@@ -5,7 +5,7 @@ import { getAdoptionQuery } from '@/admin/module/adoptions/api/queries'
 import { listPeopleFilteredQuery } from '@/admin/module/people/api/queries'
 import { TriggerPreInspectionDialog } from '@/admin/module/pre-inspections/components/TriggerPreInspectionDialog'
 import { Route as AdoptionRoute } from '../index.tsx'
-import { Route as PreInspectionDetailRoute } from '@/routes/admin/_authenticated/people/$id/adoptions/pre-inspections/$preInspectionId/index'
+import { Route as PreInspectionDetailRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/pre-inspections/$preInspectionId/index'
 import { BreadcrumbNav } from '@/router/BreadcrumbNav.tsx'
 import { useBreadcrumbs } from '@/router/useBreadcrumbs.ts'
 
@@ -37,7 +37,6 @@ function RouteComponent() {
   const navigateToAdoption = AdoptionRoute.useNavigate()
   const navigateToInspection = PreInspectionDetailRoute.useNavigate()
 
-  const applicantId = adoption.applicant_id
   const animalTypeId = adoption.animal.animal_type_id
 
   const { data: inspectors } = useSuspenseQuery(
@@ -60,7 +59,7 @@ function RouteComponent() {
       inspectors={inspectors}
       onCreated={(preInspectionId) =>
         navigateToInspection({
-          params: { id: applicantId, preInspectionId },
+          params: { adoptionId, preInspectionId },
           replace: true,
         })
       }

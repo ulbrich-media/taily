@@ -28,11 +28,14 @@ function OverallStatusBadge({ status }: { status: AdoptionStatus }) {
 interface AdoptionSidebarProps {
   adoption: AdoptionDetailResource
   mediatorEditLink?: ReactNode
+  // Opens the linked Person, or the dialog to link one.
+  applicantPersonLink?: ReactNode
 }
 
 export function AdoptionSidebar({
   adoption,
   mediatorEditLink,
+  applicantPersonLink,
 }: AdoptionSidebarProps) {
   return (
     <aside>
@@ -69,9 +72,9 @@ export function AdoptionSidebar({
               </div>
               <div className="w-[calc(50%-1rem)]">
                 <div className="w-24 mx-auto aspect-square bg-muted rounded-full flex items-center justify-center mb-4 overflow-hidden">
-                  {adoption.applicant.pictures?.[0]?.url ? (
+                  {adoption.applicant_person?.profile_picture_url ? (
                     <img
-                      src={adoption.applicant.pictures[0].url}
+                      src={adoption.applicant_person.profile_picture_url}
                       alt={adoption.applicant.full_name}
                       className="w-full h-full object-cover"
                       loading="lazy"
@@ -85,6 +88,14 @@ export function AdoptionSidebar({
                     {adoption.applicant.full_name}
                   </p>
                   <p className="text-xs text-muted-foreground">Interessent</p>
+                  {adoption.applicant.email && (
+                    <p className="text-xs text-muted-foreground break-all">
+                      {adoption.applicant.email}
+                    </p>
+                  )}
+                  {applicantPersonLink && (
+                    <div className="mt-1 text-xs">{applicantPersonLink}</div>
+                  )}
                 </div>
               </div>
             </div>

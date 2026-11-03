@@ -31,15 +31,21 @@ export interface GenerateContractResponse {
 // Request / input types (sent to the API — not resource shapes)
 // ---------------------------------------------------------------------------
 
+// Either a Person whose data is copied once, or the applicant's data.
 export interface CreateAdoptionRequest {
   animal_id: string
-  applicant_id: string
   mediator_id: string | null
+  applicant_person_id?: string
+  applicant_first_name?: string
+  applicant_last_name?: string
+  applicant_email?: string
+  applicant_phone?: string
 }
 
 export interface UpdateAdoptionRequest {
   animal_id?: string
-  applicant_id?: string
+  // Links or unlinks a Person; the applicant's data stays as it is.
+  applicant_person_id?: string | null
   mediator_id?: string | null
   status?: AdoptionStatus
   canceled_reason?: string

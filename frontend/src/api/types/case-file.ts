@@ -128,7 +128,7 @@ export interface TransportChecklistResource {
   adoptions: {
     adoption_id: string
     animal: { id: string; name: string }
-    applicant: { id: string; full_name: string }
+    applicant: { person_id: string | null; full_name: string }
     checklist: Checklist
   }[]
 }

@@ -6,17 +6,17 @@ import { PreInspectionEditPage } from '@/admin/module/pre-inspections/pages/PreI
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { Button } from '@/shadcn/components/ui/button'
 import { Trash2 } from 'lucide-react'
-import { Route as DeleteRoute } from '@/routes/admin/_authenticated/people/$id/adoptions/pre-inspections/$preInspectionId/delete'
+import { Route as DeleteRoute } from './delete'
 
 export const Route = createFileRoute(
-  '/admin/_authenticated/people/$id/adoptions/pre-inspections/$preInspectionId'
+  '/admin/_authenticated/adoptions/$adoptionId/pre-inspections/$preInspectionId'
 )({
   loader: async ({ params }) => {
     const inspection = await queryClient.ensureQueryData(
       getPreInspectionQuery(params.preInspectionId)
     )
 
-    if (inspection.adoption.applicant_id !== params.id) {
+    if (inspection.adoption.id !== params.adoptionId) {
       throw notFound()
     }
     await queryClient.ensureQueryData(
@@ -31,7 +31,7 @@ export const Route = createFileRoute(
 })
 
 function RouteComponent() {
-  const { id, preInspectionId } = Route.useParams()
+  const { adoptionId, preInspectionId } = Route.useParams()
   const { data: inspection } = useSuspenseQuery(
     getPreInspectionQuery(preInspectionId)
   )
@@ -44,7 +44,7 @@ function RouteComponent() {
 
   const deleteAction = (
     <Button variant="destructive_outline" size="sm" asChild>
-      <DeleteRoute.Link params={{ id, preInspectionId }}>
+      <DeleteRoute.Link params={{ adoptionId, preInspectionId }}>
         <Trash2 className="h-4 w-4 mr-2" />
         Löschen
       </DeleteRoute.Link>

@@ -27,7 +27,8 @@ export interface PreInspectionResource extends PreInspectionBaseResource {
   inspector: PersonBaseResource | null
   adoption: {
     id: string
-    applicant_id: string
+    applicant_person_id: string | null
+    applicant_full_name: string
     animal: {
       id: string
       name: string

@@ -13,11 +13,14 @@ export async function getPreInspections(
   params: {
     person_id?: string
     adoption_id?: string
+    related_to_adoption_id?: string
   } = {}
 ): Promise<PreInspectionsResponse> {
   const query = new URLSearchParams()
   if (params.person_id) query.set('person_id', params.person_id)
   if (params.adoption_id) query.set('adoption_id', params.adoption_id)
+  if (params.related_to_adoption_id)
+    query.set('related_to_adoption_id', params.related_to_adoption_id)
   const qs = query.toString()
   return apiRequest<PreInspectionsResponse>(
     `pre-inspections${qs ? `?${qs}` : ''}`

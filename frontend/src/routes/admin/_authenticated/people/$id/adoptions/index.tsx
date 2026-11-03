@@ -5,7 +5,7 @@ import { listPreInspectionsByPersonQuery } from '@/admin/module/pre-inspections/
 import { listAdoptionsQuery } from '@/admin/module/adoptions/api/queries.ts'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { Route as AdoptionDetailRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/index'
-import { Route as InspectionDetailRoute } from '@/routes/admin/_authenticated/people/$id/adoptions/pre-inspections/$preInspectionId/index'
+import { Route as InspectionDetailRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/pre-inspections/$preInspectionId/index'
 import type { AdoptionListResource } from '@/api/types/adoptions'
 import type { PreInspectionResource } from '@/api/types/pre-inspections'
 
@@ -16,7 +16,7 @@ export const Route = createFileRoute(
     await Promise.all([
       queryClient.ensureQueryData(listPreInspectionsByPersonQuery(params.id)),
       queryClient.ensureQueryData(
-        listAdoptionsQuery({ applicant_id: params.id })
+        listAdoptionsQuery({ applicant_person_id: params.id })
       ),
     ])
   },
@@ -29,7 +29,7 @@ function RouteComponent() {
     listPreInspectionsByPersonQuery(id)
   )
   const { data: adoptions } = useSuspenseQuery(
-    listAdoptionsQuery({ applicant_id: id })
+    listAdoptionsQuery({ applicant_person_id: id })
   )
 
   const renderAdoptionDetailLink = (adoption: AdoptionListResource) => (
@@ -39,7 +39,12 @@ function RouteComponent() {
   )
 
   const renderInspectionDetailLink = (inspection: PreInspectionResource) => (
-    <InspectionDetailRoute.Link params={{ id, preInspectionId: inspection.id }}>
+    <InspectionDetailRoute.Link
+      params={{
+        adoptionId: inspection.adoption_id,
+        preInspectionId: inspection.id,
+      }}
+    >
       {inspection.submitted_at ? (
         <>
           <span>Öffnen</span>

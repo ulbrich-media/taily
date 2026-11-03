@@ -27,6 +27,26 @@ export async function updateCaseFile(
   })
 }
 
+export interface ImportCaseFileResponse extends CaseFileResponse {
+  // Labels of the fields that were filled.
+  filled: string[]
+}
+
+// Takes over values from another adoption of the same applicant into the
+// fields that are empty here (ADR-017).
+export async function importCaseFile(
+  adoptionId: string,
+  fromAdoptionId: string
+): Promise<ImportCaseFileResponse> {
+  return apiRequest<ImportCaseFileResponse>(
+    `adoptions/${adoptionId}/case-file/import`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ from_adoption_id: fromAdoptionId }),
+    }
+  )
+}
+
 export async function setRequirement(
   adoptionId: string,
   fieldKey: string,

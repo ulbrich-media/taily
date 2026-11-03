@@ -26,6 +26,8 @@ interface AdoptionDetailPageProps {
   // Pre-inspections of the same applicant for other adoptions.
   earlierInspections?: PreInspectionResource[]
   caseFileSection: ReactNode
+  // The applicant's other adoptions (ADR-017).
+  relatedSection?: ReactNode
   confirmPreInspectionAction: ReactNode
   editInternalNotesAction: (hasNote: boolean) => ReactNode
   startContractAction: ReactNode
@@ -47,6 +49,7 @@ export function AdoptionDetailPage({
   inspectionsError,
   earlierInspections,
   caseFileSection,
+  relatedSection,
   confirmPreInspectionAction,
   editInternalNotesAction,
   startContractAction,
@@ -91,6 +94,8 @@ export function AdoptionDetailPage({
 
       {caseFileSection}
 
+      {relatedSection}
+
       <StepCard
         title="Vorkontrolle"
         status={
@@ -124,7 +129,7 @@ export function AdoptionDetailPage({
           </InfoRow>
 
           {!!earlierInspections?.length && (
-            <InfoRow label="Frühere Vorkontrollen dieser Person">
+            <InfoRow label="Frühere Vorkontrollen">
               <PreInspectionList inspections={earlierInspections} />
             </InfoRow>
           )}
