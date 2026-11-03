@@ -18,7 +18,8 @@ class PreInspectionListResource extends PreInspectionBaseResource
             // Enough of the adoption to tell earlier pre-inspections apart.
             'adoption' => $this->whenLoaded('adoption', fn ($adoption) => [
                 'id' => $adoption->id,
-                'applicant_id' => $adoption->applicant_id,
+                'applicant_person_id' => $adoption->applicant_person_id,
+                'applicant_full_name' => $adoption->applicant_full_name,
                 'animal' => $adoption->animal ? [
                     'id' => $adoption->animal->id,
                     'name' => $adoption->animal->name,

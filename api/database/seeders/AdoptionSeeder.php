@@ -217,9 +217,13 @@ class AdoptionSeeder extends Seeder
 
         $timeline = AdoptionTimeline::build($stage, $notBefore, $this->faker, $transport?->done_at);
 
+        // The applicant's data is the adoption's own (ADR-017), copied from a
+        // person of the directory. The animal's owner is a Person, so a
+        // handed-over adoption references them; about a third of the others do.
         $adoption = new Adoption([
             'animal_id' => $animal->id,
-            'applicant_id' => $applicant->id,
+            ...Adoption::applicantDataFrom($applicant),
+            'applicant_person_id' => $stage->isHandedOver() || $this->faker->boolean(35) ? $applicant->id : null,
             'mediator_id' => $mediator?->id,
             'status' => $stage->adoptionStatus(),
             'notes' => $this->faker->boolean(70) ? $this->faker->sentence(8) : '',

@@ -22,7 +22,7 @@ class AdoptionContractController extends Controller
     private const DETAIL_RELATIONS = [
         'animal', 'animal.animalType', 'animal.media',
         'mediator', 'mediator.media',
-        'applicant', 'applicant.media',
+        'applicantPerson', 'applicantPerson.media',
         'media',
         'latestContractSigningProcess.signers.person',
         'latestContractSigningProcess.signers.latestInviteEvent',

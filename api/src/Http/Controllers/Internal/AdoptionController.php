@@ -20,7 +20,7 @@ class AdoptionController extends Controller
     public const DETAIL_RELATIONS = [
         'animal', 'animal.animalType', 'animal.media',
         'mediator', 'mediator.media',
-        'applicant', 'applicant.media',
+        'applicantPerson', 'applicantPerson.media',
         'transport', 'transport.responsible', 'transport.responsible.media',
         'media',
         'latestContractSigningProcess.signers.person',
@@ -31,7 +31,7 @@ class AdoptionController extends Controller
     // What an adoption row of the list renders, including its derived step statuses.
     private const LIST_RELATIONS = [
         'animal', 'animal.animalType', 'animal.media',
-        'mediator.media', 'applicant.media',
+        'mediator.media', 'applicantPerson.media',
         'transport',
         'latestContractSigningProcess',
         'preInspections', 'requirements',
@@ -72,11 +72,30 @@ class AdoptionController extends Controller
         $validated = $request->validate([
             'animal_id' => 'required|exists:animals,id',
             'mediator_id' => 'nullable|exists:people,id',
-            'applicant_id' => 'required|exists:people,id',
+            // Either someone Taily knows, whose data is copied once …
+            'applicant_person_id' => 'nullable|exists:people,id',
+            // … or the applicant's data entered directly (ADR-017).
+            'applicant_first_name' => 'required_without:applicant_person_id|string|max:255',
+            'applicant_last_name' => 'required_without:applicant_person_id|string|max:255',
+            'applicant_email' => 'nullable|email|max:255',
+            'applicant_phone' => 'nullable|string|max:50',
             'notes' => 'sometimes|string',
+        ], attributes: [
+            'applicant_first_name' => 'Vorname',
+            'applicant_last_name' => 'Nachname',
+            'applicant_email' => 'E-Mail',
+            'applicant_phone' => 'Telefon',
         ]);
 
-        $adoption = Adoption::create($validated);
+        $person = isset($validated['applicant_person_id']) ? Person::find($validated['applicant_person_id']) : null;
+        $applicant = $person
+            ? Adoption::applicantDataFrom($person)
+            : collect($validated)->only(['applicant_first_name', 'applicant_last_name', 'applicant_email', 'applicant_phone'])->map(fn ($value) => (string) $value)->all();
+
+        $adoption = Adoption::create([
+            ...collect($validated)->only(['animal_id', 'mediator_id', 'applicant_person_id', 'notes'])->all(),
+            ...$applicant,
+        ]);
         $adoption->load(self::DETAIL_RELATIONS);
 
         return response()->json([
@@ -97,7 +116,8 @@ class AdoptionController extends Controller
         $validated = $request->validate([
             'animal_id' => 'sometimes|required|exists:animals,id',
             'mediator_id' => 'sometimes|nullable|exists:people,id',
-            'applicant_id' => 'sometimes|required|exists:people,id',
+            // Links or unlinks a Person only; the applicant's data stays as it is.
+            'applicant_person_id' => 'sometimes|nullable|exists:people,id',
             'status' => 'sometimes|in:pending,in_progress,canceled,done',
             'canceled_reason' => 'sometimes',
             'notes' => 'sometimes|string',

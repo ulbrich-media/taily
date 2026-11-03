@@ -56,7 +56,8 @@ class ContractPdfServiceTest extends TestCase
         return Adoption::create([
             'animal_id' => $animal->id,
             'mediator_id' => $mediatorId,
-            'applicant_id' => $applicant->id,
+            ...Adoption::applicantDataFrom($applicant),
+            'applicant_person_id' => $applicant->id,
             'contract_signed' => false,
         ]);
     }
@@ -212,7 +213,8 @@ class ContractPdfServiceTest extends TestCase
         $adoption = Adoption::create([
             'animal_id' => $animal->id,
             'mediator_id' => $mediator->id,
-            'applicant_id' => $applicant->id,
+            ...Adoption::applicantDataFrom($applicant),
+            'applicant_person_id' => $applicant->id,
             'contract_signed' => false,
         ]);
 

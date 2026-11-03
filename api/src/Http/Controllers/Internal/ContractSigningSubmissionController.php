@@ -39,11 +39,9 @@ class ContractSigningSubmissionController extends Controller
         }
 
         $signer->load([
-            'person',
             'signingProcess.adoption.animal.animalType',
             'signingProcess.adoption.mediator',
-            'signingProcess.adoption.applicant',
-            'signingProcess.signers.person',
+            'signingProcess.signers',
         ]);
 
         // Recorded on every view, including repeat views — see docs/features/contract.md#audit-trail.
@@ -61,7 +59,7 @@ class ContractSigningSubmissionController extends Controller
                 'animal_type' => $adoption->animal->animalType?->title,
             ],
             'mediator' => ['full_name' => $adoption->mediator?->full_name],
-            'applicant' => ['full_name' => $adoption->applicant->full_name],
+            'applicant' => ['full_name' => $adoption->applicant_full_name],
             'other_signer' => ($otherSigner && $otherSigner->isSigned()) ? [
                 'role' => $otherSigner->role,
                 'typed_name' => $otherSigner->typed_name,
@@ -153,13 +151,13 @@ class ContractSigningSubmissionController extends Controller
 
     private function notifyAdopter(ContractSigningProcess $process): void
     {
-        $adopterSigner = $process->signers()->where('role', ContractSignerRole::ADOPTER)->with('person')->firstOrFail();
+        $adopterSigner = $process->signers()->where('role', ContractSignerRole::ADOPTER)->firstOrFail();
 
-        if (! $adopterSigner->person->email) {
+        if (! $adopterSigner->email) {
             return;
         }
 
-        $email = $adopterSigner->person->email;
+        $email = $adopterSigner->email;
 
         try {
             Mail::to($email)->send(

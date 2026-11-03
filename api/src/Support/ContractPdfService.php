@@ -119,8 +119,8 @@ class ContractPdfService
 
                 return [
                     'signer' => $signer,
-                    'name' => $events->first()?->subjectName() ?? $signer->person->full_name,
-                    'email' => $events->first()?->subjectEmail() ?? $signer->person->email,
+                    'name' => $events->first()?->subjectName() ?? $signer->name,
+                    'email' => $events->first()?->subjectEmail() ?? $signer->email,
                     'events' => $events,
                 ];
             })
@@ -198,7 +198,7 @@ class ContractPdfService
      */
     private function viewData(Adoption $adoption, ContractTemplate $template): array
     {
-        $adoption->load(['animal.animalType', 'animal.media', 'mediator.organization', 'applicant']);
+        $adoption->load(['animal.animalType', 'animal.media', 'mediator.organization']);
 
         $printout = app(ContractTemplateService::class)->printout($template, $adoption);
 

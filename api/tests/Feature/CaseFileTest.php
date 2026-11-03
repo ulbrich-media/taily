@@ -53,9 +53,9 @@ class CaseFileTest extends TestCase
         $contract = FieldGroup::create(['animal_type_id' => $type->id, 'title' => 'Für den Vertrag', 'position' => 2]);
         $arrival = FieldGroup::create(['animal_type_id' => $type->id, 'title' => 'Ankunft', 'position' => 3]);
 
-        $this->define($about, 'first_name', 'text', 'Vorname', ['person_attribute' => 'first_name', 'required_for' => 'application']);
-        $this->define($about, 'date_of_birth', 'date', 'Geburtsdatum', ['person_attribute' => 'date_of_birth', 'required_for' => 'contract']);
-        $this->define($about, 'address', 'address', 'Anschrift', ['person_attribute' => 'address', 'required_for' => 'contract']);
+        $this->define($about, 'first_name', 'text', 'Vorname', ['applicant_attribute' => 'first_name', 'required_for' => 'application']);
+        $this->define($about, 'date_of_birth', 'date', 'Geburtsdatum', ['applicant_attribute' => 'date_of_birth', 'required_for' => 'contract']);
+        $this->define($about, 'address', 'address', 'Anschrift', ['applicant_attribute' => 'address', 'required_for' => 'contract']);
         $this->define($home, 'living_space_sqm', 'integer', 'Wohnfläche', ['required_for' => 'application', 'options' => ['min' => 1]]);
         $this->define($home, 'has_garden', 'boolean', 'Garten vorhanden', ['required_for' => 'application']);
         $this->define($home, 'garden_size_sqm', 'integer', 'Gartengröße', [
@@ -108,7 +108,7 @@ class CaseFileTest extends TestCase
         $this->assertSame('animal', collect($checklists['contract']['items'])->firstWhere('key', 'animal.animal_number')['subject']);
     }
 
-    public function test_update_writes_custom_values_to_the_adoption_and_built_ins_to_the_person(): void
+    public function test_update_writes_custom_values_and_built_ins_to_the_adoption(): void
     {
         $adoption = $this->adoption($this->dogs);
 
@@ -124,17 +124,19 @@ class CaseFileTest extends TestCase
             ],
         ])->assertOk();
 
-        $applicant = $adoption->applicant->fresh();
-        $this->assertSame('Anna-Lena', $applicant->first_name);
-        $this->assertSame('1990-04-12', $applicant->date_of_birth->format('Y-m-d'));
-        $this->assertSame('Köln', $applicant->city);
+        // Built-ins are the adoption's own columns; the referenced Person stays as it was (ADR-017).
+        $fresh = $adoption->fresh();
+        $this->assertSame('Anna-Lena', $fresh->applicant_first_name);
+        $this->assertSame('1990-04-12', $fresh->applicant_date_of_birth->format('Y-m-d'));
+        $this->assertSame('Köln', $fresh->applicant_city);
+        $this->assertSame('Anna', $fresh->applicantPerson->first_name);
 
         $value = fn (string $key) => AdoptionFieldValue::where('adoption_id', $adoption->id)
             ->whereRelation('fieldDefinition', 'key', $key)->value('value');
         $this->assertSame(120, $value('living_space_sqm'));
         $this->assertTrue($value('has_garden'));
         $this->assertSame('house', $value('housing_type'));
-        $this->assertSame(0, AdoptionFieldValue::whereRelation('fieldDefinition', 'person_attribute', '!=', null)->count());
+        $this->assertSame(0, AdoptionFieldValue::whereRelation('fieldDefinition', 'applicant_attribute', '!=', null)->count());
 
         $this->assertTrue($response->json('data.checklists.application.complete'));
     }
@@ -238,7 +240,7 @@ class CaseFileTest extends TestCase
         $waiting->update(['transport_id' => $transport->id]);
 
         $ready->animal->update(['animal_number' => 'K-1']);
-        $ready->applicant->update(['date_of_birth' => '1990-01-01', 'street_line' => 'Weg 2', 'postal_code' => '10115', 'city' => 'Berlin']);
+        $ready->update(['applicant_date_of_birth' => '1990-01-01', 'applicant_street_line' => 'Weg 2', 'applicant_postal_code' => '10115', 'applicant_city' => 'Berlin']);
         $this->api('put', $ready, ['values' => ['living_space_sqm' => 80, 'has_garden' => false, 'id_card_number' => 'X', 'transport_day_phone' => '0170 123']])->assertOk();
 
         $response = $this->actingAs($this->user)->withHeader('referer', 'http://localhost')
@@ -330,7 +332,8 @@ class CaseFileTest extends TestCase
     {
         return Adoption::create([
             'animal_id' => Animal::create(['animal_type_id' => $type->id, 'name' => $name, 'gender' => 'male'])->id,
-            'applicant_id' => ($applicant ?? Person::create(['first_name' => 'Anna', 'last_name' => 'Adopter']))->id,
+            ...Adoption::applicantDataFrom($__applicant = $applicant ?? Person::create(['first_name' => 'Anna', 'last_name' => 'Adopter'])),
+            'applicant_person_id' => $__applicant->id,
             'mediator_id' => Person::create(['first_name' => 'Maria', 'last_name' => 'Vermittlerin'])->id,
         ]);
     }

@@ -15,7 +15,6 @@ use Taily\Models\AdoptionRequirement;
 use Taily\Models\ContractTemplate;
 use Taily\Models\FieldDefinition;
 use Taily\Models\FieldGroup;
-use Taily\Models\Person;
 use Taily\Models\User;
 
 /**
@@ -25,8 +24,6 @@ use Taily\Models\User;
  */
 class CaseFileService
 {
-    private const ADDRESS_PARTS = ['street_line', 'street_line_additional', 'postal_code', 'city', 'country_code'];
-
     /** @var array<string, Collection<int, FieldDefinition>> keyed by animal type id */
     private array $definitions = [];
 
@@ -110,7 +107,7 @@ class CaseFileService
 
     public function state(Adoption $adoption): CaseFileState
     {
-        $adoption->loadMissing(['animal', 'mediator', 'applicant', 'fieldValues', 'requirements']);
+        $adoption->loadMissing(['animal', 'mediator', 'fieldValues', 'requirements']);
 
         $animalTypeId = $this->animalTypeId($adoption);
         $definitions = $this->definitions($animalTypeId);
@@ -121,7 +118,7 @@ class CaseFileService
 
         foreach ($definitions as $definition) {
             if ($definition->isBuiltIn()) {
-                $values[$definition->key] = $this->builtInValue($definition, $adoption->applicant);
+                $values[$definition->key] = $this->builtInValue($definition, $adoption);
             }
         }
 
@@ -309,17 +306,13 @@ class CaseFileService
             'values.*.prohibited' => 'Dieses Feld kann hier nicht gespeichert werden.',
         ], $this->attributeNames($definitions))->validate();
 
-        $adoption->loadMissing('applicant');
-
         DB::transaction(function () use ($adoption, $values, $definitions, $user) {
-            $applicant = $adoption->applicant;
-
             foreach ($values as $key => $value) {
                 $definition = $definitions->get($key);
                 $value = $this->normalize($definition, $value);
 
                 if ($definition->isBuiltIn()) {
-                    $this->writeBuiltIn($definition, $applicant, $value);
+                    $this->writeBuiltIn($definition, $adoption, $value);
 
                     continue;
                 }
@@ -338,11 +331,68 @@ class CaseFileService
                 );
             }
 
-            $applicant?->save();
+            $adoption->save();
         });
 
         $adoption->unsetRelation('fieldValues');
-        $adoption->unsetRelation('applicant');
+    }
+
+    /**
+     * Takes over values from another adoption of the same applicant
+     * (ADR-017): only fields that are empty here are filled, nothing is
+     * overwritten. Fields are matched by key, so a field the other animal
+     * type's catalogue also has is taken over too. Files aren't part of the
+     * prototype. A value that needs review has to be reviewed again.
+     *
+     * @return list<string> the labels of the fields that were filled
+     */
+    public function importFrom(Adoption $adoption, Adoption $source): array
+    {
+        $targetState = $this->state($adoption);
+        $sourceState = $this->state($source);
+        $values = [];
+
+        foreach ($this->definitions($this->animalTypeId($adoption)) as $definition) {
+            if (! $definition->type->holdsValue() || $definition->type->isFile()) {
+                continue;
+            }
+
+            $value = $sourceState->value($definition->key);
+
+            if (ChecklistCalculator::isPresent($definition->type, $value)
+                && ! ChecklistCalculator::isPresent($definition->type, $targetState->value($definition->key))) {
+                $values[$definition->key] = $value;
+            }
+        }
+
+        if ($values === []) {
+            return [];
+        }
+
+        $definitions = $this->definitions($this->animalTypeId($adoption))->keyBy('key');
+
+        DB::transaction(function () use ($adoption, $values, $definitions) {
+            foreach ($values as $key => $value) {
+                $definition = $definitions->get($key);
+
+                if ($definition->isBuiltIn()) {
+                    $this->writeBuiltIn($definition, $adoption, $value);
+
+                    continue;
+                }
+
+                AdoptionFieldValue::updateOrCreate(
+                    ['adoption_id' => $adoption->id, 'field_definition_id' => $definition->id],
+                    ['value' => $value, 'review_status' => null, 'review_note' => '', 'reviewed_by' => null, 'reviewed_at' => null],
+                );
+            }
+
+            $adoption->save();
+        });
+
+        $adoption->unsetRelation('fieldValues');
+
+        return collect(array_keys($values))->map(fn (string $key) => $definitions->get($key)->label)->all();
     }
 
     /**
@@ -378,7 +428,7 @@ class CaseFileService
             isset($options['max']) ? 'max:'.$options['max'] : null,
         ]);
 
-        if (in_array($definition->person_attribute, ['first_name', 'last_name'], true)) {
+        if (in_array($definition->applicant_attribute, ['first_name', 'last_name'], true)) {
             return ['' => ['required', 'string', 'max:255']];
         }
 
@@ -394,7 +444,7 @@ class CaseFileService
             FieldType::PHONE => ['' => ['nullable', 'string', 'max:50']],
             FieldType::ADDRESS => array_merge(
                 ['' => ['nullable', 'array']],
-                collect(self::ADDRESS_PARTS)->mapWithKeys(fn (string $part) => [".{$part}" => ['nullable', 'string', 'max:255']])->all(),
+                collect(Adoption::ADDRESS_PARTS)->mapWithKeys(fn (string $part) => [".{$part}" => ['nullable', 'string', 'max:255']])->all(),
             ),
             // Files are not part of the prototype; Info Blocks hold no value.
             FieldType::PHOTO, FieldType::VIDEO, FieldType::DOCUMENT, FieldType::INFO => ['' => ['prohibited']],
@@ -421,42 +471,37 @@ class CaseFileService
             FieldType::NUMBER => $value === null ? null : (float) $value,
             FieldType::BOOLEAN => $value === null ? null : filter_var($value, FILTER_VALIDATE_BOOLEAN),
             FieldType::TEXT, FieldType::TEXTAREA, FieldType::PHONE, FieldType::EMAIL => $value === null ? null : trim((string) $value),
-            FieldType::ADDRESS => $value === null ? null : collect(self::ADDRESS_PARTS)
+            FieldType::ADDRESS => $value === null ? null : collect(Adoption::ADDRESS_PARTS)
                 ->mapWithKeys(fn (string $part) => [$part => trim((string) ($value[$part] ?? ''))])
                 ->all(),
             default => $value,
         };
     }
 
-    private function builtInValue(FieldDefinition $definition, ?Person $person): mixed
+    /**
+     * Built-in fields read the adoption's own applicant columns (ADR-017).
+     */
+    private function builtInValue(FieldDefinition $definition, Adoption $adoption): mixed
     {
-        if ($person === null) {
-            return null;
-        }
-
-        return match ($definition->person_attribute) {
-            'address' => collect(self::ADDRESS_PARTS)->mapWithKeys(fn (string $part) => [$part => (string) $person->{$part}])->all(),
-            'date_of_birth' => $person->date_of_birth?->format('Y-m-d'),
-            default => $person->{$definition->person_attribute},
+        return match ($definition->applicant_attribute) {
+            'address' => collect(Adoption::ADDRESS_PARTS)->mapWithKeys(fn (string $part) => [$part => (string) $adoption->{"applicant_{$part}"}])->all(),
+            'date_of_birth' => $adoption->applicant_date_of_birth?->format('Y-m-d'),
+            default => $adoption->{"applicant_{$definition->applicant_attribute}"},
         };
     }
 
-    private function writeBuiltIn(FieldDefinition $definition, ?Person $person, mixed $value): void
+    private function writeBuiltIn(FieldDefinition $definition, Adoption $adoption, mixed $value): void
     {
-        if ($person === null) {
-            return;
-        }
-
-        if ($definition->person_attribute === 'address') {
-            foreach (self::ADDRESS_PARTS as $part) {
-                $person->{$part} = $value[$part] ?? '';
+        if ($definition->applicant_attribute === 'address') {
+            foreach (Adoption::ADDRESS_PARTS as $part) {
+                $adoption->{"applicant_{$part}"} = $value[$part] ?? '';
             }
 
             return;
         }
 
-        // Identity strings follow the empty-strings pattern; a date may be null.
-        $person->{$definition->person_attribute} = $definition->person_attribute === 'date_of_birth'
+        // Strings follow the empty-strings pattern; a date may be null.
+        $adoption->{"applicant_{$definition->applicant_attribute}"} = $definition->applicant_attribute === 'date_of_birth'
             ? $value
             : (string) ($value ?? '');
     }

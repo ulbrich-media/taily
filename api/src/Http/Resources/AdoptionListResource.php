@@ -11,7 +11,7 @@ class AdoptionListResource extends AdoptionBaseResource
         return array_merge(parent::toArray($request), [
             'animal' => $this->whenLoaded('animal', fn ($a) => new AnimalListResource($a)),
             'mediator' => $this->whenLoaded('mediator', fn ($m) => new PersonListResource($m)),
-            'applicant' => $this->whenLoaded('applicant', fn ($m) => new PersonListResource($m)),
+            'applicant_person' => $this->whenLoaded('applicantPerson', fn ($m) => $m ? new PersonListResource($m) : null),
         ]);
     }
 }

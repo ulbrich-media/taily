@@ -211,7 +211,8 @@ class FieldCatalogueTest extends TestCase
 
         $adoption = Adoption::create([
             'animal_id' => Animal::create(['animal_type_id' => $cats->id, 'name' => 'Mimi', 'gender' => 'female'])->id,
-            'applicant_id' => Person::create(['first_name' => 'Anna', 'last_name' => 'A'])->id,
+            ...Adoption::applicantDataFrom($__applicant = Person::create(['first_name' => 'Anna', 'last_name' => 'A'])),
+            'applicant_person_id' => $__applicant->id,
         ]);
         AdoptionFieldValue::create([
             'adoption_id' => $adoption->id,

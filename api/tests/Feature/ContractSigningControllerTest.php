@@ -66,7 +66,8 @@ class ContractSigningControllerTest extends TestCase
         return Adoption::create([
             'animal_id' => $animal->id,
             'mediator_id' => $mediatorId,
-            'applicant_id' => $applicant->id,
+            ...Adoption::applicantDataFrom($applicant),
+            'applicant_person_id' => $applicant->id,
             'contract_signed' => $contractSigned,
         ]);
     }

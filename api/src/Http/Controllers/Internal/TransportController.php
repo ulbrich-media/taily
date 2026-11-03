@@ -19,7 +19,7 @@ class TransportController extends Controller
         'adoptions',
         'adoptions.animal', 'adoptions.animal.animalType', 'adoptions.animal.media',
         'adoptions.mediator', 'adoptions.mediator.media',
-        'adoptions.applicant', 'adoptions.applicant.media',
+        'adoptions.applicantPerson', 'adoptions.applicantPerson.media',
         'adoptions.media',
     ];
 
@@ -57,7 +57,7 @@ class TransportController extends Controller
     public function checklist(Transport $transport, CaseFileService $caseFile): JsonResponse
     {
         $adoptions = $transport->adoptions()
-            ->with(['animal', 'mediator', 'applicant', 'fieldValues', 'requirements'])
+            ->with(['animal', 'mediator', 'fieldValues', 'requirements'])
             ->get()
             ->sortBy(fn (Adoption $adoption) => $adoption->animal?->name)
             ->values();
@@ -65,7 +65,7 @@ class TransportController extends Controller
         $rows = $adoptions->map(fn (Adoption $adoption) => [
             'adoption_id' => $adoption->id,
             'animal' => ['id' => $adoption->animal_id, 'name' => $adoption->animal?->name],
-            'applicant' => ['id' => $adoption->applicant_id, 'full_name' => $adoption->applicant?->full_name],
+            'applicant' => ['person_id' => $adoption->applicant_person_id, 'full_name' => $adoption->applicant_full_name],
             'checklist' => $caseFile->checklist($adoption, AdoptionStep::TRANSPORT)->toArray(),
         ]);
 

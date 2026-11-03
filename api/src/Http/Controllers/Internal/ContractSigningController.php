@@ -26,7 +26,7 @@ class ContractSigningController extends Controller
     private const DETAIL_RELATIONS = [
         'animal', 'animal.animalType', 'animal.media',
         'mediator', 'mediator.media',
-        'applicant', 'applicant.media',
+        'applicantPerson', 'applicantPerson.media',
         'media',
         'latestContractSigningProcess.signers.person',
         'latestContractSigningProcess.signers.latestInviteEvent',
@@ -59,7 +59,7 @@ class ContractSigningController extends Controller
             ]);
         }
 
-        if (! $adoption->applicant?->email) {
+        if ($adoption->applicant_email === '') {
             throw ValidationException::withMessages([
                 'template' => ['Der Adoptant hat keine E-Mail-Adresse hinterlegt.'],
             ]);
@@ -106,7 +106,7 @@ class ContractSigningController extends Controller
 
         $process->load('signers.person');
         $mediatorSigner = $process->signers->firstWhere('role', ContractSignerRole::MEDIATOR);
-        $mediatorEmail = $mediatorSigner->person->email;
+        $mediatorEmail = $mediatorSigner->email;
 
         try {
             Mail::to($mediatorEmail)->send(
@@ -178,11 +178,11 @@ class ContractSigningController extends Controller
             $process->load('signers.person');
             $adopterSigner = $process->signers->firstWhere('role', ContractSignerRole::ADOPTER);
 
-            if ($adopterSigner?->person?->email) {
+            if ($adopterSigner?->email) {
                 try {
                     $adoption->loadMissing('animal');
 
-                    Mail::to($adopterSigner->person->email)->send(
+                    Mail::to($adopterSigner->email)->send(
                         new ContractSigningCancelledMail($adopterSigner, $adoption->animal->name)
                     );
                 } catch (Throwable $e) {
@@ -228,8 +228,8 @@ class ContractSigningController extends Controller
             return $this->signingService->resend($process);
         });
 
-        $signer->load('person', 'signingProcess');
-        $email = $signer->person->email;
+        $signer->load('signingProcess');
+        $email = $signer->email;
 
         try {
             Mail::to($email)->send(

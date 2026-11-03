@@ -54,7 +54,8 @@ class AdoptionIndexTest extends TestCase
     {
         return Adoption::create(array_merge([
             'animal_id' => ($animal ?? $this->animal('Bello'))->id,
-            'applicant_id' => ($applicant ?? $this->person('Anna', 'Adopter'))->id,
+            ...Adoption::applicantDataFrom($__applicant = $applicant ?? $this->person('Anna', 'Adopter')),
+            'applicant_person_id' => $__applicant->id,
             'mediator_id' => $mediator?->id,
         ], $attributes));
     }

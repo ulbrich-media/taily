@@ -246,19 +246,22 @@ class SeederIntegrityTest extends TestCase
 
     public function test_the_animal_agrees_with_the_adoption_holding_it(): void
     {
-        foreach (Adoption::with('animal')->get() as $adoption) {
+        foreach (Adoption::with(['animal', 'mediator'])->get() as $adoption) {
             $label = "adoption {$adoption->id}";
 
             $this->assertFalse($adoption->animal->is_deceased, "$label: on a deceased animal");
             $this->assertFalse($adoption->animal->is_boarding_animal, "$label: on a boarding animal");
-            $this->assertNotSame($adoption->applicant_id, $adoption->mediator_id, "$label: applicant mediates their own adoption");
+            $this->assertFalse(
+                $adoption->applicant_email !== '' && $adoption->applicant_email === Adoption::normalizeEmail($adoption->mediator?->email),
+                "$label: applicant mediates their own adoption"
+            );
 
             if ($adoption->status === 'in_progress') {
                 $this->assertTrue($adoption->animal->is_reserved, "$label: running but the animal is not reserved");
             }
 
             if ($adoption->status === 'done') {
-                $this->assertSame($adoption->applicant_id, $adoption->animal->owner_id, "$label: handed over but the animal has another owner");
+                $this->assertSame($adoption->applicant_person_id, $adoption->animal->owner_id, "$label: handed over but the animal has another owner");
             }
         }
     }
@@ -277,9 +280,10 @@ class SeederIntegrityTest extends TestCase
                 "inspection {$inspection->id}: inspector does not handle this animal type"
             );
 
-            $this->assertNotSame(
-                $inspection->adoption->applicant_id,
-                $inspection->inspector_id,
+            // The applicant is the adoption's own data now (ADR-017); the email is what ties it to a person.
+            $email = $inspection->adoption->applicant_email;
+            $this->assertFalse(
+                $email !== '' && $email === Adoption::normalizeEmail($inspection->inspector->email),
                 "inspection {$inspection->id}: the applicant inspected their own home"
             );
         }

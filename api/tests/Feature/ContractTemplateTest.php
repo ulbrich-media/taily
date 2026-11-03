@@ -176,7 +176,8 @@ class ContractTemplateTest extends TestCase
 
         return Adoption::create([
             'animal_id' => $animal->id,
-            'applicant_id' => Person::create(['first_name' => 'Anna', 'last_name' => 'Übernehmerin'])->id,
+            ...Adoption::applicantDataFrom($__applicant = Person::create(['first_name' => 'Anna', 'last_name' => 'Übernehmerin'])),
+            'applicant_person_id' => $__applicant->id,
             'contract_signed' => false,
         ]);
     }

@@ -21,7 +21,7 @@ class CaseFileSeeder extends Seeder
 {
     /**
      * Groups in display order, each with its fields. `types` limits a field
-     * to animal type titles; `person` marks a built-in field.
+     * to animal type titles; `person` marks a built-in field (an applicant column of the adoption).
      */
     private const CATALOGUE = [
         [
@@ -132,7 +132,7 @@ class CaseFileSeeder extends Seeder
                         'label' => $field['label'],
                         'help' => $field['help'] ?? '',
                         'options' => $field['options'] ?? null,
-                        'person_attribute' => $field['person'] ?? null,
+                        'applicant_attribute' => $field['person'] ?? null,
                         'collect_at' => $field['collect_at'],
                         'required_for' => $field['required_for'] ?? null,
                         'requires_review' => $field['review'] ?? false,
@@ -154,10 +154,10 @@ class CaseFileSeeder extends Seeder
      */
     private function seedValues(): void
     {
-        $catalogues = FieldDefinition::whereNull('person_attribute')->get()->groupBy('animal_type_id')
+        $catalogues = FieldDefinition::whereNull('applicant_attribute')->get()->groupBy('animal_type_id')
             ->map(fn ($definitions) => $definitions->keyBy('key'));
 
-        Adoption::with(['animal.animalType', 'applicant'])->each(function (Adoption $adoption) use ($catalogues) {
+        Adoption::with(['animal.animalType'])->each(function (Adoption $adoption) use ($catalogues) {
             $definitions = $catalogues->get($adoption->animal?->animal_type_id, collect());
             $isDog = $adoption->animal?->animalType?->title === 'Hund';
             $signed = $adoption->contract_signed;
@@ -195,18 +195,17 @@ class CaseFileSeeder extends Seeder
             }
 
             // A signed contract printed the adopter's identity, so it exists.
-            if ($signed && $adoption->applicant !== null) {
-                $applicant = $adoption->applicant;
-                $applicant->date_of_birth ??= $this->faker->dateTimeBetween('-70 years', '-18 years');
+            if ($signed) {
+                $adoption->applicant_date_of_birth ??= $this->faker->dateTimeBetween('-70 years', '-18 years');
 
-                if ($applicant->street_line === '') {
-                    $applicant->street_line = $this->faker->streetAddress();
-                    $applicant->postal_code = $this->faker->postcode();
-                    $applicant->city = $this->faker->city();
-                    $applicant->country_code = 'DE';
+                if ($adoption->applicant_street_line === '') {
+                    $adoption->applicant_street_line = $this->faker->streetAddress();
+                    $adoption->applicant_postal_code = $this->faker->postcode();
+                    $adoption->applicant_city = $this->faker->city();
+                    $adoption->applicant_country_code = 'DE';
                 }
 
-                $applicant->save();
+                $adoption->save();
             }
         });
     }

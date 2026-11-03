@@ -23,7 +23,8 @@ class AccessTokenTest extends TestCase
 
         $adoption = Adoption::create([
             'animal_id' => Animal::create(['animal_type_id' => $animalType->id, 'name' => 'Bello', 'gender' => 'male'])->id,
-            'applicant_id' => Person::create(['first_name' => 'Jane', 'last_name' => 'Doe'])->id,
+            ...Adoption::applicantDataFrom($__applicant = Person::create(['first_name' => 'Jane', 'last_name' => 'Doe'])),
+            'applicant_person_id' => $__applicant->id,
         ]);
 
         return PreInspection::create(['adoption_id' => $adoption->id]);

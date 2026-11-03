@@ -12,9 +12,9 @@ use Taily\Support\CaseFile\FieldSpec;
 
 /**
  * One field of an animal type's Case File catalogue; keys are unique per
- * animal type. Built-in fields carry a
- * `person_attribute`: their value lives on the applicant's Person instead of
- * in an AdoptionFieldValue.
+ * animal type. Built-in fields carry an `applicant_attribute`: their value
+ * lives in the adoption's applicant columns (ADR-017) instead of in an
+ * AdoptionFieldValue.
  */
 class FieldDefinition extends Model
 {
@@ -33,7 +33,7 @@ class FieldDefinition extends Model
         'label',
         'help',
         'options',
-        'person_attribute',
+        'applicant_attribute',
         'collect_at',
         'required_for',
         'requires_review',
@@ -75,7 +75,7 @@ class FieldDefinition extends Model
 
     public function isBuiltIn(): bool
     {
-        return $this->person_attribute !== null;
+        return $this->applicant_attribute !== null;
     }
 
     /**

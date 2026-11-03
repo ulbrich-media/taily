@@ -14,7 +14,7 @@ class AdoptionBaseResource extends JsonResource
             // Foreign keys
             'animal_id' => $this->resource->animal_id,
             'mediator_id' => $this->resource->mediator_id,
-            'applicant_id' => $this->resource->applicant_id,
+            'applicant_person_id' => $this->resource->applicant_person_id,
             'transport_id' => $this->resource->transport_id,
             // General status
             'status' => $this->resource->status,
@@ -41,7 +41,33 @@ class AdoptionBaseResource extends JsonResource
             // Relations (only included when eager-loaded)
             'animal' => $this->whenLoaded('animal', fn ($a) => new AnimalBaseResource($a)),
             'mediator' => $this->whenLoaded('mediator', fn ($m) => new PersonBaseResource($m)),
-            'applicant' => $this->whenLoaded('applicant', fn ($m) => new PersonBaseResource($m)),
+            // The applicant's own data (ADR-017)
+            'applicant' => $this->applicant(),
+            'applicant_person' => $this->whenLoaded('applicantPerson', fn ($m) => $m ? new PersonBaseResource($m) : null),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function applicant(): array
+    {
+        $adoption = $this->resource;
+
+        return [
+            'person_id' => $adoption->applicant_person_id,
+            'first_name' => $adoption->applicant_first_name,
+            'last_name' => $adoption->applicant_last_name,
+            'full_name' => $adoption->applicant_full_name,
+            'email' => $adoption->applicant_email,
+            'phone' => $adoption->applicant_phone,
+            'mobile' => $adoption->applicant_mobile,
+            'date_of_birth' => $adoption->applicant_date_of_birth?->format('Y-m-d'),
+            'street_line' => $adoption->applicant_street_line,
+            'street_line_additional' => $adoption->applicant_street_line_additional,
+            'postal_code' => $adoption->applicant_postal_code,
+            'city' => $adoption->applicant_city,
+            'country_code' => $adoption->applicant_country_code,
         ];
     }
 }

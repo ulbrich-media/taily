@@ -24,7 +24,26 @@ class Adoption extends Model implements HasMedia
     /** @use InteractsWithMedia<Media> */
     use InteractsWithMedia;
 
+    /**
+     * The applicant's own data (ADR-017), without the `applicant_` prefix.
+     * Built-in Case File fields name these in `applicant_attribute`; the
+     * address parts together form the `address` field.
+     */
+    public const APPLICANT_ATTRIBUTES = ['first_name', 'last_name', 'email', 'phone', 'mobile', 'date_of_birth'];
+
+    public const ADDRESS_PARTS = ['street_line', 'street_line_additional', 'postal_code', 'city', 'country_code'];
+
     protected $attributes = [
+        'applicant_first_name' => '',
+        'applicant_last_name' => '',
+        'applicant_email' => '',
+        'applicant_phone' => '',
+        'applicant_mobile' => '',
+        'applicant_street_line' => '',
+        'applicant_street_line_additional' => '',
+        'applicant_postal_code' => '',
+        'applicant_city' => '',
+        'applicant_country_code' => '',
         'notes' => '',
         'canceled_reason' => '',
         'pre_inspection_notes' => '',
@@ -33,7 +52,18 @@ class Adoption extends Model implements HasMedia
     protected $fillable = [
         'animal_id',
         'mediator_id',
-        'applicant_id',
+        'applicant_person_id',
+        'applicant_first_name',
+        'applicant_last_name',
+        'applicant_email',
+        'applicant_phone',
+        'applicant_mobile',
+        'applicant_date_of_birth',
+        'applicant_street_line',
+        'applicant_street_line_additional',
+        'applicant_postal_code',
+        'applicant_city',
+        'applicant_country_code',
         'status',
         'canceled_at',
         'canceled_reason',
@@ -55,6 +85,7 @@ class Adoption extends Model implements HasMedia
             'canceled_at' => 'datetime',
             'handed_over_at' => 'datetime',
             'pre_inspection_confirmed_at' => 'datetime',
+            'applicant_date_of_birth' => 'date',
         ];
     }
 
@@ -68,9 +99,84 @@ class Adoption extends Model implements HasMedia
         return $this->belongsTo(Person::class, 'mediator_id');
     }
 
-    public function applicant(): BelongsTo
+    /**
+     * A Person Taily already manages, referenced for orientation only — the
+     * applicant's data is the adoption's own (ADR-017).
+     */
+    public function applicantPerson(): BelongsTo
     {
-        return $this->belongsTo(Person::class, 'applicant_id');
+        return $this->belongsTo(Person::class, 'applicant_person_id');
+    }
+
+    public function getApplicantFullNameAttribute(): string
+    {
+        return trim("{$this->applicant_first_name} {$this->applicant_last_name}");
+    }
+
+    /**
+     * The applicant's email is what links their adoptions, so it is
+     * compared in one form only.
+     */
+    public function setApplicantEmailAttribute(?string $value): void
+    {
+        $this->attributes['applicant_email'] = self::normalizeEmail($value);
+    }
+
+    public static function normalizeEmail(?string $email): string
+    {
+        return mb_strtolower(trim((string) $email));
+    }
+
+    /**
+     * The applicant's data as copied from a Person when an adoption starts
+     * from someone Taily already knows.
+     *
+     * @return array<string, mixed>
+     */
+    public static function applicantDataFrom(Person $person): array
+    {
+        $data = [];
+
+        foreach ([...self::APPLICANT_ATTRIBUTES, ...self::ADDRESS_PARTS] as $attribute) {
+            $data["applicant_{$attribute}"] = $person->{$attribute} ?? ($attribute === 'date_of_birth' ? null : '');
+        }
+
+        return $data;
+    }
+
+    /**
+     * Other adoptions of the same applicant: the same email or the same
+     * referenced Person.
+     */
+    public function scopeRelatedTo(Builder $query, Adoption $adoption): void
+    {
+        $query->whereKeyNot($adoption->id)->where(function (Builder $related) use ($adoption) {
+            $related->whereRaw('1 = 0');
+
+            if ($adoption->applicant_email !== '') {
+                $related->orWhere('applicant_email', $adoption->applicant_email);
+            }
+
+            if ($adoption->applicant_person_id !== null) {
+                $related->orWhere('applicant_person_id', $adoption->applicant_person_id);
+            }
+        });
+    }
+
+    /**
+     * Adoptions of a Person as applicant: referenced, or with their email.
+     */
+    public function scopeOfApplicant(Builder $query, Person $person): void
+    {
+        $email = self::normalizeEmail($person->email);
+
+        $query->where(function (Builder $of) use ($person, $email) {
+            $of->where('applicant_person_id', $person->id);
+
+            if ($email !== '') {
+                $of->orWhere('applicant_email', $email);
+            }
+        });
     }
 
     public function transport(): BelongsTo
@@ -132,7 +238,7 @@ class Adoption extends Model implements HasMedia
                     ? $query->whereNull('mediator_id')
                     : $query->where('mediator_id', $value),
                 'animal_id' => $query->where('animal_id', $value),
-                'applicant_id' => $query->where('applicant_id', $value),
+                'applicant_person_id' => ($person = Person::find($value)) ? $query->ofApplicant($person) : $query->whereRaw('1 = 0'),
                 'animal_type_id' => $query->whereHas('animal', fn (Builder $animal) => $animal->where('animal_type_id', $value)),
                 'pre_inspection_status' => $query->wherePreInspectionStatus($value),
                 'contract_status' => $query->whereContractStatus($value),
@@ -164,11 +270,11 @@ class Adoption extends Model implements HasMedia
                     self::whereLike($animal, 'animals.name', $term);
                     self::whereLike($animal, 'animals.old_name', $term, 'or');
                 })
-                ->orWhereHas('applicant', function (Builder $applicant) use ($words) {
+                ->orWhere(function (Builder $applicant) use ($words) {
                     foreach ($words as $word) {
                         $applicant->where(function (Builder $name) use ($word) {
-                            self::whereLike($name, 'people.first_name', $word);
-                            self::whereLike($name, 'people.last_name', $word, 'or');
+                            self::whereLike($name, 'adoptions.applicant_first_name', $word);
+                            self::whereLike($name, 'adoptions.applicant_last_name', $word, 'or');
                         });
                     }
                 });
@@ -260,8 +366,8 @@ class Adoption extends Model implements HasMedia
                 $direction,
             ),
             'applicant_name' => $query
-                ->orderBy($person('applicant_id', 'last_name'), $direction)
-                ->orderBy($person('applicant_id', 'first_name'), $direction),
+                ->orderBy('applicant_last_name', $direction)
+                ->orderBy('applicant_first_name', $direction),
             'mediator_name' => $query
                 ->orderBy($person('mediator_id', 'last_name'), $direction)
                 ->orderBy($person('mediator_id', 'first_name'), $direction),

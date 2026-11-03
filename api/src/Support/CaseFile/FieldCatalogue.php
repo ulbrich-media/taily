@@ -23,7 +23,8 @@ use Taily\Models\FieldGroup;
 class FieldCatalogue
 {
     /**
-     * Fields backed by a Person column. They identify the applicant, so they
+     * Fields backed by the adoption's applicant columns (ADR-017). They
+     * identify the applicant, so they
      * exist in every catalogue, can be configured but not archived, and keep
      * their type.
      */
@@ -47,7 +48,7 @@ class FieldCatalogue
     public function ensureBuiltIns(AnimalType $animalType): void
     {
         $existing = FieldDefinition::where('animal_type_id', $animalType->id)
-            ->whereNotNull('person_attribute')
+            ->whereNotNull('applicant_attribute')
             ->pluck('key')
             ->all();
 
@@ -67,7 +68,7 @@ class FieldCatalogue
                 'animal_type_id' => $animalType->id,
                 'field_group_id' => $group->id,
                 'key' => $field['key'],
-                'person_attribute' => $field['key'],
+                'applicant_attribute' => $field['key'],
                 'label' => $field['label'],
                 'type' => $field['type'],
                 'position' => $position++,
@@ -327,7 +328,7 @@ class FieldCatalogue
 
             if ($builtIn && in_array($existing->key, self::IDENTITY, true)
                 && ($collectAt !== AdoptionStep::APPLICATION || $requiredFor !== AdoptionStep::APPLICATION)) {
-                $validator->errors()->add('required_for', 'Name und E-Mail identifizieren die Person und werden immer mit der Bewerbung verlangt.');
+                $validator->errors()->add('required_for', 'Name und E-Mail identifizieren die Bewerber:in und werden immer mit der Bewerbung verlangt.');
             }
 
             if (! $builtIn && ! empty($input['condition'])) {

@@ -18,6 +18,7 @@ use Laravel\Passkeys\Http\Controllers\PasskeyRegistrationController;
 use Taily\Http\Controllers\Internal\AdoptionContractController;
 use Taily\Http\Controllers\Internal\AdoptionController;
 use Taily\Http\Controllers\Internal\AdoptionPreInspectionController;
+use Taily\Http\Controllers\Internal\AdoptionRelatedController;
 use Taily\Http\Controllers\Internal\AnimalController;
 use Taily\Http\Controllers\Internal\AnimalPictureController;
 use Taily\Http\Controllers\Internal\AnimalTypeController;
@@ -233,6 +234,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::put('/adoptions/{adoption}/case-file', [CaseFileController::class, 'update']);
     Route::put('/adoptions/{adoption}/requirements/{fieldKey}', [CaseFileController::class, 'setRequirement']);
     Route::delete('/adoptions/{adoption}/requirements/{fieldKey}', [CaseFileController::class, 'clearRequirement']);
+
+    // The applicant's other adoptions and taking over their data (ADR-017)
+    Route::get('/adoptions/{adoption}/related', [AdoptionRelatedController::class, 'index']);
+    Route::post('/adoptions/{adoption}/case-file/import', [AdoptionRelatedController::class, 'import']);
 
     // The mediator's confirmation that closes the pre-inspection step
     Route::post('/adoptions/{adoption}/pre-inspection/confirm', [AdoptionPreInspectionController::class, 'confirm']);

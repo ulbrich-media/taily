@@ -51,7 +51,8 @@ class PersonIndexTest extends TestCase
 
         return Adoption::create([
             'animal_id' => $animal->id,
-            'applicant_id' => $applicant->id,
+            ...Adoption::applicantDataFrom($applicant),
+            'applicant_person_id' => $applicant->id,
             'status' => $status,
         ]);
     }

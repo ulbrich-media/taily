@@ -39,14 +39,13 @@ class ProcessContractSigningReminders extends Command
     {
         foreach ($signers as $signer) {
             try {
-                $signer->loadMissing('person');
                 $token = $signer->activeToken();
 
-                if (! $signer->person?->email || ! $token) {
+                if (! $signer->email || ! $token) {
                     continue;
                 }
 
-                Mail::to($signer->person->email)->send(
+                Mail::to($signer->email)->send(
                     new ContractSignerReminderMail($signer, $token->token, $daysRemaining)
                 );
                 $this->signingService->markReminderSent($signer, $threshold);

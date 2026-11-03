@@ -55,7 +55,7 @@ class ContractSigningService
                 ->usingFileName('unsigned.pdf')
                 ->toMediaCollection('document');
 
-            $this->createSigner($process, $adoption->mediator, ContractSignerRole::MEDIATOR);
+            $this->createSigner($process, ContractSignerRole::MEDIATOR, $adoption->mediator->full_name, (string) $adoption->mediator->email, $adoption->mediator->id);
             $this->writeAuditEvent($process, null, ContractSigningEventType::PROCESS_STARTED, $ipAddress, $userAgent, actor: $actor);
 
             return $process;
@@ -127,7 +127,8 @@ class ContractSigningService
             // an automatic consequence of the signature above, and the
             // invite that follows records the same moment against the
             // person it actually concerns.
-            $this->createSigner($locked, $locked->adoption->applicant, ContractSignerRole::ADOPTER);
+            $adoption = $locked->adoption;
+            $this->createSigner($locked, ContractSignerRole::ADOPTER, $adoption->applicant_full_name, $adoption->applicant_email, $adoption->applicant_person_id);
         });
 
         $process->refresh();
@@ -441,10 +442,17 @@ class ContractSigningService
         ]);
     }
 
-    private function createSigner(ContractSigningProcess $process, Person $person, ContractSignerRole $role): ContractSigner
+    /**
+     * The signer keeps the name and email valid when they are invited
+     * (ADR-017): invitations, reminders and the signature record never
+     * follow later changes to the adoption or a Person.
+     */
+    private function createSigner(ContractSigningProcess $process, ContractSignerRole $role, string $name, string $email, ?string $personId): ContractSigner
     {
         $signer = $process->signers()->create([
-            'person_id' => $person->id,
+            'person_id' => $personId,
+            'name' => $name,
+            'email' => $email,
             'role' => $role,
         ]);
 
@@ -474,10 +482,9 @@ class ContractSigningService
         ?CarbonInterface $occurredAt = null,
     ): void {
         if ($signer) {
-            $signer->loadMissing('person');
             $metadata = array_merge([
-                'person_name' => $signer->person->full_name,
-                'person_email' => $signer->person->email,
+                'person_name' => $signer->name,
+                'person_email' => $signer->email,
             ], $metadata ?? []);
         }
 

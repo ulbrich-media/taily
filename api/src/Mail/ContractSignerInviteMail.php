@@ -33,14 +33,14 @@ class ContractSignerInviteMail extends Mailable
 
     public function content(): Content
     {
-        $this->signer->loadMissing(['person', 'signingProcess.adoption.animal']);
+        $this->signer->loadMissing(['signingProcess.adoption.animal']);
         $adoption = $this->signer->signingProcess->adoption;
 
         return new Content(
             markdown: 'taily::emails.contract-signer-invite',
             with: [
                 'signUrl' => FrontendUriBuilder::contractSign($this->plainTextToken),
-                'recipientName' => $this->signer->person->full_name,
+                'recipientName' => $this->signer->name,
                 'animalName' => $adoption->animal->name,
                 'isMediator' => $this->signer->role === ContractSignerRole::MEDIATOR,
             ],

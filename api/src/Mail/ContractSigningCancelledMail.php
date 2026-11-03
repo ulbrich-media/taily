@@ -27,12 +27,11 @@ class ContractSigningCancelledMail extends Mailable
 
     public function content(): Content
     {
-        $this->signer->loadMissing('person');
 
         return new Content(
             markdown: 'taily::emails.contract-signing-cancelled',
             with: [
-                'recipientName' => $this->signer->person->full_name,
+                'recipientName' => $this->signer->name,
                 'animalName' => $this->animalName,
             ],
         );

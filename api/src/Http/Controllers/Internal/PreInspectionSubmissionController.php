@@ -26,9 +26,8 @@ class PreInspectionSubmissionController extends Controller
             return response()->json(['message' => self::NOT_FOUND], 404);
         }
 
-        $inspection->load(['adoption.animal.animalType', 'adoption.applicant']);
+        $inspection->load(['adoption.animal.animalType']);
         $adoption = $inspection->adoption;
-        $applicant = $adoption->applicant;
 
         $groups = collect($caseFile->present($adoption)['groups'])
             ->map(fn (array $group) => [
@@ -58,12 +57,12 @@ class PreInspectionSubmissionController extends Controller
                 'breed' => $adoption->animal?->breed,
             ],
             'person' => [
-                'full_name' => $applicant?->full_name,
-                'street_line' => $applicant?->street_line,
-                'street_line_additional' => $applicant?->street_line_additional,
-                'postal_code' => $applicant?->postal_code,
-                'city' => $applicant?->city,
-                'country_code' => $applicant?->country_code,
+                'full_name' => $adoption->applicant_full_name,
+                'street_line' => $adoption->applicant_street_line,
+                'street_line_additional' => $adoption->applicant_street_line_additional,
+                'postal_code' => $adoption->applicant_postal_code,
+                'city' => $adoption->applicant_city,
+                'country_code' => $adoption->applicant_country_code,
             ],
             'case_file' => $groups,
         ]);

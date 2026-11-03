@@ -92,7 +92,7 @@ class ContractPreviewController extends Controller
      */
     private function resolveAdoption(Request $request): Adoption
     {
-        $query = Adoption::with(['animal.animalType', 'mediator.organization', 'applicant']);
+        $query = Adoption::with(['animal.animalType', 'mediator.organization']);
 
         if ($id = $request->query('adoption')) {
             return $query->whereKey($id)->firstOrFail();
@@ -182,7 +182,7 @@ class ContractPreviewController extends Controller
         callable $callback,
     ): Response {
         abort_if(
-            $adoption->mediator === null || $adoption->applicant === null,
+            $adoption->mediator === null || $adoption->applicant_full_name === '',
             404,
             'This adoption needs both a mediator and an applicant to synthesize a signing process. Pass ?adoption= with one that has both.',
         );
@@ -213,14 +213,14 @@ class ContractPreviewController extends Controller
             );
 
             $mediator = $process->signers()->where('role', ContractSignerRole::MEDIATOR)->firstOrFail();
-            $signingService->recordEmailSent($mediator, $mediator->person->email);
+            $signingService->recordEmailSent($mediator, $mediator->email);
             $signingService->recordLinkOpened($mediator, '192.0.2.10', self::DEMO_USER_AGENTS['mediator']);
             $signingService->recordMediatorSignature($process, $adoption->mediator->full_name, true, true, true, '192.0.2.10', self::DEMO_USER_AGENTS['mediator']);
 
             $adopter = $process->signers()->where('role', ContractSignerRole::ADOPTER)->firstOrFail();
-            $signingService->recordEmailSent($adopter, $adopter->person->email);
+            $signingService->recordEmailSent($adopter, $adopter->email);
             $signingService->recordLinkOpened($adopter, '192.0.2.20', self::DEMO_USER_AGENTS['adopter']);
-            $signingService->recordAdopterSignature($process, $adoption->applicant->full_name, true, true, true, '192.0.2.20', self::DEMO_USER_AGENTS['adopter']);
+            $signingService->recordAdopterSignature($process, $adoption->applicant_full_name, true, true, true, '192.0.2.20', self::DEMO_USER_AGENTS['adopter']);
 
             $signingService->finalize($process, str_repeat('0', 64));
 

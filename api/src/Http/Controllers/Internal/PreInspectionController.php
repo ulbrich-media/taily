@@ -21,13 +21,15 @@ use Taily\Models\PreInspection;
  */
 class PreInspectionController extends Controller
 {
-    private const RELATIONS = ['inspector', 'accessTokens', 'adoption.animal.animalType', 'adoption.applicant'];
+    private const RELATIONS = ['inspector', 'accessTokens', 'adoption.animal.animalType'];
 
     public function index(Request $request): AnonymousResourceCollection
     {
         $filters = $request->validate([
             'adoption_id' => 'sometimes|uuid',
             'person_id' => 'sometimes|uuid',
+            // Those of the applicant's other adoptions (same email or Person).
+            'related_to_adoption_id' => 'sometimes|uuid',
         ]);
 
         $query = PreInspection::with(self::RELATIONS)->orderBy('created_at', 'desc');
@@ -37,7 +39,12 @@ class PreInspectionController extends Controller
         }
 
         if (isset($filters['person_id'])) {
-            $query->whereHas('adoption', fn (Builder $adoption) => $adoption->where('applicant_id', $filters['person_id']));
+            $query->whereHas('adoption', fn (Builder $adoption) => ($person = Person::find($filters['person_id'])) ? $adoption->ofApplicant($person) : $adoption->whereRaw('1 = 0'));
+        }
+
+        if (isset($filters['related_to_adoption_id'])) {
+            $adoption = Adoption::find($filters['related_to_adoption_id']);
+            $query->whereHas('adoption', fn (Builder $related) => $adoption ? $related->relatedTo($adoption) : $related->whereRaw('1 = 0'));
         }
 
         return PreInspectionListResource::collection($query->get());
@@ -155,7 +162,7 @@ class PreInspectionController extends Controller
             ]);
         }
 
-        if ($inspectorId === $adoption->applicant_id) {
+        if ($inspectorId === $adoption->applicant_person_id) {
             throw ValidationException::withMessages([
                 'inspector_id' => 'Bewerber:innen können ihre eigene Vorkontrolle nicht durchführen.',
             ]);
