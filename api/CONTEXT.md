@@ -138,6 +138,10 @@ _Avoid_: Todo list, Requirements list
 _Avoid_: Changelog, History, Activity log
 
 **Applicant Portal**: The page where an Applicant, logged in by email and Magic Link, follows their Adoptions and sees and edits their Case File.
+
+**Applicant Link**: A single-use link emailed to an applicant — confirming an Application or logging into the Applicant Portal. Valid for 4 hours; only the button on its page uses it up.
+
+**Applicant Session**: A 2-hour Applicant Portal session for one email, opened by an Applicant Link. Unrelated to the admin login.
 _Avoid_: Customer portal, Applicant login
 
 **Magic Link**: A single-use, short-lived emailed link that logs a Person into the Applicant Portal or confirms an application. No password, no account.

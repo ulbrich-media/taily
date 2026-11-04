@@ -48,7 +48,9 @@ Each step has a [Checklist](./case-file.md#checklist) of the data it needs: fiel
 
 The application asks only what is needed to decide whether the applicant fits. Later data — contract details, transport details — is requested when the mediator advances the adoption's `requested_step` ("Angaben für den Vertrag anfordern"). The applicant gets a form with exactly the missing fields. See [case-file.md](./case-file.md#requesting-data--split-collection).
 
-## Application *(planned)*
+## Application
+
+> **Status: prototype.** The form is reached at `/apply/{animal}` through the link copied from the animal's menu (*Bewerbungslink kopieren*); there is no public listing. It asks the catalogue fields visible to applicants with `collect_at = application` and reports every missing required field at once. Applications are refused for deceased, boarding and already adopted animals; a reserved animal still takes them. File fields can't be uploaded yet.
 
 A public application creates an adoption for **one animal**. Every public application has to be **confirmed by email** (double opt-in):
 

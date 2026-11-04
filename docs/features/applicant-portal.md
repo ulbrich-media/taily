@@ -1,6 +1,8 @@
 # Applicant Portal
 
-> **Status: planned, not implemented.** Part of the design in [ADR-015](../ADRs/ADR-015-adoption-case-file.md).
+> **Status: prototype on branch `prototype/adoption-based-structure`.** Part of the design in [ADR-015](../ADRs/ADR-015-adoption-case-file.md) and [ADR-017](../ADRs/ADR-017-applicant-data-on-the-adoption.md). The portal lives at `/adopter`. Implemented: login by email and magic link (4 h, single-use, consumed by the button), a 2 h session sent as a bearer token, the list of adoptions by email with the status rules below, per adoption the steps, the open items and the applicant's data — editable while the adoption is `pending` or `in_progress`; changed values that need review become pending again; the email itself is read-only.
+>
+> Prototype simplifications: the fields shown are those up to the **current step** — the first step that isn't finished — instead of a mediator-set `requested_step`; file fields can't be uploaded yet; no import from earlier adoptions in the portal, no audit trail, no mediator notifications, and no link to a pending contract signature.
 
 The applicant portal (German UI: *Mein Bewerbungsstatus*) shows an applicant their adoptions — from application to handover — together with the data they sent in. They can add to it and change it there.
 
