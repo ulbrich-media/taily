@@ -11,6 +11,7 @@ import { Badge } from '@/shadcn/components/ui/badge'
 import { formatApiDate } from '@/lib/dates.utils'
 
 const STATUS_LABELS: Record<RelatedAdoption['status'], string> = {
+  unconfirmed: 'Nicht bestätigt',
   pending: 'Neu',
   in_progress: 'Läuft',
   done: 'Abgeschlossen',

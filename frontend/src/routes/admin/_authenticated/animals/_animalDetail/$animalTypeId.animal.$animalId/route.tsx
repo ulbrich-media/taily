@@ -18,7 +18,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/shadcn/components/ui/dropdown-menu.tsx'
-import { MoreVertical } from 'lucide-react'
+import { Link2, MoreVertical } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/shadcn/components/ui/button.tsx'
 
 export const Route = createFileRoute(
@@ -96,6 +97,14 @@ function RouteComponent() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem
+                    onClick={() =>
+                      copyApplicationLink(animal.public_application_url)
+                    }
+                  >
+                    <Link2 />
+                    Bewerbungslink kopieren
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
                     onClick={() => console.log('Delete animal', animalId)}
                     className="text-destructive"
                   >
@@ -117,4 +126,19 @@ function RouteComponent() {
       </div>
     </>
   )
+}
+
+/**
+ * The public application form has no listing: applicants only reach it
+ * through this link, shared by the organization (e.g. on its website).
+ */
+function copyApplicationLink(url: string) {
+  navigator.clipboard
+    .writeText(url)
+    .then(() =>
+      toast.success('Bewerbungslink kopiert', {
+        description: url,
+      })
+    )
+    .catch(() => toast.error('Der Link konnte nicht kopiert werden.'))
 }

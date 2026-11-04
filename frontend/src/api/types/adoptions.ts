@@ -7,7 +7,9 @@ import type { PersonBaseResource, PersonListResource } from './people'
 import type { TransportListResource } from '@/api/types/transports.ts'
 
 export type AdoptionStepStatus = 'not_started' | 'pending' | 'finished'
-export type AdoptionStatus = 'pending' | 'in_progress' | 'canceled' | 'done'
+// 'unconfirmed': a public application whose email isn't confirmed yet.
+export type AdoptionStatus =
+  'unconfirmed' | 'pending' | 'in_progress' | 'canceled' | 'done'
 
 // Scalar fields shared by list and detail resources.
 // Use this when an Adoption is nested inside another resource.

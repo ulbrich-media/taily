@@ -80,6 +80,8 @@ export interface AnimalListResource extends AnimalBaseResource {
 // Returned by GET /animals/:id (show), POST /animals (store), PUT /animals/:id (update).
 // All relations are loaded.
 export interface AnimalDetailResource extends AnimalBaseResource {
+  // Taily's own application form for this animal, shared by copying the link.
+  public_application_url: string
   animal_type: AnimalTypeResource
   assigned_agent: PersonBaseResource | null
   owner: PersonBaseResource | null

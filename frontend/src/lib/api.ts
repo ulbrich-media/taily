@@ -3,11 +3,18 @@ const API_URL = `${API_URL_ROOT}/internal`
 
 export class ApiValidationError extends Error {
   errors?: Record<string, string[]>
+  // The HTTP status, e.g. 401 for an expired applicant portal session.
+  status?: number
 
-  constructor(message: string, errors?: Record<string, string[]>) {
+  constructor(
+    message: string,
+    errors?: Record<string, string[]>,
+    status?: number
+  ) {
     super(message)
     this.name = 'ApiValidationError'
     this.errors = errors
+    this.status = status
   }
 }
 
@@ -60,7 +67,8 @@ export async function apiRequest<T = unknown>(
     }))
     throw new ApiValidationError(
       error.message || 'An error occurred',
-      error.errors
+      error.errors,
+      response.status
     )
   }
 

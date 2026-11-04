@@ -22,6 +22,9 @@ function OverallStatusBadge({ status }: { status: AdoptionStatus }) {
   if (status === 'canceled') {
     return <Badge variant="destructive">Abgebrochen</Badge>
   }
+  if (status === 'unconfirmed') {
+    return <Badge variant="outline">E-Mail nicht bestätigt</Badge>
+  }
   return <Badge variant="warning">In Bearbeitung</Badge>
 }
 

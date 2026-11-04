@@ -22,6 +22,8 @@ import { isFileField, requirementLabel } from '../case-file.utils'
 interface CaseFileFieldInputProps {
   field: CaseFileField
   control: Control<FieldValues>
+  // Replaces the mediator's wording of the requirement badge, e.g. for applicants.
+  requirementText?: (field: CaseFileField) => string
 }
 
 const ADDRESS_PARTS: { key: keyof CaseFileAddress; label: string }[] = [
@@ -39,13 +41,14 @@ const ADDRESS_PARTS: { key: keyof CaseFileAddress; label: string }[] = [
 export function CaseFileFieldInput({
   field,
   control,
+  requirementText = requirementLabel,
 }: CaseFileFieldInputProps) {
   const name = `values.${field.key}`
   const required = !!field.effective_required_for
   const label = (
     <>
       {field.label}
-      {required && <Badge variant="secondary">{requirementLabel(field)}</Badge>}
+      {required && <Badge variant="secondary">{requirementText(field)}</Badge>}
     </>
   )
 
