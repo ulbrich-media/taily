@@ -41,7 +41,7 @@ class PublicApplicationController extends Controller
         $this->portal->apply($animal, $validated['values']);
 
         return response()->json([
-            'message' => 'Fast geschafft! Bitte bestätige deine Bewerbung über den Link in der E-Mail, die wir dir gerade geschickt haben.',
+            'message' => 'Bitte bestätige deine Bewerbung über den Link in der E-Mail, die wir dir gerade geschickt haben.',
         ], 201);
     }
 

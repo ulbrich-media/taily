@@ -15,6 +15,7 @@ use Taily\Models\ApplicantLink;
 use Taily\Models\ApplicantSession;
 use Taily\Models\FieldDefinition;
 use Taily\Support\CaseFile\CaseFileService;
+use Taily\Support\CaseFile\CaseFileState;
 use Taily\Support\CaseFile\ChecklistItem;
 
 /**
@@ -58,7 +59,7 @@ class ApplicantPortal
         $draft->setRelation('fieldValues', collect());
         $draft->setRelation('requirements', collect());
 
-        return $this->forApplicant($this->caseFile->present($draft), AdoptionStep::APPLICATION);
+        return $this->forApplicant($this->caseFile->present($draft), AdoptionStep::APPLICATION, lockEmail: false);
     }
 
     /**
@@ -76,21 +77,24 @@ class ApplicantPortal
 
         $allowed = $this->writableKeys($this->definitionsFor($animal->animal_type_id), AdoptionStep::APPLICATION, withEmail: true);
 
+        // Everything missing is reported at once, before the values are
+        // validated one by one.
+        $state = new CaseFileState($animal->animal_type_id, collect($values)->only($allowed)->all());
+        $missing = collect($this->caseFile->calculator($animal->animal_type_id)->forStep($state, AdoptionStep::APPLICATION)->open())
+            ->filter(fn (ChecklistItem $item) => in_array($item->key, $allowed, true));
+
+        if ($missing->isNotEmpty()) {
+            throw ValidationException::withMessages(
+                $missing->mapWithKeys(fn (ChecklistItem $item) => ["values.{$item->key}" => ['Bitte ausfüllen.']])->all()
+            );
+        }
+
         [$adoption, $token] = DB::transaction(function () use ($animal, $values, $allowed) {
             $adoption = Adoption::create(['animal_id' => $animal->id, 'status' => 'unconfirmed']);
             $this->caseFile->update($adoption, $values, null, $allowed);
 
-            $missing = collect($this->caseFile->checklist($adoption, AdoptionStep::APPLICATION)->open())
-                ->filter(fn (ChecklistItem $item) => in_array($item->key, $allowed, true));
-
             if ($adoption->applicant_email === '') {
-                $missing->push(new ChecklistItem('email', 'E-Mail', AdoptionStep::APPLICATION, ChecklistItem::MISSING));
-            }
-
-            if ($missing->isNotEmpty()) {
-                throw ValidationException::withMessages(
-                    $missing->mapWithKeys(fn (ChecklistItem $item) => ["values.{$item->key}" => ['Bitte ausfüllen.']])->all()
-                );
+                throw ValidationException::withMessages(['values.email' => ['Bitte ausfüllen.']]);
             }
 
             [, $token] = ApplicantLink::issue(ApplicantLink::PURPOSE_CONFIRM, $adoption->applicant_email, $adoption);
@@ -223,13 +227,14 @@ class ApplicantPortal
             'editable' => $this->isEditable($adoption),
             'current_step' => $step->value,
             'steps' => [
-                ['step' => 'application', 'status' => 'finished'],
+                // Under review until the mediator starts working on it.
+                ['step' => 'application', 'status' => $adoption->status === 'pending' ? 'pending' : 'finished'],
                 ['step' => 'pre_inspection', 'status' => $adoption->pre_inspection_status],
                 ['step' => 'contract', 'status' => $adoption->contract_status],
                 ['step' => 'transport', 'status' => $adoption->transport_status, 'planned_at' => $adoption->transport?->planned_at],
                 ['step' => 'handover', 'status' => $adoption->handover_status],
             ],
-            ...$this->forApplicant($this->caseFile->present($adoption), $step),
+            ...$this->forApplicant($this->caseFile->present($adoption), $step, lockEmail: true),
         ];
     }
 
@@ -264,19 +269,21 @@ class ApplicantPortal
      * @param  array<string, mixed>  $presented  CaseFileService::present()
      * @return array{groups: list<array<string, mixed>>, open: list<array<string, mixed>>}
      */
-    private function forApplicant(array $presented, AdoptionStep $step): array
+    private function forApplicant(array $presented, AdoptionStep $step, bool $lockEmail): array
     {
         $visible = fn (array $field) => $field['visible_to_applicant']
             && AdoptionStep::from($field['collect_at'])->isAtOrBefore($step);
 
         $groups = collect($presented['groups'])
-            ->map(function (array $group) use ($visible) {
+            ->map(function (array $group) use ($visible, $lockEmail) {
                 $group['fields'] = collect($group['fields'])
                     ->filter($visible)
                     ->map(fn (array $field) => [
-                        ...collect($field)->except(['override', 'in_contract', 'visible_to_inspector', 'updated_at'])->all(),
+                        ...$field,
+                        // The mediator's per-adoption overrides stay internal.
+                        'override' => null,
                         // Read-only in the portal: it is what the login is tied to.
-                        'locked' => $field['built_in'] && $field['key'] === 'email',
+                        'locked' => $lockEmail && $field['built_in'] && $field['key'] === 'email',
                     ])
                     ->values();
 

@@ -69,6 +69,10 @@ class ApplicantPortalTest extends TestCase
         $this->apply(['living_space_sqm' => null])
             ->assertUnprocessable()
             ->assertJsonValidationErrors('values.living_space_sqm');
+        // Everything missing at once.
+        $this->postJson("/internal/apply/{$this->bello->id}", ['values' => ['phone' => '']])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['values.first_name', 'values.last_name', 'values.email', 'values.living_space_sqm']);
         $this->apply(['id_card_number' => 'L01'])
             ->assertUnprocessable()
             ->assertJsonValidationErrors('values.id_card_number');
@@ -136,6 +140,7 @@ class ApplicantPortalTest extends TestCase
 
         $shown = $this->portal('get', "adoptions/{$adoption->id}", $session)->assertOk();
         $this->assertSame('application', $shown->json('current_step'));
+        $this->assertSame('pending', $shown->json('steps.0.status'), 'the application is under review');
         $this->assertContains('living_space_sqm', array_column($shown->json('open'), 'key'));
 
         $this->portal('put', "adoptions/{$adoption->id}/case-file", $session, ['values' => ['living_space_sqm' => 85, 'landlord_ok' => true]])
