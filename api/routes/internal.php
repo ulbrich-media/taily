@@ -23,6 +23,7 @@ use Taily\Http\Controllers\Internal\AnimalController;
 use Taily\Http\Controllers\Internal\AnimalPictureController;
 use Taily\Http\Controllers\Internal\AnimalTypeController;
 use Taily\Http\Controllers\Internal\ApiTokenController;
+use Taily\Http\Controllers\Internal\ApplicantPortalController;
 use Taily\Http\Controllers\Internal\CaseFileController;
 use Taily\Http\Controllers\Internal\ContractSigningController;
 use Taily\Http\Controllers\Internal\ContractSigningSubmissionController;
@@ -39,6 +40,7 @@ use Taily\Http\Controllers\Internal\PersonPictureController;
 use Taily\Http\Controllers\Internal\PreInspectionController;
 use Taily\Http\Controllers\Internal\PreInspectionSubmissionController;
 use Taily\Http\Controllers\Internal\ProfileController;
+use Taily\Http\Controllers\Internal\PublicApplicationController;
 use Taily\Http\Controllers\Internal\SessionController;
 use Taily\Http\Controllers\Internal\TransportController;
 use Taily\Http\Controllers\Internal\UserController;
@@ -259,6 +261,20 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Pre-Inspections
     Route::apiResource('pre-inspections', PreInspectionController::class);
     Route::put('/pre-inspections/{preInspection}/inspector', [PreInspectionController::class, 'updateInspector']);
+});
+
+// Public applications and the applicant portal (docs/features/applicant-portal.md).
+// The portal session is a bearer token; rate limited per IP and per email.
+Route::middleware('throttle:applicant')->group(function () {
+    Route::get('/apply/{animal}', [PublicApplicationController::class, 'show']);
+    Route::post('/apply/{animal}', [PublicApplicationController::class, 'store']);
+    Route::post('/apply/confirm/{token}', [PublicApplicationController::class, 'confirm']);
+    Route::post('/portal/login', [ApplicantPortalController::class, 'requestLogin']);
+    Route::post('/portal/login/{token}', [ApplicantPortalController::class, 'login']);
+    Route::post('/portal/logout', [ApplicantPortalController::class, 'logout']);
+    Route::get('/portal/adoptions', [ApplicantPortalController::class, 'index']);
+    Route::get('/portal/adoptions/{adoption}', [ApplicantPortalController::class, 'show']);
+    Route::put('/portal/adoptions/{adoption}/case-file', [ApplicantPortalController::class, 'update']);
 });
 
 // Public pre-inspection submission routes (token-protected, no auth required).

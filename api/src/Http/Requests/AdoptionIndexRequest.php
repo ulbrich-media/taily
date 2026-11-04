@@ -24,7 +24,7 @@ class AdoptionIndexRequest extends FormRequest
 
     private const SORT_KEYS = ['created_at', 'updated_at', 'animal_name', 'applicant_name', 'mediator_name'];
 
-    private const STATUSES = ['pending', 'in_progress', 'canceled', 'done'];
+    private const STATUSES = ['unconfirmed', 'pending', 'in_progress', 'canceled', 'done'];
 
     // Values the derived step statuses can take, see the Adoption accessors.
     private const STEP_STATUSES = ['not_started', 'pending', 'finished'];

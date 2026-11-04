@@ -278,14 +278,22 @@ class CaseFileService
     }
 
     /**
-     * Writes Case File values as the mediator. The mediator may write every
-     * field at any time; values they enter count as reviewed.
+     * Writes Case File values. The mediator ($user) may write every field at
+     * any time, and values they enter count as reviewed. The applicant
+     * ($user null) may only write the $only keys the portal allows; a value
+     * they change that needs review is pending again.
      *
      * @param  array<string, mixed>  $values  keyed by field key
+     * @param  list<string>|null  $only  the keys that may be written, null for all
      */
-    public function update(Adoption $adoption, array $values, User $user): void
+    public function update(Adoption $adoption, array $values, ?User $user, ?array $only = null): void
     {
         $definitions = $this->definitions($this->animalTypeId($adoption))->keyBy('key');
+
+        if ($only !== null) {
+            // Not only(): on an Eloquent collection it matches model ids, not keys.
+            $definitions = $definitions->intersectByKeys(array_flip($only));
+        }
 
         $unknown = array_diff(array_keys($values), $definitions->keys()->all());
         $rules = [];
@@ -318,15 +326,27 @@ class CaseFileService
                 }
 
                 $present = ChecklistCalculator::isPresent($definition->type, $value);
+                $existing = AdoptionFieldValue::where('adoption_id', $adoption->id)->where('field_definition_id', $definition->id)->first();
+
+                // The applicant saving a value unchanged keeps its review.
+                if ($user === null && $existing !== null && $existing->value === $value) {
+                    continue;
+                }
+
+                $review = match (true) {
+                    ! $definition->requires_review || ! $present => null,
+                    $user !== null => AdoptionFieldValue::REVIEW_CONFIRMED,
+                    default => AdoptionFieldValue::REVIEW_PENDING,
+                };
 
                 AdoptionFieldValue::updateOrCreate(
                     ['adoption_id' => $adoption->id, 'field_definition_id' => $definition->id],
                     [
                         'value' => $value,
-                        'review_status' => $definition->requires_review && $present ? AdoptionFieldValue::REVIEW_CONFIRMED : null,
+                        'review_status' => $review,
                         'review_note' => '',
-                        'reviewed_by' => $definition->requires_review && $present ? $user->id : null,
-                        'reviewed_at' => $definition->requires_review && $present ? now() : null,
+                        'reviewed_by' => $review === AdoptionFieldValue::REVIEW_CONFIRMED ? $user->id : null,
+                        'reviewed_at' => $review === AdoptionFieldValue::REVIEW_CONFIRMED ? now() : null,
                     ],
                 );
             }

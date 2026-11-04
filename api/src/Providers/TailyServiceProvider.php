@@ -180,6 +180,22 @@ class TailyServiceProvider extends ServiceProvider
 
         // Same dual-bucket shape as contract-sign, for the pre-inspection
         // submission endpoints, which previously had no throttle at all.
+        // Public applications and the applicant portal. Login links are also
+        // limited per email, so nobody can flood an inbox.
+        RateLimiter::for('applicant', function (Request $request) {
+            $limits = [Limit::perMinute(60)->by('applicant-ip:'.$request->ip())];
+
+            if ($request->isMethod('post') && $request->path() === 'internal/portal/login') {
+                $limits[] = Limit::perMinute(3)->by('applicant-email:'.mb_strtolower(trim((string) $request->input('email'))));
+            }
+
+            if ($request->isMethod('post') && $request->route('animal') !== null) {
+                $limits[] = Limit::perMinute(5)->by('applicant-apply-ip:'.$request->ip());
+            }
+
+            return $limits;
+        });
+
         RateLimiter::for('inspect', function (Request $request) {
             return [
                 Limit::perMinute(20)->by('inspect-token:'.$request->route('token')),

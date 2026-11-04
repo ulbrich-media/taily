@@ -4,12 +4,15 @@ namespace Taily\Http\Resources;
 
 use Illuminate\Http\Request;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Taily\Support\FrontendUriBuilder;
 
 class AnimalDetailResource extends AnimalBaseResource
 {
     public function toArray(Request $request): array
     {
         return array_merge(parent::toArray($request), [
+            // The public application form, shared by copying this link.
+            'application_url' => FrontendUriBuilder::application($this->resource->id),
             'pictures' => $this->resource->when(
                 $this->resource->relationLoaded('media'),
                 fn () => $this->resource->getMedia('pictures')

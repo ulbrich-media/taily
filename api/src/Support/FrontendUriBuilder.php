@@ -14,6 +14,27 @@ class FrontendUriBuilder
         return self::callback('contract_sign', $token);
     }
 
+    public static function applicationConfirm(string $token): string
+    {
+        return self::callback('application_confirm', $token);
+    }
+
+    public static function applicantLogin(string $token): string
+    {
+        return self::callback('applicant_login', $token);
+    }
+
+    /**
+     * The public application form of an animal, linked from its admin page.
+     * Not a token callback: whoever has the link may apply.
+     */
+    public static function application(string $animalId): string
+    {
+        $base = rtrim(config('taily.frontend_url'), '/');
+
+        return "{$base}/apply/{$animalId}";
+    }
+
     public static function userInvite(string $token): string
     {
         return self::callback('user_invite_accepted', $token);
