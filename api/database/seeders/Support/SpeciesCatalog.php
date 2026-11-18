@@ -3,6 +3,7 @@
 namespace Database\Seeders\Support;
 
 use Faker\Generator;
+use Taily\Enums\TiervermittlungSpecies;
 
 /**
  * The vocabulary behind the seeded animals, one entry per animal type.
@@ -21,6 +22,7 @@ class SpeciesCatalog
         return [
             'dogs' => [
                 'title' => 'Hund',
+                'tiervermittlung_species' => TiervermittlungSpecies::DOG,
                 'number_prefix' => 'DOG',
 
                 // Core vaccinations plus the ones that matter for dogs coming
@@ -112,6 +114,7 @@ class SpeciesCatalog
 
             'cats' => [
                 'title' => 'Katze',
+                'tiervermittlung_species' => TiervermittlungSpecies::CAT,
                 'number_prefix' => 'CAT',
 
                 'vaccinations' => [

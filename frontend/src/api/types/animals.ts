@@ -88,4 +88,25 @@ export interface AnimalDetailResource extends AnimalBaseResource {
   vaccinations: AnimalVaccinationResource[]
   medical_tests: AnimalMedicalTestResource[]
   pictures: AnimalPicture[]
+  // Absent while the Tiervermittlung.de export is disabled.
+  tiervermittlung?: AnimalTiervermittlungState
+}
+
+// Status values are the platform's own (`veroeffentlicht`, `doppelt`,
+// `nicht_veroeffentlicht`), plus `abgelehnt` for a payload it rejected and
+// '' before the first successful delivery.
+export interface TiervermittlungListing {
+  status: string
+  tv_id: number | null
+  url: string
+  reasons: string[]
+  warnings: string[]
+  last_error: string
+  last_sent_at: string | null
+}
+
+export interface AnimalTiervermittlungState {
+  // Empty when the animal is exported.
+  exclusion_reasons: string[]
+  listing: TiervermittlungListing | null
 }

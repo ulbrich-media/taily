@@ -54,4 +54,38 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Tiervermittlung.de Export
+    |--------------------------------------------------------------------------
+    |
+    | Pushes the published animals to tiervermittlung.de via its Partner-API
+    | (https://www.tiervermittlung.de/api/). The API key is created in the
+    | club's account there under "Persönliche Daten" → "API-Schlüssel
+    | verwalten". Runs from the scheduler (`tiervermittlung:sync`), so the
+    | scheduler cron entry is required.
+    |
+    | All animals are listed at the location below — usually the Operating
+    | Organization's own — since Taily has no structured location per
+    | animal. Contact details on the listing come from the account itself.
+    |
+    */
+
+    'tiervermittlung' => [
+        'enabled' => (bool) env('TAILY_TIERVERMITTLUNG_ENABLED', false),
+        'api_key' => env('TAILY_TIERVERMITTLUNG_API_KEY', ''),
+        'base_url' => env('TAILY_TIERVERMITTLUNG_BASE_URL', 'https://www.tiervermittlung.de/api/v1'),
+        'location' => [
+            'country' => env('TAILY_TIERVERMITTLUNG_COUNTRY', 'DE'),
+            'zip' => env('TAILY_TIERVERMITTLUNG_ZIP', ''),
+            'city' => env('TAILY_TIERVERMITTLUNG_CITY', ''),
+        ],
+        // The platform allows 60 requests per minute and key. A pause between
+        // requests and a cap on animals sent or removed per run keep each
+        // scheduler run short; whatever is left over goes out with the next
+        // run. A rate-limited request is retried once after `Retry-After`.
+        'request_interval_ms' => (int) env('TAILY_TIERVERMITTLUNG_REQUEST_INTERVAL_MS', 1100),
+        'max_requests_per_run' => (int) env('TAILY_TIERVERMITTLUNG_MAX_REQUESTS_PER_RUN', 50),
+    ],
+
 ];

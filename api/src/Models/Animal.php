@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -155,6 +156,14 @@ class Animal extends Model implements HasMedia
             ->fit(Fit::Max, 1440, 1440)
             ->performOnCollections('pictures')
             ->nonQueued();
+
+        // Always JPEG, whatever was uploaded: external platforms such as
+        // Tiervermittlung.de only accept JPEG or PNG.
+        $this->addMediaConversion('export')
+            ->fit(Fit::Max, 1440, 1440)
+            ->format('jpg')
+            ->performOnCollections('pictures')
+            ->nonQueued();
     }
 
     public function traits(): HasMany
@@ -192,6 +201,14 @@ class Animal extends Model implements HasMedia
         return $this->belongsToMany(MedicalTest::class, 'animal_medical_test')
             ->withPivot('tested_at', 'result')
             ->withTimestamps();
+    }
+
+    /**
+     * The animal's listing on Tiervermittlung.de, once it has been sent there.
+     */
+    public function tiervermittlungListing(): HasOne
+    {
+        return $this->hasOne(TiervermittlungListing::class);
     }
 
     /**

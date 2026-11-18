@@ -6,6 +6,8 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Validation\Rule;
+use Taily\Enums\TiervermittlungSpecies;
 use Taily\Http\Controllers\Controller;
 use Taily\Http\Requests\CatalogIndexRequest;
 use Taily\Http\Resources\AnimalTypeResource;
@@ -55,6 +57,7 @@ class AnimalTypeController extends Controller
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255|unique:animal_types,title',
+            'tiervermittlung_species' => ['nullable', Rule::enum(TiervermittlungSpecies::class)],
             'pre_inspection_form_template_id' => 'nullable|uuid|exists:form_templates,id',
         ]);
 
@@ -87,6 +90,7 @@ class AnimalTypeController extends Controller
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255|unique:animal_types,title,'.$animalType->id,
+            'tiervermittlung_species' => ['nullable', Rule::enum(TiervermittlungSpecies::class)],
             'pre_inspection_form_template_id' => 'nullable|uuid|exists:form_templates,id',
         ]);
 
