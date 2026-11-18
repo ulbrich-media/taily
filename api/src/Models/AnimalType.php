@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Taily\Enums\TiervermittlungSpecies;
 
 class AnimalType extends Model
 {
@@ -20,8 +21,16 @@ class AnimalType extends Model
      */
     protected $fillable = [
         'title',
+        'tiervermittlung_species',
         'pre_inspection_form_template_id',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'tiervermittlung_species' => TiervermittlungSpecies::class,
+        ];
+    }
 
     public function preInspectionFormTemplate(): BelongsTo
     {

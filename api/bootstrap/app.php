@@ -27,6 +27,9 @@ return Application::configure(basePath: dirname(__DIR__))
     // per ADR-012 Constraint 1 (no background worker infrastructure).
     ->withSchedule(function (Schedule $schedule): void {
         $schedule->command('contracts:process-reminders')->daily();
+        // Both exit right away on installs without the export configured.
+        $schedule->command('tiervermittlung:sync')->everyFiveMinutes()->withoutOverlapping();
+        $schedule->command('tiervermittlung:reconcile')->dailyAt('03:30')->withoutOverlapping();
     })
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([

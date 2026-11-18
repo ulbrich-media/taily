@@ -17,7 +17,10 @@ class AnimalTypeSeeder extends Seeder
     public function run(): void
     {
         foreach (SpeciesCatalog::all() as $species) {
-            $animalType = AnimalType::create(['title' => $species['title']]);
+            $animalType = AnimalType::create([
+                'title' => $species['title'],
+                'tiervermittlung_species' => $species['tiervermittlung_species'],
+            ]);
 
             foreach ($species['vaccinations'] as $vaccination) {
                 $animalType->vaccinations()->create($vaccination);

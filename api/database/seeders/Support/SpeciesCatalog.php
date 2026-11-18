@@ -21,6 +21,7 @@ class SpeciesCatalog
         return [
             'dogs' => [
                 'title' => 'Hund',
+                'tiervermittlung_species' => 'dog',
                 'number_prefix' => 'DOG',
 
                 // Core vaccinations plus the ones that matter for dogs coming
@@ -112,6 +113,7 @@ class SpeciesCatalog
 
             'cats' => [
                 'title' => 'Katze',
+                'tiervermittlung_species' => 'cat',
                 'number_prefix' => 'CAT',
 
                 'vaccinations' => [

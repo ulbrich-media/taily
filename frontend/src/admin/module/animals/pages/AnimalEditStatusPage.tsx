@@ -15,6 +15,7 @@ import { toast } from 'sonner'
 import type { AnimalDetailResource } from '@/api/types/animals'
 import type { UpdateAnimalRequest } from '@/admin/module/animals/api/types.ts'
 import { toApiDate } from '@/components/field/DateInput.utils.ts'
+import { AnimalTiervermittlungCard } from '@/admin/module/animals/components/AnimalTiervermittlungCard.tsx'
 
 interface AnimalEditStatusPageProps {
   animal: AnimalDetailResource
@@ -46,8 +47,9 @@ export function AnimalEditStatusPage({ animal }: AnimalEditStatusPageProps) {
   }
 
   return (
-    <Card>
-      <CardHeader className="sr-only">
+    <div className="space-y-6">
+      <Card>
+        <CardHeader className="sr-only">
         <CardTitle>Organisation, Marketing & Status</CardTitle>
       </CardHeader>
       <CardContent>
@@ -58,6 +60,10 @@ export function AnimalEditStatusPage({ animal }: AnimalEditStatusPageProps) {
           isSubmitting={updateMutation.isPending}
         />
       </CardContent>
-    </Card>
+      </Card>
+      {animal.tiervermittlung && (
+        <AnimalTiervermittlungCard tiervermittlung={animal.tiervermittlung} />
+      )}
+    </div>
   )
 }
