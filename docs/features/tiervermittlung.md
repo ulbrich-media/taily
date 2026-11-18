@@ -75,10 +75,10 @@ Animals abroad are listed at the configured location as well: Taily has no struc
 - **New or changed** animals are sent (`PUT /tiere/{tierId}`).
 - **Unchanged** animals are sent again after 30 days; the platform lets listings expire after 92 days without a delivery.
 - Animals that are **no longer exported** are removed (`DELETE`), with `grund=vermittelt` for adopted animals so they count towards the platform's placement statistics, `entfernt` otherwise. Listings of deleted animals are removed the same way.
-- A **rejected** payload (HTTP 400) is kept with the platform's message and only sent again once the animal changes. Rate limiting, outages and network errors are retried on the next run. An invalid key aborts the run.
-- The platform allows 60 requests per minute: runs pause ~1 s between requests, honour `Retry-After`, and stop after 50 requests; the rest follows with the next run.
+- A **rejected** payload (HTTP 400) is kept with the platform's message and only sent again once the animal changes — the 30-day refresh does not resend it either. If the animal was already listed, the listing keeps its status and stays online with the last accepted version. Rate limiting, outages and network errors are retried on the next run. An invalid key aborts the run.
+- The platform allows 60 requests per minute: runs pause ~1 s between requests, retry once after `Retry-After`, and stop after 50 animals sent or removed; the rest follows with the next run. Dry runs (`--probe`) have the same cap; `--limit` overrides it.
 
-`tiervermittlung:reconcile` runs daily and hands the platform the full list of listed tier ids (`POST /abgleich`), which removes listings this installation lost track of. Ids the platform does not know are sent again on the next sync. The platform's safety brake keeps it from removing anything if the list looks incomplete.
+`tiervermittlung:reconcile` runs daily and hands the platform the full list of listed tier ids (`POST /abgleich`), which removes listings this installation lost track of. Ids the platform does not know are sent again on the next sync. The platform's safety brake keeps it from removing anything if the list looks incomplete. Sync and reconcile share a lock, so the list never misses animals a running sync is just adding: a sync started while another run holds it is skipped, and reconcile waits up to five minutes for it.
 
 ## Listing states
 
@@ -87,5 +87,5 @@ Animals abroad are listed at the configured location as well: Taily has no struc
 | `veroeffentlicht` | online |
 | `nicht_veroeffentlicht` | accepted but not published; the platform's reasons are shown |
 | `doppelt` | a listing created by hand for the same animal exists and stays; delete it on the platform to let the exported one appear |
-| `abgelehnt` | Taily's own marker: the platform rejected the data |
+| `abgelehnt` | Taily's own marker: the platform rejected the data before it ever listed the animal |
 | empty | not delivered successfully yet |

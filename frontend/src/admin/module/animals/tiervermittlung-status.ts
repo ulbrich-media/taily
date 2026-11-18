@@ -44,6 +44,15 @@ export function summarizeTiervermittlung({
 function summarizeListing(listing: TiervermittlungListing): ExportSummary {
   switch (listing.status) {
     case 'veroeffentlicht':
+      // The platform keeps showing the last version it accepted.
+      if (listing.last_error !== '') {
+        return {
+          label: 'Veröffentlicht',
+          variant: 'warning',
+          description:
+            'Die Anzeige ist online, die letzte Übertragung ist aber fehlgeschlagen. Sie zeigt weiter den zuletzt übertragenen Stand.',
+        }
+      }
       return {
         label: 'Veröffentlicht',
         variant: 'success',

@@ -20,8 +20,7 @@ export const TIERVERMITTLUNG_SPECIES_LABELS: Record<
 export const NOT_EXPORTED = 'none'
 
 export type TiervermittlungSpeciesFormValue =
-  | TiervermittlungSpecies
-  | typeof NOT_EXPORTED
+  TiervermittlungSpecies | typeof NOT_EXPORTED
 
 export const TIERVERMITTLUNG_SPECIES_FORM_VALUES = [
   NOT_EXPORTED,

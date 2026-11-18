@@ -2,8 +2,10 @@
 
 namespace Taily\Support\Tiervermittlung;
 
+use Illuminate\Contracts\Cache\Lock;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Taily\Models\Animal;
 use Taily\Models\TiervermittlungListing;
@@ -23,10 +25,26 @@ class TiervermittlungExport
      */
     public const REFRESH_AFTER_DAYS = 30;
 
+    /**
+     * Upper bound for one run holding the lock, in case a process dies
+     * without releasing it.
+     */
+    private const LOCK_SECONDS = 900;
+
     public function __construct(
         private TiervermittlungClient $client,
         private AnimalPayloadMapper $mapper,
     ) {}
+
+    /**
+     * Serializes sync and reconciliation: reconciliation hands the platform
+     * a snapshot of the listed animals, so a sync adding animals in between
+     * would get them removed again.
+     */
+    public static function lock(): Lock
+    {
+        return Cache::lock('tiervermittlung-export', self::LOCK_SECONDS);
+    }
 
     public static function isEnabled(): bool
     {
@@ -61,17 +79,18 @@ class TiervermittlungExport
     /**
      * Send new and changed animals, refresh old deliveries and remove the
      * listings of animals that are no longer exported. Stops after
-     * `$maxRequests`; the rest is picked up by the next run.
+     * `$maxDeliveries` animals sent or removed; the rest is picked up by
+     * the next run.
      *
      * @return array{sent: int, unchanged: int, removed: int, failed: int, deferred: int}
      *
      * @throws TiervermittlungException when the key is rejected; nothing else
      *                                  can succeed in that case
      */
-    public function sync(int $maxRequests): array
+    public function sync(int $maxDeliveries): array
     {
         $counts = ['sent' => 0, 'unchanged' => 0, 'removed' => 0, 'failed' => 0, 'deferred' => 0];
-        $budget = $maxRequests;
+        $budget = $maxDeliveries;
 
         foreach ($this->listingsToRemove() as $listing) {
             if ($budget-- <= 0) {
@@ -240,10 +259,14 @@ class TiervermittlungExport
         $due = $exportable->filter(function (Animal $animal) use ($refreshBefore) {
             $listing = $animal->tiervermittlungListing;
 
-            return $listing === null
-                || $listing->payload_hash !== $this->mapper->hash($this->mapper->payload($animal))
-                || $listing->last_sent_at === null
-                || $listing->last_sent_at->lt($refreshBefore);
+            if ($listing === null || $listing->payload_hash !== $this->mapper->hash($this->mapper->payload($animal))) {
+                return true;
+            }
+
+            // A rejected payload is only sent again once it changes; there
+            // is no listing to keep alive.
+            return $listing->status !== TiervermittlungListing::STATUS_REJECTED
+                && ($listing->last_sent_at === null || $listing->last_sent_at->lt($refreshBefore));
         });
 
         $sorted = $due->sortBy(fn (Animal $animal) => match (true) {
@@ -274,10 +297,16 @@ class TiervermittlungExport
             // else (rate limit, outage) is retried on the next run.
             if ($e->isRejection()) {
                 $listing->fill([
-                    'status' => TiervermittlungListing::STATUS_REJECTED,
                     'payload_hash' => $this->mapper->hash($payload),
                     'last_sent_at' => now(),
                 ]);
+
+                // A listing that is live keeps its status: the platform still
+                // shows the last accepted version, and reconciliation must
+                // keep it.
+                if (in_array($listing->status, ['', TiervermittlungListing::STATUS_REJECTED], true)) {
+                    $listing->status = TiervermittlungListing::STATUS_REJECTED;
+                }
             }
 
             $listing->save();

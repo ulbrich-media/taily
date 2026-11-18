@@ -54,6 +54,15 @@ describe('summarizeTiervermittlung', () => {
     ).toBe(label)
   })
 
+  it('warns when a live listing missed the last update', () => {
+    expect(
+      summarizeTiervermittlung({
+        exclusion_reasons: [],
+        listing: listing({ last_error: 'Beschreibung zu kurz' }),
+      })
+    ).toMatchObject({ label: 'Veröffentlicht', variant: 'warning' })
+  })
+
   it('reports a failed first delivery as an error', () => {
     expect(
       summarizeTiervermittlung({

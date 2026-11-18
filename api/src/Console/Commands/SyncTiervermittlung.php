@@ -11,7 +11,7 @@ class SyncTiervermittlung extends Command
 {
     protected $signature = 'tiervermittlung:sync
         {--probe : Dry run — show what the platform would publish, without creating or storing anything}
-        {--limit= : Maximum number of requests (default: taily.tiervermittlung.max_requests_per_run)}';
+        {--limit= : Maximum number of animals sent or removed (default: taily.tiervermittlung.max_requests_per_run)}';
 
     protected $description = 'Send new and changed animals to Tiervermittlung.de and remove the ones no longer exported';
 
@@ -34,7 +34,9 @@ class SyncTiervermittlung extends Command
             return self::FAILURE;
         }
 
-        $limit = $this->option('limit') !== null ? (int) $this->option('limit') : null;
+        $limit = $this->option('limit') !== null
+            ? (int) $this->option('limit')
+            : (int) config('taily.tiervermittlung.max_requests_per_run');
 
         try {
             return $this->option('probe') ? $this->probe($export, $limit) : $this->sync($export, $limit);
@@ -46,9 +48,23 @@ class SyncTiervermittlung extends Command
         }
     }
 
-    private function sync(TiervermittlungExport $export, ?int $limit): int
+    private function sync(TiervermittlungExport $export, int $limit): int
     {
-        $counts = $export->sync($limit ?? (int) config('taily.tiervermittlung.max_requests_per_run'));
+        // Shared with tiervermittlung:reconcile, which must not take its
+        // snapshot of the listed animals while a run is still adding some.
+        $lock = TiervermittlungExport::lock();
+
+        if (! $lock->get()) {
+            $this->line('Ein anderer Export-Lauf ist noch aktiv.');
+
+            return self::SUCCESS;
+        }
+
+        try {
+            $counts = $export->sync($limit);
+        } finally {
+            $lock->release();
+        }
 
         $this->info(sprintf(
             'Gesendet: %d, unverändert: %d, entfernt: %d, fehlgeschlagen: %d, auf den nächsten Lauf verschoben: %d',
@@ -58,12 +74,15 @@ class SyncTiervermittlung extends Command
         return $counts['failed'] > 0 ? self::FAILURE : self::SUCCESS;
     }
 
-    private function probe(TiervermittlungExport $export, ?int $limit): int
+    private function probe(TiervermittlungExport $export, int $limit): int
     {
+        $failed = false;
+
         foreach ($export->probe($limit) as ['animal' => $animal, 'result' => $result, 'error' => $error]) {
             $this->line("<options=bold>{$animal->name}</> ({$animal->id})");
 
             if ($error !== null) {
+                $failed = true;
                 $this->error("  Fehler: {$error}");
 
                 continue;
@@ -88,6 +107,6 @@ class SyncTiervermittlung extends Command
             $this->line("<fg=gray>{$animal->name} ({$animal->id}) wird nicht exportiert: ".implode(' ', $reasons).'</>');
         }
 
-        return self::SUCCESS;
+        return $failed ? self::FAILURE : self::SUCCESS;
     }
 }

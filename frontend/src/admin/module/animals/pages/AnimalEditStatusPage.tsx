@@ -50,16 +50,16 @@ export function AnimalEditStatusPage({ animal }: AnimalEditStatusPageProps) {
     <div className="space-y-6">
       <Card>
         <CardHeader className="sr-only">
-        <CardTitle>Organisation, Marketing & Status</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <AnimalFormStatus
-          defaultValues={animal}
-          animalTypeId={animal.animal_type_id}
-          onSubmit={handleSubmit}
-          isSubmitting={updateMutation.isPending}
-        />
-      </CardContent>
+          <CardTitle>Organisation, Marketing & Status</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <AnimalFormStatus
+            defaultValues={animal}
+            animalTypeId={animal.animal_type_id}
+            onSubmit={handleSubmit}
+            isSubmitting={updateMutation.isPending}
+          />
+        </CardContent>
       </Card>
       {animal.tiervermittlung && (
         <AnimalTiervermittlungCard tiervermittlung={animal.tiervermittlung} />

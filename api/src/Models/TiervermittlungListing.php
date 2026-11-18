@@ -15,7 +15,10 @@ class TiervermittlungListing extends Model
 {
     use HasUuids;
 
-    /** Our own marker for a delivery the platform rejected (HTTP 400). */
+    /**
+     * Our own marker for an animal whose deliveries the platform rejected
+     * (HTTP 400) before it ever accepted one, so there is no listing.
+     */
     public const STATUS_REJECTED = 'abgelehnt';
 
     protected $attributes = [

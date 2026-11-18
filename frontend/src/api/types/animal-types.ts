@@ -4,14 +4,7 @@ import type { FormTemplateResource } from './form-templates'
 
 // Mirrors: api/src/Enums/TiervermittlungSpecies.php
 export type TiervermittlungSpecies =
-  | 'dog'
-  | 'cat'
-  | 'small'
-  | 'bird'
-  | 'reptile'
-  | 'horse'
-  | 'fish'
-  | 'other'
+  'dog' | 'cat' | 'small' | 'bird' | 'reptile' | 'horse' | 'fish' | 'other'
 
 export interface AnimalTypeResource {
   id: string

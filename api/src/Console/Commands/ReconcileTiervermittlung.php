@@ -3,6 +3,7 @@
 namespace Taily\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Support\Facades\Log;
 use Taily\Support\Tiervermittlung\TiervermittlungException;
 use Taily\Support\Tiervermittlung\TiervermittlungExport;
@@ -13,10 +14,25 @@ class ReconcileTiervermittlung extends Command
 
     protected $description = 'Remove listings on Tiervermittlung.de that this installation no longer exports';
 
+    private const LOCK_WAIT_SECONDS = 300;
+
     public function handle(TiervermittlungExport $export): int
     {
         if (! TiervermittlungExport::isEnabled() || TiervermittlungExport::configurationProblems()) {
             return self::SUCCESS;
+        }
+
+        // Waits for a running sync: the list handed to the platform must not
+        // miss animals that sync is adding at the same time, or the platform
+        // would remove them again.
+        $lock = TiervermittlungExport::lock();
+
+        try {
+            $lock->block(self::LOCK_WAIT_SECONDS);
+        } catch (LockTimeoutException) {
+            $this->error('Ein Export-Lauf ist noch aktiv, der Abgleich wurde übersprungen.');
+
+            return self::FAILURE;
         }
 
         try {
@@ -26,6 +42,8 @@ class ReconcileTiervermittlung extends Command
             $this->error("Fehlgeschlagen: {$e->describe()}");
 
             return self::FAILURE;
+        } finally {
+            $lock->release();
         }
 
         if ($result === null) {

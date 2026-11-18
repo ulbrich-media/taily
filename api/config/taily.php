@@ -73,7 +73,7 @@ return [
 
     'tiervermittlung' => [
         'enabled' => (bool) env('TAILY_TIERVERMITTLUNG_ENABLED', false),
-        'api_key' => env('TAILY_TIERVERMITTLUNG_API_KEY', 'abc'),
+        'api_key' => env('TAILY_TIERVERMITTLUNG_API_KEY', ''),
         'base_url' => env('TAILY_TIERVERMITTLUNG_BASE_URL', 'https://www.tiervermittlung.de/api/v1'),
         'location' => [
             'country' => env('TAILY_TIERVERMITTLUNG_COUNTRY', 'DE'),
@@ -81,8 +81,9 @@ return [
             'city' => env('TAILY_TIERVERMITTLUNG_CITY', ''),
         ],
         // The platform allows 60 requests per minute and key. A pause between
-        // requests and a cap per run keep each scheduler run short; whatever
-        // is left over goes out with the next run.
+        // requests and a cap on animals sent or removed per run keep each
+        // scheduler run short; whatever is left over goes out with the next
+        // run. A rate-limited request is retried once after `Retry-After`.
         'request_interval_ms' => (int) env('TAILY_TIERVERMITTLUNG_REQUEST_INTERVAL_MS', 1100),
         'max_requests_per_run' => (int) env('TAILY_TIERVERMITTLUNG_MAX_REQUESTS_PER_RUN', 50),
     ],

@@ -5,6 +5,7 @@ namespace Taily\Tests\Feature;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Sleep;
@@ -227,6 +228,45 @@ class TiervermittlungExportTest extends TestCase
         Http::assertSentCount(2);
     }
 
+    public function test_an_unchanged_rejected_animal_is_not_resent_by_the_refresh(): void
+    {
+        Http::fake([self::BASE.'/tiere/*' => Http::response(['fehler' => 'Beschreibung zu kurz', 'feld' => 'description'], 400)]);
+        $this->animal();
+
+        $this->artisan('tiervermittlung:sync');
+        $this->travel(31)->days();
+        $this->artisan('tiervermittlung:sync');
+
+        Http::assertSentCount(1);
+    }
+
+    public function test_a_rejected_update_keeps_the_live_listing(): void
+    {
+        Http::fakeSequence()
+            ->push(['status' => 'veroeffentlicht', 'tvId' => 2962437, 'url' => 'https://example.org/2962437'], 201)
+            ->push(['fehler' => 'Beschreibung zu kurz', 'feld' => 'description'], 400)
+            ->push(['bremse' => false, 'entfernt' => [], 'behalten' => 1, 'unbekannt' => [], 'hinweis' => '']);
+        $animal = $this->animal();
+        $this->sync();
+
+        $animal->update(['publish_description' => 'Kurz']);
+        $this->artisan('tiervermittlung:sync')->assertFailed();
+
+        $listing = $animal->tiervermittlungListing()->first();
+        $this->assertSame('veroeffentlicht', $listing->status);
+        $this->assertSame(2962437, $listing->tv_id);
+        $this->assertSame('Beschreibung zu kurz (Feld: description)', $listing->last_error);
+
+        // Not sent again until it changes ...
+        $this->sync();
+        Http::assertSentCount(2);
+
+        // ... and still part of the reconciliation, so the platform keeps it.
+        $this->artisan('tiervermittlung:reconcile')->assertSuccessful();
+        Http::assertSent(fn (Request $request) => $request->url() === self::BASE.'/abgleich'
+            && $request['tierIds'] === [$animal->id]);
+    }
+
     public function test_a_temporary_failure_is_retried_on_the_next_run(): void
     {
         Http::fakeSequence()
@@ -308,6 +348,13 @@ class TiervermittlungExportTest extends TestCase
         Http::assertNothingSent();
     }
 
+    public function test_the_api_key_defaults_to_empty_so_a_missing_key_is_reported(): void
+    {
+        $config = require __DIR__.'/../../config/taily.php';
+
+        $this->assertSame('', $config['tiervermittlung']['api_key']);
+    }
+
     public function test_an_incomplete_configuration_is_reported(): void
     {
         config(['taily.tiervermittlung.api_key' => '', 'taily.tiervermittlung.location.zip' => '']);
@@ -342,6 +389,63 @@ class TiervermittlungExportTest extends TestCase
         Http::assertSentCount(1);
         Http::assertSent(fn (Request $request) => $request->url() === self::BASE.'/tiere/'.$animal->id.'?probe=1');
         $this->assertDatabaseCount('tiervermittlung_listings', 0);
+    }
+
+    public function test_a_probe_with_errors_fails(): void
+    {
+        Http::fake([self::BASE.'/tiere/*' => Http::response(['fehler' => 'Beschreibung zu kurz', 'feld' => 'description'], 400)]);
+        $this->animal();
+
+        $this->artisan('tiervermittlung:sync --probe')
+            ->expectsOutputToContain('Fehler: Beschreibung zu kurz (Feld: description)')
+            ->assertFailed();
+    }
+
+    public function test_a_probe_is_capped_like_a_sync(): void
+    {
+        Http::fake([self::BASE.'/tiere/*' => Http::response(['probe' => true, 'status' => 'wuerde_veroeffentlicht'])]);
+        config(['taily.tiervermittlung.max_requests_per_run' => 2]);
+        $this->animal('Bello');
+        $this->animal('Luna');
+        $this->animal('Rex');
+
+        $this->artisan('tiervermittlung:sync --probe')->assertSuccessful();
+        Http::assertSentCount(2);
+
+        $this->artisan('tiervermittlung:sync --probe --limit=3')->assertSuccessful();
+        Http::assertSentCount(5);
+    }
+
+    public function test_sync_skips_while_another_export_run_holds_the_lock(): void
+    {
+        $this->fakePublished();
+        $this->animal();
+        $lock = Cache::lock('tiervermittlung-export', 60);
+        $lock->get();
+
+        $this->artisan('tiervermittlung:sync')
+            ->expectsOutputToContain('noch aktiv')
+            ->assertSuccessful();
+        Http::assertNothingSent();
+
+        $lock->release();
+        $this->sync();
+        Http::assertSentCount(1);
+    }
+
+    public function test_reconcile_waits_for_a_running_sync_and_gives_up_eventually(): void
+    {
+        Sleep::fake(syncWithCarbon: true);
+        $this->fakePublished();
+        $this->animal();
+        $this->sync();
+        Cache::lock('tiervermittlung-export', 3600)->get();
+
+        $this->artisan('tiervermittlung:reconcile')
+            ->expectsOutputToContain('übersprungen')
+            ->assertFailed();
+
+        Http::assertNotSent(fn (Request $request) => str_ends_with($request->url(), '/abgleich'));
     }
 
     public function test_reconcile_sends_all_listed_animals_and_resends_unknown_ones(): void
