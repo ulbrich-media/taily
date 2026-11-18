@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { AuthenticatedLayout } from '@/admin/components/layout/AuthenticatedLayout'
 import { queryClient } from '@/lib/queryClient'
+import { useAuth } from '@/lib/auth.hook'
 import { type User as AuthUser } from '@/lib/auth.types'
 import { UserRole } from '@/api/types/users'
 import { Route as DashboardRoute } from '@/routes/admin/_authenticated/index'
@@ -37,6 +38,7 @@ export const Route = createFileRoute('/admin/_authenticated')({
 
 function RouteComponent() {
   const navigateToLogin = LoginRoute.useNavigate()
+  const { sessionExpired } = useAuth()
 
   const navLinks = (
     <>
@@ -129,7 +131,11 @@ function RouteComponent() {
       navLinks={navLinks}
       dropdownUserItems={dropdownUserItems}
       mobileUserLinks={mobileUserLinks}
-      onUnauthenticated={() => navigateToLogin({})}
+      onUnauthenticated={() =>
+        navigateToLogin({
+          search: sessionExpired ? { reason: 'expired' } : {},
+        })
+      }
     />
   )
 }
