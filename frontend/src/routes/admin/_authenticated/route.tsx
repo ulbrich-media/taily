@@ -1,9 +1,8 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 import { AuthenticatedLayout } from '@/admin/components/layout/AuthenticatedLayout'
 import { queryClient } from '@/lib/queryClient'
 import { useAuth } from '@/lib/auth.hook'
-import { type User as AuthUser } from '@/lib/auth.types'
-import { UserRole } from '@/api/types/users'
+import { resolveAdminAccess } from '@/lib/profile.query'
 import { Route as DashboardRoute } from '@/routes/admin/_authenticated/index'
 import { Route as AnimalsRoute } from '@/routes/admin/_authenticated/animals/_animalsList/route'
 import { Route as PeopleRoute } from '@/routes/admin/_authenticated/people/index'
@@ -22,9 +21,13 @@ import {
 
 export const Route = createFileRoute('/admin/_authenticated')({
   component: RouteComponent,
-  beforeLoad: () => {
-    const user = queryClient.getQueryData<AuthUser>(['profile'])
-    const isAdmin = user?.role === UserRole.Admin
+  beforeLoad: async () => {
+    const { isAdmin, isAuthenticated } = await resolveAdminAccess(queryClient)
+
+    // Logged-out visitors go to the login page instead of an admin 403.
+    if (!isAuthenticated) {
+      throw redirect({ to: '/admin/login' })
+    }
 
     return {
       isAdmin,
