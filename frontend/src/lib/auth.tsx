@@ -1,11 +1,7 @@
 import { type ReactNode, useCallback, useEffect, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import {
-  apiRequest,
-  csrfCookie,
-  setUnauthenticatedHandler,
-  UnauthenticatedError,
-} from './api'
+import { apiRequest, csrfCookie, setUnauthenticatedHandler } from './api'
+import { fetchProfile, profileQueryKey } from './profile.query'
 import type {
   AuthContextType,
   LoginResult,
@@ -35,11 +31,11 @@ export function AuthProvider({
   // from another request firing together cause a single transition. Users who
   // were never signed in (public pages, first visit) are left alone.
   const expireSession = useCallback(() => {
-    if (!queryClient.getQueryData<User | null>(['profile'])) {
+    if (!queryClient.getQueryData<User | null>(profileQueryKey)) {
       return
     }
     setSessionExpired(true)
-    queryClient.setQueryData(['profile'], null)
+    queryClient.setQueryData(profileQueryKey, null)
   }, [queryClient])
 
   useEffect(() => {
@@ -52,18 +48,18 @@ export function AuthProvider({
     isLoading,
     refetch,
   } = useQuery({
-    queryKey: ['profile'],
+    queryKey: profileQueryKey,
     queryFn: async () => {
       try {
-        return await apiRequest<User>('profile')
-      } catch (error) {
-        if (error instanceof UnauthenticatedError) {
+        const profile = await fetchProfile()
+        if (profile === null) {
           expireSession()
-          return null
         }
+        return profile
+      } catch {
         // Network or server errors must not log the user out; keep the
         // current user (if any) until the next successful check.
-        return queryClient.getQueryData<User | null>(['profile']) ?? null
+        return queryClient.getQueryData<User | null>(profileQueryKey) ?? null
       }
     },
     refetchInterval: 5 * 60 * 1000, // 5 minutes
@@ -129,7 +125,7 @@ export function AuthProvider({
       console.error('Logout error:', error)
     } finally {
       setSessionExpired(false)
-      queryClient.setQueryData(['profile'], null)
+      queryClient.setQueryData(profileQueryKey, null)
       clearRememberedListSearches()
       onLogoutSuccess?.()
     }

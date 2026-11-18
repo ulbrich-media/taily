@@ -3,6 +3,9 @@ import { UserRole } from '@/api/types/users'
 import { apiRequest, UnauthenticatedError } from './api'
 import type { User } from '@/lib/auth.types'
 
+/** Shared cache key for the signed-in user (AuthProvider and route guards). */
+export const profileQueryKey = ['profile'] as const
+
 /** Loads the signed-in user; resolves to `null` when the session is gone. */
 export async function fetchProfile(): Promise<User | null> {
   try {
@@ -27,7 +30,7 @@ export async function resolveAdminAccess(
 ): Promise<AdminAccess> {
   try {
     const user = await queryClient.ensureQueryData<User | null>({
-      queryKey: ['profile'],
+      queryKey: profileQueryKey,
       queryFn: fetchProfile,
     })
     return {
