@@ -1,4 +1,4 @@
-import { useForm, FormProvider } from 'react-hook-form'
+import { useForm, useWatch, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Button } from '@/shadcn/components/ui/button.tsx'
@@ -33,6 +33,7 @@ import {
   zFieldString,
 } from '@/components/field/TextInput.utils.ts'
 import { COUNTRY_OPTIONS } from '@/lib/countries.ts'
+import { X } from 'lucide-react'
 
 const animalFormBasicSchema = z.object({
   animal_type_id: z.string().min(1, 'Pflichtfeld darf nicht leer sein'),
@@ -108,6 +109,11 @@ export function AnimalFormBasic({
       contract_notes: defaultValues?.contract_notes || '',
       internal_notes: defaultValues?.internal_notes || '',
     },
+  })
+
+  const currentCountry = useWatch({
+    control: form.control,
+    name: 'current_country',
   })
 
   const handleFormSubmit = async (data: AnimalFormBasicData) => {
@@ -235,6 +241,22 @@ export function AnimalFormBasic({
                 label="Aufenthaltsland"
                 info="Land, in dem das Tier gerade lebt. Wird für den Export zu Tiervermittlung.de benötigt."
                 options={COUNTRY_OPTIONS}
+                additionalAction={
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    aria-label="Aufenthaltsland entfernen"
+                    disabled={!currentCountry}
+                    onClick={() =>
+                      form.setValue('current_country', '', {
+                        shouldDirty: true,
+                      })
+                    }
+                  >
+                    <X />
+                  </Button>
+                }
               />
 
               <DateInput

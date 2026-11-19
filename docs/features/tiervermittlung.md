@@ -47,6 +47,8 @@ The same animals the website and the public API show (`do_publish`), minus those
 - at least one picture,
 - an Aufenthaltsland (`current_country`).
 
+The Aufenthaltsland was added after the export. When an installation upgrades, animals that already have a listing get `DE`, the country they were listed with until then, so their listings stay online; all other animals start without a country and are only exported once it is set.
+
 Every exported animal is listed as up for adoption (`forAdoption`). The animal's status tab shows whether it is exported, why not, and what the platform answered on the last delivery.
 
 ## Data sent
