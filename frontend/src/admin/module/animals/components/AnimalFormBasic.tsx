@@ -32,6 +32,7 @@ import {
   zFieldInt,
   zFieldString,
 } from '@/components/field/TextInput.utils.ts'
+import { COUNTRY_OPTIONS } from '@/lib/countries.ts'
 
 const animalFormBasicSchema = z.object({
   animal_type_id: z.string().min(1, 'Pflichtfeld darf nicht leer sein'),
@@ -48,6 +49,7 @@ const animalFormBasicSchema = z.object({
   date_of_birth: zFieldDate,
   origin_country: zFieldString(),
   current_location: zFieldString(),
+  current_country: z.string(),
   intake_date: zFieldDate,
   character_description: zFieldString({ maxLength: STRING_LENGTH_TEXTAREA }),
   contract_notes: zFieldString({ maxLength: STRING_LENGTH_TEXTAREA }),
@@ -100,6 +102,7 @@ export function AnimalFormBasic({
       date_of_birth: toDateFieldValue(defaultValues?.date_of_birth),
       origin_country: defaultValues?.origin_country || '',
       current_location: defaultValues?.current_location || '',
+      current_country: defaultValues?.current_country || '',
       intake_date: toDateFieldValue(defaultValues?.intake_date),
       character_description: defaultValues?.character_description || '',
       contract_notes: defaultValues?.contract_notes || '',
@@ -224,6 +227,14 @@ export function AnimalFormBasic({
                 control={form.control}
                 label="Aufenthaltsort"
                 info="Aktueller Standort des Tieres"
+              />
+
+              <SelectInput
+                name="current_country"
+                control={form.control}
+                label="Aufenthaltsland"
+                info="Land, in dem das Tier gerade lebt. Wird für den Export zu Tiervermittlung.de benötigt."
+                options={COUNTRY_OPTIONS}
               />
 
               <DateInput

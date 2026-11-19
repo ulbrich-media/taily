@@ -65,9 +65,8 @@ return [
     | verwalten". Runs from the scheduler (`tiervermittlung:sync`), so the
     | scheduler cron entry is required.
     |
-    | All animals are listed at the location below — usually the Operating
-    | Organization's own — since Taily has no structured location per
-    | animal. Contact details on the listing come from the account itself.
+    | Each animal is listed in its `current_country`. Contact details on the
+    | listing come from the account itself.
     |
     */
 
@@ -75,11 +74,6 @@ return [
         'enabled' => (bool) env('TAILY_TIERVERMITTLUNG_ENABLED', false),
         'api_key' => env('TAILY_TIERVERMITTLUNG_API_KEY', ''),
         'base_url' => env('TAILY_TIERVERMITTLUNG_BASE_URL', 'https://www.tiervermittlung.de/api/v1'),
-        'location' => [
-            'country' => env('TAILY_TIERVERMITTLUNG_COUNTRY', 'DE'),
-            'zip' => env('TAILY_TIERVERMITTLUNG_ZIP', ''),
-            'city' => env('TAILY_TIERVERMITTLUNG_CITY', ''),
-        ],
         // The platform allows 60 requests per minute and key. A pause between
         // requests and a cap on animals sent or removed per run keep each
         // scheduler run short; whatever is left over goes out with the next

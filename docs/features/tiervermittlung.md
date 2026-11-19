@@ -12,9 +12,6 @@ The platform is push-only: Taily sends the complete state of each animal, the pl
 
    ```dotenv
    TAILY_TIERVERMITTLUNG_API_KEY=tv_…
-   TAILY_TIERVERMITTLUNG_COUNTRY=DE
-   TAILY_TIERVERMITTLUNG_ZIP=04109
-   TAILY_TIERVERMITTLUNG_CITY=Leipzig
    ```
 
 4. Map every Animal Type that should be exported to a species on tiervermittlung.de (Einstellungen → Tierarten → "Tierart auf Tiervermittlung.de").
@@ -47,7 +44,8 @@ The same animals the website and the public API show (`do_publish`), minus those
 - not adopted (no adoption with status `done`),
 - Animal Type mapped to a Tiervermittlung Species,
 - a description text (`publish_description`),
-- at least one picture.
+- at least one picture,
+- an Aufenthaltsland (`current_country`).
 
 Every exported animal is listed as up for adoption (`forAdoption`). The animal's status tab shows whether it is exported, why not, and what the platform answered on the last delivery.
 
@@ -63,10 +61,10 @@ Every exported animal is listed as up for adoption (`forAdoption`). The animal's
 | `description` | `publish_description` |
 | `images` | the first five pictures in their order, as the `export` conversion via the public media route; the media uuid is the image id, so the platform only downloads new pictures |
 | `chip` | whether a TASSO or FINDEFIX registration exists — never the numbers |
-| `location` | the configured location, for every animal |
+| `location` | `current_country` as country; zip and city are always `-` |
 | `externalUrl` | `application_url`, shown below the description |
 
-Animals abroad are listed at the configured location as well: Taily has no structured location per animal, and the club already lists them this way by hand. Not sent: health data, chip numbers, people, compatibilities and personality traits (free text without a fixed mapping).
+Taily only knows the country an animal lives in (`current_location` is free text for people). The platform requires zip and city too and fills both with a dash when a listing abroad is entered by hand, so the export sends `-` for every animal. Animals abroad are only published if the club's account has a § 11 TierSchG permit on file; otherwise they come back as `nicht_veroeffentlicht` with a reason. Not sent: health data, chip numbers, people, compatibilities and personality traits (free text without a fixed mapping).
 
 ## How the sync works
 

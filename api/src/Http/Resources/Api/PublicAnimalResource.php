@@ -45,6 +45,7 @@ class PublicAnimalResource extends JsonResource
             'health_description' => $this->resource->health_description,
             'adoption_fee' => $this->resource->adoption_fee,
             'current_location' => $this->resource->current_location,
+            'current_country' => $this->resource->current_country,
             'do_publish' => $this->resource->do_publish,
             'is_reserved' => $this->resource->is_reserved,
             'publish_description' => $this->resource->publish_description,

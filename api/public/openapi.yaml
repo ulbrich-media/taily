@@ -243,6 +243,12 @@ components:
         current_location:
           type: string
           nullable: true
+        current_country:
+          type: string
+          description: |
+            ISO 3166-1 alpha-2 code of the country the animal currently lives
+            in, e.g. `DE`. Empty string when unknown.
+          example: DE
         do_publish:
           type: boolean
           description: Always `true` for animals returned by this endpoint.
