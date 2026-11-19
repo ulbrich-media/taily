@@ -63,6 +63,8 @@ class AnimalController extends Controller
             'size_cm' => 'nullable|integer|min:0|max:500',
             'date_of_birth' => 'nullable|date',
             'origin_country' => 'nullable|string|max:255',
+            'current_location' => 'nullable|string|max:255',
+            'current_country' => ['string', 'regex:/^[A-Z]{2}$/'],
             'is_boarding_animal' => 'boolean',
             'intake_date' => 'nullable|date',
             'character_description' => 'nullable|string',
@@ -74,7 +76,7 @@ class AnimalController extends Controller
 
         $animal = Animal::create($validated);
 
-        $animal->load(['animalType', 'vaccinations', 'medicalTests', 'assignedAgent', 'owner', 'sponsor', 'adoptions', 'media', 'compatibilities', 'personalityTraits']);
+        $animal->load(['animalType', 'vaccinations', 'medicalTests', 'assignedAgent', 'owner', 'sponsor', 'adoptions', 'media', 'compatibilities', 'personalityTraits', 'tiervermittlungListing']);
 
         return response()->json([
             'message' => 'Tier erfolgreich angelegt.',
@@ -98,6 +100,7 @@ class AnimalController extends Controller
             'media',
             'compatibilities',
             'personalityTraits',
+            'tiervermittlungListing',
         ]);
 
         return new AnimalDetailResource($animal);
@@ -122,6 +125,7 @@ class AnimalController extends Controller
             'size_cm' => 'sometimes|nullable|integer|min:0|max:500',
             'date_of_birth' => 'sometimes|nullable|date',
             'origin_country' => 'sometimes|nullable|string|max:255',
+            'current_country' => ['sometimes', 'string', 'regex:/^[A-Z]{2}$/'],
             'is_boarding_animal' => 'sometimes|boolean',
             'intake_date' => 'sometimes|nullable|date',
             'character_description' => 'sometimes|nullable|string',
@@ -197,7 +201,7 @@ class AnimalController extends Controller
             $animal->medicalTests()->sync($testData->toArray());
         }
 
-        $animal->load(['animalType', 'vaccinations', 'medicalTests', 'assignedAgent', 'owner', 'sponsor', 'adoptions', 'media', 'compatibilities', 'personalityTraits']);
+        $animal->load(['animalType', 'vaccinations', 'medicalTests', 'assignedAgent', 'owner', 'sponsor', 'adoptions', 'media', 'compatibilities', 'personalityTraits', 'tiervermittlungListing']);
 
         return response()->json([
             'message' => 'Tier erfolgreich aktualisiert.',

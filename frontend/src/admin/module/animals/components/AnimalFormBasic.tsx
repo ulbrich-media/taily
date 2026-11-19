@@ -1,4 +1,4 @@
-import { useForm, FormProvider } from 'react-hook-form'
+import { useForm, useWatch, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Button } from '@/shadcn/components/ui/button.tsx'
@@ -32,6 +32,8 @@ import {
   zFieldInt,
   zFieldString,
 } from '@/components/field/TextInput.utils.ts'
+import { COUNTRY_OPTIONS } from '@/lib/countries.ts'
+import { X } from 'lucide-react'
 
 const animalFormBasicSchema = z.object({
   animal_type_id: z.string().min(1, 'Pflichtfeld darf nicht leer sein'),
@@ -48,6 +50,7 @@ const animalFormBasicSchema = z.object({
   date_of_birth: zFieldDate,
   origin_country: zFieldString(),
   current_location: zFieldString(),
+  current_country: z.string(),
   intake_date: zFieldDate,
   character_description: zFieldString({ maxLength: STRING_LENGTH_TEXTAREA }),
   contract_notes: zFieldString({ maxLength: STRING_LENGTH_TEXTAREA }),
@@ -100,11 +103,17 @@ export function AnimalFormBasic({
       date_of_birth: toDateFieldValue(defaultValues?.date_of_birth),
       origin_country: defaultValues?.origin_country || '',
       current_location: defaultValues?.current_location || '',
+      current_country: defaultValues?.current_country || '',
       intake_date: toDateFieldValue(defaultValues?.intake_date),
       character_description: defaultValues?.character_description || '',
       contract_notes: defaultValues?.contract_notes || '',
       internal_notes: defaultValues?.internal_notes || '',
     },
+  })
+
+  const currentCountry = useWatch({
+    control: form.control,
+    name: 'current_country',
   })
 
   const handleFormSubmit = async (data: AnimalFormBasicData) => {
@@ -224,6 +233,30 @@ export function AnimalFormBasic({
                 control={form.control}
                 label="Aufenthaltsort"
                 info="Aktueller Standort des Tieres"
+              />
+
+              <SelectInput
+                name="current_country"
+                control={form.control}
+                label="Aufenthaltsland"
+                info="Land, in dem das Tier gerade lebt. Wird für den Export zu Tiervermittlung.de benötigt."
+                options={COUNTRY_OPTIONS}
+                additionalAction={
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    aria-label="Aufenthaltsland entfernen"
+                    disabled={!currentCountry}
+                    onClick={() =>
+                      form.setValue('current_country', '', {
+                        shouldDirty: true,
+                      })
+                    }
+                  >
+                    <X />
+                  </Button>
+                }
               />
 
               <DateInput

@@ -109,7 +109,7 @@ paths:
           required: false
           schema:
             type: string
-            enum: [thumbnail, preview, full]
+            enum: [thumbnail, preview, full, export]
           description: |
             Image size variant to serve. Omit for the original file (required for videos).
 
@@ -118,6 +118,7 @@ paths:
             | `thumbnail` | 80×80 px (cropped square) | List views, avatars |
             | `preview` | up to 800×800 px | Detail pages |
             | `full` | up to 1440×1440 px | Lightbox / full-screen |
+            | `export` | up to 1440×1440 px, always JPEG | Third-party platforms that only accept JPEG |
       responses:
         '200':
           description: Binary image or video file.
@@ -242,6 +243,12 @@ components:
         current_location:
           type: string
           nullable: true
+        current_country:
+          type: string
+          description: |
+            ISO 3166-1 alpha-2 code of the country the animal currently lives
+            in, e.g. `DE`. Empty string when unknown.
+          example: DE
         do_publish:
           type: boolean
           description: Always `true` for animals returned by this endpoint.

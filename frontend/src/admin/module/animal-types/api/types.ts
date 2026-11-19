@@ -2,7 +2,10 @@
 // Response types (returned by the API)
 // ---------------------------------------------------------------------------
 
-import type { AnimalTypeResource } from '@/api/types/animal-types'
+import type {
+  AnimalTypeResource,
+  TiervermittlungSpecies,
+} from '@/api/types/animal-types'
 
 /** Single animal type (backwards compat alias). */
 export type AnimalType = AnimalTypeResource
@@ -24,8 +27,10 @@ export interface DeleteAnimalTypeResponse {
 
 export interface CreateAnimalTypeRequest {
   title: string
+  tiervermittlung_species?: TiervermittlungSpecies | null
 }
 
 export interface UpdateAnimalTypeRequest {
   title: string
+  tiervermittlung_species?: TiervermittlungSpecies | null
 }

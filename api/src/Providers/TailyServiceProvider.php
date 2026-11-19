@@ -11,16 +11,20 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
+use Taily\Console\Commands\CheckTiervermittlung;
 use Taily\Console\Commands\ProcessContractSigningReminders;
+use Taily\Console\Commands\ReconcileTiervermittlung;
 use Taily\Console\Commands\SeedDatabase;
 use Taily\Console\Commands\SmokeTestAuthConfig;
 use Taily\Console\Commands\SmokeTestMailViews;
+use Taily\Console\Commands\SyncTiervermittlung;
 use Taily\Http\Controllers\Dev\ContractPreviewController;
 use Taily\Http\Middleware\EnsureUserIsAdmin;
 use Taily\Http\Middleware\ForceJsonResponse;
 use Taily\Http\Middleware\PublicApiCors;
 use Taily\Models\User;
 use Taily\Support\MediaUrlGenerator;
+use Taily\Support\Tiervermittlung\TiervermittlungClient;
 
 class TailyServiceProvider extends ServiceProvider
 {
@@ -40,6 +44,12 @@ class TailyServiceProvider extends ServiceProvider
         // Passkeys::useUserModel() in FortifyServiceProvider::boot() (which
         // runs after Fortify's register()+boot() have both completed).
         config(['auth.providers.users.model' => User::class]);
+
+        $this->app->bind(TiervermittlungClient::class, fn () => new TiervermittlungClient(
+            config('taily.tiervermittlung.base_url'),
+            (string) config('taily.tiervermittlung.api_key'),
+            (int) config('taily.tiervermittlung.request_interval_ms'),
+        ));
     }
 
     /**
@@ -120,6 +130,9 @@ class TailyServiceProvider extends ServiceProvider
                 SmokeTestMailViews::class,
                 SmokeTestAuthConfig::class,
                 ProcessContractSigningReminders::class,
+                SyncTiervermittlung::class,
+                ReconcileTiervermittlung::class,
+                CheckTiervermittlung::class,
             ]);
         }
     }

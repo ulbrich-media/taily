@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -40,6 +41,7 @@ class Animal extends Model implements HasMedia
         'origin_organization' => '',
         'sponsor_external' => '',
         'current_location' => '',
+        'current_country' => '',
         'alternate_transport_trace' => '',
         'alternate_arrival_location' => '',
         'publish_description' => '',
@@ -64,6 +66,7 @@ class Animal extends Model implements HasMedia
         'size_cm',
         'date_of_birth',
         'origin_country',
+        'current_country',
         'is_boarding_animal',
         'intake_date',
         'character_description',
@@ -155,6 +158,14 @@ class Animal extends Model implements HasMedia
             ->fit(Fit::Max, 1440, 1440)
             ->performOnCollections('pictures')
             ->nonQueued();
+
+        // Always JPEG, whatever was uploaded: external platforms such as
+        // Tiervermittlung.de only accept JPEG or PNG.
+        $this->addMediaConversion('export')
+            ->fit(Fit::Max, 1440, 1440)
+            ->format('jpg')
+            ->performOnCollections('pictures')
+            ->nonQueued();
     }
 
     public function traits(): HasMany
@@ -192,6 +203,14 @@ class Animal extends Model implements HasMedia
         return $this->belongsToMany(MedicalTest::class, 'animal_medical_test')
             ->withPivot('tested_at', 'result')
             ->withTimestamps();
+    }
+
+    /**
+     * The animal's listing on Tiervermittlung.de, once it has been sent there.
+     */
+    public function tiervermittlungListing(): HasOne
+    {
+        return $this->hasOne(TiervermittlungListing::class);
     }
 
     /**

@@ -21,10 +21,18 @@ import { toast } from 'sonner'
 import { FormBlocker } from '@/components/form/FormBlocker'
 import { TextInput } from '@/components/field/TextInput'
 import { zFieldString } from '@/components/field/TextInput.utils.ts'
+import { SelectInput } from '@/components/field/SelectInput'
+import {
+  fromSpeciesFormValue,
+  TIERVERMITTLUNG_SPECIES_FORM_VALUES,
+  TIERVERMITTLUNG_SPECIES_OPTIONS,
+  toSpeciesFormValue,
+} from '@/admin/module/animal-types/tiervermittlung-species'
 import { Mark } from '@/components/typo/mark.tsx'
 
 const updateAnimalTypeSchema = z.object({
   title: zFieldString({ required: true }),
+  tiervermittlung_species: z.enum(TIERVERMITTLUNG_SPECIES_FORM_VALUES),
 })
 
 type UpdateAnimalTypeFormData = z.infer<typeof updateAnimalTypeSchema>
@@ -46,6 +54,9 @@ export function AnimalTypeEditPage({
     resolver: zodResolver(updateAnimalTypeSchema),
     defaultValues: {
       title: animalType.title,
+      tiervermittlung_species: toSpeciesFormValue(
+        animalType.tiervermittlung_species
+      ),
     },
   })
 
@@ -53,6 +64,9 @@ export function AnimalTypeEditPage({
     mutationFn: (data: UpdateAnimalTypeFormData) =>
       updateAnimalType(animalType.id, {
         title: data.title,
+        tiervermittlung_species: fromSpeciesFormValue(
+          data.tiervermittlung_species
+        ),
       }),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: animalTypeQueryKeys.list })
@@ -94,6 +108,14 @@ export function AnimalTypeEditPage({
                 control={form.control}
                 label="Name"
                 required
+              />
+
+              <SelectInput
+                name="tiervermittlung_species"
+                control={form.control}
+                label="Tierart auf Tiervermittlung.de"
+                info="Tiere dieser Art werden unter dieser Tierart an Tiervermittlung.de exportiert, sofern der Export aktiviert ist."
+                options={TIERVERMITTLUNG_SPECIES_OPTIONS}
               />
             </FieldGroup>
 

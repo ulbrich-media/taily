@@ -149,3 +149,14 @@ _Avoid_: Login link, Token link
 
 **Unconfirmed Application**: An Adoption from the public form whose email has not been confirmed yet. Its applicant data is stored on it like any other Adoption, but it isn't linked to earlier Adoptions or the portal until the email is confirmed.
 _Avoid_: Draft, Lead
+
+### Exports
+
+**Tiervermittlung Export**: The push of exported Animals to the listing platform tiervermittlung.de through its Partner-API. Runs from the scheduler; see `docs/features/tiervermittlung.md`.
+_Avoid_: Feed, Sync (outside code), Integration
+
+**Listing**: An Animal's advertisement on tiervermittlung.de, identified there by the Animal's id (`tierId`) and the platform's own number (`tvId`). Taily keeps the platform's last answer per Listing.
+_Avoid_: Ad, Posting, Anzeige (outside German UI strings)
+
+**Tiervermittlung Species**: The fixed species value (`dog`, `cat`, `small`, …) an Animal Type is mapped to for the Tiervermittlung Export. Animal Types without one are not exported.
+_Avoid_: Species (alone — Animal Type is the domain term)

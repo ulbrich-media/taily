@@ -20,9 +20,17 @@ import { toast } from 'sonner'
 import { FormBlocker } from '@/components/form/FormBlocker'
 import { TextInput } from '@/components/field/TextInput'
 import { zFieldString } from '@/components/field/TextInput.utils.ts'
+import { SelectInput } from '@/components/field/SelectInput'
+import {
+  fromSpeciesFormValue,
+  TIERVERMITTLUNG_SPECIES_FORM_VALUES,
+  TIERVERMITTLUNG_SPECIES_OPTIONS,
+  toSpeciesFormValue,
+} from '@/admin/module/animal-types/tiervermittlung-species'
 
 const createAnimalTypeSchema = z.object({
   title: zFieldString({ required: true }),
+  tiervermittlung_species: z.enum(TIERVERMITTLUNG_SPECIES_FORM_VALUES),
 })
 
 type CreateAnimalTypeFormData = z.infer<typeof createAnimalTypeSchema>
@@ -42,6 +50,7 @@ export function AnimalTypeCreatePage({
     resolver: zodResolver(createAnimalTypeSchema),
     defaultValues: {
       title: '',
+      tiervermittlung_species: toSpeciesFormValue(null),
     },
   })
 
@@ -64,6 +73,9 @@ export function AnimalTypeCreatePage({
   const onSubmit = async (data: CreateAnimalTypeFormData) => {
     await createMutation.mutateAsync({
       title: data.title,
+      tiervermittlung_species: fromSpeciesFormValue(
+        data.tiervermittlung_species
+      ),
     })
   }
 
@@ -84,6 +96,14 @@ export function AnimalTypeCreatePage({
                 control={form.control}
                 label="Name"
                 required
+              />
+
+              <SelectInput
+                name="tiervermittlung_species"
+                control={form.control}
+                label="Tierart auf Tiervermittlung.de"
+                info="Tiere dieser Art werden unter dieser Tierart an Tiervermittlung.de exportiert, sofern der Export aktiviert ist."
+                options={TIERVERMITTLUNG_SPECIES_OPTIONS}
               />
             </FieldGroup>
 

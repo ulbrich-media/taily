@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Taily\Enums\TiervermittlungSpecies;
 
 class AnimalType extends Model
 {
@@ -19,7 +20,15 @@ class AnimalType extends Model
      */
     protected $fillable = [
         'title',
+        'tiervermittlung_species',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'tiervermittlung_species' => TiervermittlungSpecies::class,
+        ];
+    }
 
     public function fieldGroups(): HasMany
     {

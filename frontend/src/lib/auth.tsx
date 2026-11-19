@@ -1,6 +1,7 @@
-import { type ReactNode } from 'react'
+import { type ReactNode, useCallback, useEffect, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { apiRequest, csrfCookie } from './api'
+import { apiRequest, csrfCookie, setUnauthenticatedHandler } from './api'
+import { fetchProfile, profileQueryKey } from './profile.query'
 import type {
   AuthContextType,
   LoginResult,
@@ -23,21 +24,48 @@ export function AuthProvider({
   onLogoutSuccess,
 }: AuthProviderProps) {
   const queryClient = useQueryClient()
+  const [sessionExpired, setSessionExpired] = useState(false)
+
+  // Ends the session locally when the server reports it is gone. Idempotent:
+  // only acts while a user is still signed in, so a profile refetch and a 401
+  // from another request firing together cause a single transition. Users who
+  // were never signed in (public pages, first visit) are left alone.
+  const expireSession = useCallback(() => {
+    if (!queryClient.getQueryData<User | null>(profileQueryKey)) {
+      return
+    }
+    setSessionExpired(true)
+    queryClient.setQueryData(profileQueryKey, null)
+  }, [queryClient])
+
+  useEffect(() => {
+    setUnauthenticatedHandler(expireSession)
+    return () => setUnauthenticatedHandler(null)
+  }, [expireSession])
 
   const {
     data: user,
     isLoading,
     refetch,
   } = useQuery({
-    queryKey: ['profile'],
+    queryKey: profileQueryKey,
     queryFn: async () => {
       try {
-        return await apiRequest<User>('profile')
+        const profile = await fetchProfile()
+        if (profile === null) {
+          expireSession()
+        }
+        return profile
       } catch {
-        return null
+        // Network or server errors must not log the user out; keep the
+        // current user (if any) until the next successful check.
+        return queryClient.getQueryData<User | null>(profileQueryKey) ?? null
       }
     },
     refetchInterval: 5 * 60 * 1000, // 5 minutes
+    // Re-check the session as soon as the user returns to the tab.
+    refetchOnWindowFocus: true,
+    staleTime: 0,
     retry: false,
   })
 
@@ -65,6 +93,7 @@ export function AuthProvider({
     }
 
     await refetch()
+    setSessionExpired(false)
     clearRememberedListSearches()
     onLoginSuccess?.()
     return { twoFactorRequired: false }
@@ -81,6 +110,7 @@ export function AuthProvider({
     })
 
     await refetch()
+    setSessionExpired(false)
     clearRememberedListSearches()
     onLoginSuccess?.()
   }
@@ -94,7 +124,8 @@ export function AuthProvider({
     } catch (error) {
       console.error('Logout error:', error)
     } finally {
-      queryClient.setQueryData(['profile'], null)
+      setSessionExpired(false)
+      queryClient.setQueryData(profileQueryKey, null)
       clearRememberedListSearches()
       onLogoutSuccess?.()
     }
@@ -109,6 +140,7 @@ export function AuthProvider({
     isAdmin: user?.role === UserRole.Admin,
     isLoading,
     isAuthenticated: !!user,
+    sessionExpired,
     login,
     completeTwoFactorChallenge,
     logout,

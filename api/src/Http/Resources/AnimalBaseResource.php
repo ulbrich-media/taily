@@ -45,6 +45,7 @@ class AnimalBaseResource extends JsonResource
             'sponsor_external' => $this->resource->sponsor_external,
             // Tab 4: Organization, Marketing & Status
             'current_location' => $this->resource->current_location,
+            'current_country' => $this->resource->current_country,
             'alternate_transport_trace' => $this->resource->alternate_transport_trace,
             'alternate_arrival_location' => $this->resource->alternate_arrival_location,
             'do_publish' => $this->resource->do_publish,

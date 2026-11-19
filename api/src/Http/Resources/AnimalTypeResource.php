@@ -12,6 +12,7 @@ class AnimalTypeResource extends JsonResource
         return [
             'id' => $this->resource->id,
             'title' => $this->resource->title,
+            'tiervermittlung_species' => $this->resource->tiervermittlung_species?->value,
             'created_at' => $this->resource->created_at,
             'updated_at' => $this->resource->updated_at,
         ];

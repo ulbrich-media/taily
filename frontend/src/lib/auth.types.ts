@@ -31,6 +31,8 @@ export interface AuthContextType {
   isAdmin: boolean
   isLoading: boolean
   isAuthenticated: boolean
+  /** True when the last authenticated session ended because it expired. */
+  sessionExpired: boolean
   login: (
     email: string,
     password: string,
