@@ -26,7 +26,7 @@ class TiervermittlungPayloadTest extends TestCase
 
         Storage::fake('animal-pictures');
 
-        $this->mapper = new AnimalPayloadMapper(['country' => 'DE', 'zip' => '04109', 'city' => 'Leipzig']);
+        $this->mapper = new AnimalPayloadMapper;
         $this->dogs = AnimalType::create(['title' => 'Hund', 'tiervermittlung_species' => 'dog']);
     }
 
@@ -39,6 +39,7 @@ class TiervermittlungPayloadTest extends TestCase
             'animal_type_id' => $this->dogs->id,
             'name' => 'Bello',
             'gender' => 'male',
+            'current_country' => 'DE',
             'do_publish' => true,
             'publish_description' => 'Bello ist ein freundlicher Rüde, der gern spazieren geht und Menschen mag.',
         ], $attributes));
@@ -75,7 +76,7 @@ class TiervermittlungPayloadTest extends TestCase
             'forAdoption' => true,
             'reserved' => true,
             'chip' => ['present' => true, 'tasso' => true, 'findefix' => false],
-            'location' => ['country' => 'DE', 'zip' => '04109', 'city' => 'Leipzig'],
+            'location' => ['country' => 'DE', 'zip' => '-', 'city' => '-'],
             'images' => [[
                 'id' => $media->uuid,
                 'url' => route('api.media.serve', ['mediaUuid' => $media->uuid, 'conversion' => 'export']),
@@ -131,6 +132,7 @@ class TiervermittlungPayloadTest extends TestCase
             'animal_type_id' => $this->dogs->id,
             'name' => 'Bello',
             'gender' => 'male',
+            'current_country' => 'DE',
             'do_publish' => true,
             'publish_description' => 'Text',
         ]);
@@ -195,6 +197,7 @@ class TiervermittlungPayloadTest extends TestCase
             'do_publish' => false,
             'is_deceased' => true,
             'publish_description' => '   ',
+            'current_country' => '',
         ], images: 0);
 
         $this->assertSame([
@@ -203,7 +206,15 @@ class TiervermittlungPayloadTest extends TestCase
             'Die Tierart ist keiner Tierart auf Tiervermittlung.de zugeordnet.',
             'Es gibt keinen Beschreibungstext.',
             'Es gibt kein Bild.',
+            'Das Aufenthaltsland ist nicht angegeben.',
         ], $this->mapper->exclusionReasons($animal));
+    }
+
+    public function test_it_lists_the_animal_in_its_country_without_zip_and_city(): void
+    {
+        $payload = $this->mapper->payload($this->animal(['current_country' => 'RO']));
+
+        $this->assertSame(['country' => 'RO', 'zip' => '-', 'city' => '-'], $payload['location']);
     }
 
     public function test_adopted_animals_are_removed_as_placed(): void

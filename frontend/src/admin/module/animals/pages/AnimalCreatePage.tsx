@@ -65,6 +65,8 @@ export function AnimalCreatePage({
       size_cm: data.size_cm || undefined,
       date_of_birth: toApiDate(data.date_of_birth),
       origin_country: data.origin_country || undefined,
+      current_location: data.current_location || undefined,
+      current_country: data.current_country || undefined,
       intake_date: toApiDate(data.intake_date),
       character_description: data.character_description || undefined,
       contract_notes: data.contract_notes || undefined,

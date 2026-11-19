@@ -29,9 +29,11 @@ class AnimalPayloadMapper
     public const IMAGE_CONVERSION = 'export';
 
     /**
-     * @param  array{country: string, zip: string, city: string}  $location
+     * Taily only knows the country an animal lives in. The platform requires
+     * zip and city as well and fills them with a dash itself when a listing
+     * abroad is entered by hand, so the export does the same.
      */
-    public function __construct(private array $location) {}
+    public const UNKNOWN_LOCATION_PART = '-';
 
     /**
      * Why the animal is not exported, as German text for the admin UI.
@@ -69,6 +71,10 @@ class AnimalPayloadMapper
 
         if ($this->images($animal) === []) {
             $reasons[] = 'Es gibt kein Bild.';
+        }
+
+        if ($animal->current_country === '') {
+            $reasons[] = 'Das Aufenthaltsland ist nicht angegeben.';
         }
 
         return $reasons;
@@ -128,9 +134,9 @@ class AnimalPayloadMapper
                 'findefix' => $animal->findefix_id !== '',
             ],
             'location' => [
-                'country' => $this->location['country'],
-                'zip' => $this->location['zip'],
-                'city' => $this->location['city'],
+                'country' => $animal->current_country,
+                'zip' => self::UNKNOWN_LOCATION_PART,
+                'city' => self::UNKNOWN_LOCATION_PART,
             ],
             'images' => array_map(fn (Media $media) => [
                 // A new upload gets a new uuid, so the platform only downloads
