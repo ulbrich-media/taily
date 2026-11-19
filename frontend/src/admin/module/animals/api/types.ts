@@ -26,6 +26,7 @@ export interface CreateAnimalRequest {
   size_cm?: string | null
   date_of_birth?: string | null
   origin_country?: string
+  current_location?: string
   intake_date?: string | null
   character_description?: string
   contract_notes?: string
@@ -52,7 +53,6 @@ export interface UpdateAnimalRequest extends CreateAnimalRequest {
   sponsor_id?: string | null
   sponsor_external?: string
   // Tab 4: Organization, Marketing & Status
-  current_location?: string
   alternate_transport_trace?: string
   alternate_arrival_location?: string
   do_publish: boolean
