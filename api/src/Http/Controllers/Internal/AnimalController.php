@@ -63,6 +63,7 @@ class AnimalController extends Controller
             'size_cm' => 'nullable|integer|min:0|max:500',
             'date_of_birth' => 'nullable|date',
             'origin_country' => 'nullable|string|max:255',
+            'current_location' => 'nullable|string|max:255',
             'is_boarding_animal' => 'boolean',
             'intake_date' => 'nullable|date',
             'character_description' => 'nullable|string',
