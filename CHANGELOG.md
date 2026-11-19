@@ -2,6 +2,19 @@
 
 All notable changes to Taily are documented here.
 
+# [0.14.0](https://github.com/ulbrich-media/taily/compare/v0.13.0...v0.14.0) (2026-11-19)
+
+
+### Bug Fixes
+
+* **auth:** load profile before admin route guards on direct load ([#280](https://github.com/ulbrich-media/taily/issues/280)) ([4e4ebe9](https://github.com/ulbrich-media/taily/commit/4e4ebe9d0e844017278e926c868757bca6216412))
+
+
+### Features
+
+* **auth:** redirect to login with notice when session expires ([#259](https://github.com/ulbrich-media/taily/issues/259)) ([47d51f2](https://github.com/ulbrich-media/taily/commit/47d51f2d1d9eb044fbb9c4f12b5955539fec1b8a))
+* **tiervermittlung:** export to tiervermittlung.de added ([#277](https://github.com/ulbrich-media/taily/issues/277)) ([5c9cf24](https://github.com/ulbrich-media/taily/commit/5c9cf2468463c5a1ddd47d1a4a8487da82f4bc3b))
+
 # [0.13.0](https://github.com/ulbrich-media/taily/compare/v0.12.0...v0.13.0) (2026-10-30)
 
 
