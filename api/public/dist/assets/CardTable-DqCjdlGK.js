@@ -1,0 +1,1 @@
+import{_a as e}from"./index-B5fATRsz.js";import{t}from"./jsx-runtime-Wy9s6hX0.js";var n=e(),r=t();function i(e){let t=(0,n.c)(2),{children:i}=e,a;return t[0]===i?a=t[1]:(a=(0,r.jsx)(`div`,{"data-slot":`card-table`,className:`-mx-6`,children:i}),t[0]=i,t[1]=a),a}export{i as t};
