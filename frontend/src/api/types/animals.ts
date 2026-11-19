@@ -60,6 +60,7 @@ export interface AnimalBaseResource {
   alternate_arrival_location: string | null
   do_publish: boolean
   is_reserved: boolean
+  publish_title: string | null
   publish_description: string | null
   compatibilities: string[]
   personality_traits: string[]

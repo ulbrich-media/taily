@@ -44,6 +44,7 @@ class Animal extends Model implements HasMedia
         'current_country' => '',
         'alternate_transport_trace' => '',
         'alternate_arrival_location' => '',
+        'publish_title' => '',
         'publish_description' => '',
         'application_url' => '',
     ];
@@ -93,6 +94,7 @@ class Animal extends Model implements HasMedia
         'alternate_arrival_location',
         'do_publish',
         'is_reserved',
+        'publish_title',
         'publish_description',
         'application_url',
         'is_deceased',

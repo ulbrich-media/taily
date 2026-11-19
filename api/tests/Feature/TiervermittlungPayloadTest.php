@@ -51,6 +51,25 @@ class TiervermittlungPayloadTest extends TestCase
         return $animal->fresh(['animalType', 'media', 'adoptions']);
     }
 
+    public function test_it_sends_the_trimmed_title_cut_at_sixty_characters(): void
+    {
+        $payload = $this->mapper->payload($this->animal(['publish_title' => '  Bello sucht ein Zuhause  ']));
+        $this->assertSame('Bello sucht ein Zuhause', $payload['title']);
+
+        $payload = $this->mapper->payload($this->animal(['publish_title' => str_repeat('a', 60).'b']));
+        $this->assertSame(str_repeat('a', 60), $payload['title']);
+    }
+
+    public function test_it_leaves_out_a_blank_title_without_blocking_the_export(): void
+    {
+        foreach (['', '   ', null] as $title) {
+            $animal = $this->animal(['publish_title' => $title]);
+
+            $this->assertTrue($this->mapper->isExportable($animal));
+            $this->assertArrayNotHasKey('title', $this->mapper->payload($animal));
+        }
+    }
+
     public function test_it_maps_a_complete_animal(): void
     {
         $animal = $this->animal([

@@ -50,6 +50,7 @@ class AnimalBaseResource extends JsonResource
             'alternate_arrival_location' => $this->resource->alternate_arrival_location,
             'do_publish' => $this->resource->do_publish,
             'is_reserved' => $this->resource->is_reserved,
+            'publish_title' => $this->resource->publish_title,
             'publish_description' => $this->resource->publish_description,
             'application_url' => $this->resource->application_url,
             'is_deceased' => $this->resource->is_deceased,
