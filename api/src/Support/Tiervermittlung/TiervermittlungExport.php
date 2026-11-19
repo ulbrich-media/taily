@@ -67,12 +67,6 @@ class TiervermittlungExport
             $problems[] = 'Es ist kein API-Schlüssel hinterlegt (TAILY_TIERVERMITTLUNG_API_KEY).';
         }
 
-        foreach (['country' => 'TAILY_TIERVERMITTLUNG_COUNTRY', 'zip' => 'TAILY_TIERVERMITTLUNG_ZIP', 'city' => 'TAILY_TIERVERMITTLUNG_CITY'] as $key => $env) {
-            if (($config['location'][$key] ?? '') === '') {
-                $problems[] = "Der Standort ist unvollständig ({$env}).";
-            }
-        }
-
         return $problems;
     }
 

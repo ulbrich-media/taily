@@ -24,7 +24,6 @@ use Taily\Http\Middleware\ForceJsonResponse;
 use Taily\Http\Middleware\PublicApiCors;
 use Taily\Models\User;
 use Taily\Support\MediaUrlGenerator;
-use Taily\Support\Tiervermittlung\AnimalPayloadMapper;
 use Taily\Support\Tiervermittlung\TiervermittlungClient;
 
 class TailyServiceProvider extends ServiceProvider
@@ -50,9 +49,6 @@ class TailyServiceProvider extends ServiceProvider
             config('taily.tiervermittlung.base_url'),
             (string) config('taily.tiervermittlung.api_key'),
             (int) config('taily.tiervermittlung.request_interval_ms'),
-        ));
-        $this->app->bind(AnimalPayloadMapper::class, fn () => new AnimalPayloadMapper(
-            config('taily.tiervermittlung.location'),
         ));
     }
 

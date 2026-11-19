@@ -55,6 +55,7 @@ export interface AnimalBaseResource {
   sponsor_external: string | null
   // Tab 4: Organization, Marketing & Status
   current_location: string | null
+  current_country: string
   alternate_transport_trace: string | null
   alternate_arrival_location: string | null
   do_publish: boolean

@@ -53,6 +53,7 @@ class TiervermittlungExportTest extends TestCase
             'animal_type_id' => $this->dogs->id,
             'name' => $name,
             'gender' => 'male',
+            'current_country' => 'DE',
             'do_publish' => true,
             'publish_description' => "{$name} ist ein freundlicher Hund, der ein Zuhause sucht.",
         ], $attributes));
@@ -201,8 +202,9 @@ class TiervermittlungExportTest extends TestCase
         $this->animal('Alpaka', ['animal_type_id' => $unmapped->id]);
         Animal::create([
             'animal_type_id' => $this->dogs->id, 'name' => 'Ohne Bild', 'gender' => 'male',
-            'do_publish' => true, 'publish_description' => 'Text',
+            'do_publish' => true, 'publish_description' => 'Text', 'current_country' => 'DE',
         ]);
+        $this->animal('Ohne Land', ['current_country' => '']);
 
         $this->sync();
 
@@ -357,11 +359,10 @@ class TiervermittlungExportTest extends TestCase
 
     public function test_an_incomplete_configuration_is_reported(): void
     {
-        config(['taily.tiervermittlung.api_key' => '', 'taily.tiervermittlung.location.zip' => '']);
+        config(['taily.tiervermittlung.api_key' => '']);
 
         $this->artisan('tiervermittlung:sync')
             ->expectsOutputToContain('TAILY_TIERVERMITTLUNG_API_KEY')
-            ->expectsOutputToContain('TAILY_TIERVERMITTLUNG_ZIP')
             ->assertFailed();
 
         Http::assertNothingSent();
