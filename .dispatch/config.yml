@@ -20,6 +20,15 @@ workspace:
   setup: ["scripts/worktree-init.sh", "ddev start", "ddev composer install", "ddev artisan app:seed --fresh", "npm ci --prefix frontend"]
   # Removes the workspace's DDEV project (containers, volumes, DB) before the worktree is deleted; failures only warn.
   teardown: ["ddev delete --omit-snapshot --yes"]
+  # Idle task: stop the DDEV project (stop only, nothing is deleted); `dev.start` brings it back before the next job.
+  stop: ["ddev stop"]
+  # Dev environment (task page "Start dev environment", `dispatch task dev <task> start`). Host and port of the frontend and the
+  # API's CORS/cookie setup come from worktree-init.sh (frontend/.env.local: <slug>.ddev.site:<port>), so no portEnv here and no
+  # url template: open https://<slug>.ddev.site:<port> from the workspace's frontend/.env.local.
+  dev:
+    start: ["ddev start"]
+    run: "npm run dev --prefix frontend"
+    timeoutMinutes: 60
   copy: []
   env: {}
   portEnv: {}

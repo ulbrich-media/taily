@@ -74,7 +74,7 @@ class AnimalController extends Controller
 
         $animal = Animal::create($validated);
 
-        $animal->load(['animalType', 'vaccinations', 'medicalTests', 'assignedAgent', 'owner', 'sponsor', 'adoptions', 'media', 'compatibilities', 'personalityTraits']);
+        $animal->load(['animalType', 'vaccinations', 'medicalTests', 'assignedAgent', 'owner', 'sponsor', 'adoptions', 'media', 'compatibilities', 'personalityTraits', 'tiervermittlungListing']);
 
         return response()->json([
             'message' => 'Tier erfolgreich angelegt.',
@@ -98,6 +98,7 @@ class AnimalController extends Controller
             'media',
             'compatibilities',
             'personalityTraits',
+            'tiervermittlungListing',
         ]);
 
         return new AnimalDetailResource($animal);
@@ -197,7 +198,7 @@ class AnimalController extends Controller
             $animal->medicalTests()->sync($testData->toArray());
         }
 
-        $animal->load(['animalType', 'vaccinations', 'medicalTests', 'assignedAgent', 'owner', 'sponsor', 'adoptions', 'media', 'compatibilities', 'personalityTraits']);
+        $animal->load(['animalType', 'vaccinations', 'medicalTests', 'assignedAgent', 'owner', 'sponsor', 'adoptions', 'media', 'compatibilities', 'personalityTraits', 'tiervermittlungListing']);
 
         return response()->json([
             'message' => 'Tier erfolgreich aktualisiert.',
