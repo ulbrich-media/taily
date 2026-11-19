@@ -2,6 +2,14 @@
 
 All notable changes to Taily are documented here.
 
+## [0.14.1](https://github.com/ulbrich-media/taily/compare/v0.14.0...v0.14.1) (2026-11-19)
+
+
+### Bug Fixes
+
+* **animals:** save current_location when creating an animal ([#283](https://github.com/ulbrich-media/taily/issues/283)) ([5149b48](https://github.com/ulbrich-media/taily/commit/5149b488d893407886466380501df0471861d070))
+* **tiervermittlung:** current country added for the export ([#284](https://github.com/ulbrich-media/taily/issues/284)) ([4f01a39](https://github.com/ulbrich-media/taily/commit/4f01a3901eaa3408559215e1bd1927094d3bf5b2))
+
 # [0.14.0](https://github.com/ulbrich-media/taily/compare/v0.13.0...v0.14.0) (2026-11-19)
 
 
