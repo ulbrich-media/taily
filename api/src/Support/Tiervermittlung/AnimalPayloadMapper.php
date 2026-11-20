@@ -46,6 +46,13 @@ class AnimalPayloadMapper
      */
     public const UNKNOWN_LOCATION_PART = '-';
 
+    private CompatibilityMapping $compatibility;
+
+    public function __construct(?CompatibilityMapping $compatibility = null)
+    {
+        $this->compatibility = $compatibility ?? new CompatibilityMapping;
+    }
+
     /**
      * Why the animal is not exported, as German text for the admin UI.
      * Empty when the animal is exported.
@@ -162,6 +169,9 @@ class AnimalPayloadMapper
                 'url' => route('api.media.serve', ['mediaUuid' => $video->uuid]),
             ] : null,
             'externalUrl' => $animal->application_url ?: null,
+            // The options whose configured words match one of the animal's
+            // compatibilities; none matching leaves the key out.
+            'compatibleWith' => $this->compatibility->match($animal->compatibilities->pluck('value')) ?: null,
         ];
 
         return array_filter($payload, fn ($value) => $value !== null);

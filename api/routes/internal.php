@@ -23,6 +23,7 @@ use Taily\Http\Controllers\Internal\AnimalTypeController;
 use Taily\Http\Controllers\Internal\ApiTokenController;
 use Taily\Http\Controllers\Internal\ContractSigningController;
 use Taily\Http\Controllers\Internal\ContractSigningSubmissionController;
+use Taily\Http\Controllers\Internal\ExportSettingsController;
 use Taily\Http\Controllers\Internal\FormTemplateController;
 use Taily\Http\Controllers\Internal\InvitationController;
 use Taily\Http\Controllers\Internal\MediaController;
@@ -180,6 +181,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Vaccinations and Medical Tests
     Route::apiResource('vaccinations', VaccinationController::class);
     Route::apiResource('medical-tests', MedicalTestController::class);
+
+    // Export settings
+    Route::get('export-settings/tiervermittlung', [ExportSettingsController::class, 'show']);
+    Route::put('export-settings/tiervermittlung', [ExportSettingsController::class, 'update']);
 
     // People
     Route::apiResource('persons', PersonController::class);

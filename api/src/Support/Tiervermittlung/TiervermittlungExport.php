@@ -197,9 +197,11 @@ class TiervermittlungExport
     }
 
     /**
+     * Animals that are sent to the platform.
+     *
      * @return Collection<int, Animal>
      */
-    private function exportableAnimals(): Collection
+    public function exportableAnimals(): Collection
     {
         return $this->candidates()
             ->filter(fn (Animal $animal) => $this->mapper->isExportable($animal))

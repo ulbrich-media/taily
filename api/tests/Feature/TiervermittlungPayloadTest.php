@@ -11,6 +11,7 @@ use Taily\Models\AnimalTrait;
 use Taily\Models\AnimalType;
 use Taily\Models\Person;
 use Taily\Support\Tiervermittlung\AnimalPayloadMapper;
+use Taily\Support\Tiervermittlung\CompatibilityMapping;
 use Taily\Tests\TestCase;
 
 class TiervermittlungPayloadTest extends TestCase
@@ -157,6 +158,45 @@ class TiervermittlungPayloadTest extends TestCase
         $animal = $this->addVideo($animal->fresh(), 'new.mp4');
 
         $this->assertNotSame($oldId, $this->mapper->payload($animal)['video']['id']);
+    }
+
+    public function test_compatible_with_matches_traits_trimmed_and_case_insensitive(): void
+    {
+        $animal = $this->animal();
+        $animal->traits()->create(['type' => 'compatibility', 'value' => '  kinder ']);
+        $animal->traits()->create(['type' => 'compatibility', 'value' => 'RÜDEN']);
+        $animal->traits()->create(['type' => 'compatibility', 'value' => 'Kinderlieb']);
+        // Only compatibilities count, not personality traits.
+        $animal->traits()->create(['type' => 'personality_trait', 'value' => 'Katzen']);
+
+        $payload = $this->mapper->payload($animal->fresh(['animalType', 'media', 'adoptions']));
+
+        $this->assertSame(['children' => true, 'dogs' => true], $payload['compatibleWith']);
+    }
+
+    public function test_compatible_with_is_left_out_without_a_match(): void
+    {
+        $animal = $this->animal();
+        $animal->traits()->create(['type' => 'compatibility', 'value' => 'Pferde']);
+
+        $this->assertArrayNotHasKey('compatibleWith', $this->mapper->payload($animal->fresh(['animalType', 'media', 'adoptions'])));
+        $this->assertArrayNotHasKey('compatibleWith', $this->mapper->payload($this->animal()));
+    }
+
+    public function test_changing_the_mapping_changes_the_hash(): void
+    {
+        $mapping = new CompatibilityMapping;
+        $mapper = new AnimalPayloadMapper($mapping);
+
+        $animal = $this->animal();
+        $animal->traits()->create(['type' => 'compatibility', 'value' => 'Kinder']);
+        $animal = $animal->fresh(['animalType', 'media', 'adoptions']);
+
+        $before = $mapper->hash($mapper->payload($animal));
+
+        $mapping->save([...CompatibilityMapping::DEFAULTS, 'children' => ['Kids']]);
+
+        $this->assertNotSame($before, $mapper->hash($mapper->payload($animal)));
     }
 
     public function test_it_sends_the_trimmed_title_cut_at_sixty_characters(): void
