@@ -37,6 +37,7 @@ import { X } from 'lucide-react'
 
 const animalFormBasicSchema = z.object({
   animal_type_id: z.string().min(1, 'Pflichtfeld darf nicht leer sein'),
+  // The number is locked in edit mode; legacy values may exceed 64 characters.
   animal_number: zFieldString(),
   name: zFieldString({ required: true }),
   old_name: zFieldString(),
@@ -152,6 +153,12 @@ export function AnimalFormBasic({
                 name="animal_number"
                 control={form.control}
                 label="Tiernummer"
+                description={
+                  isEditMode
+                    ? 'Die Tiernummer kann nachträglich nicht geändert werden.'
+                    : 'Leer lassen für automatische Vergabe'
+                }
+                disabled={isEditMode}
               />
 
               <TextInput

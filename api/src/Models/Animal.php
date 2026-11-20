@@ -15,6 +15,7 @@ use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Taily\Models\Concerns\SearchesWithLike;
+use Taily\Support\AnimalNumberGenerator;
 
 class Animal extends Model implements HasMedia
 {
@@ -24,6 +25,16 @@ class Animal extends Model implements HasMedia
     use InteractsWithMedia;
 
     protected $hidden = ['media'];
+
+    protected static function booted(): void
+    {
+        // Every animal has a unique, readable number; supplied ones are kept.
+        static::creating(function (Animal $animal) {
+            if (trim((string) $animal->animal_number) === '') {
+                $animal->animal_number = app(AnimalNumberGenerator::class)->generate();
+            }
+        });
+    }
 
     protected $attributes = [
         'animal_number' => '',
@@ -44,6 +55,7 @@ class Animal extends Model implements HasMedia
         'current_country' => '',
         'alternate_transport_trace' => '',
         'alternate_arrival_location' => '',
+        'publish_title' => '',
         'publish_description' => '',
         'application_url' => '',
     ];
@@ -93,6 +105,7 @@ class Animal extends Model implements HasMedia
         'alternate_arrival_location',
         'do_publish',
         'is_reserved',
+        'publish_title',
         'publish_description',
         'application_url',
         'is_deceased',

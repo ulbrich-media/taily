@@ -197,6 +197,64 @@ class TiervermittlungExport
     }
 
     /**
+     * Read-only export status for the settings page: listing counts per
+     * status, animals without an accepted delivery, the last successful
+     * delivery and the listings that need attention.
+     *
+     * @return array<string, mixed>
+     */
+    public function status(): array
+    {
+        $counts = TiervermittlungListing::query()
+            ->whereNotNull('animal_id')
+            ->selectRaw('status, count(*) as total')
+            ->groupBy('status')
+            ->pluck('total', 'status');
+
+        // Animals that are exported but have no accepted delivery yet.
+        $notDelivered = $this->exportableAnimals()
+            ->filter(fn (Animal $animal) => $animal->tiervermittlungListing === null
+                || $animal->tiervermittlungListing->status === TiervermittlungListing::STATUS_NONE)
+            ->count();
+
+        $attention = TiervermittlungListing::query()
+            ->with('animal:id,name,animal_type_id')
+            ->whereNotNull('animal_id')
+            ->whereIn('status', [TiervermittlungListing::STATUS_REJECTED, TiervermittlungListing::STATUS_UNPUBLISHED])
+            ->orderBy('status')
+            ->get()
+            ->map(fn (TiervermittlungListing $listing) => [
+                'animal_id' => $listing->animal_id,
+                'animal_type_id' => $listing->animal?->animal_type_id,
+                'name' => $listing->animal?->name,
+                'status' => $listing->status,
+            ])
+            ->values();
+
+        return [
+            'enabled' => self::isEnabled(),
+            'api_key_configured' => (string) config('taily.tiervermittlung.api_key') !== '',
+            'listings' => [
+                'veroeffentlicht' => (int) ($counts[TiervermittlungListing::STATUS_PUBLISHED] ?? 0),
+                'nicht_veroeffentlicht' => (int) ($counts[TiervermittlungListing::STATUS_UNPUBLISHED] ?? 0),
+                'doppelt' => (int) ($counts[TiervermittlungListing::STATUS_DUPLICATE] ?? 0),
+                'abgelehnt' => (int) ($counts[TiervermittlungListing::STATUS_REJECTED] ?? 0),
+                'not_delivered' => $notDelivered,
+            ],
+            'last_delivery_at' => TiervermittlungListing::query()
+                ->whereNotNull('last_sent_at')
+                ->where(fn ($query) => $query->where('last_error', '')->orWhereNull('last_error'))
+                ->orderByDesc('last_sent_at')
+                ->first()
+                ?->last_sent_at
+                ?->toIso8601String(),
+            'attention' => $attention,
+        ];
+    }
+
+    /**
+     * Animals that are sent to the platform.
+     *
      * @return Collection<int, Animal>
      */
     private function exportableAnimals(): Collection
@@ -217,7 +275,7 @@ class TiervermittlungExport
             ->where(fn (Builder $query) => $query
                 ->where('do_publish', true)
                 ->orWhereHas('tiervermittlungListing'))
-            ->with(['animalType', 'media', 'adoptions', 'tiervermittlungListing'])
+            ->with(['animalType', 'media', 'adoptions', 'compatibilities', 'personalityTraits', 'tiervermittlungListing'])
             ->orderBy('id')
             ->get();
     }
@@ -253,7 +311,11 @@ class TiervermittlungExport
         $due = $exportable->filter(function (Animal $animal) use ($refreshBefore) {
             $listing = $animal->tiervermittlungListing;
 
-            if ($listing === null || $listing->payload_hash !== $this->mapper->hash($this->mapper->payload($animal))) {
+            // A different tier id (the listing is still keyed by the old
+            // one) leaves the payload hash alone but needs a re-key.
+            if ($listing === null
+                || $listing->tier_id !== $this->mapper->tierId($animal)
+                || $listing->payload_hash !== $this->mapper->hash($this->mapper->payload($animal))) {
                 return true;
             }
 
@@ -278,6 +340,10 @@ class TiervermittlungExport
         $listing = $animal->tiervermittlungListing
             ?? new TiervermittlungListing(['animal_id' => $animal->id, 'tier_id' => $this->mapper->tierId($animal)]);
 
+        if ($listing->tier_id !== $this->mapper->tierId($animal) && ! $this->rekey($listing, $this->mapper->tierId($animal))) {
+            return false;
+        }
+
         try {
             $result = $this->client->putAnimal($listing->tier_id, $payload);
         } catch (TiervermittlungException $e) {
@@ -298,7 +364,7 @@ class TiervermittlungExport
                 // A listing that is live keeps its status: the platform still
                 // shows the last accepted version, and reconciliation must
                 // keep it.
-                if (in_array($listing->status, ['', TiervermittlungListing::STATUS_REJECTED], true)) {
+                if (in_array($listing->status, [TiervermittlungListing::STATUS_NONE, TiervermittlungListing::STATUS_REJECTED], true)) {
                     $listing->status = TiervermittlungListing::STATUS_REJECTED;
                 }
             }
@@ -326,6 +392,46 @@ class TiervermittlungExport
             'last_sent_at' => now(),
         ])->save();
         $animal->setRelation('tiervermittlungListing', $listing);
+
+        return true;
+    }
+
+    /**
+     * Move a listing to a new tier id: the old listing is deleted on the
+     * platform first, then the record is reset so the animal is sent fresh
+     * under the new id. Returns false (and retries next run) when the delete
+     * fails; the old listing stays untouched in that case.
+     */
+    private function rekey(TiervermittlungListing $listing, string $tierId): bool
+    {
+        try {
+            $this->client->deleteAnimal($listing->tier_id, 'entfernt');
+        } catch (TiervermittlungException $e) {
+            if ($e->isAuthError()) {
+                throw $e;
+            }
+
+            if (! $e->isNotFound()) {
+                $listing->update(['last_error' => $e->describe()]);
+
+                Log::warning('Failed to remove old listing while re-keying on Tiervermittlung.de', [
+                    'tier_id' => $listing->tier_id,
+                    'status' => $e->status,
+                    'error' => $e->describe(),
+                ]);
+
+                return false;
+            }
+        }
+
+        $listing->fill([
+            'tier_id' => $tierId,
+            'tv_id' => null,
+            'url' => '',
+            'status' => TiervermittlungListing::STATUS_NONE,
+            'payload_hash' => '',
+            'last_error' => '',
+        ])->save();
 
         return true;
     }
