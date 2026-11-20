@@ -197,11 +197,67 @@ class TiervermittlungExport
     }
 
     /**
+     * Read-only export status for the settings page: listing counts per
+     * status, animals without an accepted delivery, the last successful
+     * delivery and the listings that need attention.
+     *
+     * @return array<string, mixed>
+     */
+    public function status(): array
+    {
+        $counts = TiervermittlungListing::query()
+            ->whereNotNull('animal_id')
+            ->selectRaw('status, count(*) as total')
+            ->groupBy('status')
+            ->pluck('total', 'status');
+
+        // Animals that are exported but have no accepted delivery yet.
+        $notDelivered = $this->exportableAnimals()
+            ->filter(fn (Animal $animal) => $animal->tiervermittlungListing === null
+                || $animal->tiervermittlungListing->status === TiervermittlungListing::STATUS_NONE)
+            ->count();
+
+        $attention = TiervermittlungListing::query()
+            ->with('animal:id,name,animal_type_id')
+            ->whereNotNull('animal_id')
+            ->whereIn('status', [TiervermittlungListing::STATUS_REJECTED, TiervermittlungListing::STATUS_UNPUBLISHED])
+            ->orderBy('status')
+            ->get()
+            ->map(fn (TiervermittlungListing $listing) => [
+                'animal_id' => $listing->animal_id,
+                'animal_type_id' => $listing->animal?->animal_type_id,
+                'name' => $listing->animal?->name,
+                'status' => $listing->status,
+            ])
+            ->values();
+
+        return [
+            'enabled' => self::isEnabled(),
+            'api_key_configured' => (string) config('taily.tiervermittlung.api_key') !== '',
+            'listings' => [
+                'veroeffentlicht' => (int) ($counts[TiervermittlungListing::STATUS_PUBLISHED] ?? 0),
+                'nicht_veroeffentlicht' => (int) ($counts[TiervermittlungListing::STATUS_UNPUBLISHED] ?? 0),
+                'doppelt' => (int) ($counts[TiervermittlungListing::STATUS_DUPLICATE] ?? 0),
+                'abgelehnt' => (int) ($counts[TiervermittlungListing::STATUS_REJECTED] ?? 0),
+                'not_delivered' => $notDelivered,
+            ],
+            'last_delivery_at' => TiervermittlungListing::query()
+                ->whereNotNull('last_sent_at')
+                ->where(fn ($query) => $query->where('last_error', '')->orWhereNull('last_error'))
+                ->orderByDesc('last_sent_at')
+                ->first()
+                ?->last_sent_at
+                ?->toIso8601String(),
+            'attention' => $attention,
+        ];
+    }
+
+    /**
      * Animals that are sent to the platform.
      *
      * @return Collection<int, Animal>
      */
-    public function exportableAnimals(): Collection
+    private function exportableAnimals(): Collection
     {
         return $this->candidates()
             ->filter(fn (Animal $animal) => $this->mapper->isExportable($animal))
@@ -300,7 +356,7 @@ class TiervermittlungExport
                 // A listing that is live keeps its status: the platform still
                 // shows the last accepted version, and reconciliation must
                 // keep it.
-                if (in_array($listing->status, ['', TiervermittlungListing::STATUS_REJECTED], true)) {
+                if (in_array($listing->status, [TiervermittlungListing::STATUS_NONE, TiervermittlungListing::STATUS_REJECTED], true)) {
                     $listing->status = TiervermittlungListing::STATUS_REJECTED;
                 }
             }
