@@ -2,6 +2,8 @@ import { PawPrint } from 'lucide-react'
 import { Badge } from '@/shadcn/components/ui/badge.tsx'
 import { Card, CardContent } from '@/shadcn/components/ui/card.tsx'
 import type { AnimalDetailResource } from '@/api/types/animals'
+import { AnimalExportChip } from '@/admin/module/animals/components/AnimalExportChip'
+import { hasExportChip } from '@/admin/module/animals/tiervermittlung-status'
 
 interface AnimalSidebarProps {
   animal: AnimalDetailResource
@@ -76,13 +78,16 @@ export function AnimalSidebar({ animal }: AnimalSidebarProps) {
             )}
 
             {/* Badges */}
-            {animal.is_neutered && (
+            {(animal.is_neutered || hasExportChip(animal)) && (
               <div className="pt-2 border-t">
                 <span className="text-xs text-muted-foreground uppercase tracking-wide block mb-2">
                   Status
                 </span>
                 <div className="flex flex-wrap gap-2">
-                  <Badge variant="outline">Kastriert</Badge>
+                  {animal.is_neutered && (
+                    <Badge variant="outline">Kastriert</Badge>
+                  )}
+                  <AnimalExportChip animal={animal} />
                 </div>
               </div>
             )}

@@ -110,5 +110,9 @@ export interface TiervermittlungListing {
 export interface AnimalTiervermittlungState {
   // Empty when the animal is exported.
   exclusion_reasons: string[]
+  // Approved for publishing but held back for a reason somebody can fix.
+  blocked: boolean
+  // Deceased or adopted: left out on purpose, the listing just goes away.
+  intentionally_excluded: boolean
   listing: TiervermittlungListing | null
 }
