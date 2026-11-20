@@ -26,7 +26,7 @@ workspace:
   # API's CORS/cookie setup come from worktree-init.sh (frontend/.env.local: <slug>.ddev.site:<port>), so no portEnv here and no
   # url template: open https://<slug>.ddev.site:<port> from the workspace's frontend/.env.local.
   dev:
-    start: ["ddev start"]
+    start: ["ddev start", "ddev artisan migrate --force"]
     run: "npm run dev --prefix frontend"
     timeoutMinutes: 60
   copy: []
