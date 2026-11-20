@@ -14,6 +14,7 @@ use Taily\Models\Animal;
 use Taily\Models\AnimalType;
 use Taily\Models\Person;
 use Taily\Models\TiervermittlungListing;
+use Taily\Support\Tiervermittlung\AnimalPayloadMapper;
 use Taily\Tests\TestCase;
 
 class TiervermittlungExportTest extends TestCase
@@ -91,7 +92,7 @@ class TiervermittlungExportTest extends TestCase
         $this->sync();
 
         Http::assertSent(fn (Request $request) => $request->method() === 'PUT'
-            && $request->url() === self::BASE.'/tiere/'.$animal->id
+            && $request->url() === self::BASE.'/tiere/'.$animal->animal_number
             && $request->hasHeader('Authorization', 'Bearer tv_test_key')
             && $request['name'] === 'Bello'
             && $request['species'] === 'dog');
@@ -150,7 +151,7 @@ class TiervermittlungExportTest extends TestCase
         $this->sync();
 
         Http::assertSent(fn (Request $request) => $request->method() === 'DELETE'
-            && $request->url() === self::BASE.'/tiere/'.$animal->id.'?grund=vermittelt');
+            && $request->url() === self::BASE.'/tiere/'.$animal->animal_number.'?grund=vermittelt');
         $this->assertDatabaseCount('tiervermittlung_listings', 0);
     }
 
@@ -178,19 +179,72 @@ class TiervermittlungExportTest extends TestCase
         $this->sync();
 
         Http::assertSent(fn (Request $request) => $request->method() === 'DELETE'
-            && $request->url() === self::BASE.'/tiere/'.$animal->id.'?grund=entfernt');
+            && $request->url() === self::BASE.'/tiere/'.$animal->animal_number.'?grund=entfernt');
         $this->assertDatabaseCount('tiervermittlung_listings', 0);
     }
 
     public function test_a_listing_already_gone_on_the_platform_is_forgotten(): void
     {
         $animal = $this->animal('Bello', ['do_publish' => false]);
-        TiervermittlungListing::create(['animal_id' => $animal->id, 'tier_id' => $animal->id, 'status' => 'veroeffentlicht']);
+        TiervermittlungListing::create(['animal_id' => $animal->id, 'tier_id' => $animal->animal_number, 'status' => 'veroeffentlicht']);
         Http::fake([self::BASE.'/tiere/*' => Http::response(['fehler' => 'Unbekannte Tiernummer'], 404)]);
 
         $this->sync();
 
         $this->assertDatabaseCount('tiervermittlung_listings', 0);
+    }
+
+    public function test_a_listing_keyed_by_the_uuid_is_deleted_and_sent_again_under_the_number(): void
+    {
+        $this->fakePublished();
+        $animal = $this->animal();
+        $listing = TiervermittlungListing::create(['animal_id' => $animal->id, 'tier_id' => $animal->id, 'status' => 'veroeffentlicht', 'tv_id' => 1, 'payload_hash' => 'old']);
+
+        $this->sync();
+
+        Http::assertSent(fn (Request $request) => $request->method() === 'DELETE'
+            && $request->url() === self::BASE.'/tiere/'.$animal->id.'?grund=entfernt');
+        Http::assertSent(fn (Request $request) => $request->method() === 'PUT'
+            && $request->url() === self::BASE.'/tiere/'.$animal->animal_number);
+        $listing->refresh();
+        $this->assertSame($animal->animal_number, $listing->tier_id);
+        $this->assertSame(2962437, $listing->tv_id);
+    }
+
+    public function test_a_failed_delete_keeps_the_old_listing_and_is_retried(): void
+    {
+        $animal = $this->animal();
+        $listing = TiervermittlungListing::create(['animal_id' => $animal->id, 'tier_id' => $animal->id, 'status' => 'veroeffentlicht']);
+        Http::fake([self::BASE.'/tiere/*' => Http::response(['fehler' => 'Fehler'], 500)]);
+
+        $this->artisan('tiervermittlung:sync')->assertFailed();
+
+        $this->assertSame($animal->id, $listing->fresh()->tier_id);
+        Http::assertNotSent(fn (Request $request) => $request->method() === 'PUT');
+    }
+
+    public function test_a_delete_answered_with_404_still_re_keys(): void
+    {
+        $animal = $this->animal();
+        $listing = TiervermittlungListing::create(['animal_id' => $animal->id, 'tier_id' => $animal->id, 'status' => 'veroeffentlicht']);
+        Http::fake([self::BASE.'/tiere/*' => fn (Request $request) => $request->method() === 'DELETE'
+            ? Http::response(['fehler' => 'Unbekannt'], 404)
+            : Http::response(['status' => 'veroeffentlicht', 'tvId' => 5, 'url' => 'https://example.test/5'], 201)]);
+
+        $this->sync();
+
+        $this->assertSame($animal->animal_number, $listing->fresh()->tier_id);
+    }
+
+    public function test_an_animal_with_a_number_the_platform_would_not_accept_is_not_exported(): void
+    {
+        $this->fakePublished();
+        $animal = $this->animal('Bello', ['animal_number' => 'Tier 1 ä']);
+
+        $this->sync();
+
+        Http::assertNothingSent();
+        $this->assertNotEmpty(app(AnimalPayloadMapper::class)->exclusionReasons($animal));
     }
 
     public function test_animals_that_are_not_exportable_are_never_sent(): void
@@ -266,7 +320,7 @@ class TiervermittlungExportTest extends TestCase
         // ... and still part of the reconciliation, so the platform keeps it.
         $this->artisan('tiervermittlung:reconcile')->assertSuccessful();
         Http::assertSent(fn (Request $request) => $request->url() === self::BASE.'/abgleich'
-            && $request['tierIds'] === [$animal->id]);
+            && $request['tierIds'] === [$animal->animal_number]);
     }
 
     public function test_a_temporary_failure_is_retried_on_the_next_run(): void
@@ -388,7 +442,7 @@ class TiervermittlungExportTest extends TestCase
             ->assertSuccessful();
 
         Http::assertSentCount(1);
-        Http::assertSent(fn (Request $request) => $request->url() === self::BASE.'/tiere/'.$animal->id.'?probe=1');
+        Http::assertSent(fn (Request $request) => $request->url() === self::BASE.'/tiere/'.$animal->animal_number.'?probe=1');
         $this->assertDatabaseCount('tiervermittlung_listings', 0);
     }
 
@@ -457,13 +511,13 @@ class TiervermittlungExportTest extends TestCase
         $this->sync();
 
         Http::fake([self::BASE.'/abgleich' => Http::response([
-            'bremse' => false, 'entfernt' => ['ALT-1'], 'behalten' => 1, 'unbekannt' => [$luna->id], 'hinweis' => '',
+            'bremse' => false, 'entfernt' => ['ALT-1'], 'behalten' => 1, 'unbekannt' => [$luna->animal_number], 'hinweis' => '',
         ])]);
 
         $this->artisan('tiervermittlung:reconcile')->assertSuccessful();
 
         Http::assertSent(fn (Request $request) => $request->url() === self::BASE.'/abgleich'
-            && collect($request['tierIds'])->sort()->values()->all() === collect([$bello->id, $luna->id])->sort()->values()->all());
+            && collect($request['tierIds'])->sort()->values()->all() === collect([$bello->animal_number, $luna->animal_number])->sort()->values()->all());
         $this->assertSame('', $luna->tiervermittlungListing()->first()->payload_hash);
         $this->assertNotSame('', $bello->tiervermittlungListing()->first()->payload_hash);
     }

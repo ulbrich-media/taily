@@ -8,6 +8,7 @@ import { Route as VaccinationsRoute } from '@/routes/admin/_authenticated/settin
 import { Route as MedicalTestsRoute } from '@/routes/admin/_authenticated/settings/medical-tests/route'
 import { Route as OrganizationsRoute } from '@/routes/admin/_authenticated/settings/organizations/index'
 import { Route as FormTemplatesRoute } from '@/routes/admin/_authenticated/settings/form-templates/index'
+import { Route as ExportRoute } from '@/routes/admin/_authenticated/settings/export'
 import { Button } from '@/shadcn/components/ui/button'
 
 export const Route = createFileRoute('/admin/_authenticated/settings/')({
@@ -59,6 +60,11 @@ function RouteComponent() {
           <FormTemplatesRoute.Link aria-label="Formularvorlagen öffnen">
             Öffnen
           </FormTemplatesRoute.Link>
+        </Button>
+      }
+      exportAction={
+        <Button variant="default_outline" asChild>
+          <ExportRoute.Link aria-label="Export öffnen">Öffnen</ExportRoute.Link>
         </Button>
       }
     />

@@ -14,6 +14,7 @@ import {
 } from '@/shadcn/components/ui/card.tsx'
 import { Button } from '@/shadcn/components/ui/button.tsx'
 import { toast } from 'sonner'
+import { ApiValidationError } from '@/lib/api'
 import { useFormSaveAndResetHook } from '@/lib/form.hook.tsx'
 import type { AnimalTypeResource } from '@/api/types/animal-types'
 import { toApiDate } from '@/components/field/DateInput.utils.ts'
@@ -46,8 +47,12 @@ export function AnimalCreatePage({
         onCreated(response.data.animal_type_id, response.data.id)
       }
     },
-    onError: () => {
-      toast.error('Fehler beim Erstellen des Tieres')
+    onError: (error) => {
+      const numberError =
+        error instanceof ApiValidationError
+          ? error.errors?.animal_number?.[0]
+          : undefined
+      toast.error(numberError ?? 'Fehler beim Erstellen des Tieres')
       saveAndReset.disableShouldReset()
     },
   })
@@ -57,7 +62,7 @@ export function AnimalCreatePage({
       animal_type_id: data.animal_type_id,
       name: data.name,
       gender: data.gender,
-      animal_number: data.animal_number || '',
+      animal_number: data.animal_number || undefined,
       old_name: data.old_name || undefined,
       breed: data.breed || undefined,
       color: data.color || undefined,

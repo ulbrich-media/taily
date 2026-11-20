@@ -6,10 +6,12 @@ use Illuminate\Support\Str;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Taily\Enums\TiervermittlungSpecies;
 use Taily\Models\Animal;
+use Taily\Support\AnimalNumberGenerator;
 
 /**
  * Decides whether an animal goes to Tiervermittlung.de and builds the
- * payload for it. Expects `animalType`, `media` and `adoptions` to be loaded
+ * payload for it. Expects `animalType`, `media`, `adoptions`,
+ * `compatibilities` and `personalityTraits` to be loaded
  * (they are loaded on demand otherwise).
  *
  * The payload carries public data only: no chip numbers, health records or
@@ -19,6 +21,14 @@ class AnimalPayloadMapper
 {
     /** The platform takes at most five images; the first is the title image. */
     public const MAX_IMAGES = 5;
+
+    /** The only video types the platform converts. */
+    public const VIDEO_MIME_TYPES = ['video/mp4', 'video/quicktime'];
+
+    /** The platform rejects larger videos; its "50 MB" is read as 50 MiB. */
+    public const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
+
+    public const MAX_TITLE_LENGTH = 60;
 
     public const MAX_DESCRIPTION_LENGTH = 20000;
 
@@ -30,10 +40,19 @@ class AnimalPayloadMapper
 
     /**
      * Taily only knows the country an animal lives in. The platform requires
-     * zip and city as well and fills them with a dash itself when a listing
-     * abroad is entered by hand, so the export does the same.
+     * zip and city only for Germany (DE), so this placeholder is sent there
+     * until a concrete location is tracked; for other countries nothing is
+     * sent. The Bundesland is derived by the platform from the zip code and
+     * is never sent.
      */
     public const UNKNOWN_LOCATION_PART = '-';
+
+    private CompatibilityMapping $compatibility;
+
+    public function __construct(?CompatibilityMapping $compatibility = null)
+    {
+        $this->compatibility = $compatibility ?? new CompatibilityMapping;
+    }
 
     /**
      * Why the animal is not exported, as German text for the admin UI.
@@ -77,6 +96,10 @@ class AnimalPayloadMapper
             $reasons[] = 'Das Aufenthaltsland ist nicht angegeben.';
         }
 
+        if (! preg_match(AnimalNumberGenerator::PATTERN, (string) $animal->animal_number)) {
+            $reasons[] = 'Die Tiernummer enthält Zeichen, die Tiervermittlung.de nicht akzeptiert (erlaubt: Buchstaben, Ziffern, - und _).';
+        }
+
         return $reasons;
     }
 
@@ -95,12 +118,13 @@ class AnimalPayloadMapper
     }
 
     /**
-     * The animal's id never changes and fits the platform's tier id pattern,
-     * unlike the animal number, which can be empty or be edited.
+     * The animal number is the user-facing id on the platform. It is always
+     * set and unique; numbers that do not fit the platform's pattern keep the
+     * animal out of the export (see `exclusionReasons`).
      */
     public function tierId(Animal $animal): string
     {
-        return $animal->id;
+        return (string) $animal->animal_number;
     }
 
     /**
@@ -114,6 +138,9 @@ class AnimalPayloadMapper
         /** @var TiervermittlungSpecies $species */
         $species = $animal->animalType->tiervermittlung_species;
 
+        $title = trim($animal->publish_title ?? '');
+        $video = $this->video($animal);
+
         $payload = [
             'name' => $animal->name,
             'species' => $species->value,
@@ -123,7 +150,8 @@ class AnimalPayloadMapper
             'neutered' => (bool) $animal->is_neutered,
             'birthDate' => $animal->date_of_birth?->format('Y-m-d'),
             'heightCm' => $species === TiervermittlungSpecies::DOG ? $animal->size_cm : null,
-            'description' => Str::limit(trim($animal->publish_description), self::MAX_DESCRIPTION_LENGTH, ''),
+            'title' => $title !== '' ? Str::limit($title, self::MAX_TITLE_LENGTH, '') : null,
+            'description' => $this->description($animal),
             'forAdoption' => true,
             'reserved' => (bool) $animal->is_reserved,
             // Only whether the animal is chipped and registered, never the
@@ -133,18 +161,23 @@ class AnimalPayloadMapper
                 'tasso' => $animal->tasso_id !== '',
                 'findefix' => $animal->findefix_id !== '',
             ],
-            'location' => [
-                'country' => $animal->current_country,
-                'zip' => self::UNKNOWN_LOCATION_PART,
-                'city' => self::UNKNOWN_LOCATION_PART,
-            ],
+            'location' => $this->location($animal),
             'images' => array_map(fn (Media $media) => [
                 // A new upload gets a new uuid, so the platform only downloads
                 // images it has not seen before.
                 'id' => $media->uuid,
                 'url' => route('api.media.serve', ['mediaUuid' => $media->uuid, 'conversion' => self::IMAGE_CONVERSION]),
             ], $this->images($animal)),
+            'video' => $video !== null ? [
+                // Same pattern as images: a replaced video has a new uuid, so
+                // the platform only downloads it when it actually changed.
+                'id' => $video->uuid,
+                'url' => route('api.media.serve', ['mediaUuid' => $video->uuid]),
+            ] : null,
             'externalUrl' => $animal->application_url ?: null,
+            // The options whose configured words match one of the animal's
+            // compatibilities; none matching leaves the key out.
+            'compatibleWith' => $this->compatibility->match($animal->compatibilities->pluck('value')) ?: null,
         ];
 
         return array_filter($payload, fn ($value) => $value !== null);
@@ -162,6 +195,32 @@ class AnimalPayloadMapper
     }
 
     /**
+     * The description with the animal's compatibilities and personality
+     * traits appended as plain text. The description is shortened first, so
+     * the trait block is never cut off and the total stays within the limit.
+     */
+    private function description(Animal $animal): string
+    {
+        $base = trim($animal->publish_description ?? '');
+
+        $lines = [];
+        foreach (['Verträglichkeiten' => $animal->compatibilities, 'Persönlichkeit' => $animal->personalityTraits] as $label => $traits) {
+            if ($traits->isNotEmpty()) {
+                $lines[] = $label.': '.$traits->pluck('value')->implode(', ');
+            }
+        }
+
+        if ($lines === []) {
+            return Str::limit($base, self::MAX_DESCRIPTION_LENGTH, '');
+        }
+
+        $block = "\n\n".implode("\n\n", $lines);
+        $room = max(0, self::MAX_DESCRIPTION_LENGTH - mb_strlen($block));
+
+        return Str::limit(rtrim(Str::limit($base, $room, '')).$block, self::MAX_DESCRIPTION_LENGTH, '');
+    }
+
+    /**
      * @return list<Media>
      */
     private function images(Animal $animal): array
@@ -175,6 +234,33 @@ class AnimalPayloadMapper
             ->take(self::MAX_IMAGES)
             ->values()
             ->all();
+    }
+
+    /**
+     * The first video by order that the platform accepts. The original file
+     * is sent (no conversion).
+     */
+    private function video(Animal $animal): ?Media
+    {
+        return $animal->getMedia('pictures')
+            ->sortBy('order_column')
+            ->first(fn (Media $media) => in_array($media->mime_type, self::VIDEO_MIME_TYPES, true)
+                && $media->size <= self::MAX_VIDEO_BYTES);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function location(Animal $animal): array
+    {
+        $location = ['country' => $animal->current_country];
+
+        if ($animal->current_country === 'DE') {
+            $location['zip'] = self::UNKNOWN_LOCATION_PART;
+            $location['city'] = self::UNKNOWN_LOCATION_PART;
+        }
+
+        return $location;
     }
 
     private function isAdopted(Animal $animal): bool
