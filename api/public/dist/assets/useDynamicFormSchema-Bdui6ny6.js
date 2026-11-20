@@ -1,0 +1,1 @@
+import{ba as e}from"./index-Dw7ZkMcF.js";import{n as t}from"./jsx-runtime-Wy9s6hX0.js";import{r as n}from"./DynamicFormFields-CdAoLN69.js";var r=e();t();function i(e,t){let i=(0,r.c)(3),a;return i[0]!==t||i[1]!==e?(a=e.extend({form_data:n(t)}),i[0]=t,i[1]=e,i[2]=a):a=i[2],a}export{i as t};

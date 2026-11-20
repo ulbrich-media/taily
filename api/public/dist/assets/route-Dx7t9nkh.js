@@ -1,1 +1,0 @@
-import{Sa as e}from"./index-DBTWtAcd.js";var t=e;export{t as component};
