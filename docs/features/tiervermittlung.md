@@ -65,10 +65,10 @@ Every exported animal is listed as up for adoption (`forAdoption`). The animal's
 | `images` | the first five pictures in their order, as the `export` conversion via the public media route; the media uuid is the image id, so the platform only downloads new pictures |
 | `video` | the first MP4 or MOV video of the pictures by order, at most 50 MB, as the original file via the public media route (so `APP_URL` must be publicly reachable); the media uuid is the video id, so a replaced video is downloaded again. Left out when there is none, which makes the platform remove a video sent earlier. The platform converts MP4s in the background, so they appear after a few minutes; problems come back in `warnungen`. YouTube links are not sent |
 | `chip` | whether a TASSO or FINDEFIX registration exists — never the numbers |
-| `location` | `current_country` as country; zip and city are always `-` |
+| `location` | `current_country` as country; zip and city are `-` only for `DE`, abroad only the country is sent |
 | `externalUrl` | `application_url`, shown below the description |
 
-Taily only knows the country an animal lives in (`current_location` is free text for people). The platform requires zip and city too and fills both with a dash when a listing abroad is entered by hand, so the export sends `-` for every animal. Animals abroad are only published if the club's account has a § 11 TierSchG permit on file; otherwise they come back as `nicht_veroeffentlicht` with a reason. Not sent: health data, chip numbers, people.
+Taily only knows the country an animal lives in (`current_location` is free text for people). The platform requires zip and city only for `DE`; abroad the country alone is enough and the listing shows only the country. Until Taily tracks a concrete location, the export sends `-` for both for animals in Germany. The Bundesland is derived by the platform from the zip code, so it is never sent. Animals abroad are only published if the club's account has a § 11 TierSchG permit on file; otherwise they come back as `nicht_veroeffentlicht` with a reason. Not sent: health data, chip numbers, people. Compatibilities and personality traits are not sent as fields of their own, only appended to the description.
 
 ## How the sync works
 

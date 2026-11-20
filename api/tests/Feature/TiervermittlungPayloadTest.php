@@ -340,11 +340,20 @@ class TiervermittlungPayloadTest extends TestCase
         ], $this->mapper->exclusionReasons($animal));
     }
 
-    public function test_it_lists_the_animal_in_its_country_without_zip_and_city(): void
+    public function test_it_sends_only_the_country_for_animals_abroad(): void
     {
         $payload = $this->mapper->payload($this->animal(['current_country' => 'RO']));
 
-        $this->assertSame(['country' => 'RO', 'zip' => '-', 'city' => '-'], $payload['location']);
+        $this->assertSame(['country' => 'RO'], $payload['location']);
+        $this->assertArrayNotHasKey('zip', $payload['location']);
+        $this->assertArrayNotHasKey('city', $payload['location']);
+    }
+
+    public function test_it_sends_placeholder_zip_and_city_for_animals_in_germany(): void
+    {
+        $payload = $this->mapper->payload($this->animal(['current_country' => 'DE']));
+
+        $this->assertSame(['country' => 'DE', 'zip' => '-', 'city' => '-'], $payload['location']);
     }
 
     public function test_adopted_animals_are_removed_as_placed(): void
