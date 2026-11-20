@@ -152,6 +152,7 @@ class AnimalController extends Controller
             'alternate_arrival_location' => 'sometimes|nullable|string|max:255',
             'do_publish' => 'sometimes|boolean',
             'is_reserved' => 'sometimes|boolean',
+            'publish_title' => 'sometimes|nullable|string|max:60',
             'publish_description' => 'sometimes|nullable|string',
             'application_url' => 'sometimes|nullable|url|max:2048',
             'is_deceased' => 'sometimes|boolean',

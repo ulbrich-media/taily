@@ -60,6 +60,7 @@ Every exported animal is listed as up for adoption (`forAdoption`). The animal's
 | `species` / `speciesDetail` | the Animal Type's Tiervermittlung Species; for `small` and `other` the type's title as detail |
 | `birthDate` | `date_of_birth` |
 | `heightCm` | `size_cm`, dogs only |
+| `title` | `publish_title` — optional, trimmed, at most 60 characters; left out when empty |
 | `description` | `publish_description` |
 | `images` | the first five pictures in their order, as the `export` conversion via the public media route; the media uuid is the image id, so the platform only downloads new pictures |
 | `chip` | whether a TASSO or FINDEFIX registration exists — never the numbers |

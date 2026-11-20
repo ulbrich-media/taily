@@ -20,6 +20,8 @@ class AnimalPayloadMapper
     /** The platform takes at most five images; the first is the title image. */
     public const MAX_IMAGES = 5;
 
+    public const MAX_TITLE_LENGTH = 60;
+
     public const MAX_DESCRIPTION_LENGTH = 20000;
 
     /**
@@ -114,6 +116,8 @@ class AnimalPayloadMapper
         /** @var TiervermittlungSpecies $species */
         $species = $animal->animalType->tiervermittlung_species;
 
+        $title = trim($animal->publish_title ?? '');
+
         $payload = [
             'name' => $animal->name,
             'species' => $species->value,
@@ -123,6 +127,7 @@ class AnimalPayloadMapper
             'neutered' => (bool) $animal->is_neutered,
             'birthDate' => $animal->date_of_birth?->format('Y-m-d'),
             'heightCm' => $species === TiervermittlungSpecies::DOG ? $animal->size_cm : null,
+            'title' => $title !== '' ? Str::limit($title, self::MAX_TITLE_LENGTH, '') : null,
             'description' => Str::limit(trim($animal->publish_description), self::MAX_DESCRIPTION_LENGTH, ''),
             'forAdoption' => true,
             'reserved' => (bool) $animal->is_reserved,

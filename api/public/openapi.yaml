@@ -257,6 +257,11 @@ components:
           description: |
             Whether the animal is already reserved for an ongoing adoption.
             Does not affect whether the animal is returned by this endpoint.
+        publish_title:
+          type: string
+          nullable: true
+          maxLength: 60
+          description: Short public title shown above the description.
         publish_description:
           type: string
           nullable: true
