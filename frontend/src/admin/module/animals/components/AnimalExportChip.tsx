@@ -15,10 +15,12 @@ export function AnimalExportChip({ animal }: { animal: ExportChipAnimal }) {
   if (!tiervermittlung || !hasExportChip(animal)) return null
 
   if (tiervermittlung.blocked) {
-    return <Badge variant="warning">Nicht exportiert</Badge>
+    return <Badge variant="warning">Tiervermittlung.de: nicht exportiert</Badge>
   }
 
   const summary = summarizeTiervermittlung(tiervermittlung)
 
-  return <Badge variant={summary.variant}>{summary.label}</Badge>
+  return (
+    <Badge variant={summary.variant}>Tiervermittlung.de: {summary.label}</Badge>
+  )
 }

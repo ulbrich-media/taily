@@ -28,7 +28,9 @@ describe('AnimalExportChip', () => {
         animal={{ do_publish: true, tiervermittlung: state() }}
       />
     )
-    expect(screen.getByText('Veröffentlicht')).toBeInTheDocument()
+    expect(
+      screen.getByText('Tiervermittlung.de: Veröffentlicht')
+    ).toBeInTheDocument()
   })
 
   it('shows platform problems such as a rejection', () => {
@@ -42,7 +44,9 @@ describe('AnimalExportChip', () => {
         }}
       />
     )
-    expect(screen.getByText('Abgelehnt')).toBeInTheDocument()
+    expect(
+      screen.getByText('Tiervermittlung.de: Abgelehnt')
+    ).toBeInTheDocument()
   })
 
   it('shows blocked animals, even with an old listing', () => {
@@ -57,7 +61,9 @@ describe('AnimalExportChip', () => {
         }}
       />
     )
-    expect(screen.getByText('Nicht exportiert')).toBeInTheDocument()
+    expect(
+      screen.getByText('Tiervermittlung.de: nicht exportiert')
+    ).toBeInTheDocument()
     expect(screen.queryByRole('link')).not.toBeInTheDocument()
   })
 

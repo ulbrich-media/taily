@@ -111,6 +111,11 @@ export function ExportStatusCard({
                 <p className="text-sm font-medium">
                   Freigegeben, aber nicht exportiert
                 </p>
+                <p className="text-muted-foreground text-sm">
+                  Diese Tiere konnten nicht an Tiervermittlung.de übermittelt
+                  werden. Öffne das jeweilige Tier und prüfe die genannten
+                  Gründe, um das Problem zu beheben.
+                </p>
                 <ul className="space-y-1 text-sm">
                   {status.not_exported.map((item) => (
                     <li key={item.animal_id}>
