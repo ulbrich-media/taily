@@ -10,6 +10,17 @@ return new class extends Migration
 {
     private const ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 
+    // Mirrors AnimalNumberGenerator::PATTERN (frozen at migration time).
+    private const PATTERN = '/^[A-Za-z0-9_-]{1,64}$/';
+
+    /**
+     * Compare the way a case-insensitive, trailing-space-insensitive collation does.
+     */
+    private function key(string $number): string
+    {
+        return mb_strtolower(rtrim($number));
+    }
+
     public function up(): void
     {
         $taken = [];
@@ -19,19 +30,21 @@ return new class extends Migration
 
         foreach ($animals as $animal) {
             $number = (string) $animal->animal_number;
+            $key = $this->key($number);
+            $valid = (bool) preg_match(self::PATTERN, $number);
 
-            if ($number !== '' && ! isset($taken[$number])) {
-                $taken[$number] = true;
+            if ($number !== '' && $valid && ! isset($taken[$key])) {
+                $taken[$key] = true;
 
                 continue;
             }
 
             if ($number !== '') {
-                Log::warning('Duplicate animal number renumbered', ['animal_id' => $animal->id, 'old_number' => $number]);
+                Log::warning($valid ? 'Duplicate animal number renumbered' : 'Invalid animal number renumbered', ['animal_id' => $animal->id, 'old_number' => $number]);
             }
 
             $new = $this->generate($taken);
-            $taken[$new] = true;
+            $taken[$this->key($new)] = true;
 
             DB::table('animals')->where('id', $animal->id)->update(['animal_number' => $new]);
         }
@@ -59,7 +72,7 @@ return new class extends Migration
             for ($i = 0; $i < 6; $i++) {
                 $number .= self::ALPHABET[random_int(0, strlen(self::ALPHABET) - 1)];
             }
-        } while (isset($taken[$number]) || ! preg_match('/[A-Z]/', $number));
+        } while (isset($taken[$this->key($number)]) || ! preg_match('/[A-Z]/', $number));
 
         return $number;
     }

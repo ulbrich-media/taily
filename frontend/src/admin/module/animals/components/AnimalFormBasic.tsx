@@ -37,7 +37,8 @@ import { X } from 'lucide-react'
 
 const animalFormBasicSchema = z.object({
   animal_type_id: z.string().min(1, 'Pflichtfeld darf nicht leer sein'),
-  animal_number: zFieldString({ maxLength: 64 }),
+  // The number is locked in edit mode; legacy values may exceed 64 characters.
+  animal_number: zFieldString(),
   name: zFieldString({ required: true }),
   old_name: zFieldString(),
   breed: zFieldString(),

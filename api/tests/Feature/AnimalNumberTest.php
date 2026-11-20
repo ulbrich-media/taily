@@ -57,4 +57,24 @@ class AnimalNumberTest extends TestCase
         $this->assertMatchesRegularExpression('/^[A-Z2-9]{6}$/', $third->fresh()->animal_number);
         $this->assertSame(3, DB::table('animals')->distinct()->count('animal_number'));
     }
+
+    public function test_migration_renumbers_case_duplicates_and_numbers_outside_the_pattern(): void
+    {
+        $type = AnimalType::create(['title' => 'Hund']);
+        $migration = require database_path('migrations/2026_11_21_000000_make_animal_number_unique.php');
+        $migration->down();
+
+        $first = Animal::create(['animal_type_id' => $type->id, 'name' => 'Erst', 'gender' => 'male', 'animal_number' => 'abc']);
+        $second = Animal::create(['animal_type_id' => $type->id, 'name' => 'Zweit', 'gender' => 'male', 'animal_number' => 'ABC']);
+        $third = Animal::create(['animal_type_id' => $type->id, 'name' => 'Dritt', 'gender' => 'male', 'animal_number' => 'Nr. 5 ä']);
+        DB::table('animals')->where('id', $first->id)->update(['created_at' => now()->subDays(3)]);
+        DB::table('animals')->where('id', $second->id)->update(['created_at' => now()->subDays(2)]);
+        DB::table('animals')->where('id', $third->id)->update(['created_at' => now()->subDay()]);
+
+        $migration->up();
+
+        $this->assertSame('abc', $first->fresh()->animal_number);
+        $this->assertMatchesRegularExpression('/^[A-Z2-9]{6}$/', $second->fresh()->animal_number);
+        $this->assertMatchesRegularExpression('/^[A-Z2-9]{6}$/', $third->fresh()->animal_number);
+    }
 }
