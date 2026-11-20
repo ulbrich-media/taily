@@ -37,7 +37,7 @@ import { X } from 'lucide-react'
 
 const animalFormBasicSchema = z.object({
   animal_type_id: z.string().min(1, 'Pflichtfeld darf nicht leer sein'),
-  animal_number: zFieldString(),
+  animal_number: zFieldString({ maxLength: 64 }),
   name: zFieldString({ required: true }),
   old_name: zFieldString(),
   breed: zFieldString(),
@@ -152,6 +152,12 @@ export function AnimalFormBasic({
                 name="animal_number"
                 control={form.control}
                 label="Tiernummer"
+                description={
+                  isEditMode
+                    ? 'Die Tiernummer kann nachträglich nicht geändert werden.'
+                    : 'Leer lassen für automatische Vergabe'
+                }
+                disabled={isEditMode}
               />
 
               <TextInput

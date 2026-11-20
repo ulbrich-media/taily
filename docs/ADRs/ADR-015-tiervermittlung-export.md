@@ -13,7 +13,7 @@ The Operating Organization lists its animals on tiervermittlung.de by hand. The 
 - The export runs as scheduled commands: `tiervermittlung:sync` every five minutes, `tiervermittlung:reconcile` daily. Saving an animal never calls the platform.
 - Changes are detected by comparing a hash of the payload with the hash stored for the last delivery in `tiervermittlung_listings`, not by model events. Pictures, adoptions and type mappings all feed into the payload or the eligibility rule, so they need no wiring of their own.
 - Each run is bounded (pause between requests, request cap) so it stays short on shared hosting; leftovers go out with the next run.
-- The animal's id is the platform's `tierId`. Configuration (key, location) lives in env vars; the species mapping lives on the Animal Type.
+- The animal number is the platform's `tierId` (amended: it was the animal's UUID). The UUID is unsuitable to read out on the phone or quote in a contact form; the animal number is now always set (generated as a 6-character readable code when omitted), unique and fixed after creation. Existing listings are re-keyed on the next sync. Configuration (key, location) lives in env vars; the species mapping lives on the Animal Type.
 
 ## Consequences
 

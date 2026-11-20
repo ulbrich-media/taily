@@ -56,7 +56,7 @@ Every exported animal is listed as up for adoption (`forAdoption`). The animal's
 
 | Platform field | Source |
 |---|---|
-| `tierId` | the animal's id — permanent, unlike the animal number |
+| `tierId` | the animal number — always set, unique and not editable after creation. Animals whose number has characters outside letters, digits, `-` and `_` are excluded from the export |
 | `name`, `breed`, `sex`, `neutered`, `reserved` | same fields on the animal |
 | `species` / `speciesDetail` | the Animal Type's Tiervermittlung Species; for `small` and `other` the type's title as detail |
 | `birthDate` | `date_of_birth` |
@@ -87,6 +87,7 @@ The same page shows the export status (read-only): whether the export is enabled
 `tiervermittlung:sync` runs every five minutes. Each run builds the payload of every candidate animal and compares its hash with the one stored for the last delivery (`tiervermittlung_listings`), so there is no event wiring — a changed field, a new picture or a completed adoption all show up on the next run.
 
 - **New or changed** animals are sent (`PUT /tiere/{tierId}`).
+- A listing whose `tier_id` differs from the animal's current number (listings created when the animal's UUID was the `tierId`) is **re-keyed**: the old listing is deleted on the platform (a 404 counts as deleted; any other failure keeps the old listing and retries next run), then the animal is sent as a new listing. The listing gets a new platform URL and `tvId`, so old links stop working once. Re-keys count towards the per-run limit.
 - **Unchanged** animals are sent again after 30 days; the platform lets listings expire after 92 days without a delivery.
 - Animals that are **no longer exported** are removed (`DELETE`), with `grund=vermittelt` for adopted animals so they count towards the platform's placement statistics, `entfernt` otherwise. Listings of deleted animals are removed the same way.
 - A **rejected** payload (HTTP 400) is kept with the platform's message and only sent again once the animal changes — the 30-day refresh does not resend it either. If the animal was already listed, the listing keeps its status and stays online with the last accepted version. Rate limiting, outages and network errors are retried on the next run. An invalid key aborts the run.

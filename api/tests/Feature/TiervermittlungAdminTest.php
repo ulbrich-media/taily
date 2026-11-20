@@ -60,7 +60,7 @@ class TiervermittlungAdminTest extends TestCase
         ]);
         TiervermittlungListing::create([
             'animal_id' => $animal->id,
-            'tier_id' => $animal->id,
+            'tier_id' => $animal->animal_number,
             'status' => 'veroeffentlicht',
             'tv_id' => 2962437,
             'url' => 'https://www.tiervermittlung.de/cgi-bin/haustier/details.pl?IDin=2962437',
