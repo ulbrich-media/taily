@@ -12,6 +12,7 @@ use Taily\Http\Resources\AnimalDetailResource;
 use Taily\Http\Resources\AnimalListResource;
 use Taily\Models\Animal;
 use Taily\Services\AnimalTraitService;
+use Taily\Support\AnimalNumberGenerator;
 
 class AnimalController extends Controller
 {
@@ -51,9 +52,14 @@ class AnimalController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        // A blank number means "generate one".
+        if (is_string($request->input('animal_number'))) {
+            $request->merge(['animal_number' => trim($request->input('animal_number')) ?: null]);
+        }
+
         $validated = $request->validate([
             'animal_type_id' => 'required|uuid|exists:animal_types,id',
-            'animal_number' => 'nullable|string|max:255',
+            'animal_number' => ['nullable', 'string', 'max:64', 'regex:'.AnimalNumberGenerator::PATTERN, 'unique:animals,animal_number'],
             'name' => 'required|string|max:255',
             'old_name' => 'nullable|string|max:255',
             'breed' => 'nullable|string|max:255',
@@ -70,6 +76,10 @@ class AnimalController extends Controller
             'character_description' => 'nullable|string',
             'contract_notes' => 'nullable|string',
             'internal_notes' => 'nullable|string',
+        ], [
+            'animal_number.unique' => 'Diese Tiernummer ist bereits vergeben.',
+            'animal_number.regex' => 'Die Tiernummer darf nur Buchstaben, Ziffern, Bindestriche und Unterstriche enthalten.',
+            'animal_number.max' => 'Die Tiernummer darf höchstens 64 Zeichen lang sein.',
         ]);
 
         $validated['is_boarding_animal'] = $request->boolean('is_boarding_animal');
@@ -115,7 +125,8 @@ class AnimalController extends Controller
         $validated = $request->validate([
             // Tab 1: Basic & Description
             'animal_type_id' => 'sometimes|required|uuid|exists:animal_types,id',
-            'animal_number' => 'sometimes|string|max:255',
+            // Set on creation only; an unchanged value is tolerated.
+            'animal_number' => ['sometimes', 'string', Rule::in([$animal->animal_number])],
             'name' => 'sometimes|required|string|max:255',
             'old_name' => 'sometimes|nullable|string|max:255',
             'breed' => 'sometimes|nullable|string|max:255',
@@ -170,7 +181,11 @@ class AnimalController extends Controller
             'tests.*.medical_test_id' => ['required', 'uuid', Rule::exists('medical_tests', 'id')->where('animal_type_id', $animal->animal_type_id)],
             'tests.*.tested_at' => 'sometimes|nullable|date',
             'tests.*.result' => 'required|in:positive,negative',
+        ], [
+            'animal_number.in' => 'Die Tiernummer kann nicht geändert werden.',
         ]);
+
+        unset($validated['animal_number']);
 
         $animal->update($validated);
 

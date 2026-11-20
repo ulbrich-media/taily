@@ -6,6 +6,7 @@ use Illuminate\Support\Str;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Taily\Enums\TiervermittlungSpecies;
 use Taily\Models\Animal;
+use Taily\Support\AnimalNumberGenerator;
 
 /**
  * Decides whether an animal goes to Tiervermittlung.de and builds the
@@ -95,6 +96,10 @@ class AnimalPayloadMapper
             $reasons[] = 'Das Aufenthaltsland ist nicht angegeben.';
         }
 
+        if (! preg_match(AnimalNumberGenerator::PATTERN, (string) $animal->animal_number)) {
+            $reasons[] = 'Die Tiernummer enthält Zeichen, die Tiervermittlung.de nicht akzeptiert (erlaubt: Buchstaben, Ziffern, - und _).';
+        }
+
         return $reasons;
     }
 
@@ -113,12 +118,13 @@ class AnimalPayloadMapper
     }
 
     /**
-     * The animal's id never changes and fits the platform's tier id pattern,
-     * unlike the animal number, which can be empty or be edited.
+     * The animal number is the user-facing id on the platform. It is always
+     * set and unique; numbers that do not fit the platform's pattern keep the
+     * animal out of the export (see `exclusionReasons`).
      */
     public function tierId(Animal $animal): string
     {
-        return $animal->id;
+        return (string) $animal->animal_number;
     }
 
     /**

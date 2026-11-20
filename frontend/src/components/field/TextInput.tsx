@@ -18,6 +18,7 @@ export type TextInputProps<
   autoComplete?: ComponentProps<'input'>['autoComplete']
   inputMode?: ComponentProps<'input'>['inputMode']
   autoFocus?: boolean
+  disabled?: boolean
 }
 
 export function TextInput<
@@ -29,6 +30,7 @@ export function TextInput<
   autoComplete = 'off',
   inputMode,
   autoFocus = false,
+  disabled = false,
   ...props
 }: TextInputProps<TFieldValues, TName, TTransformedValues>) {
   return (
@@ -43,6 +45,7 @@ export function TextInput<
           autoComplete={autoComplete}
           inputMode={inputMode}
           autoFocus={autoFocus}
+          disabled={disabled}
         />
       )}
     />

@@ -311,7 +311,11 @@ class TiervermittlungExport
         $due = $exportable->filter(function (Animal $animal) use ($refreshBefore) {
             $listing = $animal->tiervermittlungListing;
 
-            if ($listing === null || $listing->payload_hash !== $this->mapper->hash($this->mapper->payload($animal))) {
+            // A different tier id (the listing is still keyed by the old
+            // one) leaves the payload hash alone but needs a re-key.
+            if ($listing === null
+                || $listing->tier_id !== $this->mapper->tierId($animal)
+                || $listing->payload_hash !== $this->mapper->hash($this->mapper->payload($animal))) {
                 return true;
             }
 
@@ -335,6 +339,10 @@ class TiervermittlungExport
         $payload = $this->mapper->payload($animal);
         $listing = $animal->tiervermittlungListing
             ?? new TiervermittlungListing(['animal_id' => $animal->id, 'tier_id' => $this->mapper->tierId($animal)]);
+
+        if ($listing->tier_id !== $this->mapper->tierId($animal) && ! $this->rekey($listing, $this->mapper->tierId($animal))) {
+            return false;
+        }
 
         try {
             $result = $this->client->putAnimal($listing->tier_id, $payload);
@@ -384,6 +392,46 @@ class TiervermittlungExport
             'last_sent_at' => now(),
         ])->save();
         $animal->setRelation('tiervermittlungListing', $listing);
+
+        return true;
+    }
+
+    /**
+     * Move a listing to a new tier id: the old listing is deleted on the
+     * platform first, then the record is reset so the animal is sent fresh
+     * under the new id. Returns false (and retries next run) when the delete
+     * fails; the old listing stays untouched in that case.
+     */
+    private function rekey(TiervermittlungListing $listing, string $tierId): bool
+    {
+        try {
+            $this->client->deleteAnimal($listing->tier_id, 'entfernt');
+        } catch (TiervermittlungException $e) {
+            if ($e->isAuthError()) {
+                throw $e;
+            }
+
+            if (! $e->isNotFound()) {
+                $listing->update(['last_error' => $e->describe()]);
+
+                Log::warning('Failed to remove old listing while re-keying on Tiervermittlung.de', [
+                    'tier_id' => $listing->tier_id,
+                    'status' => $e->status,
+                    'error' => $e->describe(),
+                ]);
+
+                return false;
+            }
+        }
+
+        $listing->fill([
+            'tier_id' => $tierId,
+            'tv_id' => null,
+            'url' => '',
+            'status' => TiervermittlungListing::STATUS_NONE,
+            'payload_hash' => '',
+            'last_error' => '',
+        ])->save();
 
         return true;
     }

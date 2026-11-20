@@ -17,6 +17,7 @@ use Taily\Models\MedicalTest;
 use Taily\Models\Person;
 use Taily\Models\Vaccination;
 use Taily\Services\AnimalTraitService;
+use Taily\Support\AnimalNumberGenerator;
 
 /**
  * The animals, generated per species from SpeciesCatalog.
@@ -82,7 +83,7 @@ class AnimalSeeder extends Seeder
         return Animal::create([
             // Tab 1: Basic & Description
             'animal_type_id' => $animalTypeId,
-            'animal_number' => $species['number_prefix'].'-'.str_pad((string) $index, 5, '0', STR_PAD_LEFT),
+            'animal_number' => app(AnimalNumberGenerator::class)->generate(),
             'name' => $faker->randomElement($species['names']),
             'old_name' => $faker->boolean(30) ? $faker->randomElement($species['names']) : '',
             'breed' => SpeciesCatalog::pickBreed($species['breeds'], $faker),

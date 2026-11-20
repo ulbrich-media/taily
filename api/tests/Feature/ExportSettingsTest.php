@@ -95,7 +95,7 @@ class ExportSettingsTest extends TestCase
         $animal = Animal::create(['animal_type_id' => $type->id, 'name' => 'Bello', 'gender' => 'male']);
         TiervermittlungListing::create([
             'animal_id' => $animal->id,
-            'tier_id' => $animal->id,
+            'tier_id' => $animal->animal_number,
             'status' => 'abgelehnt',
             'last_error' => 'kaputt',
             'last_sent_at' => now()->subDay(),
@@ -103,7 +103,7 @@ class ExportSettingsTest extends TestCase
         $other = Animal::create(['animal_type_id' => $type->id, 'name' => 'Luna', 'gender' => 'female']);
         TiervermittlungListing::create([
             'animal_id' => $other->id,
-            'tier_id' => $other->id,
+            'tier_id' => $other->animal_number,
             'status' => 'veroeffentlicht',
             'last_sent_at' => '2026-11-01 10:00:00',
         ]);

@@ -19,7 +19,7 @@ class CurrentCountryMigrationTest extends TestCase
         $type = AnimalType::create(['title' => 'Hund', 'tiervermittlung_species' => 'dog']);
         $listed = Animal::create(['animal_type_id' => $type->id, 'name' => 'Gelistet', 'gender' => 'male']);
         $unlisted = Animal::create(['animal_type_id' => $type->id, 'name' => 'Nicht gelistet', 'gender' => 'male']);
-        TiervermittlungListing::create(['animal_id' => $listed->id, 'tier_id' => $listed->id, 'status' => 'veroeffentlicht']);
+        TiervermittlungListing::create(['animal_id' => $listed->id, 'tier_id' => $listed->animal_number, 'status' => 'veroeffentlicht']);
 
         $migration = require database_path('migrations/2026_11_19_000000_add_current_country_to_animals.php');
         $migration->down();
