@@ -39,8 +39,10 @@ class AnimalPayloadMapper
 
     /**
      * Taily only knows the country an animal lives in. The platform requires
-     * zip and city as well and fills them with a dash itself when a listing
-     * abroad is entered by hand, so the export does the same.
+     * zip and city only for Germany (DE), so this placeholder is sent there
+     * until a concrete location is tracked; for other countries nothing is
+     * sent. The Bundesland is derived by the platform from the zip code and
+     * is never sent.
      */
     public const UNKNOWN_LOCATION_PART = '-';
 
@@ -146,11 +148,7 @@ class AnimalPayloadMapper
                 'tasso' => $animal->tasso_id !== '',
                 'findefix' => $animal->findefix_id !== '',
             ],
-            'location' => [
-                'country' => $animal->current_country,
-                'zip' => self::UNKNOWN_LOCATION_PART,
-                'city' => self::UNKNOWN_LOCATION_PART,
-            ],
+            'location' => $this->location($animal),
             'images' => array_map(fn (Media $media) => [
                 // A new upload gets a new uuid, so the platform only downloads
                 // images it has not seen before.
@@ -232,6 +230,21 @@ class AnimalPayloadMapper
             ->sortBy('order_column')
             ->first(fn (Media $media) => in_array($media->mime_type, self::VIDEO_MIME_TYPES, true)
                 && $media->size <= self::MAX_VIDEO_BYTES);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function location(Animal $animal): array
+    {
+        $location = ['country' => $animal->current_country];
+
+        if ($animal->current_country === 'DE') {
+            $location['zip'] = self::UNKNOWN_LOCATION_PART;
+            $location['city'] = self::UNKNOWN_LOCATION_PART;
+        }
+
+        return $location;
     }
 
     private function isAdopted(Animal $animal): bool
