@@ -45,34 +45,32 @@ export function ExportSettingsPage({
         breadcrumb={breadcrumb}
       />
 
-      <section className="space-y-4">
-        <h2 className="text-lg font-semibold">Tiervermittlung.de</h2>
+      <ExportStatusCard status={status} renderAnimalLink={renderAnimalLink} />
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Verträglichkeiten</CardTitle>
-            <CardDescription>
-              Tiervermittlung.de kennt nur Kinder, Hunde und Katzen als
-              Verträglichkeit. Lege fest, welche Wörter bei den
-              Verträglichkeiten eines Tieres zu welcher Option gehören
-              (Groß-/Kleinschreibung spielt keine Rolle).
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <CompatibilityMappingForm
-              // Only a save resets the form; background refetches must not
-              // discard unsaved edits.
-              key={formResetKey}
-              value={compatibleWith}
-              readOnly={!isAdmin}
-              isPending={isSaving}
-              onSubmit={onSave}
-            />
-          </CardContent>
-        </Card>
-
-        <ExportStatusCard status={status} renderAnimalLink={renderAnimalLink} />
-      </section>
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            Verträglichkeiten für Tiervermittlung.de zuordnen
+          </CardTitle>
+          <CardDescription>
+            Tiervermittlung.de kennt nur Kinder, Hunde und Katzen als
+            Verträglichkeit. Lege fest, welche Wörter bei den Verträglichkeiten
+            eines Tieres zu welcher Option gehören (Groß-/Kleinschreibung spielt
+            keine Rolle).
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <CompatibilityMappingForm
+            // Only a save resets the form; background refetches must not
+            // discard unsaved edits.
+            key={formResetKey}
+            value={compatibleWith}
+            readOnly={!isAdmin}
+            isPending={isSaving}
+            onSubmit={onSave}
+          />
+        </CardContent>
+      </Card>
     </div>
   )
 }

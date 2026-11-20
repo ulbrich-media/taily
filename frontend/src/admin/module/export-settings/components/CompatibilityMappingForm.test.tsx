@@ -43,10 +43,9 @@ describe('CompatibilityMappingForm', () => {
     const user = userEvent.setup()
     render(<CompatibilityMappingForm value={value} onSubmit={vi.fn()} />)
 
-    await user.click(
+    expect(
       screen.getByRole('button', { name: 'Wort für Kinder hinzufügen' })
-    )
-    expect(screen.getByRole('alert')).toHaveTextContent('Bitte gib ein Wort')
+    ).toBeDisabled()
 
     await user.type(screen.getByLabelText('Neues Wort für Kinder'), ' kinder ')
     await user.click(

@@ -43,9 +43,11 @@ export function ExportStatusCard({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Status</CardTitle>
+        <CardTitle>Status des Exports zu Tiervermittlung.de</CardTitle>
         <CardDescription>
-          Der aktuelle Stand des Exports zu Tiervermittlung.de.
+          Taily übermittelt veröffentlichte Tiere automatisch an
+          Tiervermittlung.de. Hier siehst du, ob der Export läuft und was damit
+          passiert ist.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -60,34 +62,47 @@ export function ExportStatusCard({
           </Badge>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-          {LISTING_LABELS.map(({ key, label }) => (
-            <InfoRow key={key} label={label}>
-              {status.listings[key]}
-            </InfoRow>
-          ))}
-        </div>
-
-        <InfoRow label="Letzte erfolgreiche Übermittlung">
-          {status.last_delivery_at
-            ? formatApiDateTime(status.last_delivery_at)
-            : 'noch keine'}
-        </InfoRow>
-
-        {status.attention.length > 0 && (
-          <div className="space-y-1">
-            <p className="text-sm font-medium">Tiere mit Handlungsbedarf</p>
-            <ul className="space-y-1 text-sm">
-              {status.attention.map((item) => (
-                <li key={item.animal_id} className="flex items-center gap-2">
-                  {renderAnimalLink(item)}
-                  <span className="text-muted-foreground">
-                    {ATTENTION_LABELS[item.status]}
-                  </span>
-                </li>
+        {!status.enabled || !status.api_key_configured ? (
+          <p className="text-muted-foreground text-sm">
+            {!status.enabled
+              ? 'Der Export ist deaktiviert, es werden keine Tiere übermittelt.'
+              : 'Es ist kein API-Schlüssel hinterlegt, es werden keine Tiere übermittelt.'}
+          </p>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+              {LISTING_LABELS.map(({ key, label }) => (
+                <InfoRow key={key} label={label}>
+                  {status.listings[key]}
+                </InfoRow>
               ))}
-            </ul>
-          </div>
+            </div>
+
+            <InfoRow label="Letzte erfolgreiche Übermittlung">
+              {status.last_delivery_at
+                ? formatApiDateTime(status.last_delivery_at)
+                : 'noch keine'}
+            </InfoRow>
+
+            {status.attention.length > 0 && (
+              <div className="space-y-1">
+                <p className="text-sm font-medium">Tiere mit Handlungsbedarf</p>
+                <ul className="space-y-1 text-sm">
+                  {status.attention.map((item) => (
+                    <li
+                      key={item.animal_id}
+                      className="flex items-center gap-2"
+                    >
+                      {renderAnimalLink(item)}
+                      <span className="text-muted-foreground">
+                        {ATTENTION_LABELS[item.status]}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </>
         )}
       </CardContent>
     </Card>

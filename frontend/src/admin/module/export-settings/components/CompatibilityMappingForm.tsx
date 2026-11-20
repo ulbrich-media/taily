@@ -1,5 +1,7 @@
 import { useState } from 'react'
-import { X } from 'lucide-react'
+import { PlusIcon, XIcon } from 'lucide-react'
+import { ButtonGroup } from '@/shadcn/components/ui/button-group'
+import { Field, FieldLabel } from '@/shadcn/components/ui/field'
 import { Button } from '@/shadcn/components/ui/button'
 import { Input } from '@/shadcn/components/ui/input'
 import { Badge } from '@/shadcn/components/ui/badge'
@@ -76,66 +78,75 @@ export function CompatibilityMappingForm({
       }}
     >
       {OPTIONS.map(({ option, label }) => (
-        <fieldset key={option} className="space-y-2">
-          <legend className="text-sm font-medium">{label}</legend>
-          <ul
-            className="flex flex-wrap gap-2"
-            aria-label={`Wörter für ${label}`}
-          >
-            {mapping[option].length === 0 && (
-              <li className="text-sm text-muted-foreground">Keine Wörter</li>
-            )}
-            {mapping[option].map((word) => (
-              <li key={word}>
-                <Badge variant="outline" className="gap-1">
-                  {word}
-                  {!readOnly && (
-                    <button
-                      type="button"
-                      aria-label={`${word} entfernen`}
-                      onClick={() => removeWord(option, word)}
-                    >
-                      <X className="size-3" />
-                    </button>
-                  )}
-                </Badge>
-              </li>
-            ))}
-          </ul>
+        <Field key={option} data-invalid={Boolean(errors[option])}>
+          <FieldLabel htmlFor={`mapping-${option}`}>
+            {`Wörter, die bei Tiervermittlung.de als „${label}“ gelten`}
+          </FieldLabel>
           {!readOnly && (
-            <>
-              <div className="flex gap-2">
-                <Input
-                  aria-label={`Neues Wort für ${label}`}
-                  value={drafts[option]}
-                  onChange={(event) =>
-                    setDrafts({ ...drafts, [option]: event.target.value })
+            <ButtonGroup>
+              <Input
+                id={`mapping-${option}`}
+                aria-label={`Neues Wort für ${label}`}
+                aria-invalid={Boolean(errors[option])}
+                autoComplete="off"
+                className="flex-1"
+                value={drafts[option]}
+                onChange={(event) =>
+                  setDrafts({ ...drafts, [option]: event.target.value })
+                }
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    event.preventDefault()
+                    addWord(option)
                   }
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter') {
-                      event.preventDefault()
-                      addWord(option)
-                    }
-                  }}
-                  placeholder="Wort hinzufügen"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => addWord(option)}
-                  aria-label={`Wort für ${label} hinzufügen`}
-                >
-                  Hinzufügen
-                </Button>
-              </div>
-              {errors[option] && (
-                <p role="alert" className="text-sm text-destructive">
-                  {errors[option]}
-                </p>
-              )}
-            </>
+                }}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                disabled={drafts[option].trim().length === 0}
+                onClick={() => addWord(option)}
+                aria-label={`Wort für ${label} hinzufügen`}
+              >
+                <PlusIcon className="size-4" />
+              </Button>
+            </ButtonGroup>
           )}
-        </fieldset>
+          {errors[option] && (
+            <p role="alert" className="text-destructive text-sm">
+              {errors[option]}
+            </p>
+          )}
+          {mapping[option].length === 0 ? (
+            <p className="text-muted-foreground text-sm">
+              Keine Einträge vorhanden
+            </p>
+          ) : (
+            <ul
+              className="flex flex-wrap gap-1.5"
+              aria-label={`Wörter für ${label}`}
+            >
+              {mapping[option].map((word) => (
+                <li key={word}>
+                  <Badge variant="secondary" className="gap-1 pr-1">
+                    {word}
+                    {!readOnly && (
+                      <button
+                        type="button"
+                        onClick={() => removeWord(option, word)}
+                        className="hover:text-foreground ml-0.5 opacity-60 hover:opacity-100"
+                        aria-label={`${word} entfernen`}
+                      >
+                        <XIcon className="size-3" />
+                      </button>
+                    )}
+                  </Badge>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Field>
       ))}
       {!readOnly && (
         <Button type="submit" disabled={isPending}>
