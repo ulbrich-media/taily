@@ -65,7 +65,7 @@ class SpeciesCatalogTest extends TestCase
     public function test_every_species_carries_what_the_seeders_read_from_it(): void
     {
         $required = [
-            'title', 'number_prefix', 'vaccinations', 'medical_tests', 'names',
+            'title', 'vaccinations', 'medical_tests', 'names',
             'breeds', 'weight_grams', 'size_cm', 'adoption_fee', 'boarding_cost',
             'sponsorship', 'compatibilities', 'compatibility_count',
             'personality_traits', 'personality_trait_count', 'image_directory',

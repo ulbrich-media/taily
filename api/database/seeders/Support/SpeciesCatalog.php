@@ -23,7 +23,6 @@ class SpeciesCatalog
             'dogs' => [
                 'title' => 'Hund',
                 'tiervermittlung_species' => TiervermittlungSpecies::DOG,
-                'number_prefix' => 'DOG',
 
                 // Core vaccinations plus the ones that matter for dogs coming
                 // out of southern and eastern Europe.
@@ -115,7 +114,6 @@ class SpeciesCatalog
             'cats' => [
                 'title' => 'Katze',
                 'tiervermittlung_species' => TiervermittlungSpecies::CAT,
-                'number_prefix' => 'CAT',
 
                 'vaccinations' => [
                     ['title' => 'Tollwut', 'description' => 'Pflichtimpfung für die Einreise'],
