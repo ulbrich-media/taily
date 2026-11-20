@@ -3,13 +3,18 @@
 namespace Taily\Providers;
 
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Contracts\Http\Kernel;
+use Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Sanctum\Http\Middleware\CheckAbilities;
+use Laravel\Sanctum\Http\Middleware\CheckForAnyAbility;
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
 use Taily\Console\Commands\CheckTiervermittlung;
 use Taily\Console\Commands\ProcessContractSigningReminders;
@@ -22,6 +27,7 @@ use Taily\Http\Controllers\Dev\ContractPreviewController;
 use Taily\Http\Middleware\EnsureUserIsAdmin;
 use Taily\Http\Middleware\ForceJsonResponse;
 use Taily\Http\Middleware\PublicApiCors;
+use Taily\Http\Middleware\SetReferrerPolicyHeader;
 use Taily\Models\User;
 use Taily\Support\MediaUrlGenerator;
 use Taily\Support\Tiervermittlung\TiervermittlungClient;
@@ -68,7 +74,9 @@ class TailyServiceProvider extends ServiceProvider
 
         $this->registerRoutes();
         $this->registerMiddlewareAlias();
+        $this->registerMiddleware();
         $this->registerMiddlewarePriority();
+        $this->registerSchedule();
         $this->registerRateLimiters();
         $this->registerCommands();
 
@@ -145,6 +153,59 @@ class TailyServiceProvider extends ServiceProvider
     {
         $this->callAfterResolving(Router::class, function (Router $router) {
             $router->aliasMiddleware('admin', EnsureUserIsAdmin::class);
+            $router->aliasMiddleware('ability', CheckAbilities::class);
+            $router->aliasMiddleware('abilities', CheckForAnyAbility::class);
+        });
+    }
+
+    /**
+     * Global and group middleware the package relies on.
+     *
+     * This lives here rather than in bootstrap/app.php because an install's
+     * bootstrap/app.php comes from the taily-app scaffold and is never
+     * touched again by `composer update` — anything configured there drifts
+     * from the package as soon as the package changes.
+     */
+    protected function registerMiddleware(): void
+    {
+        $kernel = $this->app->make(Kernel::class);
+
+        // What `->statefulApi()` does in bootstrap/app.php.
+        $kernel->prependMiddlewareToGroup('api', EnsureFrontendRequestsAreStateful::class);
+        $kernel->appendMiddlewareToGroup('api', SetReferrerPolicyHeader::class);
+
+        // String fields default to '' rather than null (see
+        // docs/coding-patterns/empty-strings.md), so request input must keep
+        // empty strings as they are.
+        ConvertEmptyStringsToNull::skipWhen(fn () => true);
+
+        // invitations/*/accept has no prior GET on the same session to
+        // anchor a CSRF token to. The public signing/inspection submissions
+        // do have one (via EnsureFrontendRequestsAreStateful on their GET
+        // routes) and stay protected, so a forged cross-site submission
+        // cannot attribute someone else's IP/user-agent to a signature or
+        // verdict in the audit trail.
+        ValidateCsrfToken::except([
+            'internal/invitations/*/accept',
+        ]);
+    }
+
+    /**
+     * Register the package's scheduled tasks.
+     *
+     * Requires an operator-configured cron entry invoking `schedule:run`
+     * every minute — see docs/release-architecture.md. No queue worker
+     * involved, per ADR-012 Constraint 1 (no background worker
+     * infrastructure).
+     */
+    protected function registerSchedule(): void
+    {
+        $this->callAfterResolving(Schedule::class, function (Schedule $schedule): void {
+            // Daily is enough slack for the 2-day-out reminder window.
+            $schedule->command('contracts:process-reminders')->daily();
+            // Both exit right away on installs without the export configured.
+            $schedule->command('tiervermittlung:sync')->everyFiveMinutes()->withoutOverlapping();
+            $schedule->command('tiervermittlung:reconcile')->dailyAt('03:30')->withoutOverlapping();
         });
     }
 
