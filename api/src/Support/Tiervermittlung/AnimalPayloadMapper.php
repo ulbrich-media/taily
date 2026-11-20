@@ -20,6 +20,12 @@ class AnimalPayloadMapper
     /** The platform takes at most five images; the first is the title image. */
     public const MAX_IMAGES = 5;
 
+    /** The only video types the platform converts. */
+    public const VIDEO_MIME_TYPES = ['video/mp4', 'video/quicktime'];
+
+    /** The platform rejects larger videos; its "50 MB" is read as 50 MiB. */
+    public const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
+
     public const MAX_TITLE_LENGTH = 60;
 
     public const MAX_DESCRIPTION_LENGTH = 20000;
@@ -117,6 +123,7 @@ class AnimalPayloadMapper
         $species = $animal->animalType->tiervermittlung_species;
 
         $title = trim($animal->publish_title ?? '');
+        $video = $this->video($animal);
 
         $payload = [
             'name' => $animal->name,
@@ -149,6 +156,12 @@ class AnimalPayloadMapper
                 'id' => $media->uuid,
                 'url' => route('api.media.serve', ['mediaUuid' => $media->uuid, 'conversion' => self::IMAGE_CONVERSION]),
             ], $this->images($animal)),
+            'video' => $video !== null ? [
+                // Same pattern as images: a replaced video has a new uuid, so
+                // the platform only downloads it when it actually changed.
+                'id' => $video->uuid,
+                'url' => route('api.media.serve', ['mediaUuid' => $video->uuid]),
+            ] : null,
             'externalUrl' => $animal->application_url ?: null,
         ];
 
@@ -180,6 +193,18 @@ class AnimalPayloadMapper
             ->take(self::MAX_IMAGES)
             ->values()
             ->all();
+    }
+
+    /**
+     * The first video by order that the platform accepts. The original file
+     * is sent (no conversion).
+     */
+    private function video(Animal $animal): ?Media
+    {
+        return $animal->getMedia('pictures')
+            ->sortBy('order_column')
+            ->first(fn (Media $media) => in_array($media->mime_type, self::VIDEO_MIME_TYPES, true)
+                && $media->size <= self::MAX_VIDEO_BYTES);
     }
 
     private function isAdopted(Animal $animal): bool
