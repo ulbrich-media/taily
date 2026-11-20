@@ -56,7 +56,10 @@ class TiervermittlungPayloadTest extends TestCase
         $payload = $this->mapper->payload($this->animal(['publish_title' => '  Bello sucht ein Zuhause  ']));
         $this->assertSame('Bello sucht ein Zuhause', $payload['title']);
 
-        $payload = $this->mapper->payload($this->animal(['publish_title' => str_repeat('a', 60).'b']));
+        // The column holds at most sixty characters, so a longer title only exists in memory.
+        $animal = $this->animal();
+        $animal->publish_title = str_repeat('a', 60).'b';
+        $payload = $this->mapper->payload($animal);
         $this->assertSame(str_repeat('a', 60), $payload['title']);
     }
 
