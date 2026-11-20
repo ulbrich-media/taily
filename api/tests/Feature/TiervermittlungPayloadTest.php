@@ -104,6 +104,61 @@ class TiervermittlungPayloadTest extends TestCase
         $this->assertStringEndsWith($block, $description);
     }
 
+    private function addVideo(Animal $animal, string $name = 'clip.mp4', int $kilobytes = 1000, string $mime = 'video/mp4'): Animal
+    {
+        $media = $animal->addMedia(UploadedFile::fake()->create($name, $kilobytes, $mime))->toMediaCollection('pictures');
+
+        // Spatie reads type and size from the (empty) fake content, so set them explicitly.
+        $media->update(['mime_type' => $mime, 'size' => $kilobytes * 1024]);
+
+        return $animal->fresh(['animalType', 'media', 'adoptions']);
+    }
+
+    public function test_it_sends_an_mp4_and_a_mov_video_as_original(): void
+    {
+        foreach ([['clip.mp4', 'video/mp4'], ['clip.mov', 'video/quicktime']] as [$name, $mime]) {
+            $animal = $this->addVideo($this->animal(), $name, 1000, $mime);
+            $video = $animal->getMedia('pictures')->first(fn ($m) => $m->mime_type === $mime);
+
+            $this->assertSame([
+                'id' => $video->uuid,
+                'url' => route('api.media.serve', ['mediaUuid' => $video->uuid]),
+            ], $this->mapper->payload($animal)['video']);
+            $this->assertCount(1, $this->mapper->payload($animal)['images']);
+        }
+    }
+
+    public function test_it_sends_only_the_first_video_by_order(): void
+    {
+        $animal = $this->addVideo($this->animal(), 'first.mp4');
+        $animal = $this->addVideo($animal, 'second.mp4');
+        $first = $animal->getMedia('pictures')->first(fn ($m) => $m->file_name === 'first.mp4');
+
+        $this->assertSame($first->uuid, $this->mapper->payload($animal)['video']['id']);
+    }
+
+    public function test_it_skips_too_large_and_unsupported_videos(): void
+    {
+        $animal = $this->addVideo($this->animal(), 'big.mp4', 51201);
+        $this->assertArrayNotHasKey('video', $this->mapper->payload($animal));
+
+        $animal = $this->addVideo($this->animal(), 'clip.webm', 1000, 'video/webm');
+        $this->assertArrayNotHasKey('video', $this->mapper->payload($animal));
+
+        $this->assertArrayNotHasKey('video', $this->mapper->payload($this->animal()));
+    }
+
+    public function test_it_sends_a_new_video_id_when_the_video_is_replaced(): void
+    {
+        $animal = $this->addVideo($this->animal());
+        $oldId = $this->mapper->payload($animal)['video']['id'];
+
+        $animal->getMedia('pictures')->first(fn ($m) => $m->mime_type === 'video/mp4')->delete();
+        $animal = $this->addVideo($animal->fresh(), 'new.mp4');
+
+        $this->assertNotSame($oldId, $this->mapper->payload($animal)['video']['id']);
+    }
+
     public function test_it_sends_the_trimmed_title_cut_at_sixty_characters(): void
     {
         $payload = $this->mapper->payload($this->animal(['publish_title' => '  Bello sucht ein Zuhause  ']));

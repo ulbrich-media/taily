@@ -63,6 +63,7 @@ Every exported animal is listed as up for adoption (`forAdoption`). The animal's
 | `title` | `publish_title` — optional, trimmed, at most 60 characters; left out when empty |
 | `description` | `publish_description`, followed by the lines `Verträglichkeiten: …` and `Persönlichkeit: …` (comma-separated values, each line only when the animal has any, separated by blank lines). The description text is shortened first, so the lines always fit within 20 000 characters |
 | `images` | the first five pictures in their order, as the `export` conversion via the public media route; the media uuid is the image id, so the platform only downloads new pictures |
+| `video` | the first MP4 or MOV video of the pictures by order, at most 50 MB, as the original file via the public media route (so `APP_URL` must be publicly reachable); the media uuid is the video id, so a replaced video is downloaded again. Left out when there is none, which makes the platform remove a video sent earlier. The platform converts MP4s in the background, so they appear after a few minutes; problems come back in `warnungen`. YouTube links are not sent |
 | `chip` | whether a TASSO or FINDEFIX registration exists — never the numbers |
 | `location` | `current_country` as country; zip and city are always `-` |
 | `externalUrl` | `application_url`, shown below the description |
