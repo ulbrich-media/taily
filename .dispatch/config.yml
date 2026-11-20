@@ -26,6 +26,8 @@ workspace:
   # API's CORS/cookie setup come from worktree-init.sh (frontend/.env.local: <slug>.ddev.site:<port>), so no portEnv here and no
   # url template: open https://<slug>.ddev.site:<port> from the workspace's frontend/.env.local.
   dev:
+    # Also runs before a job after an idle stop. The migrate step applies migrations the branch added after
+    # workspace setup (setup migrates only once, and the tests use in-memory SQLite, so they never notice).
     start: ["ddev start", "ddev artisan migrate --force"]
     run: "npm run dev --prefix frontend"
     timeoutMinutes: 60
