@@ -217,7 +217,7 @@ class TiervermittlungExport
             ->where(fn (Builder $query) => $query
                 ->where('do_publish', true)
                 ->orWhereHas('tiervermittlungListing'))
-            ->with(['animalType', 'media', 'adoptions', 'tiervermittlungListing'])
+            ->with(['animalType', 'media', 'adoptions', 'compatibilities', 'personalityTraits', 'tiervermittlungListing'])
             ->orderBy('id')
             ->get();
     }
