@@ -25,6 +25,7 @@ use Taily\Http\Middleware\PublicApiCors;
 use Taily\Models\User;
 use Taily\Support\MediaUrlGenerator;
 use Taily\Support\Tiervermittlung\TiervermittlungClient;
+use Taily\Support\UploadLimits;
 
 class TailyServiceProvider extends ServiceProvider
 {
@@ -206,6 +207,7 @@ class TailyServiceProvider extends ServiceProvider
         config([
             'media-library.url_generator' => MediaUrlGenerator::class,
             'media-library.queue_conversions_by_default' => false,
+            'media-library.max_file_size' => UploadLimits::maxBytes(),
         ]);
     }
 

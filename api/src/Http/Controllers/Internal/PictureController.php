@@ -9,13 +9,14 @@ use Illuminate\Validation\Rule;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Taily\Http\Controllers\Controller;
+use Taily\Support\UploadLimits;
 
 abstract class PictureController extends Controller
 {
     protected function storeAction(Request $request, Model&HasMedia $parent): JsonResponse
     {
         $request->validate([
-            'file' => 'required|image|mimes:jpg,jpeg,png,webp,gif|max:10240',
+            'file' => 'required|image|mimes:jpg,jpeg,png,webp,gif|max:'.UploadLimits::IMAGE_KB,
         ]);
 
         $file = $request->file('file');
