@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { Route as AnimalStatusRoute } from '@/routes/admin/_authenticated/animals/_animalDetail/$animalTypeId.animal.$animalId/status'
 import {
@@ -28,10 +29,13 @@ function RouteComponent() {
   const client = useQueryClient()
   const { data } = useSuspenseQuery(tiervermittlungSettingsQuery)
 
+  const [formResetKey, setFormResetKey] = useState(0)
+
   const saveMutation = useMutation({
     mutationFn: updateTiervermittlungSettings,
     onSuccess: ({ message, ...settings }) => {
       client.setQueryData(tiervermittlungSettingsQuery.queryKey, settings)
+      setFormResetKey((key) => key + 1)
       toast.success(message)
     },
   })
@@ -42,6 +46,7 @@ function RouteComponent() {
       status={data.status}
       isAdmin={isAdmin}
       isSaving={saveMutation.isPending}
+      formResetKey={formResetKey}
       onSave={(compatibleWith) => saveMutation.mutate({ compatibleWith })}
       renderAnimalLink={(item) =>
         item.animal_type_id ? (

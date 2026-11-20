@@ -7,6 +7,7 @@ import {
   CardTitle,
 } from '@/shadcn/components/ui/card'
 import { Badge } from '@/shadcn/components/ui/badge'
+import { InfoRow } from '@/shadcn/components/common/info-row'
 import { formatApiDateTime } from '@/lib/dates.utils'
 import type {
   ExportAttentionItem,
@@ -59,21 +60,19 @@ export function ExportStatusCard({
           </Badge>
         </div>
 
-        <dl className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm sm:max-w-sm">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
           {LISTING_LABELS.map(({ key, label }) => (
-            <div key={key} className="contents">
-              <dt className="text-muted-foreground">{label}</dt>
-              <dd className="text-right font-medium">{status.listings[key]}</dd>
-            </div>
+            <InfoRow key={key} label={label}>
+              {status.listings[key]}
+            </InfoRow>
           ))}
-        </dl>
+        </div>
 
-        <p className="text-sm text-muted-foreground">
-          Letzte erfolgreiche Übermittlung:{' '}
+        <InfoRow label="Letzte erfolgreiche Übermittlung">
           {status.last_delivery_at
             ? formatApiDateTime(status.last_delivery_at)
             : 'noch keine'}
-        </p>
+        </InfoRow>
 
         {status.attention.length > 0 && (
           <div className="space-y-1">

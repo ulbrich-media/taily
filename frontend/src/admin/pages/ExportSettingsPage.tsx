@@ -20,6 +20,8 @@ interface ExportSettingsPageProps {
   status: TiervermittlungExportStatus
   isAdmin: boolean
   isSaving?: boolean
+  /** Changes after a successful save to reload the form from the saved state. */
+  formResetKey?: number
   onSave: (value: CompatibleWithMapping) => void
   renderAnimalLink: (item: ExportAttentionItem) => ReactNode
   breadcrumb?: ReactNode
@@ -30,6 +32,7 @@ export function ExportSettingsPage({
   status,
   isAdmin,
   isSaving,
+  formResetKey = 0,
   onSave,
   renderAnimalLink,
   breadcrumb,
@@ -57,8 +60,9 @@ export function ExportSettingsPage({
           </CardHeader>
           <CardContent>
             <CompatibilityMappingForm
-              // Start over with the saved state after every save.
-              key={JSON.stringify(compatibleWith)}
+              // Only a save resets the form; background refetches must not
+              // discard unsaved edits.
+              key={formResetKey}
               value={compatibleWith}
               readOnly={!isAdmin}
               isPending={isSaving}
