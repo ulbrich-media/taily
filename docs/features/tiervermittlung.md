@@ -61,13 +61,13 @@ Every exported animal is listed as up for adoption (`forAdoption`). The animal's
 | `birthDate` | `date_of_birth` |
 | `heightCm` | `size_cm`, dogs only |
 | `title` | `publish_title` — optional, trimmed, at most 60 characters; left out when empty |
-| `description` | `publish_description` |
+| `description` | `publish_description`, followed by the lines `Verträglichkeiten: …` and `Persönlichkeit: …` (comma-separated values, each line only when the animal has any, separated by blank lines). The description text is shortened first, so the lines always fit within 20 000 characters |
 | `images` | the first five pictures in their order, as the `export` conversion via the public media route; the media uuid is the image id, so the platform only downloads new pictures |
 | `chip` | whether a TASSO or FINDEFIX registration exists — never the numbers |
 | `location` | `current_country` as country; zip and city are always `-` |
 | `externalUrl` | `application_url`, shown below the description |
 
-Taily only knows the country an animal lives in (`current_location` is free text for people). The platform requires zip and city too and fills both with a dash when a listing abroad is entered by hand, so the export sends `-` for every animal. Animals abroad are only published if the club's account has a § 11 TierSchG permit on file; otherwise they come back as `nicht_veroeffentlicht` with a reason. Not sent: health data, chip numbers, people, compatibilities and personality traits (free text without a fixed mapping).
+Taily only knows the country an animal lives in (`current_location` is free text for people). The platform requires zip and city too and fills both with a dash when a listing abroad is entered by hand, so the export sends `-` for every animal. Animals abroad are only published if the club's account has a § 11 TierSchG permit on file; otherwise they come back as `nicht_veroeffentlicht` with a reason. Not sent: health data, chip numbers, people.
 
 ## How the sync works
 

@@ -7,6 +7,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Taily\Models\Adoption;
 use Taily\Models\Animal;
+use Taily\Models\AnimalTrait;
 use Taily\Models\AnimalType;
 use Taily\Models\Person;
 use Taily\Support\Tiervermittlung\AnimalPayloadMapper;
@@ -48,7 +49,59 @@ class TiervermittlungPayloadTest extends TestCase
             $animal->addMedia(UploadedFile::fake()->image("bild-{$i}.jpg", 40, 30))->toMediaCollection('pictures');
         }
 
-        return $animal->fresh(['animalType', 'media', 'adoptions']);
+        return $animal->fresh(['animalType', 'media', 'adoptions', 'compatibilities', 'personalityTraits']);
+    }
+
+    /**
+     * @param  list<string>  $compatibilities
+     * @param  list<string>  $personalityTraits
+     */
+    private function withTraits(Animal $animal, array $compatibilities = [], array $personalityTraits = []): Animal
+    {
+        foreach ($compatibilities as $value) {
+            AnimalTrait::create(['animal_id' => $animal->id, 'type' => 'compatibility', 'value' => $value]);
+        }
+        foreach ($personalityTraits as $value) {
+            AnimalTrait::create(['animal_id' => $animal->id, 'type' => 'personality_trait', 'value' => $value]);
+        }
+
+        return $animal->fresh(['animalType', 'media', 'adoptions', 'compatibilities', 'personalityTraits']);
+    }
+
+    public function test_it_appends_compatibilities_and_personality_traits_to_the_description(): void
+    {
+        $animal = $this->withTraits($this->animal(['publish_description' => 'Text']), ['Hunde', 'Kinder'], ['verschmust', 'verspielt']);
+
+        $this->assertSame(
+            "Text\n\nVerträglichkeiten: Hunde, Kinder\n\nPersönlichkeit: verschmust, verspielt",
+            $this->mapper->payload($animal)['description'],
+        );
+    }
+
+    public function test_it_appends_only_the_trait_type_that_is_present(): void
+    {
+        $compat = $this->withTraits($this->animal(['publish_description' => 'Text']), ['Hunde']);
+        $this->assertSame("Text\n\nVerträglichkeiten: Hunde", $this->mapper->payload($compat)['description']);
+
+        $personality = $this->withTraits($this->animal(['publish_description' => 'Text']), [], ['verspielt']);
+        $this->assertSame("Text\n\nPersönlichkeit: verspielt", $this->mapper->payload($personality)['description']);
+    }
+
+    public function test_it_leaves_the_description_unchanged_without_traits(): void
+    {
+        $this->assertSame('Text', $this->mapper->payload($this->animal(['publish_description' => 'Text']))['description']);
+    }
+
+    public function test_a_long_description_is_shortened_so_the_trait_block_stays_complete(): void
+    {
+        $animal = $this->animal(['publish_description' => str_repeat('a', 25000)]);
+        $animal = $this->withTraits($animal, ['Hunde', 'Kinder'], ['verspielt']);
+
+        $description = $this->mapper->payload($animal)['description'];
+        $block = "\n\nVerträglichkeiten: Hunde, Kinder\n\nPersönlichkeit: verspielt";
+
+        $this->assertSame(AnimalPayloadMapper::MAX_DESCRIPTION_LENGTH, mb_strlen($description));
+        $this->assertStringEndsWith($block, $description);
     }
 
     public function test_it_sends_the_trimmed_title_cut_at_sixty_characters(): void

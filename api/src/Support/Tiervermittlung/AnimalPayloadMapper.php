@@ -9,7 +9,8 @@ use Taily\Models\Animal;
 
 /**
  * Decides whether an animal goes to Tiervermittlung.de and builds the
- * payload for it. Expects `animalType`, `media` and `adoptions` to be loaded
+ * payload for it. Expects `animalType`, `media`, `adoptions`,
+ * `compatibilities` and `personalityTraits` to be loaded
  * (they are loaded on demand otherwise).
  *
  * The payload carries public data only: no chip numbers, health records or
@@ -128,7 +129,7 @@ class AnimalPayloadMapper
             'birthDate' => $animal->date_of_birth?->format('Y-m-d'),
             'heightCm' => $species === TiervermittlungSpecies::DOG ? $animal->size_cm : null,
             'title' => $title !== '' ? Str::limit($title, self::MAX_TITLE_LENGTH, '') : null,
-            'description' => Str::limit(trim($animal->publish_description), self::MAX_DESCRIPTION_LENGTH, ''),
+            'description' => $this->description($animal),
             'forAdoption' => true,
             'reserved' => (bool) $animal->is_reserved,
             // Only whether the animal is chipped and registered, never the
@@ -164,6 +165,32 @@ class AnimalPayloadMapper
     public function hash(array $payload): string
     {
         return hash('sha256', json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+    }
+
+    /**
+     * The description with the animal's compatibilities and personality
+     * traits appended as plain text. The description is shortened first, so
+     * the trait block is never cut off and the total stays within the limit.
+     */
+    private function description(Animal $animal): string
+    {
+        $base = trim($animal->publish_description ?? '');
+
+        $lines = [];
+        foreach (['Verträglichkeiten' => $animal->compatibilities, 'Persönlichkeit' => $animal->personalityTraits] as $label => $traits) {
+            if ($traits->isNotEmpty()) {
+                $lines[] = $label.': '.$traits->pluck('value')->implode(', ');
+            }
+        }
+
+        if ($lines === []) {
+            return Str::limit($base, self::MAX_DESCRIPTION_LENGTH, '');
+        }
+
+        $block = "\n\n".implode("\n\n", $lines);
+        $room = max(0, self::MAX_DESCRIPTION_LENGTH - mb_strlen($block));
+
+        return Str::limit(rtrim(Str::limit($base, $room, '')).$block, self::MAX_DESCRIPTION_LENGTH, '');
     }
 
     /**
