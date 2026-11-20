@@ -22,6 +22,8 @@ describe('AnimalTiervermittlungCard', () => {
       <AnimalTiervermittlungCard
         tiervermittlung={{
           exclusion_reasons: [],
+          blocked: false,
+          intentionally_excluded: false,
           listing: listing({ warnings: ['Rasse nicht erkannt'] }),
         }}
       />
@@ -39,6 +41,8 @@ describe('AnimalTiervermittlungCard', () => {
       <AnimalTiervermittlungCard
         tiervermittlung={{
           exclusion_reasons: ['Es gibt keinen Beschreibungstext.'],
+          blocked: true,
+          intentionally_excluded: false,
           listing: null,
         }}
       />

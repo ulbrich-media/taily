@@ -11,6 +11,7 @@ import { InfoRow } from '@/shadcn/components/common/info-row'
 import { formatApiDateTime } from '@/lib/dates.utils'
 import type {
   ExportAttentionItem,
+  ExportNotExportedItem,
   TiervermittlungExportStatus,
 } from '@/admin/module/export-settings/api/types'
 
@@ -33,7 +34,9 @@ const ATTENTION_LABELS: Record<ExportAttentionItem['status'], string> = {
 interface ExportStatusCardProps {
   status: TiervermittlungExportStatus
   /** Renders the link to an animal's status tab. */
-  renderAnimalLink: (item: ExportAttentionItem) => ReactNode
+  renderAnimalLink: (
+    item: Pick<ExportNotExportedItem, 'animal_id' | 'animal_type_id' | 'name'>
+  ) => ReactNode
 }
 
 export function ExportStatusCard({
@@ -96,6 +99,25 @@ export function ExportStatusCard({
                       {renderAnimalLink(item)}
                       <span className="text-muted-foreground">
                         {ATTENTION_LABELS[item.status]}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {status.not_exported.length > 0 && (
+              <div className="space-y-1">
+                <p className="text-sm font-medium">
+                  Freigegeben, aber nicht exportiert
+                </p>
+                <ul className="space-y-1 text-sm">
+                  {status.not_exported.map((item) => (
+                    <li key={item.animal_id}>
+                      {renderAnimalLink(item)}
+                      <span className="text-muted-foreground">
+                        {' '}
+                        – {item.reasons.join(' ')}
                       </span>
                     </li>
                   ))}

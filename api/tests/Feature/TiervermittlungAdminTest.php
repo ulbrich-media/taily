@@ -21,7 +21,7 @@ class TiervermittlungAdminTest extends TestCase
     {
         parent::setUp();
 
-        config(['taily.tiervermittlung.enabled' => true]);
+        config(['taily.tiervermittlung.enabled' => true, 'taily.tiervermittlung.api_key' => 'secret-key']);
 
         $this->admin = User::factory()->create(['name' => 'Admin', 'email' => 'admin@example.com', 'role' => UserRole::ADMIN]);
     }
@@ -122,5 +122,38 @@ class TiervermittlungAdminTest extends TestCase
             ->getJson("/internal/animals/{$animal->id}")
             ->assertOk()
             ->assertJsonMissingPath('tiervermittlung');
+    }
+
+    public function test_the_export_state_is_absent_without_an_api_key(): void
+    {
+        config(['taily.tiervermittlung.api_key' => '']);
+        $animal = Animal::create([
+            'animal_type_id' => AnimalType::create(['title' => 'Hund'])->id,
+            'name' => 'Bello',
+            'gender' => 'male',
+        ]);
+
+        $this->actingAs($this->admin)
+            ->withHeader('referer', 'http://localhost')
+            ->getJson("/internal/animals/{$animal->id}")
+            ->assertOk()
+            ->assertJsonMissingPath('tiervermittlung');
+    }
+
+    public function test_the_animal_detail_flags_blocked_and_intentionally_excluded_animals(): void
+    {
+        $type = AnimalType::create(['title' => 'Hund', 'tiervermittlung_species' => 'dog']);
+        $blocked = Animal::create(['animal_type_id' => $type->id, 'name' => 'Bello', 'gender' => 'male', 'do_publish' => true]);
+        $deceased = Animal::create(['animal_type_id' => $type->id, 'name' => 'Rex', 'gender' => 'male', 'do_publish' => true, 'is_deceased' => true]);
+        $unpublished = Animal::create(['animal_type_id' => $type->id, 'name' => 'Luna', 'gender' => 'female']);
+
+        $this->actingAs($this->admin)->getJson("/internal/animals/{$blocked->id}")
+            ->assertJsonPath('tiervermittlung.blocked', true)
+            ->assertJsonPath('tiervermittlung.intentionally_excluded', false);
+        $this->actingAs($this->admin)->getJson("/internal/animals/{$deceased->id}")
+            ->assertJsonPath('tiervermittlung.blocked', false)
+            ->assertJsonPath('tiervermittlung.intentionally_excluded', true);
+        $this->actingAs($this->admin)->getJson("/internal/animals/{$unpublished->id}")
+            ->assertJsonPath('tiervermittlung.blocked', false);
     }
 }

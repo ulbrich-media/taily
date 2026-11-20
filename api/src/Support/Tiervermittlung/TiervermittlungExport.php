@@ -52,6 +52,14 @@ class TiervermittlungExport
     }
 
     /**
+     * Enabled and fully configured, i.e. the export actually runs.
+     */
+    public static function isActive(): bool
+    {
+        return self::isEnabled() && self::configurationProblems() === [];
+    }
+
+    /**
      * What keeps the export from talking to the platform, as German text.
      * Empty when the configuration is complete. Independent of `enabled`, so
      * dry runs work before the export is switched on.
@@ -156,6 +164,21 @@ class TiervermittlungExport
     }
 
     /**
+     * Animals approved for publishing that are held back for a fixable
+     * reason. Deceased and adopted animals are not listed.
+     *
+     * @return list<array{animal: Animal, reasons: list<string>}>
+     */
+    public function blocked(): array
+    {
+        return $this->candidates()
+            ->filter(fn (Animal $animal) => $this->mapper->isBlocked($animal))
+            ->map(fn (Animal $animal) => ['animal' => $animal, 'reasons' => $this->mapper->exclusionReasons($animal)])
+            ->values()
+            ->all();
+    }
+
+    /**
      * Hand the platform the full list of listed animals, so listings this
      * installation lost track of are removed there too. Animals the
      * platform does not know are sent again on the next sync.
@@ -231,6 +254,15 @@ class TiervermittlungExport
             ])
             ->values();
 
+        $notExported = self::isActive()
+            ? array_map(fn (array $entry) => [
+                'animal_id' => $entry['animal']->id,
+                'animal_type_id' => $entry['animal']->animal_type_id,
+                'name' => $entry['animal']->name,
+                'reasons' => $entry['reasons'],
+            ], $this->blocked())
+            : [];
+
         return [
             'enabled' => self::isEnabled(),
             'api_key_configured' => (string) config('taily.tiervermittlung.api_key') !== '',
@@ -249,6 +281,7 @@ class TiervermittlungExport
                 ?->last_sent_at
                 ?->toIso8601String(),
             'attention' => $attention,
+            'not_exported' => $notExported,
         ];
     }
 

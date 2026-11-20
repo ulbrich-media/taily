@@ -80,7 +80,7 @@ A word matches a trait when both are equal after trimming and ignoring case (exa
 
 **Storage:** a generic key/value table `export_settings` (`key`, JSON `value`) rather than a dedicated mapping table — least code, and later export targets (e.g. FINDEFIX) can add keys without a migration. The mapping lives under `tiervermittlung.compatible_with`; the migration seeds the defaults.
 
-The same page shows the export status (read-only): whether the export is enabled, whether an API key is set (never the key), listings per status, the last successful delivery and the animals that were `abgelehnt` or `nicht_veroeffentlicht`, linked to their status tab.
+The same page shows the export status (read-only): whether the export is enabled, whether an API key is set (never the key), listings per status, the last successful delivery and the animals that were `abgelehnt` or `nicht_veroeffentlicht`, linked to their status tab. It also lists the animals that are approved for publishing but held back by Taily itself ("Freigegeben, aber nicht exportiert", with the reasons); deceased and adopted animals are left out. The animal sidebar shows a chip on every edit tab: the export status of an exported animal, or "Nicht exportiert" for an approved animal that cannot be exported. There is no chip for unapproved, deceased or adopted animals. Both the list and the chip are hidden (and not sent by the API) while the export is disabled or no API key is set.
 
 ## How the sync works
 

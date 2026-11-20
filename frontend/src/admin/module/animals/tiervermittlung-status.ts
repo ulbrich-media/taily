@@ -11,10 +11,29 @@ export interface ExportSummary {
   description: string
 }
 
+/**
+ * The sidebar chip only tells whether the export works or somebody has to
+ * act: no chip for unapproved animals, while the export is inactive (no
+ * `tiervermittlung` block) or while the listing is simply being removed.
+ */
+export function hasExportChip(animal: {
+  do_publish: boolean
+  tiervermittlung?: AnimalTiervermittlungState
+}): boolean {
+  return (
+    !!animal.tiervermittlung &&
+    animal.do_publish &&
+    !animal.tiervermittlung.intentionally_excluded
+  )
+}
+
 export function summarizeTiervermittlung({
   exclusion_reasons,
   listing,
-}: AnimalTiervermittlungState): ExportSummary {
+}: Pick<
+  AnimalTiervermittlungState,
+  'exclusion_reasons' | 'listing'
+>): ExportSummary {
   if (exclusion_reasons.length > 0) {
     return listing
       ? {

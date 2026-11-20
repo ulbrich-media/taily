@@ -103,6 +103,26 @@ class AnimalPayloadMapper
         return $reasons;
     }
 
+    /**
+     * Deceased and adopted animals are left out on purpose; nobody has to
+     * fix anything for them.
+     */
+    public function isIntentionallyExcluded(Animal $animal): bool
+    {
+        return $animal->is_deceased || $this->isAdopted($animal);
+    }
+
+    /**
+     * Approved for publishing, but kept out of the export for a reason
+     * somebody can fix.
+     */
+    public function isBlocked(Animal $animal): bool
+    {
+        return $animal->do_publish
+            && ! $this->isIntentionallyExcluded($animal)
+            && $this->exclusionReasons($animal) !== [];
+    }
+
     public function isExportable(Animal $animal): bool
     {
         return $this->exclusionReasons($animal) === [];
