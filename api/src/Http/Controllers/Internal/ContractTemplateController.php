@@ -9,7 +9,7 @@ use Taily\Models\ContractTemplate;
 use Taily\Support\ContractTemplateService;
 
 /**
- * Administration of contract templates (ADR-016). Templates are archived
+ * Administration of contract templates (ADR-017). Templates are archived
  * rather than deleted: signing processes refer to the template they were
  * generated from.
  */

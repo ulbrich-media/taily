@@ -13,7 +13,7 @@ use Taily\Support\CaseFile\FieldSpec;
 /**
  * One field of an animal type's Case File catalogue; keys are unique per
  * animal type. Built-in fields carry an `applicant_attribute`: their value
- * lives in the adoption's applicant columns (ADR-017) instead of in an
+ * lives in the adoption's applicant columns (ADR-018) instead of in an
  * AdoptionFieldValue.
  */
 class FieldDefinition extends Model

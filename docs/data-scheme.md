@@ -1,6 +1,6 @@
 # Data scheme
 
-> This page describes the target model from [ADR-015](./ADRs/ADR-015-adoption-case-file.md) and [ADR-016](./ADRs/ADR-016-contract-templates-as-configuration.md). Parts marked *planned* are not implemented yet.
+> This page describes the target model from [ADR-016](./ADRs/ADR-016-adoption-case-file.md) and [ADR-017](./ADRs/ADR-017-contract-templates-as-configuration.md). Parts marked *planned* are not implemented yet.
 
 Three models carry the domain:
 
@@ -8,7 +8,7 @@ Three models carry the domain:
 - **Person** — identifies a human: who they are and how to reach them. A person can hold several roles.
 - **Adoption** — the process of finding a new owner for an animal, and the place where everything relevant to *if and how* that happens is stored.
 
-The key rule: **data that decides whether and how an adoption happens belongs to the adoption, not to the person.** Requirements depend on the animal (a Chihuahua is not a Husky) and on how far the adoption has progressed, so the data sits next to both. See [ADR-015](./ADRs/ADR-015-adoption-case-file.md) for the reasoning.
+The key rule: **data that decides whether and how an adoption happens belongs to the adoption, not to the person.** Requirements depend on the animal (a Chihuahua is not a Husky) and on how far the adoption has progressed, so the data sits next to both. See [ADR-016](./ADRs/ADR-016-adoption-case-file.md) for the reasoning.
 
 ```
 Animal ──< Adoption >── Person (applicant)
@@ -41,7 +41,7 @@ A person holds roles:
 - **Inspector** — per animal type
 - **Applicant / Adopter** — only when an adoption references them (optional, see below)
 
-Applicants are **not** Persons by default: an adoption holds its applicant's data itself ([ADR-017](./ADRs/ADR-017-applicant-data-on-the-adoption.md)). An adoption can *reference* a Person Taily already manages — a foster carer adopting their foster animal, an inspector — but the Person is never the source of the adoption's data.
+Applicants are **not** Persons by default: an adoption holds its applicant's data itself ([ADR-018](./ADRs/ADR-018-applicant-data-on-the-adoption.md)). An adoption can *reference* a Person Taily already manages — a foster carer adopting their foster animal, an inspector — but the Person is never the source of the adoption's data.
 
 The person deliberately holds **no** adoption-specific data.
 
@@ -109,7 +109,7 @@ The adoption's configurable data. Full description in [features/case-file.md](./
 
 ## Contract Template *(planned)*
 
-`contract_templates` hold a title, the animal types they are offered for, the wording and three ordered lists of field keys (animal, mediator, adopter). The mediator picks one at generation. The fields printed by the templates of an animal type are required for the contract step. See [ADR-016](./ADRs/ADR-016-contract-templates-as-configuration.md).
+`contract_templates` hold a title, the animal types they are offered for, the wording and three ordered lists of field keys (animal, mediator, adopter). The mediator picks one at generation. The fields printed by the templates of an animal type are required for the contract step. See [ADR-017](./ADRs/ADR-017-contract-templates-as-configuration.md).
 
 ## Transport
 

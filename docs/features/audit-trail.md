@@ -4,14 +4,14 @@
 
 The audit trail records **who changed what, when, from which value to which value** for animals, people and adoptions, including the [Case File](./case-file.md).
 
-It is what makes full edit rights safe. The mediator can edit everything, and so can the applicant for their own data through the [portal](./applicant-portal.md), instead of fields being owned and locked per role (see [ADR-015](../ADRs/ADR-015-adoption-case-file.md#5-the-mediator-has-full-edit-rights-the-audit-trail-makes-that-safe)). An overwrite cannot be prevented, but it can always be traced and is never silent.
+It is what makes full edit rights safe. The mediator can edit everything, and so can the applicant for their own data through the [portal](./applicant-portal.md), instead of fields being owned and locked per role (see [ADR-016](../ADRs/ADR-016-adoption-case-file.md#5-the-mediator-has-full-edit-rights-the-audit-trail-makes-that-safe)). An overwrite cannot be prevented, but it can always be traced and is never silent.
 
 ## Why it is needed
 
 - **Corrections stay traceable.** The applicant claimed 200 m², the inspector's memo says 120 m², the mediator corrects it. If the applicant later sets it back to 200, the trail shows the full sequence, and the mediator is notified.
 - **Documents can be proven.** If an applicant replaces their landlord confirmation with a version that has different wording and claims it was always like that, the original file is still there. This is why replaced files are kept.
 - **Wrong data stays visible.** If the wrong person's Ausweisnummer is entered and then corrected, the old value remains in the trail. That is acceptable, and the reason a cleanup function is planned later.
-- **Contract wording is legal text.** Changes to [contract templates](../ADRs/ADR-016-contract-templates-as-configuration.md) are recorded.
+- **Contract wording is legal text.** Changes to [contract templates](../ADRs/ADR-017-contract-templates-as-configuration.md) are recorded.
 
 ## Requirements
 

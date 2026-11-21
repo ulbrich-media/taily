@@ -33,7 +33,7 @@ export interface ImportCaseFileResponse extends CaseFileResponse {
 }
 
 // Takes over values from another adoption of the same applicant into the
-// fields that are empty here (ADR-017).
+// fields that are empty here (ADR-018).
 export async function importCaseFile(
   adoptionId: string,
   fromAdoptionId: string

@@ -30,7 +30,7 @@ return [
         explode(',', env('TAILY_CORS_ALLOWED_ORIGINS', ''))
     ),
 
-    // Contract templates are configured in the admin UI (ADR-016) and stored
+    // Contract templates are configured in the admin UI (ADR-017) and stored
     // in `contract_templates`; every template renders through
     // `contracts/configured.blade.php`.
 

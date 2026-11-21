@@ -7,7 +7,7 @@ use Taily\Models\AnimalType;
 use Taily\Models\ContractTemplate;
 
 /**
- * The example Schutzvertrag every installation starts with (ADR-016),
+ * The example Schutzvertrag every installation starts with (ADR-017),
  * offered for every animal type. It replaces the Blade template that used
  * to ship as `contracts/default.blade.php`.
  */

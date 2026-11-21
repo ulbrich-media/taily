@@ -8,7 +8,7 @@ use Taily\Models\Adoption;
 
 /**
  * The built-in animal and mediator fields a contract template can print
- * (ADR-016, "The field registry"). Adopter fields are not listed here: they
+ * (ADR-017, "The field registry"). Adopter fields are not listed here: they
  * are Field Definitions of the catalogue, built-in or custom.
  *
  * `label` names the field on checklists, where it stands next to adopter

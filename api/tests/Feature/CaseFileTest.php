@@ -124,7 +124,7 @@ class CaseFileTest extends TestCase
             ],
         ])->assertOk();
 
-        // Built-ins are the adoption's own columns; the referenced Person stays as it was (ADR-017).
+        // Built-ins are the adoption's own columns; the referenced Person stays as it was (ADR-018).
         $fresh = $adoption->fresh();
         $this->assertSame('Anna-Lena', $fresh->applicant_first_name);
         $this->assertSame('1990-04-12', $fresh->applicant_date_of_birth->format('Y-m-d'));

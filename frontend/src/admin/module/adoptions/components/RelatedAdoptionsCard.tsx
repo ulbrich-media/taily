@@ -26,7 +26,7 @@ interface RelatedAdoptionsCardProps {
 
 /**
  * The applicant's other adoptions — the same email or the same referenced
- * Person (ADR-017). Hidden while there are none.
+ * Person (ADR-018). Hidden while there are none.
  */
 export function RelatedAdoptionsCard({
   related,

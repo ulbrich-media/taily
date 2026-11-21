@@ -26,7 +26,7 @@ interface AdoptionDetailPageProps {
   // Pre-inspections of the same applicant for other adoptions.
   earlierInspections?: PreInspectionResource[]
   caseFileSection: ReactNode
-  // The applicant's other adoptions (ADR-017).
+  // The applicant's other adoptions (ADR-018).
   relatedSection?: ReactNode
   confirmPreInspectionAction: ReactNode
   editInternalNotesAction: (hasNote: boolean) => ReactNode

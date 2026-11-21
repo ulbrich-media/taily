@@ -36,7 +36,7 @@ interface AdoptionLinkPersonPageProps {
 /**
  * References a Person Taily already manages — e.g. a foster carer adopting
  * their foster animal. Only the reference changes; the applicant's data on
- * the adoption stays as it is (ADR-017).
+ * the adoption stays as it is (ADR-018).
  */
 export function AdoptionLinkPersonPage({
   adoption,

@@ -179,7 +179,7 @@ class Person extends Model implements HasMedia
 
     /**
      * Adoptions that reference this person as applicant. Adoptions that only
-     * share the email are found with Adoption::ofApplicant() (ADR-017).
+     * share the email are found with Adoption::ofApplicant() (ADR-018).
      */
     public function adoptionsAsApplicant(): HasMany
     {

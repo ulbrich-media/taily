@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * The adoption Case File (ADR-015, docs/features/case-file.md) and the move
+ * The adoption Case File (ADR-016, docs/features/case-file.md) and the move
  * of pre-inspections from Person + Animal Type onto the adoption.
  *
  * Taily is in beta, so existing pre-inspections — and their form submissions

@@ -21,7 +21,7 @@ export const listPreInspectionsByPersonQuery = (personId: string) =>
     queryFn: () => getPreInspections({ person_id: personId }),
   })
 
-// Those of the applicant's other adoptions (same email or Person, ADR-017).
+// Those of the applicant's other adoptions (same email or Person, ADR-018).
 export const listRelatedPreInspectionsQuery = (adoptionId: string) =>
   queryOptions({
     queryKey: preInspectionQueryKeys.listRelated(adoptionId),

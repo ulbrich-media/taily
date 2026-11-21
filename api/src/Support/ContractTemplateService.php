@@ -18,7 +18,7 @@ use Taily\Support\CaseFile\ContractFieldRegistry;
 
 /**
  * Configures contract templates and turns one into what the contract prints
- * for an adoption (ADR-016).
+ * for an adoption (ADR-017).
  */
 class ContractTemplateService
 {

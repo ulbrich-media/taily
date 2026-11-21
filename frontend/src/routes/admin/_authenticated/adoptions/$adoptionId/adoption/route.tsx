@@ -71,7 +71,7 @@ function RouteComponent() {
   } = useQuery(listPreInspectionsByAdoptionQuery(adoptionId))
 
   // What the applicant already went through for other animals: their
-  // adoptions with the same email or the same referenced Person (ADR-017).
+  // adoptions with the same email or the same referenced Person (ADR-018).
   const { data: earlierInspections } = useQuery(
     listRelatedPreInspectionsQuery(adoptionId)
   )

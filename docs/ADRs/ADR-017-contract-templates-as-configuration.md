@@ -1,4 +1,4 @@
-# ADR-016: Contract Templates as Configuration
+# ADR-017: Contract Templates as Configuration
 
 ## Status
 
@@ -8,7 +8,7 @@ Proposed — supersedes the template-authoring parts of [ADR-013](ADR-013-contra
 
 [ADR-013](ADR-013-contract-template-rendering.md) made contract templates Blade views registered in `config('taily.contracts')`. Changing the wording, adding a field or rebranding requires editing a Blade file and redeploying — not something an organization admin can do from the UI. ADR-013 accepted that because the alternative it saw was a WYSIWYG prose-with-merge-fields editor (DocuSeal-like), which is real effort.
 
-[ADR-015](ADR-015-adoption-case-file.md) introduces a configurable field catalogue for the adoption. That changes the picture: a contract is mostly a fixed frame, a block of wording, and three data sections — the animal, the mediator, the adopter — each showing a selection of known fields. Choosing those fields is the same kind of configuration as configuring the adoption itself. No layout editor is needed.
+[ADR-016](ADR-016-adoption-case-file.md) introduces a configurable field catalogue for the adoption. That changes the picture: a contract is mostly a fixed frame, a block of wording, and three data sections — the animal, the mediator, the adopter — each showing a selection of known fields. Choosing those fields is the same kind of configuration as configuring the adoption itself. No layout editor is needed.
 
 Two more problems this solves:
 
@@ -75,7 +75,7 @@ Editing a template does not need versioning, for the same reason given in ADR-01
 
 ### Changes after generation
 
-Applicants keep being able to edit their data through the portal. If they change a field that is part of a generated contract, the mediator's change notification says so explicitly ("changed after contract generation — the contract shows the old value"). There is no lock; see [ADR-015](ADR-015-adoption-case-file.md#lock-fields-once-they-are-in-a-generated-contract).
+Applicants keep being able to edit their data through the portal. If they change a field that is part of a generated contract, the mediator's change notification says so explicitly ("changed after contract generation — the contract shows the old value"). There is no lock; see [ADR-016](ADR-016-adoption-case-file.md#lock-fields-once-they-are-in-a-generated-contract).
 
 ## Prototype notes
 

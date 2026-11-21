@@ -444,7 +444,7 @@ class ContractSigningService
 
     /**
      * The signer keeps the name and email valid when they are invited
-     * (ADR-017): invitations, reminders and the signature record never
+     * (ADR-018): invitations, reminders and the signature record never
      * follow later changes to the adoption or a Person.
      */
     private function createSigner(ContractSigningProcess $process, ContractSignerRole $role, string $name, string $email, ?string $personId): ContractSigner

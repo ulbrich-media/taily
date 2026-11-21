@@ -1,6 +1,6 @@
 {{--
     The one view every configured contract template renders through
-    (ADR-016): the template's title, its three data sections as label/value
+    (ADR-017): the template's title, its three data sections as label/value
     tables, then its wording. The sections arrive ready to print — see
     ContractTemplateService::printout() — so this file is layout only.
 

@@ -1,6 +1,6 @@
 # Pre-Inspection
 
-> **Status: planned, not implemented.** Replaces the previous design (attached to Person + Animal Type, using a form template). See [ADR-015](../ADRs/ADR-015-adoption-case-file.md#6-pre-inspections-move-to-the-adoption-and-no-longer-use-a-form-template).
+> **Status: planned, not implemented.** Replaces the previous design (attached to Person + Animal Type, using a form template). See [ADR-016](../ADRs/ADR-016-adoption-case-file.md#6-pre-inspections-move-to-the-adoption-and-no-longer-use-a-form-template).
 
 A pre-inspection (German UI: *Vorkontrolle*) is a visit or video call in which an inspector checks whether the applicant's home and living conditions are suitable for **the animal of this adoption**. At the end, the inspector gives a verdict for or against the adoption; the mediator decides whether to proceed.
 

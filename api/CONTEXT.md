@@ -24,7 +24,7 @@ _Avoid_: Partner, External organization, Club
 **Mediator**: A Member who supervises and guides an Adoption from application through handover or cancellation.
 _Avoid_: Handler, Manager, Coordinator
 
-**Applicant**: Whoever applied to adopt an Animal and whose Adoption has not yet been accepted (status: pending). Their data — name, contact, address, date of birth — is stored on the Adoption itself, not as a Person; an Adoption may reference a Person Taily already manages. Adoptions with the same applicant email belong to the same applicant (ADR-017). Once the Mediator starts working on the Adoption, the applicant becomes an Adopter.
+**Applicant**: Whoever applied to adopt an Animal and whose Adoption has not yet been accepted (status: pending). Their data — name, contact, address, date of birth — is stored on the Adoption itself, not as a Person; an Adoption may reference a Person Taily already manages. Adoptions with the same applicant email belong to the same applicant (ADR-018). Once the Mediator starts working on the Adoption, the applicant becomes an Adopter.
 _Avoid_: Potential adopter, Candidate, Interested party
 
 **Adopter**: An Applicant whose Adoption is actively being worked on or has completed (status: in_progress or done). The term applies from the moment the Mediator accepts the application, not only after the Handover.
@@ -85,7 +85,7 @@ _Avoid_: Shipment, Delivery run
 **Handover**: The moment the Animal is physically transferred to the Adopter. Completing a Handover transitions the Adoption to status `done` and the Applicant becomes an Adopter.
 _Avoid_: Transfer, Delivery, Pickup
 
-**Contract Template**: A configured contract: title, wording and three data sections (animal, mediator, adopter) of fields. An Animal Type can have several; the Mediator picks one at generation. Fields a template marks as required are required for the contract Step of its Animal Types; optional ones are printed when present. See ADR-016.
+**Contract Template**: A configured contract: title, wording and three data sections (animal, mediator, adopter) of fields. An Animal Type can have several; the Mediator picks one at generation. Fields a template marks as required are required for the contract Step of its Animal Types; optional ones are printed when present. See ADR-017.
 _Avoid_: Contract layout, Contract form
 
 ### Form templates (under review — see docs/features/form-templates.md)

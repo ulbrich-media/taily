@@ -44,7 +44,7 @@ export interface AdoptionBaseResource {
   // Metadata
   created_at: string
   updated_at: string
-  // The applicant's own data (ADR-017)
+  // The applicant's own data (ADR-018)
   applicant: AdoptionApplicant
   applicant_person?: PersonBaseResource | null
 }

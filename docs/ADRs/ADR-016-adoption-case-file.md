@@ -1,8 +1,8 @@
-# ADR-015: Adoption Case File — Configurable Fields Stored on the Adoption
+# ADR-016: Adoption Case File — Configurable Fields Stored on the Adoption
 
 ## Status
 
-Proposed — section 2 is superseded by [ADR-017](ADR-017-applicant-data-on-the-adoption.md): applicant data now lives on the adoption, not on a Person.
+Proposed — section 2 is superseded by [ADR-018](ADR-018-applicant-data-on-the-adoption.md): applicant data now lives on the adoption, not on a Person.
 
 ## Context
 
@@ -44,7 +44,7 @@ This is the answer to the reuse fear. A small organization configures five field
 
 ### 2. Person = identity
 
-> **Superseded by [ADR-017](ADR-017-applicant-data-on-the-adoption.md).** The applicant's identity is stored on the adoption in fixed columns; adoptions of one applicant are linked by the confirmed email, and a Person can be referenced optionally.
+> **Superseded by [ADR-018](ADR-018-applicant-data-on-the-adoption.md).** The applicant's identity is stored on the adoption in fixed columns; adoptions of one applicant are linked by the confirmed email, and a Person can be referenced optionally.
 
 The Person keeps name, email, address, phone and date of birth. These columns are exposed as **built-in Field Definitions** in the catalogue, so the same requirement rules apply to them — e.g. "the address is only required by the contract", which lets the application form ask for nothing but name and email.
 
@@ -63,7 +63,7 @@ Details and examples are in [features/case-file.md](../features/case-file.md).
 
 ### 4. Requirements are derived, with per-adoption overrides
 
-`required_for` on the definition is the organization's default. A mediator can override it per adoption — require the home video for this applicant, waive the landlord confirmation for someone who owns their house. The contract templates of the animal's type also add the fields they print (see [ADR-016](ADR-016-contract-templates-as-configuration.md)).
+`required_for` on the definition is the organization's default. A mediator can override it per adoption — require the home video for this applicant, waive the landlord confirmation for someone who owns their house. The contract templates of the animal's type also add the fields they print (see [ADR-017](ADR-017-contract-templates-as-configuration.md)).
 
 The **Checklist** is the single derived answer to "what is missing for step X?". It works per adoption and is aggregated per transport.
 
@@ -85,7 +85,7 @@ The pre-inspection form template and its submissions are removed. Taily is in be
 
 Values belong to the adoption — a snapshot of what was true for *this* decision. For the (rare) case of a person applying again:
 
-- **Cross-reference**: the adoption page shows the applicant's earlier adoptions and pre-inspections, read-only — found by email or a referenced Person ([ADR-017](ADR-017-applicant-data-on-the-adoption.md)).
+- **Cross-reference**: the adoption page shows the applicant's earlier adoptions and pre-inspections, read-only — found by email or a referenced Person ([ADR-018](ADR-018-applicant-data-on-the-adoption.md)).
 - **Import**: the mediator (admin) or the applicant (portal) can copy selected values from an earlier adoption. Files are copied as well. Duplicated files are an accepted cost of each adoption standing on its own.
 
 ## Consequences

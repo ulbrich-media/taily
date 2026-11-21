@@ -11,7 +11,7 @@ use Taily\Support\CaseFile\CaseFileService;
 
 /**
  * The applicant's other adoptions — same email or same referenced Person —
- * and taking over their data (ADR-017).
+ * and taking over their data (ADR-018).
  */
 class AdoptionRelatedController extends Controller
 {

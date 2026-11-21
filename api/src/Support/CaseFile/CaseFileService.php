@@ -74,7 +74,7 @@ class CaseFileService
     /**
      * The fields the active contract templates of an animal type require.
      * Each of them is required for the contract step of every adoption of
-     * that type (ADR-016).
+     * that type (ADR-017).
      *
      * @return list<string>
      */
@@ -246,7 +246,7 @@ class CaseFileService
     /**
      * A contract can't be generated with blanks: every field the chosen
      * template requires has to be present, unless the mediator waived it for
-     * this adoption (ADR-016). The rest of the contract checklist informs
+     * this adoption (ADR-017). The rest of the contract checklist informs
      * but doesn't block.
      *
      * @throws ValidationException listing what is missing, under `template`
@@ -359,7 +359,7 @@ class CaseFileService
 
     /**
      * Takes over values from another adoption of the same applicant
-     * (ADR-017): only fields that are empty here are filled, nothing is
+     * (ADR-018): only fields that are empty here are filled, nothing is
      * overwritten. Fields are matched by key, so a field the other animal
      * type's catalogue also has is taken over too. Files aren't part of the
      * prototype. A value that needs review has to be reviewed again.
@@ -499,7 +499,7 @@ class CaseFileService
     }
 
     /**
-     * Built-in fields read the adoption's own applicant columns (ADR-017).
+     * Built-in fields read the adoption's own applicant columns (ADR-018).
      */
     private function builtInValue(FieldDefinition $definition, Adoption $adoption): mixed
     {

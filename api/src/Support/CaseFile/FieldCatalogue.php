@@ -23,7 +23,7 @@ use Taily\Models\FieldGroup;
 class FieldCatalogue
 {
     /**
-     * Fields backed by the adoption's applicant columns (ADR-017). They
+     * Fields backed by the adoption's applicant columns (ADR-018). They
      * identify the applicant, so they
      * exist in every catalogue, can be configured but not archived, and keep
      * their type.

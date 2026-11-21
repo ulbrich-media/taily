@@ -197,7 +197,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/field-definitions/{fieldDefinition}/archive', [FieldCatalogueController::class, 'archiveField']);
     Route::delete('/field-definitions/{fieldDefinition}/archive', [FieldCatalogueController::class, 'restoreField']);
 
-    // Contract templates (ADR-016)
+    // Contract templates (ADR-017)
     Route::get('/contract-templates/field-options', [ContractTemplateController::class, 'fieldOptions']);
     Route::apiResource('contract-templates', ContractTemplateController::class)->except('destroy');
     Route::post('/contract-templates/{contractTemplate}/archive', [ContractTemplateController::class, 'archive']);
@@ -237,7 +237,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::put('/adoptions/{adoption}/requirements/{fieldKey}', [CaseFileController::class, 'setRequirement']);
     Route::delete('/adoptions/{adoption}/requirements/{fieldKey}', [CaseFileController::class, 'clearRequirement']);
 
-    // The applicant's other adoptions and taking over their data (ADR-017)
+    // The applicant's other adoptions and taking over their data (ADR-018)
     Route::get('/adoptions/{adoption}/related', [AdoptionRelatedController::class, 'index']);
     Route::post('/adoptions/{adoption}/case-file/import', [AdoptionRelatedController::class, 'import']);
 

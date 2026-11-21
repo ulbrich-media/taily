@@ -26,7 +26,7 @@ interface AdoptionImportCaseFileDialogProps {
 
 /**
  * Takes over the values of an earlier adoption of the same applicant. Only
- * empty fields are filled; nothing is overwritten (ADR-017).
+ * empty fields are filled; nothing is overwritten (ADR-018).
  */
 export function AdoptionImportCaseFileDialog({
   adoptionId,

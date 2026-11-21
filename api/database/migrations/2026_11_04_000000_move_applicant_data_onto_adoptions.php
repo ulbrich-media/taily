@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Applicant data on the adoption (ADR-017): the applicant's identity moves
+ * Applicant data on the adoption (ADR-018): the applicant's identity moves
  * from the Person into fixed adoption columns, the Person becomes an
  * optional reference, and contract signers keep their own name and email.
  */

@@ -41,7 +41,7 @@ class AdoptionBaseResource extends JsonResource
             // Relations (only included when eager-loaded)
             'animal' => $this->whenLoaded('animal', fn ($a) => new AnimalBaseResource($a)),
             'mediator' => $this->whenLoaded('mediator', fn ($m) => new PersonBaseResource($m)),
-            // The applicant's own data (ADR-017)
+            // The applicant's own data (ADR-018)
             'applicant' => $this->applicant(),
             'applicant_person' => $this->whenLoaded('applicantPerson', fn ($m) => $m ? new PersonBaseResource($m) : null),
         ];

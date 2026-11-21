@@ -1,6 +1,6 @@
 # Case File
 
-> **Status: prototype on branch `prototype/adoption-based-structure`.** This describes the target design from [ADR-015](../ADRs/ADR-015-adoption-case-file.md). Implemented so far: the catalogue per animal type with its settings UI (*Einstellungen → Angaben*), Field Values, Requirement Overrides, the Checklist (adoption overview, transport page, contract blocking) mediator editing in the adoption's *Angaben* tab, contract templates as configuration (*Einstellungen → Verträge*), and applicant data on the adoption with earlier adoptions and taking over their data ([ADR-017](../ADRs/ADR-017-applicant-data-on-the-adoption.md)). Not implemented: file fields and review actions, requesting data (`requested_step`), the applicant portal, the audit trail and notifications.
+> **Status: prototype on branch `prototype/adoption-based-structure`.** This describes the target design from [ADR-016](../ADRs/ADR-016-adoption-case-file.md). Implemented so far: the catalogue per animal type with its settings UI (*Einstellungen → Angaben*), Field Values, Requirement Overrides, the Checklist (adoption overview, transport page, contract blocking) mediator editing in the adoption's *Angaben* tab, contract templates as configuration (*Einstellungen → Verträge*), and applicant data on the adoption with earlier adoptions and taking over their data ([ADR-018](../ADRs/ADR-018-applicant-data-on-the-adoption.md)). Not implemented: file fields and review actions, requesting data (`requested_step`), the applicant portal, the audit trail and notifications.
 
 The Case File (German UI: *Angaben*) is everything an adoption knows about *if and how* it can happen: the applicant's living situation, their experience, documents, photos, contract data, transport details. It belongs to the **adoption**, not to the person. The person only identifies a human (see [data-scheme.md](../data-scheme.md#person)).
 
@@ -236,7 +236,7 @@ Making a field required for a step that has already been requested sends it to t
 **Effective requirement** for a field on an adoption, in order of precedence:
 
 1. The adoption's override, if any.
-2. Otherwise the stricter (earlier) of the definition's `required_for` and the active contract templates of the animal's type (every field they mark as required is required for `contract`; see [ADR-016](../ADRs/ADR-016-contract-templates-as-configuration.md#several-templates-requirements-per-animal-type)).
+2. Otherwise the stricter (earlier) of the definition's `required_for` and the active contract templates of the animal's type (every field they mark as required is required for `contract`; see [ADR-017](../ADRs/ADR-017-contract-templates-as-configuration.md#several-templates-requirements-per-animal-type)).
 
 Fields that don't apply — a [condition](#conditional-fields) that isn't met — are never required.
 
@@ -324,7 +324,7 @@ The same groups, read-only, limited to fields with `visible_to_inspector`. Contr
 
 ## Second adoption by the same person
 
-Values belong to the adoption — a snapshot of what was true for that decision — including the applicant's name, email and address ([ADR-017](../ADRs/ADR-017-applicant-data-on-the-adoption.md)). Adoptions of the same applicant are those with the same email or the same referenced Person. Reuse is explicit:
+Values belong to the adoption — a snapshot of what was true for that decision — including the applicant's name, email and address ([ADR-018](../ADRs/ADR-018-applicant-data-on-the-adoption.md)). Adoptions of the same applicant are those with the same email or the same referenced Person. Reuse is explicit:
 
 - **Cross-reference** — the adoption overview lists the applicant's earlier adoptions (*Frühere Vermittlungen*, with why they match) and their pre-inspections (read-only), e.g. *"Bereits eine Vorkontrolle für Bello (Hund) am 03.04., Ergebnis: geeignet"*.
 - **Import** — *"Angaben übernehmen"*: the mediator in the admin, or the applicant in the portal, picks an earlier adoption. *Prototype:* everything that is empty here is filled from it, matched by field key; nothing is overwritten, and file fields aren't copied yet. *Target:* picking the values to copy. Files are copied (Spatie `copyMedia`); the duplicates are an accepted cost. Imported values of `requires_review` fields start as `pending` again — a landlord confirmation from half a year ago gets reviewed again, not trusted blindly. Every imported value is recorded in the audit trail as an import.
@@ -336,4 +336,4 @@ Values belong to the adoption — a snapshot of what was true for that decision 
 - **Complex conditions** — AND/OR, comparisons, conditions across adoptions. One equality condition per field only.
 - **Filtering or sorting the adoption list by custom field values.**
 - **Per-audience layouts.** One structure, filtered per audience.
-- **Locking fields** after contract generation. The change notification warns instead; see [ADR-015](../ADRs/ADR-015-adoption-case-file.md#lock-fields-once-they-are-in-a-generated-contract).
+- **Locking fields** after contract generation. The change notification warns instead; see [ADR-016](../ADRs/ADR-016-adoption-case-file.md#lock-fields-once-they-are-in-a-generated-contract).

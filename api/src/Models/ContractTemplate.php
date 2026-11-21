@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 /**
- * A contract template (ADR-016): the printed title, the wording and three
+ * A contract template (ADR-017): the printed title, the wording and three
  * data sections — animal, mediator, adopter — each an ordered list of
  * `{key, required}` entries. Required entries become requirements of the
  * contract step for every adoption of the animal types the template is

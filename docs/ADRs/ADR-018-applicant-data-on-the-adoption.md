@@ -1,12 +1,12 @@
-# ADR-017: Applicant Data on the Adoption
+# ADR-018: Applicant Data on the Adoption
 
 ## Status
 
-Proposed — supersedes section 2 ("Person = identity") of [ADR-015](ADR-015-adoption-case-file.md) and refines its section 7 ("A second adoption copies, it does not share")
+Proposed — supersedes section 2 ("Person = identity") of [ADR-016](ADR-016-adoption-case-file.md) and refines its section 7 ("A second adoption copies, it does not share")
 
 ## Context
 
-[ADR-015](ADR-015-adoption-case-file.md) moved everything about *if and how* an adoption happens onto the adoption, but kept the applicant's identity — name, email, phone, date of birth, address — on a shared **Person**. Built-in Field Definitions read and wrote those Person columns live.
+[ADR-016](ADR-016-adoption-case-file.md) moved everything about *if and how* an adoption happens onto the adoption, but kept the applicant's identity — name, email, phone, date of birth, address — on a shared **Person**. Built-in Field Definitions read and wrote those Person columns live.
 
 That left the Case File with two kinds of data that behave differently:
 
@@ -88,11 +88,11 @@ A small record keyed by email — *Nicht vermitteln*, *Bekannt/zuverlässig*, *H
 - Earlier adoptions are found by email; a changed email loses them unless a Person is referenced.
 - Correcting an address for several running adoptions of one applicant means correcting each.
 - An adopter who is also a foster carer or inspector is only connected through the optional reference or the same email.
-- The unique-email-per-Person rule from ADR-015 is dropped; Persons keep their email, but adopters are no longer Persons.
+- The unique-email-per-Person rule from ADR-016 is dropped; Persons keep their email, but adopters are no longer Persons.
 
 ## Alternatives Considered
 
-### Keep the applicant as a Person (ADR-015)
+### Keep the applicant as a Person (ADR-016)
 
 Shared identity, live values. Rejected for the reasons in *Context*: no history, a Person required before data, and harder deletion.
 

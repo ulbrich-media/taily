@@ -28,7 +28,7 @@ import { z } from 'zod'
 import type { PersonListResource } from '@/api/types/people'
 import type { CreateAdoptionRequest } from '@/admin/module/adoptions/api/types'
 
-// The applicant's data belongs to the adoption (ADR-017): entered here, or
+// The applicant's data belongs to the adoption (ADR-018): entered here, or
 // copied once from a person Taily already knows, who is then referenced.
 const adoptionCreateSchema = z
   .object({

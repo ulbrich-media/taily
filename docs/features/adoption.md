@@ -4,7 +4,7 @@ An adoption (German UI: *Vermittlung*) is the complete process of finding and co
 
 The adoption is also where everything relevant to *if and how* it happens is kept: the applicant's data in the [Case File](./case-file.md), the pre-inspections, the contract, the transport. The applicant themselves is a [Person](../data-scheme.md#person), which only identifies them.
 
-> Parts of this page describe the planned design from [ADR-015](../ADRs/ADR-015-adoption-case-file.md) (marked *planned*).
+> Parts of this page describe the planned design from [ADR-016](../ADRs/ADR-016-adoption-case-file.md) (marked *planned*).
 
 ## General status
 
@@ -54,7 +54,7 @@ The application asks only what is needed to decide whether the applicant fits. L
 
 A public application creates an adoption for **one animal**. Every public application has to be **confirmed by email** (double opt-in):
 
-1. The applicant submits the form. The adoption is stored with status `unconfirmed`, with the applicant's data and Case File values on the adoption as usual ([ADR-017](../ADRs/ADR-017-applicant-data-on-the-adoption.md)).
+1. The applicant submits the form. The adoption is stored with status `unconfirmed`, with the applicant's data and Case File values on the adoption as usual ([ADR-018](../ADRs/ADR-018-applicant-data-on-the-adoption.md)).
 2. Taily sends a confirmation link. Mediators already see the application, marked *"E-Mail nicht bestätigt"*.
 3. On confirmation the adoption is set to `pending`. The confirmed email now links it to the applicant's earlier adoptions and to the portal.
 

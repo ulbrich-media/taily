@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Schema;
  * Public applications and the applicant portal (docs/features/adoption.md,
  * docs/features/applicant-portal.md): unconfirmed adoptions, the emailed
  * single-use links, and portal sessions. Applicants have no account; the
- * email is the identity (ADR-017).
+ * email is the identity (ADR-018).
  */
 return new class extends Migration
 {

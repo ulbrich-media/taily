@@ -8,7 +8,7 @@ The Schutzvertrag defines the rights and responsibilities of both parties. It en
 
 ## Contract templates
 
-> **Status: prototype on branch `prototype/adoption-based-structure`.** Templates are configured under *Einstellungen → Verträge* and rendered through `contracts/configured.blade.php` ([ADR-016](../ADRs/ADR-016-contract-templates-as-configuration.md)). Not implemented yet: header/footer settings (still the Blade layout) and the download *"zur manuellen Unterschrift"*.
+> **Status: prototype on branch `prototype/adoption-based-structure`.** Templates are configured under *Einstellungen → Verträge* and rendered through `contracts/configured.blade.php` ([ADR-017](../ADRs/ADR-017-contract-templates-as-configuration.md)). Not implemented yet: header/footer settings (still the Blade layout) and the download *"zur manuellen Unterschrift"*.
 
 A contract template is configuration, not code. It consists of:
 
@@ -25,7 +25,7 @@ One generic view, `contracts/configured.blade.php`, renders every template. An o
 
 **Manual signing:** any generated contract can be downloaded *"zur manuellen Unterschrift"* — Taily appends a page with signature lines to the frozen PDF, leaving the frozen document itself untouched. This replaces copying a Blade template to add signature lines.
 
-If the applicant changes a printed field after the contract was generated, the mediator is notified with an explicit warning — the frozen PDF keeps the old value. There is no lock (see [ADR-015](../ADRs/ADR-015-adoption-case-file.md#lock-fields-once-they-are-in-a-generated-contract)).
+If the applicant changes a printed field after the contract was generated, the mediator is notified with an explicit warning — the frozen PDF keeps the old value. There is no lock (see [ADR-016](../ADRs/ADR-016-adoption-case-file.md#lock-fields-once-they-are-in-a-generated-contract)).
 
 ## Process
 
@@ -41,7 +41,7 @@ The contract step is considered done when it is marked as signed.
 
 ### Advanced Version
 
-Generation and signing are both handled natively in Taily, in PHP, targeting the SES (Simple Electronic Signature) eIDAS tier — no external document tool is used. See [ADR-012](../ADRs/ADR-012-contract-generation-and-signing.md) for the full reasoning and the legal questions this decision accepts as risk rather than as a legally confirmed answer, [ADR-013](../ADRs/ADR-013-contract-template-rendering.md) for how contracts are rendered to PDF, and [ADR-016](../ADRs/ADR-016-contract-templates-as-configuration.md) for how templates are configured.
+Generation and signing are both handled natively in Taily, in PHP, targeting the SES (Simple Electronic Signature) eIDAS tier — no external document tool is used. See [ADR-012](../ADRs/ADR-012-contract-generation-and-signing.md) for the full reasoning and the legal questions this decision accepts as risk rather than as a legally confirmed answer, [ADR-013](../ADRs/ADR-013-contract-template-rendering.md) for how contracts are rendered to PDF, and [ADR-017](../ADRs/ADR-017-contract-templates-as-configuration.md) for how templates are configured.
 
 The Advanced Version does not replace the Simple Version — both exist side by side, chosen **per adoption**, not as a global instance setting. A mediator can start the automated flow for one adoption and handle another entirely by hand, and can drop out of the automated flow back to manual handling at any point before it completes (see [Escape to manual handling](#escape-to-manual-handling) below).
 
@@ -75,7 +75,7 @@ No canvas-drawn signature. Both mediator and adopter sign by typing their full n
 
 #### Audit trail
 
-Each signer keeps the name and email they were invited with; invitations, reminders and the appendix use those, never the adoption's or a Person's current data ([ADR-017](../ADRs/ADR-017-applicant-data-on-the-adoption.md#4-contract-signers-keep-their-own-name-and-email)).
+Each signer keeps the name and email they were invited with; invitations, reminders and the appendix use those, never the adoption's or a Person's current data ([ADR-018](../ADRs/ADR-018-applicant-data-on-the-adoption.md#4-contract-signers-keep-their-own-name-and-email)).
 
 Every step of the native flow is recorded, not just the final "signed" state:
 
@@ -169,7 +169,7 @@ The endpoint renders an adoption's full personal data, so it sits behind three i
 
 #### Customization and other accepted scope decisions
 
-- **Customization** — see [Contract templates](#contract-templates) below and [ADR-016](../ADRs/ADR-016-contract-templates-as-configuration.md). An external tool with a ready-made template editor (e.g. DocuSeal) was considered but is deferred — it requires a second, non-PHP service, which conflicts with the self-hosted, fully-contained distribution model — see [ADR-012](../ADRs/ADR-012-contract-generation-and-signing.md#docuseal-as-a-combined-generation-customization-and-signing-option). It may be added later as an optional integration. Templates carry only the contract itself — no signature block and no audit trail — because signatures and the audit trail are appended afterwards as separate pages (see [ADR-013](../ADRs/ADR-013-contract-template-rendering.md)). The appendix has its own view, `contracts/signature-appendix.blade.php`. Both extend `contracts/layout.blade.php`, the shared frame (header band, footer band, base styling). The same template works unchanged for both the Simple and the Advanced Version.
+- **Customization** — see [Contract templates](#contract-templates) below and [ADR-017](../ADRs/ADR-017-contract-templates-as-configuration.md). An external tool with a ready-made template editor (e.g. DocuSeal) was considered but is deferred — it requires a second, non-PHP service, which conflicts with the self-hosted, fully-contained distribution model — see [ADR-012](../ADRs/ADR-012-contract-generation-and-signing.md#docuseal-as-a-combined-generation-customization-and-signing-option). It may be added later as an optional integration. Templates carry only the contract itself — no signature block and no audit trail — because signatures and the audit trail are appended afterwards as separate pages (see [ADR-013](../ADRs/ADR-013-contract-template-rendering.md)). The appendix has its own view, `contracts/signature-appendix.blade.php`. Both extend `contracts/layout.blade.php`, the shared frame (header band, footer band, base styling). The same template works unchanged for both the Simple and the Advanced Version.
 - **PDF output** — the end artifact is a PDF regardless of which path is chosen; see [ADR-013](../ADRs/ADR-013-contract-template-rendering.md) for the rendering library.
 - **No withdrawal-right (Widerrufsrecht) handling.** Same as the status quo — not implemented, on the basis that there is no indicator this organization needs to support it. See [ADR-012](../ADRs/ADR-012-contract-generation-and-signing.md#legal-questions-and-accepted-risk) for the accepted risk this carries.
 - **GDPR deletion/retention** is out of scope of the application for now, though the feature will integrate with a future deletion workflow once one exists — see [ADR-012](../ADRs/ADR-012-contract-generation-and-signing.md#legal-questions-and-accepted-risk).

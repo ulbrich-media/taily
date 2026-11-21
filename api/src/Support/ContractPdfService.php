@@ -191,7 +191,7 @@ class ContractPdfService
     }
 
     /**
-     * Every template renders through the one generic view (ADR-016); an
+     * Every template renders through the one generic view (ADR-017); an
      * installation that needs more overrides that view.
      *
      * @return array<string, mixed>

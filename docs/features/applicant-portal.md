@@ -1,6 +1,6 @@
 # Applicant Portal
 
-> **Status: prototype on branch `prototype/adoption-based-structure`.** Part of the design in [ADR-015](../ADRs/ADR-015-adoption-case-file.md) and [ADR-017](../ADRs/ADR-017-applicant-data-on-the-adoption.md). The portal lives at `/adopter`. Implemented: login by email and magic link (4 h, single-use, consumed by the button), a 2 h session sent as a bearer token, the list of adoptions by email with the status rules below, per adoption the steps, the open items and the applicant's data — editable while the adoption is `pending` or `in_progress`; changed values that need review become pending again; the email itself is read-only.
+> **Status: prototype on branch `prototype/adoption-based-structure`.** Part of the design in [ADR-016](../ADRs/ADR-016-adoption-case-file.md) and [ADR-018](../ADRs/ADR-018-applicant-data-on-the-adoption.md). The portal lives at `/adopter`. Implemented: login by email and magic link (4 h, single-use, consumed by the button), a 2 h session sent as a bearer token, the list of adoptions by email with the status rules below, per adoption the steps, the open items and the applicant's data — editable while the adoption is `pending` or `in_progress`; changed values that need review become pending again; the email itself is read-only.
 >
 > Prototype simplifications: the fields shown are those up to the **current step** — the first step that isn't finished — instead of a mediator-set `requested_step`; file fields can't be uploaded yet; no import from earlier adoptions in the portal, no audit trail, no mediator notifications, and no link to a pending contract signature.
 
@@ -8,7 +8,7 @@ The applicant portal (German UI: *Mein Bewerbungsstatus*) shows an applicant the
 
 ## Access: email plus magic link
 
-Applicants have no account and no password. **Whoever controls the mailbox is the person** — the same trust the contract signing emails already rely on. The portal shows every adoption whose applicant email matches ([ADR-017](../ADRs/ADR-017-applicant-data-on-the-adoption.md)), so logging in is simple:
+Applicants have no account and no password. **Whoever controls the mailbox is the person** — the same trust the contract signing emails already rely on. The portal shows every adoption whose applicant email matches ([ADR-018](../ADRs/ADR-018-applicant-data-on-the-adoption.md)), so logging in is simple:
 
 1. The applicant enters their email. The page always answers *"Falls es Bewerbungen zu dieser Adresse gibt, haben wir dir einen Link geschickt."* — whether or not the address exists (no account enumeration).
 2. The emailed **magic link is valid for 4 hours and single-use**.

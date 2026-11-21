@@ -74,7 +74,7 @@ class AdoptionController extends Controller
             'mediator_id' => 'nullable|exists:people,id',
             // Either someone Taily knows, whose data is copied once …
             'applicant_person_id' => 'nullable|exists:people,id',
-            // … or the applicant's data entered directly (ADR-017).
+            // … or the applicant's data entered directly (ADR-018).
             'applicant_first_name' => 'required_without:applicant_person_id|string|max:255',
             'applicant_last_name' => 'required_without:applicant_person_id|string|max:255',
             'applicant_email' => 'nullable|email|max:255',

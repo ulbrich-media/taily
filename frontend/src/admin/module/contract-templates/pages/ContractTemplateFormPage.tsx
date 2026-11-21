@@ -53,7 +53,7 @@ interface ContractTemplateFormPageProps {
 }
 
 /**
- * A contract template (ADR-016): a printed title, three data sections and
+ * A contract template (ADR-017): a printed title, three data sections and
  * the wording. Required fields become requirements of the contract step for
  * every adoption of the chosen animal types.
  */

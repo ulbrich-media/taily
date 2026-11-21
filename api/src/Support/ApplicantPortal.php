@@ -22,7 +22,7 @@ use Taily\Support\CaseFile\ChecklistItem;
  * Public applications and the applicant portal (docs/features/adoption.md,
  * docs/features/applicant-portal.md). The applicant's email is their
  * identity: an application is confirmed by email, and the portal shows
- * every adoption with that email (ADR-017).
+ * every adoption with that email (ADR-018).
  */
 class ApplicantPortal
 {

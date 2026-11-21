@@ -280,7 +280,7 @@ class SeederIntegrityTest extends TestCase
                 "inspection {$inspection->id}: inspector does not handle this animal type"
             );
 
-            // The applicant is the adoption's own data now (ADR-017); the email is what ties it to a person.
+            // The applicant is the adoption's own data now (ADR-018); the email is what ties it to a person.
             $email = $inspection->adoption->applicant_email;
             $this->assertFalse(
                 $email !== '' && $email === Adoption::normalizeEmail($inspection->inspector->email),

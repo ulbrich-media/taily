@@ -5,7 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Contract templates as configuration (ADR-016): a title, the wording and
+ * Contract templates as configuration (ADR-017): a title, the wording and
  * three data sections per template, offered for one or more animal types.
  * Replaces the Blade templates registered in config('taily.contracts').
  */

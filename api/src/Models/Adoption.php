@@ -25,7 +25,7 @@ class Adoption extends Model implements HasMedia
     use InteractsWithMedia;
 
     /**
-     * The applicant's own data (ADR-017), without the `applicant_` prefix.
+     * The applicant's own data (ADR-018), without the `applicant_` prefix.
      * Built-in Case File fields name these in `applicant_attribute`; the
      * address parts together form the `address` field.
      */
@@ -101,7 +101,7 @@ class Adoption extends Model implements HasMedia
 
     /**
      * A Person Taily already manages, referenced for orientation only — the
-     * applicant's data is the adoption's own (ADR-017).
+     * applicant's data is the adoption's own (ADR-018).
      */
     public function applicantPerson(): BelongsTo
     {
