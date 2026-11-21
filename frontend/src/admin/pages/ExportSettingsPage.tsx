@@ -23,7 +23,9 @@ interface ExportSettingsPageProps {
   /** Changes after a successful save to reload the form from the saved state. */
   formResetKey?: number
   onSave: (value: CompatibleWithMapping) => void
-  renderAnimalLink: (item: ExportAttentionItem) => ReactNode
+  renderAnimalLink: (
+    item: Pick<ExportAttentionItem, 'animal_id' | 'animal_type_id' | 'name'>
+  ) => ReactNode
   breadcrumb?: ReactNode
 }
 

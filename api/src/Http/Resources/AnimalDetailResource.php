@@ -36,7 +36,7 @@ class AnimalDetailResource extends AnimalBaseResource
                     ->all(),
             ),
             'tiervermittlung' => $this->when(
-                $this->resource->relationLoaded('tiervermittlungListing') && TiervermittlungExport::isEnabled(),
+                $this->resource->relationLoaded('tiervermittlungListing') && TiervermittlungExport::isActive(),
                 fn () => $this->tiervermittlung(),
             ),
         ]);
@@ -44,15 +44,20 @@ class AnimalDetailResource extends AnimalBaseResource
 
     /**
      * Whether the animal is exported to Tiervermittlung.de and what the
-     * platform answered on the last delivery. Absent when the export is off.
+     * platform answered on the last delivery. Absent when the export is not
+     * active (disabled or no API key).
      */
     private function tiervermittlung(): array
     {
         /** @var TiervermittlungListing|null $listing */
         $listing = $this->resource->tiervermittlungListing;
 
+        $mapper = app(AnimalPayloadMapper::class);
+
         return [
-            'exclusion_reasons' => app(AnimalPayloadMapper::class)->exclusionReasons($this->resource),
+            'exclusion_reasons' => $mapper->exclusionReasons($this->resource),
+            'blocked' => $mapper->isBlocked($this->resource),
+            'intentionally_excluded' => $mapper->isIntentionallyExcluded($this->resource),
             'listing' => $listing ? [
                 'status' => $listing->status,
                 'tv_id' => $listing->tv_id,
