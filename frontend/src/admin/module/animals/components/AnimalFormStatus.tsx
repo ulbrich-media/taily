@@ -34,6 +34,7 @@ const animalFormStatusSchema = z.object({
   alternate_arrival_location: zFieldString(),
   do_publish: z.boolean(),
   is_reserved: z.boolean(),
+  publish_title: zFieldString({ maxLength: 60 }),
   publish_description: zFieldString({ maxLength: STRING_LENGTH_TEXTAREA }),
   compatibilities: z
     .array(z.string())
@@ -89,6 +90,7 @@ export function AnimalFormStatus({
         defaultValues?.alternate_arrival_location || '',
       do_publish: defaultValues?.do_publish || false,
       is_reserved: defaultValues?.is_reserved || false,
+      publish_title: defaultValues?.publish_title || '',
       publish_description: defaultValues?.publish_description || '',
       compatibilities: defaultValues?.compatibilities ?? [],
       personality_traits: defaultValues?.personality_traits ?? [],
@@ -162,6 +164,13 @@ export function AnimalFormStatus({
             />
 
             <FormGrid columns={1}>
+              <TextInput
+                name="publish_title"
+                control={form.control}
+                label="Titel"
+                info="Kurzer Titel über dem Beschreibungstext, z.B. auf der Website oder bei Tiervermittlung.de (max. 60 Zeichen)."
+              />
+
               <Textarea
                 name="publish_description"
                 control={form.control}

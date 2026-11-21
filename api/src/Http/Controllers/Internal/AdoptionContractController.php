@@ -16,6 +16,7 @@ use Taily\Models\ContractTemplate;
 use Taily\Support\CaseFile\CaseFileService;
 use Taily\Support\ContractPdfService;
 use Taily\Support\ContractTemplateService;
+use Taily\Support\UploadLimits;
 
 class AdoptionContractController extends Controller
 {
@@ -38,7 +39,7 @@ class AdoptionContractController extends Controller
         $validated = $request->validate([
             'contract_signed' => 'required|boolean',
             'contract_signed_at' => 'sometimes|nullable|date',
-            'file' => 'sometimes|nullable|file|mimes:pdf,jpg,jpeg,png,webp|max:20480',
+            'file' => 'sometimes|nullable|file|mimes:pdf,jpg,jpeg,png,webp|max:'.UploadLimits::CONTRACT_KB,
             'remove_file' => 'sometimes|boolean',
         ]);
 

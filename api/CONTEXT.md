@@ -176,7 +176,7 @@ _Avoid_: Draft, Lead
 **Tiervermittlung Export**: The push of exported Animals to the listing platform tiervermittlung.de through its Partner-API. Runs from the scheduler; see `docs/features/tiervermittlung.md`.
 _Avoid_: Feed, Sync (outside code), Integration
 
-**Listing**: An Animal's advertisement on tiervermittlung.de, identified there by the Animal's id (`tierId`) and the platform's own number (`tvId`). Taily keeps the platform's last answer per Listing.
+**Listing**: An Animal's advertisement on tiervermittlung.de, identified there by the Animal's number (`tierId`) and the platform's own number (`tvId`). Taily keeps the platform's last answer per Listing.
 _Avoid_: Ad, Posting, Anzeige (outside German UI strings)
 
 **Tiervermittlung Species**: The fixed species value (`dog`, `cat`, `small`, …) an Animal Type is mapped to for the Tiervermittlung Export. Animal Types without one are not exported.

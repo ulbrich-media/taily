@@ -93,19 +93,20 @@ class CaseFileTest extends TestCase
     public function test_the_checklists_carry_requirements_forward(): void
     {
         $adoption = $this->adoption($this->dogs);
+        $this->requireTassoId($adoption);
 
         $checklists = $this->api('get', $adoption)->json('checklists');
 
         $open = fn (string $step) => collect($checklists[$step]['items'])->where('status', '!=', 'done')->pluck('key')->all();
 
         $this->assertSame(['living_space_sqm', 'has_garden'], $open('application'));
-        // The contract template prints the animal number; the animal has none.
+        // The contract template requires the Tasso-ID; the animal has none.
         $this->assertEqualsCanonicalizing(
-            ['living_space_sqm', 'has_garden', 'date_of_birth', 'address', 'id_card_number', 'animal.animal_number'],
+            ['living_space_sqm', 'has_garden', 'date_of_birth', 'address', 'id_card_number', 'animal.tasso_id'],
             $open('contract'),
         );
         $this->assertContains('harness_photo', $open('transport'));
-        $this->assertSame('animal', collect($checklists['contract']['items'])->firstWhere('key', 'animal.animal_number')['subject']);
+        $this->assertSame('animal', collect($checklists['contract']['items'])->firstWhere('key', 'animal.tasso_id')['subject']);
     }
 
     public function test_update_writes_custom_values_and_built_ins_to_the_adoption(): void
@@ -199,6 +200,7 @@ class CaseFileTest extends TestCase
     public function test_contract_generation_is_blocked_while_a_printed_field_is_missing(): void
     {
         $adoption = $this->adoption($this->dogs);
+        $this->requireTassoId($adoption);
 
         $this->actingAs($this->user)->withHeader('referer', 'http://localhost')
             ->getJson("/internal/adoptions/{$adoption->id}/contract/generate?template={$this->contractTemplate($adoption)->id}")
@@ -207,11 +209,11 @@ class CaseFileTest extends TestCase
 
         $message = $this->getJson("/internal/adoptions/{$adoption->id}/contract/generate?template={$this->contractTemplate($adoption)->id}")->json('errors.template.0');
         $this->assertStringContainsString('Ausweisnummer', $message);
-        $this->assertStringContainsString('Tiernummer', $message);
+        $this->assertStringContainsString('Tasso-ID', $message);
         // Required for the application, but not printed — informs, doesn't block.
         $this->assertStringNotContainsString('Wohnfläche', $message);
 
-        $adoption->animal->update(['animal_number' => 'H-1']);
+        $adoption->animal->update(['tasso_id' => 'T-1']);
         $this->api('put', $adoption, ['values' => [
             'date_of_birth' => '1990-04-12',
             'address' => ['street_line' => 'Hauptstr. 1', 'postal_code' => '50667', 'city' => 'Köln'],
@@ -326,6 +328,16 @@ class CaseFileTest extends TestCase
             'label' => $label,
             'collect_at' => 'application',
         ], $attributes));
+    }
+
+    /**
+     * Animals always get a generated animal number, so the Tasso-ID stands
+     * in for an animal field the contract requires and that can be missing.
+     */
+    private function requireTassoId(Adoption $adoption): void
+    {
+        $template = $this->contractTemplate($adoption);
+        $template->update(['animal_fields' => [...$template->animal_fields, ['key' => 'animal.tasso_id', 'required' => true]]]);
     }
 
     private function adoption(AnimalType $type, string $name = 'Bello', ?Person $applicant = null): Adoption

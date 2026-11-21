@@ -48,6 +48,7 @@ class PublicAnimalResource extends JsonResource
             'current_country' => $this->resource->current_country,
             'do_publish' => $this->resource->do_publish,
             'is_reserved' => $this->resource->is_reserved,
+            'publish_title' => $this->resource->publish_title,
             'publish_description' => $this->resource->publish_description,
             'application_url' => $this->resource->application_url,
             'compatibilities' => $this->whenLoaded('compatibilities', fn () => $this->resource->compatibilities->pluck('value')->values()->all(), []

@@ -9,6 +9,7 @@ import {
   PawPrint,
   ListChecks,
   FileSignature,
+  Upload,
 } from 'lucide-react'
 import {
   Alert,
@@ -28,6 +29,7 @@ interface SettingsPageProps {
   medicalTestsAction: ReactNode
   organizationsAction: ReactNode
   formTemplatesAction: ReactNode
+  exportAction: ReactNode
   breadcrumb?: ReactNode
 }
 
@@ -40,6 +42,7 @@ export function SettingsPage({
   medicalTestsAction,
   organizationsAction,
   formTemplatesAction,
+  exportAction,
   breadcrumb,
 }: SettingsPageProps) {
   const { isAdmin } = useAuth()
@@ -125,6 +128,14 @@ export function SettingsPage({
             description:
               'Erstelle und verwalte Formularvorlagen für Inspektionen, Bewerbungen und andere dynamische Formulare.',
             actions: formTemplatesAction,
+          },
+          {
+            icon: Upload,
+            title: 'Export',
+            subtitle: 'Tiervermittlung.de',
+            description:
+              'Lege fest, wie Verträglichkeiten exportiert werden, und sieh dir den Status des Exports an.',
+            actions: exportAction,
           },
         ]}
       />

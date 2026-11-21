@@ -2,6 +2,32 @@
 
 All notable changes to Taily are documented here.
 
+# [0.15.0](https://github.com/ulbrich-media/taily/compare/v0.14.1...v0.15.0) (2026-11-20)
+
+
+### Bug Fixes
+
+* **media:** accept large animal uploads and return 422 for rejected files ([#302](https://github.com/ulbrich-media/taily/issues/302)) ([9e0fc55](https://github.com/ulbrich-media/taily/commit/9e0fc55be0dce1771e5ad11d5b0d4e4b9c078aed))
+* register scheduled tasks and middleware in the service provider ([#288](https://github.com/ulbrich-media/taily/issues/288)) ([49e00b7](https://github.com/ulbrich-media/taily/commit/49e00b7ff163a8a185c592d41a52f1a49eda0c8a))
+
+
+### Features
+
+* **animals:** add optional publish_title field ([#287](https://github.com/ulbrich-media/taily/issues/287)) ([3db343e](https://github.com/ulbrich-media/taily/commit/3db343e0a2d89060f2e981333ddb262767fbf673)), closes [#286](https://github.com/ulbrich-media/taily/issues/286)
+* **animals:** generate unique user-facing animal numbers ([#304](https://github.com/ulbrich-media/taily/issues/304)) ([d837371](https://github.com/ulbrich-media/taily/commit/d8373713d1e10317608d76c01528a6b7eff9678e))
+* **export:** add export settings page with compatibleWith mapping ([#298](https://github.com/ulbrich-media/taily/issues/298)) ([8b5c707](https://github.com/ulbrich-media/taily/commit/8b5c707980a3aa140f76375a8119599959d83227))
+* **tiervermittlung:** append traits to exported description ([#295](https://github.com/ulbrich-media/taily/issues/295)) ([805ee44](https://github.com/ulbrich-media/taily/commit/805ee4450d66339a00ed98fdf661b772c54f6bad))
+* **tiervermittlung:** export one video per animal ([#296](https://github.com/ulbrich-media/taily/issues/296)) ([96c1e21](https://github.com/ulbrich-media/taily/commit/96c1e21c978cd19462dbd8d637058e1c831671bb))
+* **tiervermittlung:** only send zip and city for animals in Germany ([#297](https://github.com/ulbrich-media/taily/issues/297)) ([7fbb449](https://github.com/ulbrich-media/taily/commit/7fbb449646628ffd4176488b17c83aacb8682c64))
+
+## [0.14.1](https://github.com/ulbrich-media/taily/compare/v0.14.0...v0.14.1) (2026-11-19)
+
+
+### Bug Fixes
+
+* **animals:** save current_location when creating an animal ([#283](https://github.com/ulbrich-media/taily/issues/283)) ([5149b48](https://github.com/ulbrich-media/taily/commit/5149b488d893407886466380501df0471861d070))
+* **tiervermittlung:** current country added for the export ([#284](https://github.com/ulbrich-media/taily/issues/284)) ([4f01a39](https://github.com/ulbrich-media/taily/commit/4f01a3901eaa3408559215e1bd1927094d3bf5b2))
+
 # [0.14.0](https://github.com/ulbrich-media/taily/compare/v0.13.0...v0.14.0) (2026-11-19)
 
 

@@ -30,7 +30,6 @@ class AdoptionContractGenerateTest extends TestCase
             'animal_type_id' => $animalType->id,
             'name' => 'Bello',
             'gender' => 'male',
-            'animal_number' => 'H-2026-001',
         ]);
 
         $mediator = Person::create([

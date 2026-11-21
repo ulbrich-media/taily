@@ -21,6 +21,16 @@ class TiervermittlungListing extends Model
      */
     public const STATUS_REJECTED = 'abgelehnt';
 
+    /** Statuses the platform reports back. */
+    public const STATUS_PUBLISHED = 'veroeffentlicht';
+
+    public const STATUS_UNPUBLISHED = 'nicht_veroeffentlicht';
+
+    public const STATUS_DUPLICATE = 'doppelt';
+
+    /** No delivery accepted yet. */
+    public const STATUS_NONE = '';
+
     protected $attributes = [
         'status' => '',
         'url' => '',

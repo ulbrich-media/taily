@@ -142,6 +142,14 @@ my-taily/
 
 The `vendor/` boundary is enforced by Composer. Anything outside it is either scaffold (static boilerplate that almost never changes) or operator-owned (must never be touched by an update).
 
+### Keep the scaffold's `bootstrap/app.php` minimal
+
+An install boots from the scaffold's `bootstrap/app.php`, not from `api/bootstrap/app.php` in this repo, and `composer update` never replaces it. Anything configured there is frozen at the state of the scaffold when the instance was created. So everything the application needs at boot — scheduled tasks, middleware aliases and groups, CSRF exceptions, global middleware tweaks — is registered by `TailyServiceProvider`, and `PackageWiringTest` checks that it is. The scaffold only calls `withRouting(health: '/up')` and `withMiddleware()` (without a callback; it is still required, because it defines Laravel's default global middleware and the `web` / `api` groups).
+
+`api/bootstrap/app.php` follows the same rule; it only adds what is specific to running this repo standalone (`useAppPath`, console routes, disabled event discovery).
+
+Installs set up with v0.14.1 or earlier configured scheduled tasks and middleware in their own `bootstrap/app.php`. Those blocks can be reduced to `->withMiddleware()` after updating; until then they keep working — the package registers the same aliases and middleware again, and the scheduled jobs are safe to run twice — except that an old, looser CSRF exception list stays in effect.
+
 ---
 
 ## Delivery Variants
@@ -184,13 +192,15 @@ A Docker image built from the same distribution package, with instance data in n
 
 ## Scheduled Tasks
 
-Taily's default hosting story (see [Constraint 1](ADRs/ADR-012-contract-generation-and-signing.md#constraint-1-hosting)) has no background worker or queue infrastructure, but Laravel's scheduler still requires one operator-configured cron entry to drive time-based jobs (e.g. contract-signing reminders and expiry, or the [Tiervermittlung.de export](features/tiervermittlung.md), registered via `withSchedule()` in `bootstrap/app.php`). This is the first operational requirement of its kind — every install needs a single cron entry invoking Laravel's own dispatcher once a minute:
+Taily's default hosting story (see [Constraint 1](ADRs/ADR-012-contract-generation-and-signing.md#constraint-1-hosting)) has no background worker or queue infrastructure, but Laravel's scheduler still requires one operator-configured cron entry to drive time-based jobs (e.g. contract-signing reminders and expiry, or the [Tiervermittlung.de export](features/tiervermittlung.md), registered by `TailyServiceProvider::registerSchedule()`). This is the first operational requirement of its kind — every install needs a single cron entry invoking Laravel's own dispatcher once a minute:
 
 ```bash
 * * * * * php /path-to-your-install/artisan schedule:run >> /dev/null 2>&1
 ```
 
-This does not run a persistent process or require Node/Docker — `schedule:run` is a normal one-shot PHP invocation that exits immediately if nothing is due, consistent with the shared-hosting constraint. It belongs in the `taily-app` scaffold's install documentation too (tracked separately, out of scope of this doc).
+This does not run a persistent process or require Node/Docker — `schedule:run` is a normal one-shot PHP invocation that exits immediately if nothing is due, consistent with the shared-hosting constraint. The `taily-app` scaffold's README documents the same entry.
+
+`php artisan schedule:list` shows the registered jobs and when each is next due. `schedule:run` only starts jobs due in the current minute, so "No scheduled commands are ready to run" is the normal answer most of the time; `php artisan schedule:test --name=<command>` runs one job right away.
 
 ---
 

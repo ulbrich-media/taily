@@ -15,14 +15,15 @@ The platform is push-only: Taily sends the complete state of each animal, the pl
    ```
 
 4. Map every Animal Type that should be exported to a species on tiervermittlung.de (Einstellungen → Tierarten → "Tierart auf Tiervermittlung.de").
-5. Check the connection and do a dry run — neither creates anything:
+5. Check the Verträglichkeiten mapping under Einstellungen → Export (see [Compatibility mapping](#compatibility-mapping)). The defaults work without configuration.
+6. Check the connection and do a dry run — neither creates anything:
 
    ```bash
    php artisan tiervermittlung:check
    php artisan tiervermittlung:sync --probe      # -v also prints the listing preview
    ```
 
-6. Switch the export on with `TAILY_TIERVERMITTLUNG_ENABLED=true`.
+7. Switch the export on with `TAILY_TIERVERMITTLUNG_ENABLED=true`.
 
 The export relies on the scheduler cron entry every installation already needs (see [release-architecture.md](../release-architecture.md#scheduled-tasks)). The platform downloads the images from the URLs Taily sends, so `APP_URL` must be publicly reachable — dry runs from a local DDEV instance will report image problems.
 
@@ -55,24 +56,38 @@ Every exported animal is listed as up for adoption (`forAdoption`). The animal's
 
 | Platform field | Source |
 |---|---|
-| `tierId` | the animal's id — permanent, unlike the animal number |
+| `tierId` | the animal number — always set, unique and not editable after creation. Animals whose number has characters outside letters, digits, `-` and `_` are excluded from the export |
 | `name`, `breed`, `sex`, `neutered`, `reserved` | same fields on the animal |
 | `species` / `speciesDetail` | the Animal Type's Tiervermittlung Species; for `small` and `other` the type's title as detail |
 | `birthDate` | `date_of_birth` |
 | `heightCm` | `size_cm`, dogs only |
-| `description` | `publish_description` |
+| `title` | `publish_title` — optional, trimmed, at most 60 characters; left out when empty |
+| `description` | `publish_description`, followed by the lines `Verträglichkeiten: …` and `Persönlichkeit: …` (comma-separated values, each line only when the animal has any, separated by blank lines). The description text is shortened first, so the lines always fit within 20 000 characters |
 | `images` | the first five pictures in their order, as the `export` conversion via the public media route; the media uuid is the image id, so the platform only downloads new pictures |
+| `video` | the first MP4 or MOV video of the pictures by order, at most 50 MB, as the original file via the public media route (so `APP_URL` must be publicly reachable); the media uuid is the video id, so a replaced video is downloaded again. Left out when there is none, which makes the platform remove a video sent earlier. The platform converts MP4s in the background, so they appear after a few minutes; problems come back in `warnungen`. YouTube links are not sent |
 | `chip` | whether a TASSO or FINDEFIX registration exists — never the numbers |
-| `location` | `current_country` as country; zip and city are always `-` |
+| `location` | `current_country` as country; zip and city are `-` only for `DE`, abroad only the country is sent |
 | `externalUrl` | `application_url`, shown below the description |
+| `compatibleWith` | `children` / `dogs` / `cats` set to `true` for every option with a matching Verträglichkeit, see below; left out when nothing matches |
 
-Taily only knows the country an animal lives in (`current_location` is free text for people). The platform requires zip and city too and fills both with a dash when a listing abroad is entered by hand, so the export sends `-` for every animal. Animals abroad are only published if the club's account has a § 11 TierSchG permit on file; otherwise they come back as `nicht_veroeffentlicht` with a reason. Not sent: health data, chip numbers, people, compatibilities and personality traits (free text without a fixed mapping).
+Taily only knows the country an animal lives in (`current_location` is free text for people). The platform requires zip and city only for `DE`; abroad the country alone is enough and the listing shows only the country. Until Taily tracks a concrete location, the export sends `-` for both for animals in Germany. The Bundesland is derived by the platform from the zip code, so it is never sent. Animals abroad are only published if the club's account has a § 11 TierSchG permit on file; otherwise they come back as `nicht_veroeffentlicht` with a reason. Not sent: health data, chip numbers, people. Compatibilities and personality traits are appended to the description as plain text; compatibilities also feed `compatibleWith`.
+
+### Compatibility mapping
+
+The platform builds its filters (e.g. "verträglich mit Kindern") from `compatibleWith`, which only knows `children`, `dogs` and `cats`. Taily's Verträglichkeiten are free text (`AnimalTrait` with `type = compatibility`), so Einstellungen → Export holds, per option, the words that map to it. Defaults: Kinder → `children`; Hunde, Rüden, Hündinnen → `dogs`; Katzen → `cats`.
+
+A word matches a trait when both are equal after trimming and ignoring case (exact match, no substrings). A word may appear under several options. Only admins can change the mapping; everyone can see it. Changing it changes the payload hash, so affected animals are sent again on the next sync.
+
+**Storage:** a generic key/value table `export_settings` (`key`, JSON `value`) rather than a dedicated mapping table — least code, and later export targets (e.g. FINDEFIX) can add keys without a migration. The mapping lives under `tiervermittlung.compatible_with`; the migration seeds the defaults.
+
+The same page shows the export status (read-only): whether the export is enabled, whether an API key is set (never the key), listings per status, the last successful delivery and the animals that were `abgelehnt` or `nicht_veroeffentlicht`, linked to their status tab. It also lists the animals that are approved for publishing but held back by Taily itself ("Freigegeben, aber nicht exportiert", with the reasons); deceased and adopted animals are left out. The animal sidebar shows a chip on every edit tab: the export status of an exported animal, or "Nicht exportiert" for an approved animal that cannot be exported. There is no chip for unapproved, deceased or adopted animals. Both the list and the chip are hidden (and not sent by the API) while the export is disabled or no API key is set.
 
 ## How the sync works
 
 `tiervermittlung:sync` runs every five minutes. Each run builds the payload of every candidate animal and compares its hash with the one stored for the last delivery (`tiervermittlung_listings`), so there is no event wiring — a changed field, a new picture or a completed adoption all show up on the next run.
 
 - **New or changed** animals are sent (`PUT /tiere/{tierId}`).
+- A listing whose `tier_id` differs from the animal's current number (listings created when the animal's UUID was the `tierId`) is **re-keyed**: the old listing is deleted on the platform (a 404 counts as deleted; any other failure keeps the old listing and retries next run), then the animal is sent as a new listing. The listing gets a new platform URL and `tvId`, so old links stop working once. Re-keys count towards the per-run limit.
 - **Unchanged** animals are sent again after 30 days; the platform lets listings expire after 92 days without a delivery.
 - Animals that are **no longer exported** are removed (`DELETE`), with `grund=vermittelt` for adopted animals so they count towards the platform's placement statistics, `entfernt` otherwise. Listings of deleted animals are removed the same way.
 - A **rejected** payload (HTTP 400) is kept with the platform's message and only sent again once the animal changes — the 30-day refresh does not resend it either. If the animal was already listed, the listing keeps its status and stays online with the last accepted version. Rate limiting, outages and network errors are retried on the next run. An invalid key aborts the run.

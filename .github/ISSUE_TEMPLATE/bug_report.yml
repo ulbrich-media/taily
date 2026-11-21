@@ -23,36 +23,23 @@ body:
     id: repro-steps
     attributes:
       label: Steps to reproduce
-      description: Numbered steps, as exact as possible.
+      description: Optional — skip if the current behavior already makes it obvious.
       placeholder: |
         1. Go to...
         2. Click on...
         3. See error
     validations:
-      required: true
-
-  - type: input
-    id: affected-area
-    attributes:
-      label: Affected area
-      description: File, module, page, or component, if known.
-      placeholder: e.g. src/auth/login.ts, or "login page"
-    validations:
       required: false
 
   - type: textarea
-    id: error-output
+    id: additional-info
     attributes:
-      label: Error messages / logs
-      description: Paste exact error text, stack traces, or console output. Use code blocks.
-      render: shell
-    validations:
-      required: false
-
-  - type: input
-    id: environment
-    attributes:
-      label: Environment
-      description: Browser/OS/version/branch — whatever's relevant to this repo.
+      label: Additional information
+      description: Optional — anything else that helps narrow it down.
+      placeholder: |
+        - Affected area (page, component, file)
+        - Error messages, logs or console output (in code blocks)
+        - Environment (browser, OS, version, branch)
+        - Screenshots
     validations:
       required: false
