@@ -12,7 +12,7 @@ Form templates are reusable, versioned schemas that define the structure of dyna
 
 Form templates are split across two tables:
 
-- **`form_templates`** — the stable parent entity. Holds only the template name and a UUID that never changes across version bumps. Foreign keys from other models (e.g. `animal_types.pre_inspection_form_template_id`) always point here.
+- **`form_templates`** — the stable parent entity. Holds only the template name and a UUID that never changes across version bumps. Foreign keys from other models always point here (the only one, `animal_types.pre_inspection_form_template_id`, was removed with [ADR-016](../ADRs/ADR-016-adoption-case-file.md)).
 - **`form_template_versions`** — the versioned schemas. Each row holds a `schema`, `ui_schema`, a `version` integer, and a FK back to the parent `form_templates` row.
 
 This separation means a feature's FK to a template never goes stale when a breaking schema change creates a new version — the FK always resolves to the same parent, which in turn always surfaces the latest version.

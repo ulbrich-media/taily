@@ -78,9 +78,7 @@ From the adoption detail page, the *Transport* step card shows the currently ass
 
 ## Checklist
 
-> **Status: planned, not implemented.** See [case-file.md](./case-file.md#checklist).
-
-Before a transport, many things have to be in place for every animal on it: the adopter's Sicherheitsgeschirr photo confirmed, the phone number for the transport day, the animal's Tasso ID. Because a field required for the contract stays required for transport, contract data shows up here as well. Today this means opening every adoption, animal and person by hand.
+Before a transport, many things have to be in place for every animal on it: the adopter's Sicherheitsgeschirr photo confirmed, the phone number for the transport day, the animal's Tasso ID. Because a field required for the contract stays required for transport, contract data shows up here as well. Without the checklist this means opening every adoption and animal by hand.
 
 The transport page aggregates the transport-step [Checklist](./case-file.md#checklist) of every assigned adoption:
 
@@ -94,7 +92,7 @@ Rex   → Jana Koch           ✗ Tasso-ID des Tieres fehlt
 …
 ```
 
-From there the mediator can request the missing data from the applicant (see [case-file.md](./case-file.md#requesting-data--split-collection)) or jump to the adoption. The checklist does not block assigning or completing a transport. Whether the contract is signed is shown by the contract step's status, not by the checklist.
+From there the mediator jumps to the adoption. *Planned:* requesting the missing data from the applicant directly (see [case-file.md](./case-file.md#requesting-data--split-collection)). The rules are the same as on the adoption — see [case-file.md](./case-file.md#checklist). The checklist does not block assigning or completing a transport. Whether the contract is signed is shown by the contract step's status, not by the checklist.
 
 ## Relation to Handover
 

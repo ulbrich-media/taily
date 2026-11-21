@@ -2,19 +2,25 @@
 
 An adoption (German UI: *Vermittlung*) is the complete process of finding and confirming a new owner for an animal. It begins when someone applies to adopt and ends when the animal has been handed over — or when the process is canceled.
 
-The adoption is also where everything relevant to *if and how* it happens is kept: the applicant's data in the [Case File](./case-file.md), the pre-inspections, the contract, the transport. The applicant themselves is a [Person](../data-scheme.md#person), which only identifies them.
+The adoption is self-contained. Everything relevant to *if and how* it happens is kept on it:
 
-> Parts of this page describe the planned design from [ADR-016](../ADRs/ADR-016-adoption-case-file.md) (marked *planned*).
+- **the applicant's data** — name, contact, address, date of birth — in fixed columns ([ADR-018](../ADRs/ADR-018-applicant-data-on-the-adoption.md)),
+- **the [Case File](./case-file.md)** — every configured field of the animal's type,
+- **the [pre-inspections](./pre-inspection.md)**, the [contract](./contract.md) and the [transport](./transport.md).
+
+The applicant is not a [Person](../data-scheme.md#person). An adoption can *reference* a Person Taily already manages, but never reads its data from there.
 
 ## General status
 
 Every adoption has a general status that gives the mediator a quick overview:
 
-- **Unconfirmed** *(planned)* — a public application whose email address has not been confirmed yet (see [Application](#application-planned)). Shown to mediators marked *"E-Mail nicht bestätigt"*.
-- **Pending** — the application has arrived but the mediator hasn't started working on it yet.
-- **In progress** — the mediator is actively working through the adoption.
-- **Canceled** — the adoption was stopped. A reason is always documented.
-- **Done** — the animal has been handed over. The adoption is complete.
+| Status | German UI | Meaning |
+|---|---|---|
+| `unconfirmed` | E-Mail nicht bestätigt | A public application whose email address hasn't been confirmed yet (see [Application](#application)) |
+| `pending` | Zu prüfen | The application has arrived, but the mediator hasn't started working on it yet |
+| `in_progress` | In Bearbeitung | The mediator is actively working through the adoption |
+| `canceled` | Abgebrochen | The adoption was stopped. A reason is always documented |
+| `done` | Abgeschlossen | The animal has been handed over. The adoption is complete |
 
 ## Steps
 
@@ -22,8 +28,8 @@ The steps are a **fixed set, owned by code**. Organizations do not configure ste
 
 | Step | German UI | What happens | Details |
 |---|---|---|---|
-| `application` | Bewerbung | The applicant sends in the data asked at application | [case-file.md](./case-file.md#requesting-data--split-collection) |
-| `pre_inspection` | Vorkontrolle | A visit, video call or home video shows whether the home suits the animal | [inspection.md](./pre-inspection.md) |
+| `application` | Bewerbung | The applicant sends in the data asked at application | [Application](#application) |
+| `pre_inspection` | Vorkontrolle | A visit, video call or home video shows whether the home suits the animal | [pre-inspection.md](./pre-inspection.md) |
 | `contract` | Vertrag | The Schutzvertrag is generated and signed | [contract.md](./contract.md) |
 | `transport` | Transport | The animal travels to the adopter or a staging point | [transport.md](./transport.md) |
 | `handover` | Übergabe | The animal is physically handed over; the adoption is done | — |
@@ -32,58 +38,75 @@ For data requirements the steps have a nominal order (application → pre-inspec
 
 ### Pre-inspection
 
-The mediator closes the pre-inspection step with a **confirmation** (*"Vorkontrolle bestätigt"*, `pre_inspection_confirmed_at` plus the confirming user) — with or without a [pre-inspection](./pre-inspection.md) record, and regardless of its verdict. They base it on pre-inspections, a home video, earlier pre-inspections of the same person, or none of these (e.g. a known repeat adopter). There is no rejection on the step: a rejection means canceling the adoption, with a reason.
+The mediator closes the pre-inspection step with a **confirmation** (*"Vorkontrolle bestätigt"*, `pre_inspection_confirmed_at` plus the confirming user) — with or without a [pre-inspection](./pre-inspection.md) record, and regardless of its verdict. They base it on pre-inspections, a home video, earlier pre-inspections of the same applicant, or none of these (e.g. a known repeat adopter). There is no rejection on the step: a rejection means canceling the adoption, with a reason. The confirmation can be withdrawn.
 
 | Step status | When |
 |---|---|
 | finished | the pre-inspection is confirmed |
-| pending | not confirmed, but a pre-inspection exists or the home video was requested |
+| pending | not confirmed, but a pre-inspection exists or a field (e.g. the home video) was made required for this step |
 | not_started | neither |
 
-### Requirements per step *(planned)*
+### Requirements per step
 
-Each step has a [Checklist](./case-file.md#checklist) of the data it needs: fields required by the catalogue, by the contract template, or by the mediator's per-adoption overrides. The checklist blocks contract generation (including the download for manual signing) while contract data is missing — the mediator waives a field if needed. For every other step it informs but does not block.
+Each step has a [Checklist](./case-file.md#checklist) of the data it needs: fields required by the catalogue, by the chosen contract template, or by the mediator's per-adoption overrides. The checklist blocks contract generation while a field the chosen template requires is missing — the mediator waives a field if needed. For every other step it informs but does not block.
 
-### Split data collection *(planned)*
+## Starting an adoption
 
-The application asks only what is needed to decide whether the applicant fits. Later data — contract details, transport details — is requested when the mediator advances the adoption's `requested_step` ("Angaben für den Vertrag anfordern"). The applicant gets a form with exactly the missing fields. See [case-file.md](./case-file.md#requesting-data--split-collection).
+An adoption starts in one of two ways.
 
-## Application
+### Application
 
-> **Status: prototype.** The form is reached at `/apply/{animal}` through the link copied from the animal's menu (*Bewerbungslink kopieren*); there is no public listing. It asks the catalogue fields visible to applicants with `collect_at = application` and reports every missing required field at once. Applications are refused for deceased, boarding and already adopted animals; a reserved animal still takes them. File fields can't be uploaded yet.
+A public application creates an adoption for **one animal**.
 
-A public application creates an adoption for **one animal**. Every public application has to be **confirmed by email** (double opt-in):
+1. **The link.** The mediator copies the application link from the animal's menu (*Bewerbungslink kopieren*) and shares it, e.g. on the website. It opens `/apply/{animal}`. There is no public list of animals in Taily.
+2. **The form.** The form shows the catalogue fields of the animal's type that are visible to applicants and asked at `application`, in the catalogue's groups, with their Info Blocks and [conditions](./case-file.md#conditional-fields). Each field says whether it is needed now (*Pflicht*) or only later (*Nötig für: Vertrag*). Submitting reports every missing required field at once.
+3. **Unconfirmed.** The adoption is stored with status `unconfirmed`, with the applicant's data and Case File values on the adoption as usual. Mediators already see it, marked *"E-Mail nicht bestätigt"*.
+4. **Double opt-in.** Taily emails a confirmation link (an [Applicant Link](./applicant-portal.md#access-email-plus-magic-link)). Confirming sets the adoption to `pending` and opens the applicant's first [portal](./applicant-portal.md) session. From then on the confirmed email links the adoption to the applicant's other adoptions.
 
-1. The applicant submits the form. The adoption is stored with status `unconfirmed`, with the applicant's data and Case File values on the adoption as usual ([ADR-018](../ADRs/ADR-018-applicant-data-on-the-adoption.md)).
-2. Taily sends a confirmation link. Mediators already see the application, marked *"E-Mail nicht bestätigt"*.
-3. On confirmation the adoption is set to `pending`. The confirmed email now links it to the applicant's earlier adoptions and to the portal.
+Applications are refused for animals that are deceased, boarding animals, or already adopted (a `done` adoption exists). A reserved animal still takes applications; the mediator decides.
 
-An application never touches a Person or another adoption, so a public form can't be used to change someone else's data. Unconfirmed applications may be cleaned up after a number of days later on.
+An application never touches a Person or another adoption, so a public form can't be used to change someone else's data. Public applications have no mediator; one is assigned in the admin.
 
-Adoptions created by a mediator (e.g. after a phone call) need no confirmation; the emails mediators enter are trusted.
+### Created by a mediator
+
+After a phone call or an email, the mediator creates the adoption in the admin (*Neue Vermittlung*) with either:
+
+- **Neue Angaben** — first and last name, optionally email and phone, typed in, or
+- **Bekannte Person** — a Person Taily already manages (a foster carer adopting their foster animal, an inspector). Their data is **copied once** into the adoption and the Person is referenced.
+
+These adoptions start as `pending` and need no confirmation; the emails mediators enter are trusted.
+
+## The applicant and their other adoptions
+
+The applicant's data belongs to this adoption only: a correction never changes another adoption or a Person ([ADR-018](../ADRs/ADR-018-applicant-data-on-the-adoption.md)).
+
+- **Earlier adoptions** — the adoption page lists the applicant's other adoptions (*Frühere Vermittlungen*): those with the same email, or referencing the same Person. Each shows why it matches, its status and its pre-inspections.
+- **Taking over data** — from one of those adoptions, *"Angaben übernehmen"* fills every field that is still empty here. See [case-file.md](./case-file.md#second-adoption-by-the-same-applicant).
+- **Person reference** — the mediator can link or unlink a Person at any time (*Mit Person verknüpfen*). That sets only the reference; nothing is copied or synchronised. A Person's page lists the adoptions that reference them or use their email.
 
 ## Changing the animal
 
-The animal of an adoption can be changed to **another animal of the same animal type** — e.g. *"Bello ist reserviert, aber Luna würde passen"* — as long as no pre-inspection exists and no contract has been generated. After that, the outcome of the process depends on the animal, and a change would quietly invalidate it. The Case File stays; requirements are recalculated. An adoption always has an animal; there are no general applications.
+The animal of an adoption can be changed in the admin. *Planned:* restrict it to **another animal of the same animal type** — e.g. *"Bello ist reserviert, aber Luna würde passen"* — as long as no pre-inspection exists and no contract has been generated. After that, the outcome of the process depends on the animal, and a change would quietly invalidate it. The Case File stays; requirements are recalculated. An adoption always has an animal; there are no general applications.
 
-## Applicant portal *(planned)*
+## Applicant portal
 
-The applicant logs in with their email and a magic link, and sees all their adoptions and their data. See [applicant-portal.md](./applicant-portal.md).
+The applicant logs in with their email and a magic link, sees all their adoptions and edits their data. See [applicant-portal.md](./applicant-portal.md).
 
 ## Cancellation
 
-An adoption can be canceled at any point, regardless of which steps are done. The mediator documents a reason, kept separate from the general notes so it is easy to see why the adoption ended.
+An adoption can be canceled at any point, regardless of which steps are done. The mediator documents a reason, kept separate from the general notes so it is easy to see why the adoption ended. The reason is internal; the portal only shows that the application ended. A canceled adoption can be reopened.
 
 ## Follow-up inspection
 
 After a successful adoption, a follow-up inspection may happen some time later to make sure the animal is thriving. It does not change the adoption status — if something is wrong, any follow-up action happens outside the normal adoption process. *(Future feature.)*
 
-## Multiple adoptions
-
-- Multiple adoptions can exist for the same animal or person at different points in time.
-- All adoptions of a person or animal are listed on their pages.
-- *(planned)* A new adoption by a known person shows their earlier adoptions and pre-inspections as a cross-reference, and values can be imported from an earlier adoption. See [case-file.md](./case-file.md#second-adoption-by-the-same-person).
-
 ## Audit trail *(planned)*
 
-Every change to an adoption and its Case File is recorded — who, what, when, old and new value. See [audit-trail.md](./audit-trail.md).
+Every change to an adoption and its Case File is recorded — who, what, when, old and new value. See [audit-trail.md](./audit-trail.md). The adoption page already has its *Verlauf* tab, empty until the audit trail exists.
+
+## Not implemented yet
+
+- **Cleaning up unconfirmed applications** after a number of days.
+- **Restricting animal changes** as described in [Changing the animal](#changing-the-animal).
+- **Requesting data** for a later step (`requested_step`), see [case-file.md](./case-file.md#requesting-data--split-collection).
+- **The animal's owner after handover** is a Person (`animals.owner_id`), set by hand. An adopter without a Person reference can't be set as the owner until a Person is created for them; how ownership follows from the handover is open.

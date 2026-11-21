@@ -19,11 +19,11 @@ It is what makes full edit rights safe. The mediator can edit everything, and so
 |---|---|
 | **Subjects** | Animal, Person, Adoption, Field Values, Requirement Overrides, Pre-Inspections, Contract Templates. Configuration (Field Definitions, Groups) is a nice-to-have. |
 | **Content** | Subject, attribute/field, old value, new value, timestamp |
-| **Actor** | One of: an authenticated `User`; the applicant acting through a token (no user account); an inspector through a token; the system (e.g. an import). Token actors are recorded with the Person they act for. |
+| **Actor** | One of: an authenticated `User`; the applicant acting through an Applicant Session (no user account, identified by their email); an inspector through a pre-inspection token; the system (e.g. taking over data from another adoption). The applicant is recorded with their email and the adoption, since applicants are not Persons ([ADR-018](../ADRs/ADR-018-applicant-data-on-the-adoption.md)); an inspector with the pre-inspection and their Person, if assigned. |
 | **Origin** | IP and user agent for token actors, the same as the contract signing events record |
 | **Files** | Adding, replacing and removing a file is recorded, and replaced files are **kept** and reachable from the entry |
 | **Relations** | Changes to pivot relations (e.g. animal types of a role) are recorded |
-| **Display** | A readable history per record in the admin UI ("Wohnfläche: 200 → 120, von Anna Schmidt (Vermittlerin) am 14.11.2026, 10:32"), with labels taken from the Field Definitions |
+| **Display** | A readable history per record in the admin UI — the *Verlauf* tabs of adoptions, animals and people already exist as placeholders ("Wohnfläche: 200 → 120, von Anna Schmidt (Vermittlerin) am 14.11.2026, 10:32"), with labels taken from the Field Definitions |
 | **Notifications** | The trail can drive "changed by the applicant since your last visit", with an extra warning when the changed field is part of a generated contract |
 
 ### Out of scope for now
@@ -52,7 +52,7 @@ Points to check for every option:
 - **Bypassed events** — mass updates (`Model::query()->update()`), `insert()` and raw queries do not fire model events. Writes to audited models must go through models, or be logged explicitly.
 - **Pivots** — `sync()`/`attach()` fire no model events by default.
 - **Media** — Spatie media changes are separate models; replacements need explicit entries and must not delete the old file.
-- **Token actors** — resolving an actor that is a Person acting through an `AccessToken`, not a `User`.
+- **Token actors** — resolving an actor that is not a `User`: an applicant through an `ApplicantSession`, an inspector through an `AccessToken`.
 - **JSON values** — Field Values store JSON; the diff has to be readable per field.
 - **Volume** — one entry per changed attribute vs. per save; querying a record's history efficiently.
 

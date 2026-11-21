@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed — supersedes the template-authoring parts of [ADR-013](ADR-013-contract-template-rendering.md). Prototyped on `prototype/adoption-based-structure`, with the amendments under [Prototype notes](#prototype-notes).
+Accepted — supersedes the template-authoring parts of [ADR-013](ADR-013-contract-template-rendering.md). Implemented with the amendments under [Prototype notes](#prototype-notes); the header/footer settings and the manual-signing download are still open.
 
 ## Context
 
@@ -43,7 +43,7 @@ Each section picks from a **field registry** of everything the contract can prin
 |---|---|---|
 | `animal.*` | Built-in Animal columns | name, animal type, breed, color, date of birth, animal number, Tasso/Findefix ID, contract notes, photo |
 | `mediator.*` | Built-in Person columns of the mediator | full name, email, phone, address |
-| `adopter.*` | Built-in Person columns of the applicant | full name, date of birth, address, email, phone |
+| `adopter.*` | Built-in Person columns of the applicant — *replaced by catalogue fields, see [Prototype notes](#prototype-notes)* | full name, date of birth, address, email, phone |
 | *(no prefix)* | Case File Field Definitions | `id_card_number`, `living_space_sqm` |
 
 Labels printed in the contract come from the registry (built-ins) or the Field Definition (custom fields).
@@ -82,7 +82,7 @@ Applicants keep being able to edit their data through the portal. If they change
 The prototype keeps the decision and settles some details:
 
 - **Required or optional per field.** Each section entry is `{key, required}`. Only required entries become contract requirements and block generation; optional ones are printed when they have a value (a phone number, the animal's breed) and left out otherwise. Requiring every printed field made a template either too strict or too sparse.
-- **Adopter fields are catalogue fields.** There is no `adopter.*` prefix: built-in Person fields are Field Definitions of every catalogue (`first_name`, `address`, …). A template may only print a catalogue field that exists in the catalogue of *every* animal type it is offered for, and such a field can't be archived while a template prints it.
+- **Adopter fields are catalogue fields.** There is no `adopter.*` prefix: the applicant's built-in fields are Field Definitions of every catalogue (`first_name`, `address`, …), stored on the adoption ([ADR-018](ADR-018-applicant-data-on-the-adoption.md)). A template may only print a catalogue field that exists in the catalogue of *every* animal type it is offered for, and such a field can't be archived while a template prints it.
 - **Registry additions:** `animal.animal_type`, `animal.gender`, `animal.contract_notes`, `animal.photo` (printed beside the animal table) and `mediator.organization`.
 - **Templates are archived, not deleted** — signing processes keep the template id in `template_key`.
 - **Header and footer** still come from `contracts/layout.blade.php`; there are no contract settings yet. The manual-signing download isn't built yet either.

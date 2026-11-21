@@ -23,6 +23,15 @@ public static function myAction(string $token): string
 
 Then register the corresponding action in the frontend's `/callback` route handler.
 
+Current actions: `inspect`, `contract_sign`, `application_confirm`, `applicant_login`, `user_invite_accepted`, `password_reset`.
+
+### Links without a token
+
+A link that needs no token points straight at its page, still built in `FrontendUriBuilder`:
+
+- `application($animalId)` — the public application form `/apply/{animal}`, copied from the animal's admin page.
+- `adoptionDetail($adoptionId)` — the admin adoption page, for emails to mediators who have a login.
+
 ---
 
 ## Rules

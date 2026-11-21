@@ -12,11 +12,28 @@ _Avoid_: Field kind, Input type, Widget type
 **Catalogue Editor**: The settings screen where Field Groups, Field Definitions and Info Blocks are created and ordered. Can reuse the form builder's per-type registry (`field-types/`).
 _Avoid_: Field builder
 
-**Request Form**: A form generated from the catalogue for one Requested Step, containing exactly the fields the Applicant still has to provide. The application form is the Request Form for `application`. Paginated by Field Group.
+**Applicant Case File Form**: The form the Applicant fills in — on the Application page and in the Applicant Portal — generated from the catalogue: one card per Field Group, live Conditions, server errors mapped to their fields (`ApplicantCaseFileForm`).
 _Avoid_: Dynamic form, Wizard
+
+**Requirement Text**: The short note under an applicant-facing field: *Pflicht* when it is needed for the Current Step, *Nötig für: Vertrag* when it is asked early but needed later (`applicantRequirement()`).
+_Avoid_: Required badge
+
+**Request Form** *(planned)*: A form generated from the catalogue for one Requested Step, containing exactly the fields the Applicant still has to provide.
+_Avoid_: Dynamic form, Wizard
+
+**Step Timeline**: The Applicant Portal's list of the five Steps with a simple status each.
+_Avoid_: Progress bar
 
 **Section Navigation**: The jump list of Field Groups on the adoption page, used for long Case Files.
 _Avoid_: Table of contents, Tabs
+
+### Public pages
+
+**Applicant Pages**: The public pages under `/apply` and `/adopter` — the Application, the confirmation and login link pages, and the Applicant Portal. They live in `src/public/module/applicant/` and authenticate with the Applicant Session's bearer token, never with the admin session.
+_Avoid_: Customer area
+
+**Link Action Page**: A page an emailed link opens, with one button that uses the token up (confirming an Application, logging in). Opening the page alone never consumes it.
+_Avoid_: Landing page
 
 ### Form builder (under review — see docs/features/form-templates.md)
 

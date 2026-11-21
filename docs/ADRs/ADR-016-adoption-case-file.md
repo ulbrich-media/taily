@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed — section 2 is superseded by [ADR-018](ADR-018-applicant-data-on-the-adoption.md): applicant data now lives on the adoption, not on a Person.
+Accepted — section 2 is superseded by [ADR-018](ADR-018-applicant-data-on-the-adoption.md): applicant data lives on the adoption, not on a Person. Section 7 is refined there too. Implemented except file fields, review actions, the requested step and the audit trail — see the status table in [case-file.md](../features/case-file.md#implementation-status).
 
 ## Context
 
@@ -50,7 +50,7 @@ The Person keeps name, email, address, phone and date of birth. These columns ar
 
 Editing a built-in field from an adoption writes to the Person, because identity is shared across adoptions.
 
-**An email address belongs to exactly one Person.** Public applications are confirmed by email; until then the adoption has no applicant and its identity data waits in a pending payload, so a public form can never change an existing Person. On confirmation the adoption is linked to the Person with that email (created if needed). The applicant portal logs in by email and magic link on the same basis. Duplicates by design (one Person per application, merged by the mediator) were considered and rejected: email confirmation makes linking safe, and a unique email keeps the portal login trivial. Sharing one mailbox between several people is not supported. See [adoption.md](../features/adoption.md#application-planned) and [applicant-portal.md](../features/applicant-portal.md).
+**An email address belongs to exactly one Person.** Public applications are confirmed by email; until then the adoption has no applicant and its identity data waits in a pending payload, so a public form can never change an existing Person. On confirmation the adoption is linked to the Person with that email (created if needed). The applicant portal logs in by email and magic link on the same basis. Duplicates by design (one Person per application, merged by the mediator) were considered and rejected: email confirmation makes linking safe, and a unique email keeps the portal login trivial. Sharing one mailbox between several people is not supported. See [adoption.md](../features/adoption.md#application) and [applicant-portal.md](../features/applicant-portal.md).
 
 ### 3. Field Definitions, Field Groups and Field Values
 
@@ -86,7 +86,7 @@ The pre-inspection form template and its submissions are removed. Taily is in be
 Values belong to the adoption — a snapshot of what was true for *this* decision. For the (rare) case of a person applying again:
 
 - **Cross-reference**: the adoption page shows the applicant's earlier adoptions and pre-inspections, read-only — found by email or a referenced Person ([ADR-018](ADR-018-applicant-data-on-the-adoption.md)).
-- **Import**: the mediator (admin) or the applicant (portal) can copy selected values from an earlier adoption. Files are copied as well. Duplicated files are an accepted cost of each adoption standing on its own.
+- **Import**: the mediator (admin) or the applicant (portal) can copy selected values from an earlier adoption. Files are copied as well. Duplicated files are an accepted cost of each adoption standing on its own. (Implemented so far: the mediator fills every empty field from the earlier adoption, without files.)
 
 ## Consequences
 

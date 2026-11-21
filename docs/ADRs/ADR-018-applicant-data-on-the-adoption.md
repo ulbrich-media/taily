@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed — supersedes section 2 ("Person = identity") of [ADR-016](ADR-016-adoption-case-file.md) and refines its section 7 ("A second adoption copies, it does not share")
+Accepted — supersedes section 2 ("Person = identity") of [ADR-016](ADR-016-adoption-case-file.md) and refines its section 7 ("A second adoption copies, it does not share")
 
 ## Context
 

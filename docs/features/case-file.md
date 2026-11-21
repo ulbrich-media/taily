@@ -1,10 +1,25 @@
 # Case File
 
-> **Status: prototype on branch `prototype/adoption-based-structure`.** This describes the target design from [ADR-016](../ADRs/ADR-016-adoption-case-file.md). Implemented so far: the catalogue per animal type with its settings UI (*Einstellungen → Angaben*), Field Values, Requirement Overrides, the Checklist (adoption overview, transport page, contract blocking) mediator editing in the adoption's *Angaben* tab, contract templates as configuration (*Einstellungen → Verträge*), and applicant data on the adoption with earlier adoptions and taking over their data ([ADR-018](../ADRs/ADR-018-applicant-data-on-the-adoption.md)). Not implemented: file fields and review actions, requesting data (`requested_step`), the applicant portal, the audit trail and notifications.
-
-The Case File (German UI: *Angaben*) is everything an adoption knows about *if and how* it can happen: the applicant's living situation, their experience, documents, photos, contract data, transport details. It belongs to the **adoption**, not to the person. The person only identifies a human (see [data-scheme.md](../data-scheme.md#person)).
+The Case File (German UI: *Angaben*) is everything an adoption knows about *if and how* it can happen: the applicant's identity and living situation, their experience, documents, photos, contract data, transport details. It belongs to the **adoption** ([ADR-016](../ADRs/ADR-016-adoption-case-file.md)); the applicant's name, contact and address are columns of the adoption itself ([ADR-018](../ADRs/ADR-018-applicant-data-on-the-adoption.md)).
 
 Organizations configure which fields exist and when they are needed. Taily's code owns the process — the fixed steps `application`, `pre_inspection`, `contract`, `transport`, `handover` (see [adoption.md](./adoption.md)). That split is the core idea: **configure fields, not the process.**
+
+## Implementation status
+
+| Part | Status |
+|---|---|
+| Catalogue per animal type, settings UI (*Einstellungen → Angaben*), copying a catalogue | Implemented |
+| Built-in fields on the adoption's applicant columns | Implemented |
+| Field Values, conditions, Requirement Overrides | Implemented |
+| Checklist on the adoption, the transport page, and blocking contract generation | Implemented |
+| Mediator editing (adoption tab *Angaben*) | Implemented |
+| Application form and portal for applicants | Implemented ([adoption.md](./adoption.md#application), [applicant-portal.md](./applicant-portal.md)) |
+| Earlier adoptions and taking over their data | Implemented, without choosing single values |
+| Review: mediator values confirmed, applicant values pending | Implemented |
+| Review actions (confirm / reject with a note) and the rejection email | Planned |
+| File fields (upload, display, keeping replaced files) | Planned — file fields can be configured but not filled |
+| Requested Step and request forms | Planned — the portal derives the current step instead |
+| Audit trail, change notifications | Planned |
 
 ---
 
@@ -28,7 +43,7 @@ Every animal type has its **own** catalogue of groups and fields, configured und
 
 Keys are unique per animal type, so the same key (e.g. `has_garden`) can exist on several types. A new animal type starts with the built-in fields in a group *Über dich*.
 
-The settings show each group as a card with its fields: type, when it is asked and required, its condition and flags. Groups and fields are reordered with up/down buttons; a field moves to another group from its edit page. A group can only be deleted when it is empty, and fields are archived rather than deleted.
+The settings show each group as a card with its fields: type, when it is asked and required, its condition and flags. Groups and fields are reordered with up/down buttons; a field moves to another group from its edit page. A group can only be deleted when it is empty, and fields are archived rather than deleted. A field a [contract template](./contract.md#contract-templates) prints can't be archived until it is removed from the template.
 
 ## Field Definitions
 
@@ -48,6 +63,7 @@ field_definitions
   visible_to_applicant  asked in forms, shown and editable in the portal
   visible_to_inspector  shown on the pre-inspection page
   condition             nullable: only applies if another field has a given value
+  applicant_attribute   built-in fields only: the adoption column it stands for
   archived_at
 ```
 
@@ -55,13 +71,13 @@ field_definitions
 
 `text`, `textarea`, `number`, `integer`, `boolean`, `select`, `radio`, `date`, `email`, `phone`, `photo`, `video`, `document`, and the layout type `info` (an Info Block).
 
-File types (`photo`, `video`, `document`) store files through Spatie media on the Field Value and allow a maximum number of files. Video size is limited by what the hosting allows (`upload_max_filesize`/`post_max_size`) for now; chunked uploads may come later.
+File types (`photo`, `video`, `document`) are meant to store files through Spatie media on the Field Value and allow a maximum number of files. Video size is limited by what the hosting allows (`upload_max_filesize`/`post_max_size`) for now; chunked uploads may come later. *Not implemented yet:* file fields can be configured and required, but nobody can upload to them. The application doesn't block on a required file.
 
 ### Built-in fields
 
-The Person's identity columns appear in the catalogue as built-in fields: `first_name`, `last_name`, `email`, `phone`, `mobile`, `address` (street, postal code, city, country as one composite field), `date_of_birth`. Their group, position, `collect_at`, `required_for` and visibility are configurable like any other field; they cannot be archived, and their type is fixed. Name and email are always collected at application, because they identify the person.
+The applicant's columns on the adoption appear in every catalogue as built-in fields: `first_name`, `last_name`, `email`, `phone`, `mobile`, `address` (street, additional line, postal code, city, country as one composite field), `date_of_birth`. Their group, position, `collect_at`, `required_for` and visibility are configurable like any other field; they cannot be archived, and their type is fixed. Name and email are always collected at application, because they identify the applicant.
 
-Their values are stored on the Person, not as Field Values, because identity is shared across adoptions. Editing them from an adoption edits the Person (and is recorded in the Person's [audit trail](./audit-trail.md)).
+Their values are stored in the adoption's `applicant_*` columns, not as Field Values, because Taily's code relies on them: the full name in lists, mails and the contract; the email for linking adoptions and the portal; the address for the contract and, later, searching. The definition's `applicant_attribute` names the column. A correction applies to this adoption only — never to another adoption or a Person. The email is stored trimmed and lowercased.
 
 ### `collect_at` and `required_for`
 
@@ -74,7 +90,7 @@ Two settings are needed because "asked" and "needed" are often different:
 
 | Field | `collect_at` | `required_for` | Why |
 |---|---|---|---|
-| Name, email | application | application | Identifies the person |
+| Name, email | application | application | Identifies the applicant |
 | Wohnfläche (m²) | application | application | Part of deciding whether it fits |
 | Anschrift | application | contract | Usually given right away, but only needed for the contract |
 | Hausvideo | application | — | Offered at application; the mediator requires it case by case |
@@ -82,11 +98,13 @@ Two settings are needed because "asked" and "needed" are often different:
 | Ausweisnummer | contract | contract | Not asked before it is needed |
 | Foto Sicherheitsgeschirr | transport | transport | Asked once the transport is planned, reviewed by the mediator |
 
+The application form and the portal show the difference to the applicant: a field required now is marked *Pflicht*, one asked early but needed later *Nötig für: Vertrag*.
+
 ### Changing a definition
 
 Labels, help, group, position, steps and flags can always be changed. The **type and key cannot**: a field whose meaning or type changes gets a new key and the old one is archived. Archived fields keep their existing values and stay visible on old adoptions, but are no longer asked. This replaces the schema versioning the form builder needs.
 
-**Changes apply live to all active adoptions** (`unconfirmed`, `pending`, `in_progress`). Requirements are derived, never snapshotted per adoption, so a new required application field immediately shows up as missing on every running adoption — and as an open request in the portal of applicants whose requested step already covers it. No emails are sent automatically; the mediator sees it on the checklist and requests or waives it. Done and canceled adoptions have no checklist and keep their values. Archiving a field removes it from every checklist.
+**Changes apply live to all active adoptions** (`unconfirmed`, `pending`, `in_progress`). Requirements are derived, never snapshotted per adoption, so a new required application field immediately shows up as missing on every running adoption — and as an open item in the portal of applicants whose current step already covers it. No emails are sent automatically; the mediator sees it on the checklist and requests or waives it. Done and canceled adoptions have no checklist and keep their values. Archiving a field removes it from every checklist.
 
 ---
 
@@ -142,13 +160,11 @@ Ankunft
   Telefonnummer am Transporttag               phone · transport · required
 ```
 
-The application form shows *Über dich*, *Wohnsituation* (without the landlord confirmation), and *Erfahrung & Alltag*. *Für den Vertrag* and *Ankunft* stay hidden until their steps are requested.
+The application form shows *Über dich*, *Wohnsituation* (without the landlord confirmation), and *Erfahrung & Alltag*. *Für den Vertrag* and *Ankunft* stay hidden until their steps are reached.
 
 ---
 
 ## Conditional fields
-
-> Planned as part of the design, built after the core (catalogue, values, checklist).
 
 Some questions only make sense after another answer: *"Garten vorhanden?"* → *"Wie groß ist der Garten?"*. Without conditions the second field can only be optional — skipped by those without a garden, but also by those who have one. With a condition it can be **required, but only when it applies**.
 
@@ -160,20 +176,12 @@ condition: { "field": "housing_type", "in": ["apartment"] }     → Vermieter ei
 Deliberately limited:
 
 - **One condition per field**: equality (`equals`) or membership (`in`) on a `boolean`, `select` or `radio` field.
-- **The controlling field must come earlier** in the catalogue order. That rules out cycles and keeps forms readable top to bottom. Chains are allowed (C depends on B depends on A).
+- **The controlling field must come earlier** in the catalogue order. That rules out cycles and keeps forms readable top to bottom. Chains are allowed (C depends on B depends on A); a field whose controlling field doesn't apply doesn't apply either.
 - No AND/OR, no number comparisons. If that is ever needed, it extends this column; it doesn't replace it.
 
-A field whose condition is not met **doesn't apply**. It is not asked, not shown, not required and not on the checklist. Its value is kept if it was filled in earlier (the audit trail shows it), but it is not displayed or printed while the condition is not met. A Requirement Override cannot make a non-applying field required.
+A field whose condition is not met **doesn't apply**. It is not asked, not shown, not required and not on the checklist. Its value is kept if it was filled in earlier, but it is not displayed or printed while the condition is not met. A Requirement Override cannot make a non-applying field required.
 
-Where it touches the code — each is small, which is why this is not hard to add if the column is planned from the start:
-
-| Place | Change |
-|---|---|
-| Catalogue editor | Pick a controlling field (earlier, boolean/select/radio) and the value(s) |
-| Forms (frontend) | Watch the controlling value and show/hide the field |
-| Frontend validation | `required` becomes conditional (a `superRefine` in the generated Zod schema) |
-| Backend validation | Maps directly to Laravel's `required_if` / `exclude_unless` |
-| Checklist, portal, inspector page, contract | One shared "does this field apply?" check (animal type + condition) |
+One shared check decides whether a field applies: `ChecklistCalculator::applies()` on the server, and its counterpart in the frontend forms, which show and hide fields while the user types (the mediator's group dialog, the application form, the portal).
 
 ## Field Values
 
@@ -187,26 +195,30 @@ adoption_field_values
   (+ media for file types)
 ```
 
-One row per adoption and field holds the **current** value. History lives in the [audit trail](./audit-trail.md), not in extra rows.
+One row per adoption and field holds the **current** value. History will live in the [audit trail](./audit-trail.md), not in extra rows.
 
 Who can write:
 
-- **Applicant** — through the application form and the [portal](./applicant-portal.md), for fields with `visible_to_applicant`.
+- **Applicant** — through the application form and the [portal](./applicant-portal.md), for fields with `visible_to_applicant` up to the current step. Never files or the email in the portal.
 - **Mediator** — every field, always. Information often arrives by phone or WhatsApp, and corrections after a pre-inspection are made here.
 
-There is no field ownership and no locking. Every write goes through one action, which records the change in the audit trail and, for `requires_review` fields, resets the review status to `pending`. When the applicant changes something after the application was submitted, the mediator is notified.
+There is no field ownership and no locking. Every write goes through one action, `CaseFileService::update()`, which validates the values against their definitions and sets the review status. *Planned:* it also records the change in the audit trail, and the mediator is notified when the applicant changes something after the application was submitted.
 
 ### Review
 
 For `requires_review` fields, a value only counts as present once a mediator has **confirmed** it.
 
+- A value the **mediator** enters or saves is confirmed implicitly.
+- A value the **applicant** enters or changes is `pending` (*Prüfung offen*). Saving it unchanged keeps its review.
+- A value **taken over** from an earlier adoption has to be reviewed again.
+
+*Planned:* explicit **confirm** and **reject with a note** actions on a pending value.
+
 > **Example — Sicherheitsgeschirr.** The applicant uploads a photo of an ordinary collar. The mediator rejects it with "Das ist ein Halsband, bitte ein Sicherheitsgeschirr mit Bauchgurt fotografieren." The portal shows the note and asks for a new photo. The new upload sets the status back to `pending`; the mediator confirms. The old photo stays in the audit trail.
 
-A value the mediator enters themselves is confirmed implicitly.
+Rejecting a value will send the applicant **one email per rejection**: the field's label, the mediator's note and a portal link — never the value itself, since personal data doesn't belong in an email.
 
-Rejecting a value sends the applicant **one email per rejection**: the field's label, the mediator's note and a portal link — never the value itself, since personal data doesn't belong in an email.
-
-### Replacing files
+### Replacing files *(planned)*
 
 Replacing a file never deletes the old one. It is detached from the current value and stays reachable from the audit trail. Otherwise a replaced landlord confirmation with different wording could not be told apart from the original. Permanent removal (a mediator cleanup action, GDPR erasure) is planned separately and not part of this design.
 
@@ -214,7 +226,7 @@ Replacing a file never deletes the old one. It is detached from the current valu
 
 ## Requirement Overrides
 
-The catalogue sets defaults. The mediator decides per adoption:
+The catalogue sets defaults. The mediator decides per adoption, from the field's menu on the *Angaben* tab (*Anforderung*):
 
 ```
 adoption_requirements
@@ -231,18 +243,20 @@ adoption_requirements
 | Applicant owns the house | Vermieterbestätigung: `waived` |
 | Adopter picks the animal up personally, no transport | Foto Sicherheitsgeschirr: `waived` |
 
-Making a field required for a step that has already been requested sends it to the applicant immediately (email + portal).
+Overrides are internal: the applicant sees their effect on what is required, never the override itself. *Planned:* making a field required for a step that has already been requested sends it to the applicant immediately (email + portal).
 
 **Effective requirement** for a field on an adoption, in order of precedence:
 
 1. The adoption's override, if any.
-2. Otherwise the stricter (earlier) of the definition's `required_for` and the active contract templates of the animal's type (every field they mark as required is required for `contract`; see [ADR-017](../ADRs/ADR-017-contract-templates-as-configuration.md#several-templates-requirements-per-animal-type)).
+2. Otherwise the stricter (earlier) of the definition's `required_for` and the contract templates offered for the animal's type: every field an active template marks as *required* is required for `contract` (see [ADR-017](../ADRs/ADR-017-contract-templates-as-configuration.md#prototype-notes)).
 
 Fields that don't apply — a [condition](#conditional-fields) that isn't met — are never required.
 
 ---
 
 ## Requesting data — split collection
+
+> **Planned.** Today the portal derives the step from the adoption's progress — the **current step**, the first step that isn't finished (see [applicant-portal.md](./applicant-portal.md#which-fields-the-current-step)). The design below replaces that with a step the mediator controls.
 
 Each adoption tracks how far data collection has been opened, in `adoptions.requested_step`:
 
@@ -267,24 +281,25 @@ If nothing is missing for that step, there is no suggestion and `requested_step`
 
 ## Checklist
 
-The Checklist answers one question: **what is still missing for step X?** It is a single service, `AdoptionChecklist::for($adoption, $step)`, with pure, unit-testable logic:
+The Checklist answers one question: **what is still missing for step X?** The rules live in `ChecklistCalculator`, pure logic over plain values (`FieldSpec`, `CaseFileState`), so every rule is unit-testable without a database. `CaseFileService::checklist($adoption, $step)` feeds it an adoption's data.
 
 ```
 items = every field effectively required for $step (or an earlier step)
-        that applies to the animal's type
+        that applies (animal type + condition)
 status per item:
   missing          no value (or a rejected value)
-  awaiting review  requires_review and status pending
+  awaiting review  requires_review and not confirmed yet
   done             value present (and confirmed, if review is required)
 ```
 
-It covers Case File fields, the applicant's built-in fields, and — through the contract templates of the animal's type — the animal and mediator fields that the contract prints.
+It covers Case File fields, the applicant's built-in fields, and — through the contract templates of the animal's type — the animal and mediator fields that the contract requires.
 
 Where it is used:
 
-- **Adoption page** — the summary at the top, e.g. *"Für den Vertrag fehlen 2 Angaben, 1 Prüfung offen"*.
+- **Adoption page** — the summary on the overview, e.g. *"Für den Vertrag fehlen 2 Angaben, 1 Prüfung offen"*, with links where missing animal or mediator data has to be fixed.
 - **Contract generation** — blocked while a field the chosen template requires is missing (waived items don't count).
-- **Transport page** — aggregates the transport checklist over all assigned adoptions: *"Tour Süd: 3 von 8 Adoptionen vollständig"* with the missing items per adoption. No more checking every animal and person by hand. See [transport.md](./transport.md#checklist).
+- **Transport page** — aggregates the transport checklist over all assigned adoptions: *"Tour Süd: 3 von 8 Adoptionen vollständig"* with the missing items per adoption. See [transport.md](./transport.md#checklist).
+- **Portal and application form** — the open items among the fields the applicant can see, and every missing field at once when an application is submitted.
 
 Other steps are not blocked by the checklist; the mediator decides.
 
@@ -296,44 +311,60 @@ Other steps are not blocked by the checklist; the mediator decides.
 
 The adoption page has three tabs: **Übersicht**, **Angaben**, **Verlauf**. The adoption only shows and edits information; how fields are configured lives in the settings.
 
-- **Übersicht**: the steps, plus a compact **Checkliste** per step that opens on the first incomplete one, with links where missing animal or mediator data has to be fixed.
-- **Angaben**: every group in catalogue order, with a group menu (and the number of open items per group) and a filter **"Nur offene"**. Each group is edited as a whole in a dialog, where conditional fields appear and disappear while typing.
-- Each field shows its value first; badges only flag what needs attention (*Fehlt*, *Prüfung offen*, *Für diese Vermittlung angepasst*), and the requirement is a short grey note. Later: the last change (*"vom Bewerber geändert am 12.11."*) linked to the audit trail.
-- Fields that apply but haven't been requested yet are shown greyed: *"noch nicht angefragt"*.
-- A filter toggle: **all / only missing / only for step X**.
+- **Übersicht**: the steps, plus a compact **Checkliste** per step that opens on the first incomplete one. Below it the applicant's earlier adoptions (*Frühere Vermittlungen*).
+- **Angaben**: every group in catalogue order, with a group menu and a filter **"Nur offene"**. Each group is edited as a whole in a dialog, where conditional fields appear and disappear while typing.
+- Each field shows its value first; badges only flag what needs attention (*Fehlt*, *Prüfung offen*, *Für diese Vermittlung angepasst*), and the requirement is a short grey note.
 - Per field: require, waive or move the due step (Requirement Override).
-- A **marker for applicant changes**: *"3 Änderungen durch Bewerber seit 12.11."* with a jump to the audit trail and a **"Gesehen"** button. Changes to fields printed in an already generated contract are highlighted.
+- **Verlauf**: empty until the audit trail exists.
+
+*Planned* on the adoption page:
+
+- The last change per field (*"vom Bewerber geändert am 12.11."*) linked to the audit trail.
+- Fields that apply but haven't been requested yet shown greyed: *"noch nicht angefragt"*.
+- A filter **only for step X**.
+- A **marker for applicant changes** — see below.
 
 #### Change notifications
+
+*Planned.* A marker on the adoption: *"3 Änderungen durch Bewerber seit 12.11."* with a jump to the audit trail and a **"Gesehen"** button. Changes to fields printed in an already generated contract are highlighted.
 
 The marker is **per adoption, not per user**: `adoptions.applicant_changes_seen_at`. Every applicant change after the application was submitted counts until someone clicks "Gesehen". Since each adoption has one responsible mediator, one user's "Gesehen" clearing it for everyone is accepted.
 
 - The adoption list shows a badge and offers the filter *"Ungesehene Änderungen"*.
 - The **assigned mediator** gets a **daily summary email** of unseen changes (applicants often change several fields in a row, so not one email per change). Without an assigned mediator there is only the badge. The summary runs through the scheduler, like the contract signing reminders.
 
-### Applicant — forms and portal
+### Applicant — application form and portal
 
-- The **application form** and each **request form** are paginated by group: one group per page, with a progress indicator. Empty groups are skipped.
-- The **portal** shows the same groups read-only with an edit action per group, plus the open requests (missing and rejected items) at the top. See [applicant-portal.md](./applicant-portal.md).
+- The **application form** shows every group with fields asked at `application` on one page, each group as a card with its intro and Info Blocks. See [adoption.md](./adoption.md#application).
+- The **portal** shows the same groups, editable, for the fields up to the current step, with the open items at the top. See [applicant-portal.md](./applicant-portal.md).
+- Fields marked with a condition appear and disappear while the applicant types.
+- *Planned:* request forms for a requested step, containing only the missing fields.
 
 ### Inspector — pre-inspection page
 
-The same groups, read-only, limited to fields with `visible_to_inspector`. Contract data like the Ausweisnummer stays hidden. See [pre-inspection.md](./pre-inspection.md).
+The same groups, read-only, limited to fields with `visible_to_inspector` that apply. Contract data like the Ausweisnummer stays hidden. See [pre-inspection.md](./pre-inspection.md).
 
 ---
 
-## Second adoption by the same person
+## Second adoption by the same applicant
 
 Values belong to the adoption — a snapshot of what was true for that decision — including the applicant's name, email and address ([ADR-018](../ADRs/ADR-018-applicant-data-on-the-adoption.md)). Adoptions of the same applicant are those with the same email or the same referenced Person. Reuse is explicit:
 
-- **Cross-reference** — the adoption overview lists the applicant's earlier adoptions (*Frühere Vermittlungen*, with why they match) and their pre-inspections (read-only), e.g. *"Bereits eine Vorkontrolle für Bello (Hund) am 03.04., Ergebnis: geeignet"*.
-- **Import** — *"Angaben übernehmen"*: the mediator in the admin, or the applicant in the portal, picks an earlier adoption. *Prototype:* everything that is empty here is filled from it, matched by field key; nothing is overwritten, and file fields aren't copied yet. *Target:* picking the values to copy. Files are copied (Spatie `copyMedia`); the duplicates are an accepted cost. Imported values of `requires_review` fields start as `pending` again — a landlord confirmation from half a year ago gets reviewed again, not trusted blindly. Every imported value is recorded in the audit trail as an import.
+- **Cross-reference** — the adoption overview lists the applicant's other adoptions (*Frühere Vermittlungen*, with why they match: same email, same Person) and their pre-inspections (read-only), e.g. *"Bereits eine Vorkontrolle für Bello (Hund) am 03.04., Ergebnis: geeignet"*.
+- **Taking over** — *"Angaben übernehmen"* on one of those adoptions. Everything that is empty here is filled from it, matched by field key, so a field the other animal type's catalogue also has is taken over too. Nothing is overwritten. Taken-over values of `requires_review` fields have to be reviewed again — a landlord confirmation from half a year ago gets reviewed, not trusted blindly. The result lists the fields that were filled.
+
+*Planned:*
+
+- Picking the values to take over instead of all empty ones.
+- Files are copied (Spatie `copyMedia`); the duplicates are an accepted cost.
+- The applicant takes over data in the portal.
+- Every taken-over value is recorded in the audit trail as an import.
 
 ---
 
 ## Not supported (deliberately)
 
 - **Complex conditions** — AND/OR, comparisons, conditions across adoptions. One equality condition per field only.
-- **Filtering or sorting the adoption list by custom field values.**
+- **Filtering or sorting the adoption list by custom field values.** The built-in applicant fields are columns and can be searched and sorted.
 - **Per-audience layouts.** One structure, filtered per audience.
 - **Locking fields** after contract generation. The change notification warns instead; see [ADR-016](../ADRs/ADR-016-adoption-case-file.md#lock-fields-once-they-are-in-a-generated-contract).
