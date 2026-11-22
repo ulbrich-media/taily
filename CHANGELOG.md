@@ -2,6 +2,13 @@
 
 All notable changes to Taily are documented here.
 
+# [0.17.0](https://github.com/ulbrich-media/taily/compare/v0.16.0...v0.17.0) (2026-11-22)
+
+
+### Features
+
+* add optional Sentry error monitoring and user feedback ([#333](https://github.com/ulbrich-media/taily/issues/333)) ([ca6d4c6](https://github.com/ulbrich-media/taily/commit/ca6d4c6235953979b3682b2b1f3310465f956511))
+
 # [0.16.0](https://github.com/ulbrich-media/taily/compare/v0.15.0...v0.16.0) (2026-11-22)
 
 

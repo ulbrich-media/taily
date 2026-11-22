@@ -1,1 +1,2 @@
 var e=(e,t=``)=>e?new Date(e).toLocaleString(`de-DE`,{year:`numeric`,month:`2-digit`,day:`2-digit`,hour:`2-digit`,minute:`2-digit`}):t,t=e=>e?new Date(e).toLocaleString(`de-DE`,{year:`numeric`,month:`2-digit`,day:`2-digit`}):``;export{e as n,t};
+//# sourceMappingURL=dates.utils-BVKqv0Cx.js.map
