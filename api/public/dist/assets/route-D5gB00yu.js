@@ -1,0 +1,1 @@
+import{Mo as e}from"./index-WI5b-J9I.js";var t=e;export{t as component};

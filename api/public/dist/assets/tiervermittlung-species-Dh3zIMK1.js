@@ -1,0 +1,1 @@
+var e={dog:`Hund`,cat:`Katze`,small:`Kleintier`,bird:`Vogel`,reptile:`Reptil`,horse:`Pferd`,fish:`Fisch`,other:`Sonstige`},t=`none`,n=[t,...Object.keys(e)],r=[{value:t,label:`Nicht exportieren`},...Object.entries(e).map(([e,t])=>({value:e,label:t}))];function i(e){return e??`none`}function a(e){return e===`none`?null:e}export{i,r as n,a as r,n as t};
