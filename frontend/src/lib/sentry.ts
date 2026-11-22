@@ -8,6 +8,8 @@ export interface SentryClientConfig {
   dsn: string
   environment: string
   release: string | null
+  /** Tags events when several installations share one project; '' for none. */
+  instance: string
   traces_sample_rate: number
   replays_session_sample_rate: number
   replays_on_error_sample_rate: number
@@ -46,6 +48,10 @@ export function startSentry(
     dsn: config.dsn,
     environment: config.environment,
     release: config.release ?? undefined,
+    // Same `instance` tag as the backend, also on feedback.
+    initialScope: config.instance
+      ? { tags: { instance: config.instance } }
+      : undefined,
     integrations: [
       Sentry.tanstackRouterBrowserTracingIntegration(router),
       // Text and media are masked by default; Taily handles personal data.

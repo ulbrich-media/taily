@@ -31,12 +31,25 @@ Backend (Laravel) and frontend (React) report to separate Sentry projects, each 
 | `SENTRY_ENABLE_LOGS` | `false` | Send Laravel logs to Sentry. Also add `sentry_logs` to `LOG_STACK`, e.g. `LOG_STACK=single,sentry_logs`. |
 | `SENTRY_ENVIRONMENT` | `APP_ENV` | Environment name shown in Sentry, used for backend and frontend. |
 | `SENTRY_RELEASE` | none | Release name, e.g. the Taily version. Used for backend and frontend. |
+| `SENTRY_INSTANCE` | empty | Name of this installation, sent as the `instance` tag on backend and frontend events and feedback. See [Several installations in one project](#several-installations-in-one-project). |
 | `SENTRY_FRONTEND_DSN` | empty | Frontend project DSN. Empty disables frontend reporting. |
 | `SENTRY_FRONTEND_TRACES_SAMPLE_RATE` | `0` | Share of page loads and navigations traced. |
 | `SENTRY_FRONTEND_REPLAYS_SESSION_SAMPLE_RATE` | `0` | Share of sessions recorded with Session Replay. |
 | `SENTRY_FRONTEND_REPLAYS_ON_ERROR_SAMPLE_RATE` | `0` | Share of sessions with an error recorded with Session Replay. |
 
 All other `SENTRY_*` options of [sentry-laravel](https://docs.sentry.io/platforms/php/guides/laravel/configuration/options/) apply to the backend as usual.
+
+## Several installations in one project
+
+Several Taily installations can report to the same Sentry projects. Give each one its own name:
+
+```dotenv
+SENTRY_INSTANCE=verein-a
+```
+
+Every event and every piece of feedback then carries an `instance` tag. In Sentry, filter with `instance:verein-a`, or check the tag breakdown on an issue to see which installations are affected.
+
+Keep in mind that everyone with access to the project sees the errors and feedback of all installations, and that they share the project's quota. A separate client key (DSN) per installation lets you rate-limit each one on its own.
 
 ## User feedback
 

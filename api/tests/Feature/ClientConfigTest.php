@@ -24,6 +24,7 @@ class ClientConfigTest extends TestCase
             'taily.sentry.frontend_replays_on_error_sample_rate' => 1.0,
             'taily.sentry.environment' => 'production',
             'taily.sentry.release' => 'v1.2.3',
+            'taily.sentry.instance' => 'verein-a',
         ]);
 
         $this->getJson('/internal/client-config')
@@ -33,6 +34,7 @@ class ClientConfigTest extends TestCase
                     'dsn' => 'https://key@o1.ingest.sentry.io/2',
                     'environment' => 'production',
                     'release' => 'v1.2.3',
+                    'instance' => 'verein-a',
                     'traces_sample_rate' => 0.1,
                     'replays_session_sample_rate' => 0.0,
                     'replays_on_error_sample_rate' => 1.0,

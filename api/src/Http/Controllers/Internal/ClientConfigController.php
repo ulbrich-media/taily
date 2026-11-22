@@ -37,6 +37,7 @@ class ClientConfigController extends Controller
             'dsn' => $dsn,
             'environment' => (string) config('taily.sentry.environment'),
             'release' => config('taily.sentry.release'),
+            'instance' => (string) config('taily.sentry.instance'),
             'traces_sample_rate' => (float) config('taily.sentry.frontend_traces_sample_rate'),
             'replays_session_sample_rate' => (float) config('taily.sentry.frontend_replays_session_sample_rate'),
             'replays_on_error_sample_rate' => (float) config('taily.sentry.frontend_replays_on_error_sample_rate'),
