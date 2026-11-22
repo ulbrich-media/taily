@@ -1,6 +1,6 @@
 # Data scheme
 
-> This page describes the model from [ADR-016](./ADRs/ADR-016-adoption-case-file.md) (Case File), [ADR-017](./ADRs/ADR-017-contract-templates-as-configuration.md) (contract templates) and [ADR-018](./ADRs/ADR-018-applicant-data-on-the-adoption.md) (applicant data). Parts marked *planned* are not implemented yet.
+> The reasoning behind this model is in [ADR-016](./ADRs/ADR-016-adoption-case-file.md) (Case File), [ADR-017](./ADRs/ADR-017-contract-templates-as-configuration.md) (contract templates) and [ADR-018](./ADRs/ADR-018-applicant-data-on-the-adoption.md) (applicant data).
 
 Three models carry the domain:
 
@@ -21,7 +21,7 @@ Animal ──< Adoption ─ ─ > Person (applicant, optional reference)
              └──> Transport
 
 Animal Type ──< Field Group, Field Definition       (one catalogue per type)
-Animal Type >──< Contract Template                  (templates offered per type)
+Animal Type ──< Contract Template                   (several templates per type)
 Applicant Session ─ ─ adoptions by applicant_email  (no foreign key)
 ```
 
@@ -33,7 +33,6 @@ An animal that is or was open for adoption, with all information about it.
 - **Vaccination** — a vaccination type defined per Animal Type, linked to animals with `vaccinated_at`.
 - **Medical Test** — a health or sickness test type defined per Animal Type, linked to animals with `tested_at` and a result.
 - **Owner** — `owner_id`, a Person, set by hand on the animal (e.g. after a handover, or the owner of a boarding animal).
-- **Custom fields** *(planned, approach open)* — organization-defined fields on the animal, e.g. for the website or internal notes. See [features/form-templates.md](./features/form-templates.md#future-of-the-form-builder).
 
 ## Person
 
@@ -63,7 +62,7 @@ The adoption process is started by an application or by a mediator. The mediator
 | `mediator_id` | uuid FK → people, nullable | The mediator handling the adoption |
 | `applicant_first_name`, `applicant_last_name` | string | The applicant's name |
 | `applicant_email` | string, indexed | Stored trimmed and lowercased; links the applicant's adoptions and is the portal login. Not unique |
-| `applicant_phone`, `applicant_mobile` | string | |
+| `applicant_phone` | string | One number, mobile or landline |
 | `applicant_date_of_birth` | date, nullable | |
 | `applicant_street_line`, `applicant_street_line_additional`, `applicant_postal_code`, `applicant_city`, `applicant_country_code` | string | The applicant's address |
 | `applicant_person_id` | uuid FK → people, nullable, null on delete | Optional reference to a Person Taily manages; never a data source. Data is copied once when an adoption is started from a Person |
@@ -77,8 +76,6 @@ The adoption process is started by an application or by a mediator. The mediator
 | `contract_signed` | boolean | Whether the contract has been signed by both parties |
 | `contract_signed_at` | timestamp, nullable | When the contract was signed |
 | `handed_over_at` | timestamp, nullable | When the animal was handed over |
-| `requested_step` | enum, nullable | *(planned)* How far data collection has been opened to the applicant |
-| `applicant_changes_seen_at` | timestamp, nullable | *(planned)* When a user last acknowledged the applicant's changes |
 
 The applicant columns are exposed as **built-in fields** of every Case File catalogue, so the same requirement rules apply to them (e.g. the address is only required for the contract). They belong to this adoption only: a correction never changes another adoption or a Person. Adoptions of the same applicant are found by `applicant_email` or `applicant_person_id`; the link is derived, never stored.
 
@@ -105,12 +102,12 @@ The adoption's configurable data. Full description in [features/case-file.md](./
 |---|---|
 | `field_groups` | Titled sections with an optional intro, ordered — per animal type |
 | `field_definitions` | The catalogue: key, type, group, `collect_at`, `required_for`, `requires_review`, `visible_to_applicant`, `visible_to_inspector`, `condition`, `applicant_attribute` (built-in fields); per animal type, keys unique per type |
-| `adoption_field_values` | One row per adoption and field: current value (files via media, *planned*), review status |
+| `adoption_field_values` | One row per adoption and field: current value (JSON), review status (`null` \| `pending` \| `confirmed` \| `rejected`), review note, reviewer and time |
 | `adoption_requirements` | Per-adoption overrides: require, waive or move a field's due step |
 
 ### Pre-Inspection
 
-`pre_inspections` belong to an adoption: inspector, verdict, memo, submission time, access token. See [features/pre-inspection.md](./features/pre-inspection.md).
+`pre_inspections` belong to an adoption: inspector (nullable), verdict (`null` \| `approved` \| `rejected`), memo, `submitted_at`, and an access token (`HasAccessToken`) usable until it is submitted. See [features/pre-inspection.md](./features/pre-inspection.md).
 
 ### Applicant access
 
@@ -121,11 +118,13 @@ The public application and the [applicant portal](./features/applicant-portal.md
 | `applicant_links` | Single-use emailed links: email, purpose (`confirm` an application \| `login`), the adoption for a confirmation, the SHA-256 hash of the token, `expires_at` (4 hours), `used_at` |
 | `applicant_sessions` | Portal sessions: email, token hash, `expires_at` (2 hours). They show every adoption with that `applicant_email` |
 
+The SPA keeps the session token in `sessionStorage` and sends it as a bearer token, unrelated to the admin login. Mail links go through `FrontendUriBuilder` (`applicationConfirm()`, `applicantLogin()`). The public routes are throttled: 60 requests per minute per IP, login links 3 per minute per email, applications 5 per minute per IP.
+
 ## Contract
 
 ### Contract Template
 
-`contract_templates` hold a name, a printed title, the wording (`body`, Markdown) and three ordered sections — `animal_fields`, `mediator_fields`, `adopter_fields` — each a list of `{key, required}`; plus `archived_at`. The pivot `animal_type_contract_template` says for which animal types a template is offered. The mediator picks one at generation. The fields an offered template marks as required are required for the contract step. See [ADR-017](./ADRs/ADR-017-contract-templates-as-configuration.md) and [features/contract.md](./features/contract.md#contract-templates).
+`contract_templates` hold their `animal_type_id`, a name, a printed title, the wording (`body`, Markdown) and three ordered sections — `animal_fields`, `mediator_fields`, `adopter_fields` — each a list of `{key, required}`; plus `archived_at`. Animal and mediator keys are prefixed (`animal.tasso_id`, `mediator.full_name`); adopter keys are the catalogue's field keys (`address`, `id_card_number`). The mediator picks one of the type's active templates at generation. The fields they mark as required are required for the contract step. See [ADR-017](./ADRs/ADR-017-contract-templates-as-configuration.md) and [features/contract.md](./features/contract.md#contract-templates).
 
 ### Signing
 
@@ -135,20 +134,18 @@ The public application and the [applicant portal](./features/applicant-portal.md
 
 A transport moves one or more animals toward their adopters. Multiple adoptions can be assigned to the same transport. See [features/transport.md](./features/transport.md).
 
-## Audit trail *(planned)*
-
-Changes to animals, people, adoptions and their Case Files are recorded. See [features/audit-trail.md](./features/audit-trail.md).
-
 ## User
 
 A user is anyone with credentials for logging into the admin application. Users administrate Taily, manage people or animals and guide adoptions.
 
 Applicants and inspectors have no user account. They get token-based access: the pre-inspection page, the contract signing pages, and the applicant portal (by email and magic link).
 
-## Removed or under review
+## Under review
 
-The **person-level pre-inspections** and their form template are replaced by adoption-level pre-inspections. Taily is in beta; existing data is not migrated.
+The **form builder** (form templates, versions, submissions) has no consumer at the moment. Its future depends on how custom fields on the animal are built (see [features/form-templates.md](./features/form-templates.md#future-of-the-form-builder)).
 
-**Applicants as Persons** are replaced by the applicant columns on the adoption ([ADR-018](./ADRs/ADR-018-applicant-data-on-the-adoption.md)). Existing data is copied onto the adoptions by the migration, and the former applicant Person stays referenced.
+## Planned
 
-The **form builder** (form templates, versions, submissions) stays for now: its future depends on how animal custom fields are built (see [features/form-templates.md](./features/form-templates.md#future-of-the-form-builder)).
+- **Custom fields on the animal** — organization-defined fields, e.g. for the website or internal notes; approach open.
+- **Audit trail** — changes to animals, people, adoptions and their Case Files ([features/audit-trail.md](./features/audit-trail.md)).
+- On the adoption: the requested step and when the applicant's changes were last seen ([features/case-file.md](./features/case-file.md#planned)).

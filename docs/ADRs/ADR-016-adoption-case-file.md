@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted — section 2 is superseded by [ADR-018](ADR-018-applicant-data-on-the-adoption.md): applicant data lives on the adoption, not on a Person. Section 7 is refined there too. Implemented except file fields, review actions, the requested step and the audit trail — see the status table in [case-file.md](../features/case-file.md#implementation-status).
+Accepted
 
 ## Context
 
@@ -32,7 +32,7 @@ Two fears shaped the decision:
 
 ## Decision
 
-**The data relevant to *if and how* an adoption happens is stored on the Adoption, in a Case File made of configurable Field Definitions. The Person is reduced to identifying a human. Organizations configure *which* fields exist and *by when* each is needed; the process itself (its steps) stays in code.**
+**The data relevant to *if and how* an adoption happens is stored on the Adoption, in a Case File made of configurable Field Definitions — including the applicant's identity. Organizations configure *which* fields exist and *by when* each is needed; the process itself (its steps) stays in code.**
 
 ### 1. The boundary: configure fields, not the process
 
@@ -40,17 +40,11 @@ The steps of an adoption are a fixed set, owned by code: `application`, `pre_ins
 
 What organizations configure is the **field catalogue**: which fields exist, how they are grouped and presented, at which step they are first asked and by which step they are required.
 
-This is the answer to the reuse fear. A small organization configures five fields, all asked and required at application. A larger one configures forty fields spread across the steps, with photo reviews and contract-only data. Neither configures the process, because there is nothing to configure.
+This is the answer to the reuse fear. An organization with a simple process configures five fields, all asked and required at application. One with a thorough process configures forty fields spread across the steps, with photo reviews and contract-only data. Neither configures the process, because there is nothing to configure.
 
-### 2. Person = identity
+### 2. The applicant's identity is part of the Case File
 
-> **Superseded by [ADR-018](ADR-018-applicant-data-on-the-adoption.md).** The applicant's identity is stored on the adoption in fixed columns; adoptions of one applicant are linked by the confirmed email, and a Person can be referenced optionally.
-
-The Person keeps name, email, address, phone and date of birth. These columns are exposed as **built-in Field Definitions** in the catalogue, so the same requirement rules apply to them — e.g. "the address is only required by the contract", which lets the application form ask for nothing but name and email.
-
-Editing a built-in field from an adoption writes to the Person, because identity is shared across adoptions.
-
-**An email address belongs to exactly one Person.** Public applications are confirmed by email; until then the adoption has no applicant and its identity data waits in a pending payload, so a public form can never change an existing Person. On confirmation the adoption is linked to the Person with that email (created if needed). The applicant portal logs in by email and magic link on the same basis. Duplicates by design (one Person per application, merged by the mediator) were considered and rejected: email confirmation makes linking safe, and a unique email keeps the portal login trivial. Sharing one mailbox between several people is not supported. See [adoption.md](../features/adoption.md#application) and [applicant-portal.md](../features/applicant-portal.md).
+The applicant's name, email, phone, date of birth and address are stored on the adoption in fixed columns and exposed as **built-in Field Definitions** in every catalogue, so the same requirement rules apply to them — e.g. "the address is only required by the contract", which lets the application form ask for nothing but name and email. Adoptions of the same applicant are linked by the confirmed email; a Person Taily already manages can be referenced, but is never the source of the data. The details are in [ADR-018](ADR-018-applicant-data-on-the-adoption.md).
 
 ### 3. Field Definitions, Field Groups and Field Values
 
@@ -86,7 +80,7 @@ The pre-inspection form template and its submissions are removed. Taily is in be
 Values belong to the adoption — a snapshot of what was true for *this* decision. For the (rare) case of a person applying again:
 
 - **Cross-reference**: the adoption page shows the applicant's earlier adoptions and pre-inspections, read-only — found by email or a referenced Person ([ADR-018](ADR-018-applicant-data-on-the-adoption.md)).
-- **Import**: the mediator (admin) or the applicant (portal) can copy selected values from an earlier adoption. Files are copied as well. Duplicated files are an accepted cost of each adoption standing on its own. (Implemented so far: the mediator fills every empty field from the earlier adoption, without files.)
+- **Import**: the mediator (admin) or the applicant (portal) can copy selected values from an earlier adoption. Files are copied as well. Duplicated files are an accepted cost of each adoption standing on its own.
 
 ## Consequences
 

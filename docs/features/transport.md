@@ -92,7 +92,7 @@ Rex   → Jana Koch           ✗ Tasso-ID des Tieres fehlt
 …
 ```
 
-From there the mediator jumps to the adoption. *Planned:* requesting the missing data from the applicant directly (see [case-file.md](./case-file.md#requesting-data--split-collection)). The rules are the same as on the adoption — see [case-file.md](./case-file.md#checklist). The checklist does not block assigning or completing a transport. Whether the contract is signed is shown by the contract step's status, not by the checklist.
+From there the mediator jumps to the adoption and fills in or waives what is missing; requesting it from the applicant directly is [planned](./case-file.md#planned). The rules are the same as on the adoption — see [case-file.md](./case-file.md#checklist). The checklist does not block assigning or completing a transport. Whether the contract is signed is shown by the contract step's status, not by the checklist.
 
 ## Relation to Handover
 

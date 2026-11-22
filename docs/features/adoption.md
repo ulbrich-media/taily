@@ -38,7 +38,7 @@ For data requirements the steps have a nominal order (application → pre-inspec
 
 ### Pre-inspection
 
-The mediator closes the pre-inspection step with a **confirmation** (*"Vorkontrolle bestätigt"*, `pre_inspection_confirmed_at` plus the confirming user) — with or without a [pre-inspection](./pre-inspection.md) record, and regardless of its verdict. They base it on pre-inspections, a home video, earlier pre-inspections of the same applicant, or none of these (e.g. a known repeat adopter). There is no rejection on the step: a rejection means canceling the adoption, with a reason. The confirmation can be withdrawn.
+The mediator closes the pre-inspection step with a **confirmation** (*"Vorkontrolle bestätigt"*, with who confirmed it and when) — with or without a [pre-inspection](./pre-inspection.md) record, and regardless of its verdict. They base it on pre-inspections, a home video, earlier pre-inspections of the same applicant, or none of these (e.g. a known repeat adopter). There is no rejection on the step: a rejection means canceling the adoption, with a reason. The confirmation can be withdrawn.
 
 | Step status | When |
 |---|---|
@@ -59,7 +59,7 @@ An adoption starts in one of two ways.
 A public application creates an adoption for **one animal**.
 
 1. **The link.** The mediator copies the application link from the animal's menu (*Bewerbungslink kopieren*) and shares it, e.g. on the website. It opens `/apply/{animal}`. There is no public list of animals in Taily.
-2. **The form.** The form shows the catalogue fields of the animal's type that are visible to applicants and asked at `application`, in the catalogue's groups, with their Info Blocks and [conditions](./case-file.md#conditional-fields). Each field says whether it is needed now (*Pflicht*) or only later (*Nötig für: Vertrag*). Submitting reports every missing required field at once.
+2. **The form.** The form shows the catalogue fields of the animal's type that are visible to applicants and asked at application, in the catalogue's groups, with their Info Blocks and [conditions](./case-file.md#conditional-fields). Each field says whether it is needed now (*Pflicht*) or only later (*Nötig für: Vertrag*). Submitting reports every missing required field at once.
 3. **Unconfirmed.** The adoption is stored with status `unconfirmed`, with the applicant's data and Case File values on the adoption as usual. Mediators already see it, marked *"E-Mail nicht bestätigt"*.
 4. **Double opt-in.** Taily emails a confirmation link (an [Applicant Link](./applicant-portal.md#access-email-plus-magic-link)). Confirming sets the adoption to `pending` and opens the applicant's first [portal](./applicant-portal.md) session. From then on the confirmed email links the adoption to the applicant's other adoptions.
 
@@ -86,7 +86,7 @@ The applicant's data belongs to this adoption only: a correction never changes a
 
 ## Changing the animal
 
-The animal of an adoption can be changed in the admin. *Planned:* restrict it to **another animal of the same animal type** — e.g. *"Bello ist reserviert, aber Luna würde passen"* — as long as no pre-inspection exists and no contract has been generated. After that, the outcome of the process depends on the animal, and a change would quietly invalidate it. The Case File stays; requirements are recalculated. An adoption always has an animal; there are no general applications.
+The animal of an adoption can be changed in the admin — e.g. *"Bello ist reserviert, aber Luna würde passen"*. The Case File stays; requirements are recalculated. There is no restriction yet: changing to an animal of another type, or after a pre-inspection or contract, quietly invalidates what was gathered for the first animal. An adoption always has an animal; there are no general applications.
 
 ## Applicant portal
 
@@ -96,17 +96,15 @@ The applicant logs in with their email and a magic link, sees all their adoption
 
 An adoption can be canceled at any point, regardless of which steps are done. The mediator documents a reason, kept separate from the general notes so it is easy to see why the adoption ended. The reason is internal; the portal only shows that the application ended. A canceled adoption can be reopened.
 
-## Follow-up inspection
+## The owner after handover
 
-After a successful adoption, a follow-up inspection may happen some time later to make sure the animal is thriving. It does not change the adoption status — if something is wrong, any follow-up action happens outside the normal adoption process. *(Future feature.)*
+The animal's owner is a Person, set by hand on the animal. An adopter without a Person reference can't be set as the owner until a Person is created for them; the handover doesn't set the owner.
 
-## Audit trail *(planned)*
+## Planned
 
-Every change to an adoption and its Case File is recorded — who, what, when, old and new value. See [audit-trail.md](./audit-trail.md). The adoption page already has its *Verlauf* tab, empty until the audit trail exists.
-
-## Not implemented yet
-
+- **Restricting animal changes** to another animal of the same animal type, as long as no pre-inspection exists and no contract has been generated. After that the outcome of the process depends on the animal.
 - **Cleaning up unconfirmed applications** after a number of days.
-- **Restricting animal changes** as described in [Changing the animal](#changing-the-animal).
-- **Requesting data** for a later step (`requested_step`), see [case-file.md](./case-file.md#requesting-data--split-collection).
-- **The animal's owner after handover** is a Person (`animals.owner_id`), set by hand. An adopter without a Person reference can't be set as the owner until a Person is created for them; how ownership follows from the handover is open.
+- **Requesting data** for a later step, see [case-file.md](./case-file.md#planned).
+- **Audit trail** — every change to an adoption and its Case File recorded: who, what, when, old and new value. See [audit-trail.md](./audit-trail.md). The adoption page already has its *Verlauf* tab.
+- **Ownership after handover** — how the owner follows from the handover is open.
+- **Follow-up inspection** — some time after a successful adoption, a check that the animal is thriving. It does not change the adoption status; any follow-up action happens outside the adoption process.

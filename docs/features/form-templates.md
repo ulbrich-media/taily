@@ -1,6 +1,6 @@
 # Form Templates
 
-> **Status: under review.** The form builder's only current consumer, the pre-inspection form, is removed by [ADR-016](../ADRs/ADR-016-adoption-case-file.md) (inspections get a verdict and a memo instead). The builder is **kept until it is decided how animal custom fields are built** — see [Future of the form builder](#future-of-the-form-builder). The rest of this page describes the current implementation.
+> **Status: under review.** The form builder has no consumer at the moment: pre-inspections have a verdict and a memo instead of a form ([ADR-016](../ADRs/ADR-016-adoption-case-file.md)). The builder is **kept until it is decided how animal custom fields are built** — see [Future of the form builder](#future-of-the-form-builder). The rest of this page describes the current implementation.
 
 Form templates are reusable, versioned schemas that define the structure of dynamic forms used throughout Taily — for example a veterinary inspection report or an adoption application. They decouple the _shape_ of a form from any specific feature, so the same builder infrastructure can power any form-based workflow.
 
@@ -12,7 +12,7 @@ Form templates are reusable, versioned schemas that define the structure of dyna
 
 Form templates are split across two tables:
 
-- **`form_templates`** — the stable parent entity. Holds only the template name and a UUID that never changes across version bumps. Foreign keys from other models always point here (the only one, `animal_types.pre_inspection_form_template_id`, was removed with [ADR-016](../ADRs/ADR-016-adoption-case-file.md)).
+- **`form_templates`** — the stable parent entity. Holds only the template name and a UUID that never changes across version bumps. Foreign keys from other models always point here; currently there are none.
 - **`form_template_versions`** — the versioned schemas. Each row holds a `schema`, `ui_schema`, a `version` integer, and a FK back to the parent `form_templates` row.
 
 This separation means a feature's FK to a template never goes stale when a breaking schema change creates a new version — the FK always resolves to the same parent, which in turn always surfaces the latest version.
@@ -281,7 +281,7 @@ The current leaning is **B**, to be confirmed before the builder is touched:
 
 - Animal fields are **current state**, edited over time — not a one-off submission pinned to a schema version. The builder's main complexity (versioning, `SchemaChangeAnalyzer`, version pinning) exists for submissions and would have no use left.
 - Two systems for "configurable fields" would mean two editors, two renderers and two integrations with the [audit trail](./audit-trail.md).
-- Animal custom fields could be printed in contracts through the same field registry ([ADR-017](../ADRs/ADR-017-contract-templates-as-configuration.md#the-field-registry)).
+- Animal custom fields could be printed in contracts through the same field registry ([ADR-017](../ADRs/ADR-017-contract-templates-as-configuration.md#the-fields-a-template-can-print)).
 - The builder's frontend parts — the per-type `field-types/` registry, `DynamicFormFields`, `DynamicFormDisplay` — are reusable by B either way.
 
 Arguments for A: it exists and works, and animal fields would not need anything the catalogue adds (steps, review, per-adoption overrides).

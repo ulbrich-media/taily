@@ -30,5 +30,5 @@ These are the key terms relevant for adoption process. They should stay consiste
 | Requirement Override | A mediator's per-adoption change to when a field is required | | Anforderung |
 | Audit Trail  | History of who changed what and when                                 | Change history       | Änderungsverlauf                 |
 | Contract     | Protection contract signed by adopter and mediator                   |                      | Schutzvertrag                    |
-| Contract Template | Configured contract: wording and the fields it prints, offered per animal type | | Vertragsvorlage; Vertrag (settings) |
+| Contract Template | Configured contract for one animal type: wording and the fields it prints | | Vertragsvorlage; Vertrag (settings) |
 

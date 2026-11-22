@@ -2,18 +2,16 @@
 
 ## Status
 
-Accepted — supersedes section 2 ("Person = identity") of [ADR-016](ADR-016-adoption-case-file.md) and refines its section 7 ("A second adoption copies, it does not share")
+Accepted
 
 ## Context
 
-[ADR-016](ADR-016-adoption-case-file.md) moved everything about *if and how* an adoption happens onto the adoption, but kept the applicant's identity — name, email, phone, date of birth, address — on a shared **Person**. Built-in Field Definitions read and wrote those Person columns live.
-
-That left the Case File with two kinds of data that behave differently:
+Until now an adoption's applicant was a **Person**: the adoption pointed to a Person, and name, email, phone and address were read from there. [ADR-016](ADR-016-adoption-case-file.md) moves everything about *if and how* an adoption happens onto the adoption, as a Case File. Keeping the applicant's identity on a shared Person next to it would leave the Case File with two kinds of data that behave differently:
 
 - **No history per adoption.** Correcting an address in one adoption changes it in every adoption of that person, including closed ones. Last year's adoption shows today's address.
-- **A Person must exist before data can be stored.** An unconfirmed public application has no applicant yet, so its identity data needed a separate pending payload.
+- **A Person must exist before data can be stored.** An unconfirmed public application has no applicant yet, so its identity data would need a separate pending payload.
 - **Everything about the adopter is spread across two models**: lists, search and sorting join the Person; the contract, the portal and the checklist read both.
-- **Deleting old data** is harder: a Person shared by several adoptions — and referenced by contract signers with `restrictOnDelete` — can't be removed when one adoption is old enough to be deleted.
+- **Deleting old data** is harder: a Person shared by several adoptions — and referenced by contract signers — can't be removed when one adoption is old enough to be deleted.
 
 What a Person actually gives the adopter side is small: seeing earlier adoptions, reusing their data, warnings ("not again"), and the portal finding "your adoptions". None of these needs shared, live identity data. Mediators, inspectors and foster carers are different: they are managed in Taily with roles, animal types and accounts, and stay Persons.
 
@@ -27,7 +25,7 @@ What a Person actually gives the adopter side is small: seeing earlier adoptions
 adoptions
   applicant_first_name, applicant_last_name
   applicant_email            indexed (not unique), stored trimmed and lowercased
-  applicant_phone, applicant_mobile
+  applicant_phone            one number, mobile or landline
   applicant_date_of_birth    nullable
   applicant_street_line, applicant_street_line_additional,
   applicant_postal_code, applicant_city, applicant_country_code
@@ -35,9 +33,11 @@ adoptions
 
 A field is a fixed column — not a Field Value — when Taily's code does something with it beyond showing it: the full name for lists, mails and the contract; the email for linking, the portal and notifications; the address for the contract and searching.
 
-They stay **built-in Field Definitions** of every catalogue, so labels, groups, steps and visibility are configured exactly like before. Only the target changes: the definition's `applicant_attribute` (formerly `person_attribute`) names the adoption column. All other Case File fields stay flexible Field Values.
+They are **built-in Field Definitions** of every catalogue, so labels, groups, steps and visibility are configured like any other field. The definition's `applicant_attribute` names the adoption column. All other Case File fields are flexible Field Values.
 
-The values are the adoption's own: a correction applies to this adoption only. An unconfirmed public application stores its data directly on the adoption; no pending payload is needed.
+The values are the adoption's own: a correction applies to this adoption only. An unconfirmed public application stores its data directly on the adoption.
+
+There is one phone number. Whether it is a mobile or a landline number makes no difference to the process; the applicant gives the number they can be reached at. When an adoption is created from a Person who only has a mobile number, that number is taken.
 
 ### 2. The email is the soft link
 
@@ -88,11 +88,10 @@ A small record keyed by email — *Nicht vermitteln*, *Bekannt/zuverlässig*, *H
 - Earlier adoptions are found by email; a changed email loses them unless a Person is referenced.
 - Correcting an address for several running adoptions of one applicant means correcting each.
 - An adopter who is also a foster carer or inspector is only connected through the optional reference or the same email.
-- The unique-email-per-Person rule from ADR-016 is dropped; Persons keep their email, but adopters are no longer Persons.
 
 ## Alternatives Considered
 
-### Keep the applicant as a Person (ADR-016)
+### Keep the applicant as a Person
 
 Shared identity, live values. Rejected for the reasons in *Context*: no history, a Person required before data, and harder deletion.
 
