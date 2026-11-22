@@ -9,6 +9,7 @@ import { ThemeProvider } from './lib/theme.tsx'
 import ErrorBoundary from '@/components/ErrorBoundary.tsx'
 import { shouldResetScroll } from '@/router/scroll.ts'
 import { Toaster } from '@/shadcn/components/ui/sonner.tsx'
+import { initSentry, sentryRootOptions } from '@/lib/sentry.ts'
 
 // Import the generated route tree
 import { routeTree } from './routeTree.gen'
@@ -34,13 +35,15 @@ router.subscribe('onBeforeLoad', ({ fromLocation, toLocation }) => {
   }
 })
 
+void initSentry(router)
+
 declare module '@tanstack/react-router' {
   interface Register {
     router: typeof router
   }
 }
 
-createRoot(document.getElementById('root')!).render(
+createRoot(document.getElementById('root')!, sentryRootOptions).render(
   <StrictMode>
     <ErrorBoundary>
       <ThemeProvider>
