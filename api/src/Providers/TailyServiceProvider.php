@@ -53,6 +53,8 @@ class TailyServiceProvider extends ServiceProvider
         // runs after Fortify's register()+boot() have both completed).
         config(['auth.providers.users.model' => User::class]);
 
+        $this->configureSentryInstanceTag();
+
         $this->app->bind(TiervermittlungClient::class, fn () => new TiervermittlungClient(
             config('taily.tiervermittlung.base_url'),
             (string) config('taily.tiervermittlung.api_key'),
@@ -99,6 +101,25 @@ class TailyServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__.'/../../config/taily.php' => config_path('taily.php'),
         ], 'taily-config');
+    }
+
+    /**
+     * Adds the `instance` tag to sentry-laravel's default tags. Runs in
+     * register(): the Sentry client is created lazily from config('sentry')
+     * on first use, so it already sees the tag.
+     */
+    protected function configureSentryInstanceTag(): void
+    {
+        $instance = (string) config('taily.sentry.instance');
+
+        if ($instance === '') {
+            return;
+        }
+
+        $tags = (array) config('sentry.tags', []);
+        $tags['instance'] = $instance;
+
+        config(['sentry.tags' => $tags]);
     }
 
     /**

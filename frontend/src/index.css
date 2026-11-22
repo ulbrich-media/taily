@@ -176,12 +176,28 @@
   border: 0;
 }
 
+/*
+ * Room for Sentry's floating "Feedback geben" button, so it never covers
+ * page content. Set only while the widget is shown, see lib/sentry.ts.
+ * The button sits bottom left; toasts keep the bottom right corner.
+ */
+:root {
+  --feedback-widget-space: 0px;
+}
+:root.has-feedback-widget {
+  --feedback-widget-space: 5rem;
+}
+#sentry-feedback {
+  --inset: auto auto 0 0;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
   body {
     @apply bg-muted text-foreground;
+    padding-bottom: var(--feedback-widget-space);
   }
   body.dark {
     @apply bg-background;
