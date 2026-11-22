@@ -25,6 +25,7 @@ use Taily\Http\Controllers\Internal\AnimalTypeController;
 use Taily\Http\Controllers\Internal\ApiTokenController;
 use Taily\Http\Controllers\Internal\ApplicantPortalController;
 use Taily\Http\Controllers\Internal\CaseFileController;
+use Taily\Http\Controllers\Internal\ClientConfigController;
 use Taily\Http\Controllers\Internal\ContractSigningController;
 use Taily\Http\Controllers\Internal\ContractSigningSubmissionController;
 use Taily\Http\Controllers\Internal\ContractTemplateController;
@@ -91,6 +92,10 @@ Route::post('/reset-password', [NewPasswordController::class, 'store'])->middlew
 // the session; `login` verifies the signed assertion against it.
 Route::get('/passkeys/login/options', [PasskeyLoginController::class, 'index'])->middleware('throttle:6,1');
 Route::post('/passkeys/login', [PasskeyLoginController::class, 'store'])->middleware('throttle:6,1');
+
+// Runtime configuration for the frontend (e.g. its Sentry DSN). Holds only
+// values that are public by design, so it needs no authentication.
+Route::get('/client-config', ClientConfigController::class);
 
 // Public invitation routes. The 64-character token is the credential; the
 // throttle is defense in depth against token guessing, matching the other

@@ -8,6 +8,8 @@ import {
 } from '@/shadcn/components/ui/card'
 import { AlertCircle } from 'lucide-react'
 import { Alert, AlertDescription } from '@/shadcn/components/ui/alert.tsx'
+import { Button } from '@/shadcn/components/ui/button.tsx'
+import { isSentryEnabled, showCrashReportDialog } from '@/lib/sentry.ts'
 
 interface ErrorProps {
   error: unknown
@@ -29,6 +31,16 @@ const ErrorInfoComponent = ({ error: caught }: ErrorProps) => {
       </CardHeader>
       {error && (
         <CardContent className="flex flex-col gap-4">
+          {isSentryEnabled() && (
+            <Button
+              type="button"
+              variant="outline"
+              className="self-start"
+              onClick={showCrashReportDialog}
+            >
+              Problem melden
+            </Button>
+          )}
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>

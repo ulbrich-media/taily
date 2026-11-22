@@ -62,4 +62,26 @@ return [
         'max_requests_per_run' => (int) env('TAILY_TIERVERMITTLUNG_MAX_REQUESTS_PER_RUN', 50),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Sentry (frontend)
+    |--------------------------------------------------------------------------
+    |
+    | Error monitoring for the React frontend, using the operator's own Sentry
+    | project. The backend is configured through the sentry/sentry-laravel
+    | variables (SENTRY_LARAVEL_DSN, ...). The frontend reads these values at
+    | runtime from GET /internal/client-config, so the prebuilt assets work
+    | for every installation. Leave the DSN empty to disable it.
+    | See docs/features/error-monitoring.md.
+    |
+    */
+
+    'sentry' => [
+        'frontend_dsn' => env('SENTRY_FRONTEND_DSN', ''),
+        'frontend_traces_sample_rate' => (float) env('SENTRY_FRONTEND_TRACES_SAMPLE_RATE', 0.0),
+        // Session Replay masks all text and media by default.
+        'frontend_replays_session_sample_rate' => (float) env('SENTRY_FRONTEND_REPLAYS_SESSION_SAMPLE_RATE', 0.0),
+        'frontend_replays_on_error_sample_rate' => (float) env('SENTRY_FRONTEND_REPLAYS_ON_ERROR_SAMPLE_RATE', 0.0),
+    ],
+
 ];
