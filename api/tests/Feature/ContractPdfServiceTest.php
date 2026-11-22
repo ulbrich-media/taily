@@ -95,7 +95,7 @@ class ContractPdfServiceTest extends TestCase
         $template = $this->contractTemplate($adoption);
         $template->update([
             'title' => 'Übernahmevertrag',
-            'body' => "## Pflichten\n\nDas Tier wird **artgerecht** gehalten.\n\n<script>alert(1)</script>",
+            'body' => "## Pflichten\n\nDas Tier wird **artgerecht** gehalten.\n\n<script>alert(1)</script>\n\n![x](/etc/hosts)",
             'animal_fields' => [['key' => 'animal.color', 'required' => true], ['key' => 'animal.breed', 'required' => false]],
             'mediator_fields' => [],
             'adopter_fields' => [['key' => 'date_of_birth', 'required' => true]],
@@ -110,6 +110,8 @@ class ContractPdfServiceTest extends TestCase
         $this->assertStringContainsString('<strong>artgerecht</strong>', $html);
         // HTML in the wording is dropped, not rendered.
         $this->assertStringNotContainsString('<script>', $html);
+        // Images too: dompdf would embed any local file they point to.
+        $this->assertStringNotContainsString('/etc/hosts', $html);
         // An optional field without a value is left out.
         $this->assertStringNotContainsString('Rasse', $html);
         // The fixed fields are printed although the template doesn't list them.

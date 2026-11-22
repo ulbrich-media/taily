@@ -55,6 +55,24 @@ class ApplicantLink extends Model
         return [$link, $token];
     }
 
+    /**
+     * Uses a link up and returns it, or null when it isn't usable. The
+     * conditional update makes two concurrent uses of one link fail for
+     * all but one of them.
+     */
+    public static function consume(string $purpose, string $token): ?self
+    {
+        $link = self::findUsable($purpose, $token);
+
+        if ($link === null) {
+            return null;
+        }
+
+        $used = self::whereKey($link->id)->whereNull('used_at')->update(['used_at' => now()]);
+
+        return $used === 1 ? $link->refresh() : null;
+    }
+
     public static function findUsable(string $purpose, string $token): ?self
     {
         return self::where('token', hash('sha256', $token))

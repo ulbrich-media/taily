@@ -9,6 +9,7 @@ use Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Mail\Markdown;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
@@ -71,6 +72,9 @@ class TailyServiceProvider extends ServiceProvider
         $this->configureMediaLibrary();
 
         JsonResource::withoutWrapping();
+
+        // Values in mails (an applicant's name) can't become Markdown links.
+        Markdown::withSecuredEncoding();
 
         $this->registerRoutes();
         $this->registerMiddlewareAlias();
@@ -261,7 +265,8 @@ class TailyServiceProvider extends ServiceProvider
             $limits = [Limit::perMinute(60)->by('applicant-ip:'.$request->ip())];
 
             if ($request->isMethod('post') && $request->path() === 'internal/portal/login') {
-                $limits[] = Limit::perMinute(3)->by('applicant-email:'.mb_strtolower(trim((string) $request->input('email'))));
+                $email = $request->input('email');
+                $limits[] = Limit::perMinute(3)->by('applicant-email:'.(is_string($email) ? mb_strtolower(trim($email)) : ''));
             }
 
             if ($request->isMethod('post') && $request->route('animal') !== null) {

@@ -10,7 +10,23 @@ import type {
 } from '@/api/types/case-file'
 import type { AdoptionStatus, AdoptionStepStatus } from '@/api/types/adoptions'
 
-export interface ApplicantField extends CaseFileField {
+// The part of a Case File field the applicant gets (ApplicantPortal::APPLICANT_FIELD_KEYS).
+export interface ApplicantField extends Pick<
+  CaseFileField,
+  | 'key'
+  | 'label'
+  | 'help'
+  | 'type'
+  | 'options'
+  | 'built_in'
+  | 'collect_at'
+  | 'required_for'
+  | 'effective_required_for'
+  | 'condition'
+  | 'applies'
+  | 'value'
+  | 'status'
+> {
   // Shown but not editable — the email the portal login is tied to.
   locked?: boolean
 }

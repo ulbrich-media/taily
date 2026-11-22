@@ -11,6 +11,7 @@ use Taily\Models\Adoption;
 use Taily\Models\AdoptionFieldValue;
 use Taily\Models\Animal;
 use Taily\Models\AnimalType;
+use Taily\Models\ApplicantLink;
 use Taily\Models\ApplicantSession;
 use Taily\Models\FieldDefinition;
 use Taily\Models\FieldGroup;
@@ -167,6 +168,31 @@ class ApplicantPortalTest extends TestCase
         $this->portal('put', "adoptions/{$adoption->id}/case-file", $session, ['values' => ['living_space_sqm' => 90]])
             ->assertUnprocessable()
             ->assertJsonValidationErrors('values');
+    }
+
+    public function test_public_input_cannot_inject_links_or_crash_the_endpoints(): void
+    {
+        // A name can't become a link in the mail Taily sends to any address.
+        $this->apply(['first_name' => 'Anna, [Konto entsperren](https://evil.example/login)'])->assertCreated();
+        $mail = (new ApplicationConfirmMail(Adoption::sole(), 't'))->render();
+        $this->assertStringNotContainsString('href="https://evil.example', $mail);
+
+        // A key with a dot, or an email that isn't a string, is refused, not a 500.
+        $this->apply(['a.b' => 'x'])->assertUnprocessable();
+        $this->postJson('/internal/portal/login', ['email' => ['a@example.com']])->assertUnprocessable();
+    }
+
+    public function test_a_link_is_used_up_once_and_the_portal_sends_only_what_the_forms_need(): void
+    {
+        $adoption = $this->adoption(['status' => 'pending']);
+        [, $token] = ApplicantLink::issue(ApplicantLink::PURPOSE_LOGIN, 'anna@example.com');
+
+        $this->assertNotNull(ApplicantLink::consume(ApplicantLink::PURPOSE_LOGIN, $token));
+        $this->assertNull(ApplicantLink::consume(ApplicantLink::PURPOSE_LOGIN, $token));
+
+        $session = ApplicantSession::open('anna@example.com')[1];
+        $field = $this->portal('get', "adoptions/{$adoption->id}", $session)->json('groups.0.fields.0');
+        $this->assertSame(['key', 'label', 'help', 'type', 'options', 'built_in', 'collect_at', 'required_for', 'effective_required_for', 'condition', 'applies', 'value', 'status', 'locked'], array_keys($field));
     }
 
     /**

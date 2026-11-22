@@ -59,7 +59,8 @@ class ContractSigningSubmissionController extends Controller
                 'animal_type' => $adoption->animal->animalType?->title,
             ],
             'mediator' => ['full_name' => $adoption->mediator?->full_name],
-            'applicant' => ['full_name' => $adoption->applicant_full_name],
+            // The name the adopter was invited with, once they are (ADR-018).
+            'applicant' => ['full_name' => $process->signers->firstWhere('role', ContractSignerRole::ADOPTER)?->name ?: $adoption->applicant_full_name],
             'other_signer' => ($otherSigner && $otherSigner->isSigned()) ? [
                 'role' => $otherSigner->role,
                 'typed_name' => $otherSigner->typed_name,

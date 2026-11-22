@@ -29,6 +29,7 @@ import { CaseFileFieldInput } from '../components/CaseFileFieldInput'
 import {
   fieldApplies,
   isEditable,
+  requirementLabel,
   toApiValue,
   type CaseFileValues,
 } from '../case-file.utils'
@@ -142,6 +143,7 @@ export function CaseFileGroupEditDialog({
                   key={field.key}
                   field={field}
                   control={form.control as unknown as Control<FieldValues>}
+                  requirementText={requirementLabel}
                 />
               ))}
             </FieldGroup>

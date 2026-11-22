@@ -17,10 +17,12 @@ type FieldShape = Pick<CaseFileField, 'type' | 'options'>
  * value. The animal-type check already happened on the server — fields for
  * other animal types are never sent.
  */
-export function fieldApplies(
-  field: CaseFileField,
+export function fieldApplies<
+  F extends Pick<CaseFileField, 'key' | 'condition'>,
+>(
+  field: F,
   values: CaseFileValues,
-  fieldsByKey: Map<string, CaseFileField>,
+  fieldsByKey: Map<string, F>,
   visited: Set<string> = new Set()
 ): boolean {
   const condition = field.condition
@@ -102,7 +104,7 @@ export function formatValue(field: FieldShape, value: unknown): string {
  * Turns the form state into what the API expects: numbers as numbers,
  * empty inputs as null.
  */
-export function toApiValue(field: CaseFileField, value: unknown): unknown {
+export function toApiValue(field: FieldShape, value: unknown): unknown {
   if (value === '' || value === undefined) return null
   if (field.type === 'integer' || field.type === 'number') {
     const number = Number(value)

@@ -158,6 +158,28 @@ class ApplicantDataTest extends TestCase
             ->assertJsonValidationErrors('from_adoption_id');
     }
 
+    public function test_taking_over_skips_a_value_the_target_field_cannot_hold(): void
+    {
+        // On the cat catalogue the same key is a text field.
+        $cats = AnimalType::create(['title' => 'Katze']);
+        app(FieldCatalogue::class)->ensureBuiltIns($cats);
+        $catSpace = FieldDefinition::create([
+            'animal_type_id' => $cats->id, 'field_group_id' => FieldGroup::where('animal_type_id', $cats->id)->value('id'), 'position' => 100,
+            'key' => 'living_space_sqm', 'type' => 'text', 'label' => 'Wohnfläche', 'collect_at' => 'application',
+        ]);
+        $earlier = Adoption::create([
+            'animal_id' => Animal::create(['animal_type_id' => $cats->id, 'name' => 'Mimi', 'gender' => 'female'])->id,
+            'applicant_first_name' => 'Anna', 'applicant_last_name' => 'Adopter', 'applicant_email' => 'anna@example.com',
+        ]);
+        AdoptionFieldValue::create(['adoption_id' => $earlier->id, 'field_definition_id' => $catSpace->id, 'value' => 'ziemlich groß', 'review_note' => '']);
+        $this->value($earlier, 'harness_ok', true);
+
+        $current = $this->adoption(['applicant_email' => 'anna@example.com']);
+        $this->as()->postJson("/internal/adoptions/{$current->id}/case-file/import", ['from_adoption_id' => $earlier->id])->assertOk();
+
+        $this->assertNull(AdoptionFieldValue::where('adoption_id', $current->id)->whereRelation('fieldDefinition', 'key', 'living_space_sqm')->first());
+    }
+
     public function test_a_signer_keeps_the_name_and_email_they_were_invited_with(): void
     {
         Storage::fake('contract-signing-document');

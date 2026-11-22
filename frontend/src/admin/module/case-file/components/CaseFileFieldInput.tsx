@@ -17,13 +17,19 @@ import {
 } from '@/shadcn/components/ui/field'
 import { Badge } from '@/shadcn/components/ui/badge'
 import type { CaseFileAddress, CaseFileField } from '@/api/types/case-file'
-import { isFileField, requirementLabel } from '../case-file.utils'
+import { isFileField } from '../case-file.utils'
 
-interface CaseFileFieldInputProps {
-  field: CaseFileField
+// What the input needs of a field — the applicant's forms get no more.
+export type CaseFileInputField = Pick<
+  CaseFileField,
+  'key' | 'label' | 'help' | 'type' | 'options' | 'effective_required_for'
+>
+
+interface CaseFileFieldInputProps<F extends CaseFileInputField> {
+  field: F
   control: Control<FieldValues>
-  // Replaces the mediator's wording of the requirement badge, e.g. for applicants.
-  requirementText?: (field: CaseFileField) => string
+  // The wording of the requirement badge.
+  requirementText: (field: F) => string
 }
 
 const ADDRESS_PARTS: { key: keyof CaseFileAddress; label: string }[] = [
@@ -38,11 +44,11 @@ const ADDRESS_PARTS: { key: keyof CaseFileAddress; label: string }[] = [
  * One Case File field as a form input, named `values.<key>` so server
  * validation errors (`values.<key>`) land on it directly.
  */
-export function CaseFileFieldInput({
+export function CaseFileFieldInput<F extends CaseFileInputField>({
   field,
   control,
-  requirementText = requirementLabel,
-}: CaseFileFieldInputProps) {
+  requirementText,
+}: CaseFileFieldInputProps<F>) {
   const name = `values.${field.key}`
   const required = !!field.effective_required_for
   const label = (

@@ -298,12 +298,8 @@ class CaseFileService
             $definitions = $definitions->intersectByKeys(array_flip($only));
         }
 
-        $unknown = array_diff(array_keys($values), $definitions->keys()->all());
+        $unknown = array_diff(array_map('strval', array_keys($values)), $definitions->keys()->all());
         $rules = [];
-
-        foreach ($unknown as $key) {
-            $rules["values.{$key}"] = ['prohibited'];
-        }
 
         foreach ($values as $key => $value) {
             if ($definitions->has($key)) {
@@ -313,9 +309,18 @@ class CaseFileService
             }
         }
 
-        Validator::make(['values' => $values], $rules, [
+        $validator = Validator::make(['values' => $values], $rules, [
             'values.*.prohibited' => 'Dieses Feld kann hier nicht gespeichert werden.',
-        ], $this->attributeNames($definitions))->validate();
+        ], $this->attributeNames($definitions));
+
+        // Added by hand rather than as rules: a key with a dot would slip past a rule.
+        $validator->after(function ($validator) use ($unknown) {
+            foreach ($unknown as $key) {
+                $validator->errors()->add("values.{$key}", 'Dieses Feld kann hier nicht gespeichert werden.');
+            }
+        });
+
+        $validator->validate();
 
         DB::transaction(function () use ($adoption, $values, $definitions, $user) {
             foreach ($values as $key => $value) {
@@ -382,8 +387,10 @@ class CaseFileService
 
             $value = $sourceState->value($definition->key);
 
+            // The same key can mean another type on the other animal type's catalogue.
             if (ChecklistCalculator::isPresent($definition->type, $value)
-                && ! ChecklistCalculator::isPresent($definition->type, $targetState->value($definition->key))) {
+                && ! ChecklistCalculator::isPresent($definition->type, $targetState->value($definition->key))
+                && $this->isValid($definition, $value)) {
                 $values[$definition->key] = $value;
             }
         }
@@ -478,6 +485,13 @@ class CaseFileService
             // Files are not part of the prototype; Info Blocks hold no value.
             FieldType::PHOTO, FieldType::VIDEO, FieldType::DOCUMENT, FieldType::INFO => ['' => ['prohibited']],
         };
+    }
+
+    private function isValid(FieldDefinition $definition, mixed $value): bool
+    {
+        $rules = collect($this->rules($definition))->mapWithKeys(fn (array $rules, string $path) => ["value{$path}" => $rules])->all();
+
+        return Validator::make(['value' => $value], $rules)->passes();
     }
 
     /**

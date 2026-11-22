@@ -101,6 +101,10 @@ class FieldCatalogueTest extends TestCase
         $create(['key' => 'landlord', 'type' => 'boolean', 'label' => 'Vermieter', 'condition' => ['field' => 'housing', 'in' => ['apartment']]])
             ->assertCreated();
         $this->assertEquals(['field' => 'housing', 'in' => ['apartment']], FieldDefinition::where('key', 'landlord')->value('condition'));
+        // Only the operator that fits the controlling field is kept.
+        $create(['key' => 'balcony', 'type' => 'boolean', 'label' => 'Balkon', 'condition' => ['field' => 'housing', 'in' => ['apartment'], 'equals' => ['x' => 1]]])
+            ->assertCreated();
+        $this->assertEquals(['field' => 'housing', 'in' => ['apartment']], FieldDefinition::where('key', 'balcony')->value('condition'));
 
         $create(['key' => 'bad_1', 'type' => 'text', 'label' => 'x', 'condition' => ['field' => 'garden_size', 'equals' => 1]])
             ->assertJsonValidationErrors('condition.field');
@@ -231,6 +235,18 @@ class FieldCatalogueTest extends TestCase
 
         $this->as($user)->getJson("/internal/animal-types/{$dogs->id}/catalogue")->assertOk();
         $this->as($user)->postJson("/internal/animal-types/{$dogs->id}/field-groups", ['title' => 'X'])->assertForbidden();
+    }
+
+    public function test_an_animal_type_with_animals_cannot_be_deleted(): void
+    {
+        $dogs = $this->type('Hund');
+        Animal::create(['animal_type_id' => $dogs->id, 'name' => 'Bello', 'gender' => 'male']);
+
+        $this->as($this->admin)->deleteJson("/internal/animal-types/{$dogs->id}")->assertUnprocessable();
+        $this->assertNotNull($dogs->fresh());
+
+        $cats = $this->type('Katze');
+        $this->as($this->admin)->deleteJson("/internal/animal-types/{$cats->id}")->assertOk();
     }
 
     private function type(string $title): AnimalType

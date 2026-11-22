@@ -115,6 +115,14 @@ class AnimalTypeController extends Controller
      */
     public function destroy(AnimalType $animalType): JsonResponse
     {
+        // Animals, and with them adoptions and their Case Files, would be
+        // deleted along with the type.
+        if ($animalType->animals()->exists()) {
+            return response()->json([
+                'message' => 'Diese Tierart kann nicht gelöscht werden, da ihr noch Tiere zugeordnet sind.',
+            ], 422);
+        }
+
         try {
             $animalType->delete();
         } catch (QueryException) {

@@ -172,11 +172,14 @@ class ContractTemplateService
     }
 
     /**
-     * The wording as HTML. Markdown only — HTML in the wording is dropped.
+     * The wording as HTML. Markdown only — HTML in the wording is dropped,
+     * and so are images: dompdf would embed any local file they point to.
      */
     public function bodyHtml(ContractTemplate $template): string
     {
-        return Str::markdown($template->body, ['html_input' => 'strip', 'allow_unsafe_links' => false]);
+        $html = Str::markdown($template->body, ['html_input' => 'strip', 'allow_unsafe_links' => false]);
+
+        return (string) preg_replace('/<img\b[^>]*>/i', '', $html);
     }
 
     /**

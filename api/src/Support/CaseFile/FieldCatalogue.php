@@ -357,7 +357,7 @@ class FieldCatalogue
 
         if (! $builtIn) {
             $result['requires_review'] = $data['requires_review'] ?? false;
-            $result['condition'] = empty($data['condition']) ? null : array_intersect_key($data['condition'], array_flip(['field', 'equals', 'in']));
+            $result['condition'] = empty($data['condition']) ? null : $this->storedCondition($animalType, $data['condition']);
             $result['options'] = $this->options($type, $data['options'] ?? null);
         }
 
@@ -368,6 +368,21 @@ class FieldCatalogue
      * A condition depends on one earlier yes/no or choice field of the same
      * animal type, so forms read top to bottom and cycles can't happen.
      */
+    /**
+     * Only what the controlling field's type uses: `equals` for a yes/no
+     * field, `in` for a choice field. Validated before.
+     *
+     * @param  array<string, mixed>  $condition
+     * @return array<string, mixed>
+     */
+    private function storedCondition(AnimalType $animalType, array $condition): array
+    {
+        $type = FieldDefinition::active()->where('animal_type_id', $animalType->id)->where('key', $condition['field'])->value('type');
+        $operator = $type === FieldType::BOOLEAN || $type === FieldType::BOOLEAN->value ? 'equals' : 'in';
+
+        return ['field' => $condition['field'], $operator => $condition[$operator]];
+    }
+
     private function validateCondition($validator, AnimalType $animalType, array $input, ?FieldDefinition $existing): void
     {
         $condition = $input['condition'];

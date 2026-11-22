@@ -18,6 +18,8 @@ use Taily\Support\CaseFile\CaseFileService;
 use Taily\Support\CaseFile\CaseFileState;
 use Taily\Support\CaseFile\ChecklistItem;
 
+use function Illuminate\Support\defer;
+
 /**
  * Public applications and the applicant portal (docs/features/adoption.md,
  * docs/features/applicant-portal.md). The applicant's email is their
@@ -115,13 +117,11 @@ class ApplicantPortal
     public function confirm(string $token): ?string
     {
         return DB::transaction(function () use ($token) {
-            $link = ApplicantLink::findUsable(ApplicantLink::PURPOSE_CONFIRM, $token);
+            $link = ApplicantLink::consume(ApplicantLink::PURPOSE_CONFIRM, $token);
 
             if ($link === null) {
                 return null;
             }
-
-            $link->update(['used_at' => now()]);
             Adoption::whereKey($link->adoption_id)->where('status', 'unconfirmed')->update(['status' => 'pending']);
 
             return ApplicantSession::open($link->email)[1];
@@ -143,7 +143,15 @@ class ApplicantPortal
 
         [, $token] = ApplicantLink::issue(ApplicantLink::PURPOSE_LOGIN, $email);
 
-        Mail::to($email)->send(new ApplicantLoginMail($token));
+        // After the response, and never failing it: neither the time taken
+        // nor an error may tell whether the address is known.
+        defer(function () use ($email, $token) {
+            try {
+                Mail::to($email)->send(new ApplicantLoginMail($token));
+            } catch (\Throwable $exception) {
+                report($exception);
+            }
+        });
     }
 
     /**
@@ -152,13 +160,11 @@ class ApplicantPortal
     public function login(string $token): ?string
     {
         return DB::transaction(function () use ($token) {
-            $link = ApplicantLink::findUsable(ApplicantLink::PURPOSE_LOGIN, $token);
+            $link = ApplicantLink::consume(ApplicantLink::PURPOSE_LOGIN, $token);
 
             if ($link === null) {
                 return null;
             }
-
-            $link->update(['used_at' => now()]);
 
             return ApplicantSession::open($link->email)[1];
         });
@@ -269,6 +275,12 @@ class ApplicantPortal
      * @param  array<string, mixed>  $presented  CaseFileService::present()
      * @return array{groups: list<array<string, mixed>>, open: list<array<string, mixed>>}
      */
+    /** The keys of a presented Case File field the applicant gets. */
+    private const APPLICANT_FIELD_KEYS = [
+        'key', 'label', 'help', 'type', 'options', 'built_in', 'collect_at', 'required_for',
+        'effective_required_for', 'condition', 'applies', 'value', 'status',
+    ];
+
     private function forApplicant(array $presented, AdoptionStep $step, bool $lockEmail): array
     {
         $visible = fn (array $field) => $field['visible_to_applicant']
@@ -278,10 +290,10 @@ class ApplicantPortal
             ->map(function (array $group) use ($visible, $lockEmail) {
                 $group['fields'] = collect($group['fields'])
                     ->filter($visible)
+                    // Only what the forms need: review state, overrides and the
+                    // catalogue's internal flags stay with the mediator.
                     ->map(fn (array $field) => [
-                        ...$field,
-                        // The mediator's per-adoption overrides stay internal.
-                        'override' => null,
+                        ...collect($field)->only(self::APPLICANT_FIELD_KEYS)->all(),
                         // Read-only in the portal: it is what the login is tied to.
                         'locked' => $lockEmail && $field['built_in'] && $field['key'] === 'email',
                     ])
