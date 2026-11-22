@@ -97,10 +97,10 @@ class FieldCatalogueTest extends TestCase
 
         $create(['key' => 'garden_size', 'type' => 'integer', 'label' => 'Gartengröße', 'condition' => ['field' => 'has_garden', 'equals' => true]])
             ->assertCreated();
-        $this->assertSame(['field' => 'has_garden', 'equals' => true], FieldDefinition::where('key', 'garden_size')->value('condition'));
+        $this->assertEquals(['field' => 'has_garden', 'equals' => true], FieldDefinition::where('key', 'garden_size')->value('condition'));
         $create(['key' => 'landlord', 'type' => 'boolean', 'label' => 'Vermieter', 'condition' => ['field' => 'housing', 'in' => ['apartment']]])
             ->assertCreated();
-        $this->assertSame(['field' => 'housing', 'in' => ['apartment']], FieldDefinition::where('key', 'landlord')->value('condition'));
+        $this->assertEquals(['field' => 'housing', 'in' => ['apartment']], FieldDefinition::where('key', 'landlord')->value('condition'));
 
         $create(['key' => 'bad_1', 'type' => 'text', 'label' => 'x', 'condition' => ['field' => 'garden_size', 'equals' => 1]])
             ->assertJsonValidationErrors('condition.field');

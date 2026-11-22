@@ -90,19 +90,23 @@ final class ContractFieldRegistry
     {
         [$subject, $attribute] = explode('.', $key, 2);
 
-        $model = $subject === 'animal' ? $adoption->animal : $adoption->mediator;
+        if ($subject === 'animal') {
+            $animal = $adoption->animal;
 
-        if ($model === null) {
-            return null;
+            $value = $animal === null ? null : match ($key) {
+                'animal.animal_type' => $animal->animalType?->title,
+                'animal.gender' => self::GENDERS[$animal->gender] ?? $animal->gender,
+                'animal.photo' => $animal->getMedia('pictures')->contains(fn ($media) => str_starts_with((string) $media->mime_type, 'image/')) ?: null,
+                default => $animal->{$attribute},
+            };
+        } else {
+            $mediator = $adoption->mediator;
+
+            $value = $mediator === null ? null : match ($key) {
+                'mediator.organization' => $mediator->organization?->name,
+                default => $mediator->{$attribute},
+            };
         }
-
-        $value = match ($key) {
-            'animal.animal_type' => $model->animalType?->title,
-            'animal.gender' => self::GENDERS[$model->gender] ?? $model->gender,
-            'animal.photo' => $model->getMedia('pictures')->contains(fn ($media) => str_starts_with((string) $media->mime_type, 'image/')) ?: null,
-            'mediator.organization' => $model->organization?->name,
-            default => $model->{$attribute},
-        };
 
         return $value instanceof \DateTimeInterface ? $value->format('Y-m-d') : $value;
     }

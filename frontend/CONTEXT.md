@@ -15,10 +15,10 @@ _Avoid_: Field builder
 **Applicant Case File Form**: The form the Applicant fills in — on the Application page and in the Applicant Portal — generated from the catalogue: one card per Field Group, live Conditions, server errors mapped to their fields (`ApplicantCaseFileForm`).
 _Avoid_: Dynamic form, Wizard
 
-**Requirement Text**: The short note under an applicant-facing field: *Pflicht* when it is needed for the Current Step, *Nötig für: Vertrag* when it is asked early but needed later (`applicantRequirement()`).
+**Requirement Text**: The short note under an applicant-facing field: _Pflicht_ when it is needed for the Current Step, _Nötig für: Vertrag_ when it is asked early but needed later (`applicantRequirement()`).
 _Avoid_: Required badge
 
-**Request Form** *(planned)*: A form generated from the catalogue for one Requested Step, containing exactly the fields the Applicant still has to provide.
+**Request Form** _(planned)_: A form generated from the catalogue for one Requested Step, containing exactly the fields the Applicant still has to provide.
 _Avoid_: Dynamic form, Wizard
 
 **Step Timeline**: The Applicant Portal's list of the five Steps with a simple status each.

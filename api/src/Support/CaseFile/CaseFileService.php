@@ -86,6 +86,7 @@ class CaseFileService
 
         return $this->contractFieldKeys[$animalTypeId] ??= ContractTemplate::offeredFor($animalTypeId)
             ->get()
+            ->toBase()
             ->flatMap(fn (ContractTemplate $template) => $template->requiredKeys())
             ->unique()
             ->values()

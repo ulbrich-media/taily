@@ -52,7 +52,7 @@ class CaseFileController extends Controller
             $adoption,
             $definition,
             isset($validated['required_for']) ? AdoptionStep::from($validated['required_for']) : null,
-            $validated['waived'],
+            (bool) $validated['waived'],
         );
 
         return response()->json([

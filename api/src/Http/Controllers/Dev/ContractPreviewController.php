@@ -106,13 +106,13 @@ class ContractPreviewController extends Controller
     }
 
     /**
-     * The template named by ?template=, or the first one offered for the
+     * The template named by ?template=, or the first active one of the
      * adoption's animal type.
      */
     private function resolveTemplate(Request $request, Adoption $adoption): ContractTemplate
     {
-        if ($id = $request->query('template')) {
-            return ContractTemplate::findOrFail($id);
+        if ($request->filled('template')) {
+            return ContractTemplate::whereKey($request->string('template')->toString())->firstOrFail();
         }
 
         $template = ContractTemplate::offeredFor($adoption->animal?->animal_type_id)->orderBy('name')->first();

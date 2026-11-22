@@ -141,7 +141,7 @@ class Adoption extends Model implements HasMedia
 
         // An applicant has one phone number; a Person may only have a mobile one.
         if ($data['applicant_phone'] === '') {
-            $data['applicant_phone'] = $person->mobile ?? '';
+            $data['applicant_phone'] = (string) $person->mobile;
         }
 
         return $data;

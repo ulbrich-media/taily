@@ -108,7 +108,7 @@ class ContractPdfService
      * rewrite the document they already hold. The live record is the
      * fallback for a signer whose events predate those snapshots.
      *
-     * @return Collection<int, array{signer: ContractSigner, name: string|null, email: string|null, events: EloquentCollection<int, ContractSigningAuditEvent>}>
+     * @return Collection<int, array{signer: ContractSigner, name: string, email: string, events: EloquentCollection<int, ContractSigningAuditEvent>}>
      */
     private function signerSections(ContractSigningProcess $process): Collection
     {
