@@ -4,6 +4,7 @@ import {
   getAdoptionsPage,
   getAdoption,
   getContractTemplates,
+  getRelatedAdoptions,
   type AdoptionsFilters,
 } from './requests'
 import type { AdoptionListParams } from '../adoption-list.search'
@@ -18,7 +19,9 @@ export const adoptionQueryKeys = {
   page: (params: AdoptionListParams) =>
     ['adoptions', 'list', 'page', params] as const,
   detail: (id: string) => ['adoptions', 'detail', id] as const,
-  contractTemplates: () => ['adoptions', 'contract-templates'] as const,
+  related: (id: string) => ['adoptions', 'detail', id, 'related'] as const,
+  contractTemplates: (id: string) =>
+    ['adoptions', 'detail', id, 'contract-templates'] as const,
 }
 
 export const listAdoptionsQuery = (filters?: AdoptionsFilters) =>
@@ -39,8 +42,14 @@ export const getAdoptionQuery = (id: string) =>
     queryFn: () => getAdoption(id),
   })
 
-export const getContractTemplatesQuery = () =>
+export const getContractTemplatesQuery = (id: string) =>
   queryOptions({
-    queryKey: adoptionQueryKeys.contractTemplates(),
-    queryFn: () => getContractTemplates(),
+    queryKey: adoptionQueryKeys.contractTemplates(id),
+    queryFn: () => getContractTemplates(id),
+  })
+
+export const getRelatedAdoptionsQuery = (id: string) =>
+  queryOptions({
+    queryKey: adoptionQueryKeys.related(id),
+    queryFn: () => getRelatedAdoptions(id),
   })

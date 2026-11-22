@@ -18,6 +18,7 @@ use Taily\Models\Animal;
 use Taily\Models\Person;
 use Taily\Models\PreInspection;
 use Taily\Models\Transport;
+use Taily\Models\User;
 
 /**
  * Adoptions, together with everything that hangs off them: the pre-inspection,
@@ -80,19 +81,6 @@ class AdoptionSeeder extends Seeder
     private array $availableFrom = [];
 
     /**
-     * The pre-inspection each person already has per animal type, as
-     * ['at' => when it last moved, 'submitted' => whether it came back].
-     *
-     * Pre-inspections belong to the person and the animal type, not to the
-     * adoption (see Adoption::preInspections), so a person with a second
-     * adoption for the same type reuses the inspection they already have
-     * instead of collecting a contradictory second one.
-     *
-     * @var array<string, array<string, array{at: CarbonImmutable, submitted: bool, verdict: string|null}>>
-     */
-    private array $inspections = [];
-
-    /**
      * Applicants who have not applied for a given animal type yet, as a queue
      * per type. Picking from a queue keeps choosing an applicant independent
      * of how many people there are, which matters once a data set is sized
@@ -102,13 +90,8 @@ class AdoptionSeeder extends Seeder
      */
     private array $unseenByType = [];
 
-    /**
-     * Applicants whose inspection for a given type came back approved, and who
-     * can therefore be given another adoption of that type at any step.
-     *
-     * @var array<string, list<Person>>
-     */
-    private array $inspectedByType = [];
+    /** Who confirms the pre-inspection step of the seeded adoptions. */
+    private ?User $confirmingUser = null;
 
     /**
      * @param  array<string, int>  $stageWeights
@@ -123,6 +106,7 @@ class AdoptionSeeder extends Seeder
         $this->faker->setDefaultTimezone('UTC');
 
         $this->applicants = Person::all();
+        $this->confirmingUser = User::orderBy('created_at')->first();
         $this->mediators = Person::with('mediatorAnimalTypes')->whereHas('mediatorAnimalTypes')->get();
         $this->mediatorsByAnimalType = $this->groupByAnimalType($this->mediators, 'mediatorAnimalTypes');
         $this->inspectorsByAnimalType = $this->groupByAnimalType(
@@ -207,39 +191,20 @@ class AdoptionSeeder extends Seeder
 
     /**
      * @return AdoptionStage the stage that was actually used, which can be an
-     *                       earlier one than requested when the applicant's
-     *                       inspection has not come back yet
+     *                       earlier one than requested when no transport run
+     *                       fits the adoption
      */
     private function createAdoption(Animal $animal, AdoptionStage $stage, TransportPool $transports): AdoptionStage
     {
         $mediator = $this->mediatorFor($animal, $stage);
         $applicant = $this->applicantFor($mediator, $animal->animal_type_id);
 
-        $existing = $this->inspections[$applicant->id][$animal->animal_type_id] ?? null;
+        // Nothing may predate the animal's intake or the end of its previous
+        // adoption.
+        $notBefore = $this->readyFrom($animal);
 
-        // The applicant's inspection is still out, so this adoption cannot
-        // have got past the inspection step either.
-        if ($existing !== null && ! $existing['submitted'] && $stage->preInspectionVerdict() !== null) {
-            $stage = AdoptionStage::InReview;
-        }
-
-        // Their inspection for this animal type came back rejected, so this
-        // adoption cannot reach a contract on the back of it. It ends where
-        // the inspection did.
-        if (($existing['verdict'] ?? null) === 'rejected' && $stage->preInspectionVerdict() === 'approved') {
-            $stage = AdoptionStage::Canceled;
-        }
-
-        // Nothing may predate the animal's intake, the end of its previous
-        // adoption, or an inspection this applicant already went through.
-        $notBefore = $this->latest(
-            $this->readyFrom($animal),
-            $existing['at'] ?? null,
-        );
-
-        // The applicant's own history can reach past the run as well — they
-        // may have been inspected after it left. Checked before the seat is
-        // taken, so a run this adoption cannot use keeps it for one that can.
+        // Checked before the seat is taken, so a run this adoption cannot use
+        // keeps it for one that can.
         if ($stage->transport() === TransportState::Done) {
             $runAt = $transports->nextCompletedRunAt();
 
@@ -252,15 +217,23 @@ class AdoptionSeeder extends Seeder
 
         $timeline = AdoptionTimeline::build($stage, $notBefore, $this->faker, $transport?->done_at);
 
+        // The applicant's data is the adoption's own (ADR-018), copied from a
+        // person of the directory. The animal's owner is a Person, so a
+        // handed-over adoption references them; about a third of the others do.
         $adoption = new Adoption([
             'animal_id' => $animal->id,
-            'applicant_id' => $applicant->id,
+            ...Adoption::applicantDataFrom($applicant),
+            'applicant_person_id' => $stage->isHandedOver() || $this->faker->boolean(35) ? $applicant->id : null,
             'mediator_id' => $mediator?->id,
             'status' => $stage->adoptionStatus(),
             'notes' => $this->faker->boolean(70) ? $this->faker->sentence(8) : '',
             'pre_inspection_notes' => $stage->hasPreInspection() && $this->faker->boolean(70)
                 ? $this->faker->paragraph(2)
                 : '',
+            // The mediator confirms the step once the inspection came back
+            // approved. A rejected one ends in a cancellation instead.
+            'pre_inspection_confirmed_at' => $stage->preInspectionVerdict() === 'approved' ? $timeline->inspectionSubmittedAt : null,
+            'pre_inspection_confirmed_by' => $stage->preInspectionVerdict() === 'approved' ? $this->confirmingUser?->id : null,
             'contract_signed' => $stage->hasContract(),
             'contract_signed_at' => $timeline->contractSignedAt,
             'transport_id' => $transport?->id,
@@ -275,8 +248,8 @@ class AdoptionSeeder extends Seeder
         $adoption->updated_at = $timeline->lastEventAt();
         $adoption->save();
 
-        if ($stage->hasPreInspection() && $existing === null) {
-            $this->createPreInspection($animal, $applicant, $stage, $timeline);
+        if ($stage->hasPreInspection()) {
+            $this->createPreInspection($adoption, $animal, $applicant, $stage, $timeline);
         }
 
         $this->applyPlacementState($animal, $applicant, $stage, $timeline);
@@ -299,6 +272,7 @@ class AdoptionSeeder extends Seeder
     }
 
     private function createPreInspection(
+        Adoption $adoption,
         Animal $animal,
         Person $applicant,
         AdoptionStage $stage,
@@ -311,29 +285,16 @@ class AdoptionSeeder extends Seeder
         $verdict = $stage->preInspectionVerdict();
 
         $inspection = new PreInspection([
-            'person_id' => $applicant->id,
-            'animal_type_id' => $animal->animal_type_id,
-            'notes' => $verdict !== null ? $this->faker->paragraph(2) : '',
+            'adoption_id' => $adoption->id,
+            'memo' => $verdict !== null ? $this->faker->paragraph(2) : '',
         ]);
 
         $inspection->inspector_id = $eligible !== null ? SeedRandom::pick($eligible)?->id : null;
-        $inspection->verdict = $verdict ?? 'pending';
+        $inspection->verdict = $verdict;
         $inspection->submitted_at = $timeline->inspectionSubmittedAt;
         $inspection->created_at = $timeline->inspectionCreatedAt;
         $inspection->updated_at = $timeline->inspectionSubmittedAt ?? $timeline->inspectionCreatedAt;
         $inspection->save();
-
-        $this->inspections[$applicant->id][$animal->animal_type_id] = [
-            'at' => $timeline->inspectionSubmittedAt ?? $timeline->inspectionCreatedAt,
-            'submitted' => $verdict !== null,
-            'verdict' => $verdict,
-        ];
-
-        // Only an approved inspection lets this applicant take on another
-        // adoption of the same type later.
-        if ($verdict === 'approved') {
-            $this->inspectedByType[$animal->animal_type_id][] = $applicant;
-        }
 
         // An inspection still out with the inspector needs a link they can open.
         if ($verdict === null) {
@@ -468,8 +429,8 @@ class AdoptionSeeder extends Seeder
 
     /**
      * Nobody mediates their own adoption, and an applicant is preferred who
-     * has not applied for this animal type before — their pre-inspection would
-     * otherwise be shared between two adoptions.
+     * has not applied for this animal type before, so repeat applications
+     * stay the exception they are in practice.
      */
     private function applicantFor(?Person $mediator, string $animalTypeId): Person
     {
@@ -493,10 +454,8 @@ class AdoptionSeeder extends Seeder
 
         array_push($this->unseenByType[$animalTypeId], ...$passedOver);
 
-        // Everyone has applied for this type before. Prefer someone whose
-        // inspection is finished, since that one fits any later step.
-        return $this->pickExcept($this->inspectedByType[$animalTypeId] ?? [], $mediator)
-            ?? $this->pickExcept($this->applicants->all(), $mediator)
+        // Everyone has applied for this type before.
+        return $this->pickExcept($this->applicants->all(), $mediator)
             ?? $this->applicants->first();
     }
 

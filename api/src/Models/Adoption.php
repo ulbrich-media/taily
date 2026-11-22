@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Taily\Enums\AdoptionStep;
 use Taily\Enums\ContractSigningStatus;
 use Taily\Models\Concerns\SearchesWithLike;
 
@@ -23,7 +24,25 @@ class Adoption extends Model implements HasMedia
     /** @use InteractsWithMedia<Media> */
     use InteractsWithMedia;
 
+    /**
+     * The applicant's own data (ADR-018), without the `applicant_` prefix.
+     * Built-in Case File fields name these in `applicant_attribute`; the
+     * address parts together form the `address` field.
+     */
+    public const APPLICANT_ATTRIBUTES = ['first_name', 'last_name', 'email', 'phone', 'date_of_birth'];
+
+    public const ADDRESS_PARTS = ['street_line', 'street_line_additional', 'postal_code', 'city', 'country_code'];
+
     protected $attributes = [
+        'applicant_first_name' => '',
+        'applicant_last_name' => '',
+        'applicant_email' => '',
+        'applicant_phone' => '',
+        'applicant_street_line' => '',
+        'applicant_street_line_additional' => '',
+        'applicant_postal_code' => '',
+        'applicant_city' => '',
+        'applicant_country_code' => '',
         'notes' => '',
         'canceled_reason' => '',
         'pre_inspection_notes' => '',
@@ -32,12 +51,24 @@ class Adoption extends Model implements HasMedia
     protected $fillable = [
         'animal_id',
         'mediator_id',
-        'applicant_id',
+        'applicant_person_id',
+        'applicant_first_name',
+        'applicant_last_name',
+        'applicant_email',
+        'applicant_phone',
+        'applicant_date_of_birth',
+        'applicant_street_line',
+        'applicant_street_line_additional',
+        'applicant_postal_code',
+        'applicant_city',
+        'applicant_country_code',
         'status',
         'canceled_at',
         'canceled_reason',
         'notes',
         'pre_inspection_notes',
+        'pre_inspection_confirmed_at',
+        'pre_inspection_confirmed_by',
         'contract_signed',
         'contract_signed_at',
         'transport_id',
@@ -51,6 +82,8 @@ class Adoption extends Model implements HasMedia
             'contract_signed_at' => 'datetime',
             'canceled_at' => 'datetime',
             'handed_over_at' => 'datetime',
+            'pre_inspection_confirmed_at' => 'datetime',
+            'applicant_date_of_birth' => 'date',
         ];
     }
 
@@ -64,9 +97,95 @@ class Adoption extends Model implements HasMedia
         return $this->belongsTo(Person::class, 'mediator_id');
     }
 
-    public function applicant(): BelongsTo
+    /**
+     * A Person Taily already manages, referenced for orientation only — the
+     * applicant's data is the adoption's own (ADR-018).
+     */
+    public function applicantPerson(): BelongsTo
     {
-        return $this->belongsTo(Person::class, 'applicant_id');
+        return $this->belongsTo(Person::class, 'applicant_person_id');
+    }
+
+    public function getApplicantFullNameAttribute(): string
+    {
+        return trim("{$this->applicant_first_name} {$this->applicant_last_name}");
+    }
+
+    /**
+     * The applicant's email is what links their adoptions, so it is
+     * compared in one form only.
+     */
+    public function setApplicantEmailAttribute(?string $value): void
+    {
+        $this->attributes['applicant_email'] = self::normalizeEmail($value);
+    }
+
+    public static function normalizeEmail(?string $email): string
+    {
+        return mb_strtolower(trim((string) $email));
+    }
+
+    /**
+     * The applicant's data as copied from a Person when an adoption starts
+     * from someone Taily already knows.
+     *
+     * @return array<string, mixed>
+     */
+    public static function applicantDataFrom(Person $person): array
+    {
+        $data = [];
+
+        foreach ([...self::APPLICANT_ATTRIBUTES, ...self::ADDRESS_PARTS] as $attribute) {
+            $data["applicant_{$attribute}"] = $person->{$attribute} ?? ($attribute === 'date_of_birth' ? null : '');
+        }
+
+        // An applicant has one phone number; a Person may only have a mobile one.
+        if ($data['applicant_phone'] === '') {
+            $data['applicant_phone'] = (string) $person->mobile;
+        }
+
+        return $data;
+    }
+
+    /**
+     * Other adoptions of the same applicant: the same confirmed email or the
+     * same referenced Person. An unconfirmed application's email may belong
+     * to someone else, so it links nothing until it is confirmed.
+     */
+    public function scopeRelatedTo(Builder $query, Adoption $adoption): void
+    {
+        $query->whereKeyNot($adoption->id)->where(function (Builder $related) use ($adoption) {
+            $related->whereRaw('1 = 0');
+
+            if ($adoption->applicant_email !== '' && $adoption->status !== 'unconfirmed') {
+                $related->orWhere(fn (Builder $sameEmail) => $sameEmail
+                    ->where('applicant_email', $adoption->applicant_email)
+                    ->where('status', '!=', 'unconfirmed'));
+            }
+
+            if ($adoption->applicant_person_id !== null) {
+                $related->orWhere('applicant_person_id', $adoption->applicant_person_id);
+            }
+        });
+    }
+
+    /**
+     * Adoptions of a Person as applicant: referenced, or with their email
+     * once it is confirmed.
+     */
+    public function scopeOfApplicant(Builder $query, Person $person): void
+    {
+        $email = self::normalizeEmail($person->email);
+
+        $query->where(function (Builder $of) use ($person, $email) {
+            $of->where('applicant_person_id', $person->id);
+
+            if ($email !== '') {
+                $of->orWhere(fn (Builder $sameEmail) => $sameEmail
+                    ->where('applicant_email', $email)
+                    ->where('status', '!=', 'unconfirmed'));
+            }
+        });
     }
 
     public function transport(): BelongsTo
@@ -74,11 +193,24 @@ class Adoption extends Model implements HasMedia
         return $this->belongsTo(Transport::class);
     }
 
-    // All pre-inspections for this adoption's applicant, keyed on person_id.
-    // Filter by animal_type_id in application code (see getPreInspectionStatusAttribute).
     public function preInspections(): HasMany
     {
-        return $this->hasMany(PreInspection::class, 'person_id', 'applicant_id');
+        return $this->hasMany(PreInspection::class)->orderBy('created_at');
+    }
+
+    public function preInspectionConfirmedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'pre_inspection_confirmed_by');
+    }
+
+    public function fieldValues(): HasMany
+    {
+        return $this->hasMany(AdoptionFieldValue::class);
+    }
+
+    public function requirements(): HasMany
+    {
+        return $this->hasMany(AdoptionRequirement::class);
     }
 
     public function contractSigningProcesses(): HasMany
@@ -115,7 +247,7 @@ class Adoption extends Model implements HasMedia
                     ? $query->whereNull('mediator_id')
                     : $query->where('mediator_id', $value),
                 'animal_id' => $query->where('animal_id', $value),
-                'applicant_id' => $query->where('applicant_id', $value),
+                'applicant_person_id' => ($person = Person::find($value)) ? $query->ofApplicant($person) : $query->whereRaw('1 = 0'),
                 'animal_type_id' => $query->whereHas('animal', fn (Builder $animal) => $animal->where('animal_type_id', $value)),
                 'pre_inspection_status' => $query->wherePreInspectionStatus($value),
                 'contract_status' => $query->whereContractStatus($value),
@@ -147,11 +279,11 @@ class Adoption extends Model implements HasMedia
                     self::whereLike($animal, 'animals.name', $term);
                     self::whereLike($animal, 'animals.old_name', $term, 'or');
                 })
-                ->orWhereHas('applicant', function (Builder $applicant) use ($words) {
+                ->orWhere(function (Builder $applicant) use ($words) {
                     foreach ($words as $word) {
                         $applicant->where(function (Builder $name) use ($word) {
-                            self::whereLike($name, 'people.first_name', $word);
-                            self::whereLike($name, 'people.last_name', $word, 'or');
+                            self::whereLike($name, 'adoptions.applicant_first_name', $word);
+                            self::whereLike($name, 'adoptions.applicant_last_name', $word, 'or');
                         });
                     }
                 });
@@ -159,26 +291,23 @@ class Adoption extends Model implements HasMedia
     }
 
     /**
-     * Mirrors getPreInspectionStatusAttribute(): the pre-inspections of the
-     * applicant for the animal's animal type decide the status.
+     * Mirrors getPreInspectionStatusAttribute().
      *
      * @param  list<string>  $statuses
      */
     public function scopeWherePreInspectionStatus(Builder $query, array $statuses): void
     {
-        $inspections = fn (bool $unsubmittedOnly): Closure => function ($sub) use ($unsubmittedOnly) {
-            $sub->selectRaw('1')
-                ->from('pre_inspections')
-                ->join('animals', 'animals.animal_type_id', '=', 'pre_inspections.animal_type_id')
-                ->whereColumn('animals.id', 'adoptions.animal_id')
-                ->whereColumn('pre_inspections.person_id', 'adoptions.applicant_id')
-                ->when($unsubmittedOnly, fn ($q) => $q->whereNull('pre_inspections.submitted_at'));
+        $started = function (Builder $q) {
+            $q->whereHas('preInspections')
+                ->orWhereHas('requirements', fn (Builder $requirement) => $requirement
+                    ->where('waived', false)
+                    ->where('required_for', AdoptionStep::PRE_INSPECTION->value));
         };
 
         self::whereAnyStatus($query, $statuses, fn (Builder $q, string $status) => match ($status) {
-            'not_started' => $q->whereNotExists($inspections(false)),
-            'pending' => $q->whereExists($inspections(true)),
-            'finished' => $q->whereExists($inspections(false))->whereNotExists($inspections(true)),
+            'finished' => $q->whereNotNull('pre_inspection_confirmed_at'),
+            'pending' => $q->whereNull('pre_inspection_confirmed_at')->where($started),
+            'not_started' => $q->whereNull('pre_inspection_confirmed_at')->whereNot($started),
         });
     }
 
@@ -246,8 +375,8 @@ class Adoption extends Model implements HasMedia
                 $direction,
             ),
             'applicant_name' => $query
-                ->orderBy($person('applicant_id', 'last_name'), $direction)
-                ->orderBy($person('applicant_id', 'first_name'), $direction),
+                ->orderBy('applicant_last_name', $direction)
+                ->orderBy('applicant_first_name', $direction),
             'mediator_name' => $query
                 ->orderBy($person('mediator_id', 'last_name'), $direction)
                 ->orderBy($person('mediator_id', 'first_name'), $direction),
@@ -322,30 +451,26 @@ class Adoption extends Model implements HasMedia
         return $this->handed_over_at !== null ? 'finished' : 'not_started';
     }
 
+    /**
+     * The mediator closes the step with a confirmation — with or without a
+     * pre-inspection, and regardless of its verdict. Until then the step is
+     * under way once a pre-inspection exists or a field (e.g. the home
+     * video) was made required for it (docs/features/adoption.md#pre-inspection).
+     */
     public function getPreInspectionStatusAttribute(): string
     {
-        $animalTypeId = $this->animal?->animal_type_id;
-
-        if (! $animalTypeId) {
-            return 'not_started';
+        if ($this->pre_inspection_confirmed_at !== null) {
+            return 'finished';
         }
 
-        if ($this->relationLoaded('preInspections')) {
-            $inspections = $this->preInspections->where('animal_type_id', $animalTypeId);
-        } else {
-            $inspections = PreInspection::where('person_id', $this->applicant_id)
-                ->where('animal_type_id', $animalTypeId)
-                ->get();
-        }
+        $hasInspections = $this->relationLoaded('preInspections')
+            ? $this->preInspections->isNotEmpty()
+            : $this->preInspections()->exists();
 
-        if ($inspections->isEmpty()) {
-            return 'not_started';
-        }
+        $requested = $this->relationLoaded('requirements')
+            ? $this->requirements->contains(fn (AdoptionRequirement $r) => ! $r->waived && $r->required_for === AdoptionStep::PRE_INSPECTION)
+            : $this->requirements()->where('waived', false)->where('required_for', AdoptionStep::PRE_INSPECTION->value)->exists();
 
-        if ($inspections->whereNull('submitted_at')->isNotEmpty()) {
-            return 'pending';
-        }
-
-        return 'finished';
+        return $hasInspections || $requested ? 'pending' : 'not_started';
     }
 }

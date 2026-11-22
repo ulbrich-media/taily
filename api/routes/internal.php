@@ -17,13 +17,19 @@ use Laravel\Passkeys\Http\Controllers\PasskeyLoginController;
 use Laravel\Passkeys\Http\Controllers\PasskeyRegistrationController;
 use Taily\Http\Controllers\Internal\AdoptionContractController;
 use Taily\Http\Controllers\Internal\AdoptionController;
+use Taily\Http\Controllers\Internal\AdoptionPreInspectionController;
+use Taily\Http\Controllers\Internal\AdoptionRelatedController;
 use Taily\Http\Controllers\Internal\AnimalController;
 use Taily\Http\Controllers\Internal\AnimalPictureController;
 use Taily\Http\Controllers\Internal\AnimalTypeController;
 use Taily\Http\Controllers\Internal\ApiTokenController;
+use Taily\Http\Controllers\Internal\ApplicantPortalController;
+use Taily\Http\Controllers\Internal\CaseFileController;
 use Taily\Http\Controllers\Internal\ContractSigningController;
 use Taily\Http\Controllers\Internal\ContractSigningSubmissionController;
+use Taily\Http\Controllers\Internal\ContractTemplateController;
 use Taily\Http\Controllers\Internal\ExportSettingsController;
+use Taily\Http\Controllers\Internal\FieldCatalogueController;
 use Taily\Http\Controllers\Internal\FormTemplateController;
 use Taily\Http\Controllers\Internal\InvitationController;
 use Taily\Http\Controllers\Internal\MediaController;
@@ -35,6 +41,7 @@ use Taily\Http\Controllers\Internal\PersonPictureController;
 use Taily\Http\Controllers\Internal\PreInspectionController;
 use Taily\Http\Controllers\Internal\PreInspectionSubmissionController;
 use Taily\Http\Controllers\Internal\ProfileController;
+use Taily\Http\Controllers\Internal\PublicApplicationController;
 use Taily\Http\Controllers\Internal\SessionController;
 use Taily\Http\Controllers\Internal\TransportController;
 use Taily\Http\Controllers\Internal\UserController;
@@ -178,6 +185,25 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/animal-types/{animalType}/trait-suggestions', [AnimalTypeController::class, 'traitSuggestions']);
     Route::apiResource('animal-types', AnimalTypeController::class);
 
+    // Case File catalogue per animal type (docs/features/case-file.md)
+    Route::get('/animal-types/{animalType}/catalogue', [FieldCatalogueController::class, 'show']);
+    Route::post('/animal-types/{animalType}/catalogue/copy', [FieldCatalogueController::class, 'copy']);
+    Route::post('/animal-types/{animalType}/field-groups', [FieldCatalogueController::class, 'storeGroup']);
+    Route::put('/animal-types/{animalType}/field-groups/order', [FieldCatalogueController::class, 'reorderGroups']);
+    Route::put('/field-groups/{fieldGroup}', [FieldCatalogueController::class, 'updateGroup']);
+    Route::delete('/field-groups/{fieldGroup}', [FieldCatalogueController::class, 'destroyGroup']);
+    Route::post('/field-groups/{fieldGroup}/fields', [FieldCatalogueController::class, 'storeField']);
+    Route::put('/field-groups/{fieldGroup}/fields/order', [FieldCatalogueController::class, 'reorderFields']);
+    Route::put('/field-definitions/{fieldDefinition}', [FieldCatalogueController::class, 'updateField']);
+    Route::post('/field-definitions/{fieldDefinition}/archive', [FieldCatalogueController::class, 'archiveField']);
+    Route::delete('/field-definitions/{fieldDefinition}/archive', [FieldCatalogueController::class, 'restoreField']);
+
+    // Contract templates (ADR-017)
+    Route::get('/contract-templates/field-options', [ContractTemplateController::class, 'fieldOptions']);
+    Route::apiResource('contract-templates', ContractTemplateController::class)->except('destroy');
+    Route::post('/contract-templates/{contractTemplate}/archive', [ContractTemplateController::class, 'archive']);
+    Route::delete('/contract-templates/{contractTemplate}/archive', [ContractTemplateController::class, 'restore']);
+
     // Vaccinations and Medical Tests
     Route::apiResource('vaccinations', VaccinationController::class);
     Route::apiResource('medical-tests', MedicalTestController::class);
@@ -198,18 +224,31 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Transports
     Route::apiResource('transports', TransportController::class)->except('show');
     Route::post('/transports/{transport}/mark-done', [TransportController::class, 'markDone']);
+    Route::get('/transports/{transport}/checklist', [TransportController::class, 'checklist']);
 
     // Adoptions
     Route::get('/adoptions/options', [AdoptionController::class, 'options']);
-    // Registered before the apiResource below so "contract-templates" isn't
-    // swallowed by the resource's /adoptions/{adoption} show route.
-    Route::get('/adoptions/contract-templates', [AdoptionContractController::class, 'templates']);
     Route::apiResource('adoptions', AdoptionController::class);
+    Route::get('/adoptions/{adoption}/contract-templates', [AdoptionContractController::class, 'templates']);
     Route::put('/adoptions/{adoption}/contract', [AdoptionContractController::class, 'store']);
     Route::get('/adoptions/{adoption}/contract/generate', [AdoptionContractController::class, 'generate']);
     Route::post('/adoptions/{adoption}/contract/signing', [ContractSigningController::class, 'store']);
     Route::post('/adoptions/{adoption}/contract/signing/cancel', [ContractSigningController::class, 'cancel']);
     Route::post('/adoptions/{adoption}/contract/signing/resend', [ContractSigningController::class, 'resend']);
+
+    // Case File (docs/features/case-file.md)
+    Route::get('/adoptions/{adoption}/case-file', [CaseFileController::class, 'show']);
+    Route::put('/adoptions/{adoption}/case-file', [CaseFileController::class, 'update']);
+    Route::put('/adoptions/{adoption}/requirements/{fieldKey}', [CaseFileController::class, 'setRequirement']);
+    Route::delete('/adoptions/{adoption}/requirements/{fieldKey}', [CaseFileController::class, 'clearRequirement']);
+
+    // The applicant's other adoptions and taking over their data (ADR-018)
+    Route::get('/adoptions/{adoption}/related', [AdoptionRelatedController::class, 'index']);
+    Route::post('/adoptions/{adoption}/case-file/import', [AdoptionRelatedController::class, 'import']);
+
+    // The mediator's confirmation that closes the pre-inspection step
+    Route::post('/adoptions/{adoption}/pre-inspection/confirm', [AdoptionPreInspectionController::class, 'confirm']);
+    Route::delete('/adoptions/{adoption}/pre-inspection/confirm', [AdoptionPreInspectionController::class, 'unconfirm']);
 
     // API Tokens
     Route::get('/api-tokens/abilities', [ApiTokenController::class, 'abilities']);
@@ -227,6 +266,20 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Pre-Inspections
     Route::apiResource('pre-inspections', PreInspectionController::class);
     Route::put('/pre-inspections/{preInspection}/inspector', [PreInspectionController::class, 'updateInspector']);
+});
+
+// Public applications and the applicant portal (docs/features/applicant-portal.md).
+// The portal session is a bearer token; rate limited per IP and per email.
+Route::middleware('throttle:applicant')->group(function () {
+    Route::get('/apply/{animal}', [PublicApplicationController::class, 'show']);
+    Route::post('/apply/{animal}', [PublicApplicationController::class, 'store']);
+    Route::post('/apply/confirm/{token}', [PublicApplicationController::class, 'confirm']);
+    Route::post('/portal/login', [ApplicantPortalController::class, 'requestLogin']);
+    Route::post('/portal/login/{token}', [ApplicantPortalController::class, 'login']);
+    Route::post('/portal/logout', [ApplicantPortalController::class, 'logout']);
+    Route::get('/portal/adoptions', [ApplicantPortalController::class, 'index']);
+    Route::get('/portal/adoptions/{adoption}', [ApplicantPortalController::class, 'show']);
+    Route::put('/portal/adoptions/{adoption}/case-file', [ApplicantPortalController::class, 'update']);
 });
 
 // Public pre-inspection submission routes (token-protected, no auth required).

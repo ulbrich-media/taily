@@ -9,6 +9,13 @@ export interface ExportAttentionItem {
   status: 'abgelehnt' | 'nicht_veroeffentlicht'
 }
 
+export interface ExportNotExportedItem {
+  animal_id: string
+  animal_type_id: string | null
+  name: string | null
+  reasons: string[]
+}
+
 export interface TiervermittlungExportStatus {
   enabled: boolean
   api_key_configured: boolean
@@ -21,6 +28,7 @@ export interface TiervermittlungExportStatus {
   }
   last_delivery_at: string | null
   attention: ExportAttentionItem[]
+  not_exported: ExportNotExportedItem[]
 }
 
 export interface TiervermittlungSettingsResponse {

@@ -12,12 +12,13 @@ use Taily\Enums\ContractSigningStatus;
 use Taily\Http\Controllers\Controller;
 use Taily\Models\Adoption;
 use Taily\Models\ContractSigningProcess;
+use Taily\Models\ContractTemplate;
 use Taily\Support\ContractPdfService;
 use Taily\Support\ContractSigningService;
 
 /**
  * Renders a contract on every request, so working on either Blade template
- * is an edit-and-reload loop in the browser rather than a signing flow
+ * (and the configured view) is an edit-and-reload loop in the browser rather than a signing flow
  * driven by hand: generate, open the mediator's mail, sign, open the
  * adopter's mail, sign, download.
  *
@@ -49,15 +50,8 @@ class ContractPreviewController extends Controller
         abort_unless(app()->environment(self::ENVIRONMENTS), 404);
         abort_unless(Auth::guard('web')->check(), 404);
 
-        $templateKey = (string) $request->query('template', 'default');
-
-        abort_unless(
-            array_key_exists($templateKey, config('taily.contracts', [])),
-            404,
-            "Unknown template key '{$templateKey}'. Available: ".implode(', ', array_keys(config('taily.contracts', []))),
-        );
-
         $adoption = $this->resolveAdoption($request);
+        $template = $this->resolveTemplate($request, $adoption);
 
         // Two independent flags rather than one mode parameter, so every
         // combination is a URL you can bookmark and reload:
@@ -69,12 +63,12 @@ class ContractPreviewController extends Controller
         $html = $request->has('html');
 
         if ($signed) {
-            return $this->withProcess($request, $adoption, $signingService, $pdfService, $templateKey, $html);
+            return $this->withProcess($request, $adoption, $signingService, $pdfService, $template, $html);
         }
 
         return $html
-            ? $this->html($pdfService->renderBody($adoption, $templateKey))
-            : $this->pdf($pdfService->generate($adoption, $templateKey));
+            ? $this->html($pdfService->renderBody($adoption, $template))
+            : $this->pdf($pdfService->generate($adoption, $template));
     }
 
     /**
@@ -98,7 +92,7 @@ class ContractPreviewController extends Controller
      */
     private function resolveAdoption(Request $request): Adoption
     {
-        $query = Adoption::with(['animal.animalType', 'mediator.organization', 'applicant']);
+        $query = Adoption::with(['animal.animalType', 'mediator.organization']);
 
         if ($id = $request->query('adoption')) {
             return $query->whereKey($id)->firstOrFail();
@@ -112,6 +106,23 @@ class ContractPreviewController extends Controller
     }
 
     /**
+     * The template named by ?template=, or the first active one of the
+     * adoption's animal type.
+     */
+    private function resolveTemplate(Request $request, Adoption $adoption): ContractTemplate
+    {
+        if ($request->filled('template')) {
+            return ContractTemplate::whereKey($request->string('template')->toString())->firstOrFail();
+        }
+
+        $template = ContractTemplate::offeredFor($adoption->animal?->animal_type_id)->orderBy('name')->first();
+
+        abort_if($template === null, 404, 'No contract template is offered for this animal type. Configure one under Einstellungen → Verträge.');
+
+        return $template;
+    }
+
+    /**
      * Renders the variant that needs a signing process, using the adoption's
      * own completed one where there is one.
      */
@@ -120,7 +131,7 @@ class ContractPreviewController extends Controller
         Adoption $adoption,
         ContractSigningService $signingService,
         ContractPdfService $pdfService,
-        string $templateKey,
+        ContractTemplate $template,
         bool $html,
     ): Response {
         $process = $adoption->contractSigningProcesses()
@@ -131,7 +142,7 @@ class ContractPreviewController extends Controller
         if ($process) {
             return $html
                 ? $this->html($pdfService->renderAppendix($process))
-                : $this->pdf($pdfService->appendSignaturePages($pdfService->generate($adoption, $templateKey), $process));
+                : $this->pdf($pdfService->appendSignaturePages($pdfService->generate($adoption, $template), $process));
         }
 
         return $this->withDemoProcess(
@@ -139,7 +150,7 @@ class ContractPreviewController extends Controller
             $adoption,
             $signingService,
             $pdfService,
-            $templateKey,
+            $template,
             fn (ContractSigningProcess $demo, string $body) => $html
                 ? $this->html($pdfService->renderAppendix($demo))
                 : $this->pdf($pdfService->appendSignaturePages($body, $demo)),
@@ -167,16 +178,16 @@ class ContractPreviewController extends Controller
         Adoption $adoption,
         ContractSigningService $signingService,
         ContractPdfService $pdfService,
-        string $templateKey,
+        ContractTemplate $template,
         callable $callback,
     ): Response {
         abort_if(
-            $adoption->mediator === null || $adoption->applicant === null,
+            $adoption->mediator === null || $adoption->applicant_full_name === '',
             404,
             'This adoption needs both a mediator and an applicant to synthesize a signing process. Pass ?adoption= with one that has both.',
         );
 
-        $body = $pdfService->generate($adoption, $templateKey);
+        $body = $pdfService->generate($adoption, $template);
 
         Storage::fake('contract-signing-document');
 
@@ -194,7 +205,7 @@ class ContractPreviewController extends Controller
             // column's true width from the layout loop.
             $process = $signingService->start(
                 $adoption,
-                $templateKey,
+                $template->id,
                 $body,
                 $request->user(),
                 (string) $request->ip(),
@@ -202,14 +213,14 @@ class ContractPreviewController extends Controller
             );
 
             $mediator = $process->signers()->where('role', ContractSignerRole::MEDIATOR)->firstOrFail();
-            $signingService->recordEmailSent($mediator, $mediator->person->email);
+            $signingService->recordEmailSent($mediator, $mediator->email);
             $signingService->recordLinkOpened($mediator, '192.0.2.10', self::DEMO_USER_AGENTS['mediator']);
             $signingService->recordMediatorSignature($process, $adoption->mediator->full_name, true, true, true, '192.0.2.10', self::DEMO_USER_AGENTS['mediator']);
 
             $adopter = $process->signers()->where('role', ContractSignerRole::ADOPTER)->firstOrFail();
-            $signingService->recordEmailSent($adopter, $adopter->person->email);
+            $signingService->recordEmailSent($adopter, $adopter->email);
             $signingService->recordLinkOpened($adopter, '192.0.2.20', self::DEMO_USER_AGENTS['adopter']);
-            $signingService->recordAdopterSignature($process, $adoption->applicant->full_name, true, true, true, '192.0.2.20', self::DEMO_USER_AGENTS['adopter']);
+            $signingService->recordAdopterSignature($process, $adoption->applicant_full_name, true, true, true, '192.0.2.20', self::DEMO_USER_AGENTS['adopter']);
 
             $signingService->finalize($process, str_repeat('0', 64));
 

@@ -16,7 +16,7 @@ export const Route = createFileRoute(
   loader: async ({ params }) => {
     await Promise.all([
       queryClient.ensureQueryData(getAdoptionQuery(params.adoptionId)),
-      queryClient.ensureQueryData(getContractTemplatesQuery()),
+      queryClient.ensureQueryData(getContractTemplatesQuery(params.adoptionId)),
     ])
   },
   component: RouteComponent,
@@ -31,7 +31,9 @@ function RouteComponent() {
   const { adoptionId } = Route.useParams()
   const navigate = AdoptionDetailRoute.useNavigate()
   const { data: adoption } = useSuspenseQuery(getAdoptionQuery(adoptionId))
-  const { data: templates } = useSuspenseQuery(getContractTemplatesQuery())
+  const { data: templates } = useSuspenseQuery(
+    getContractTemplatesQuery(adoptionId)
+  )
 
   const handleClose = () => {
     navigate({ params: { adoptionId } })

@@ -1,11 +1,6 @@
 import { useState } from 'react'
 import { useSuspenseQuery, useMutation } from '@tanstack/react-query'
-import {
-  useForm,
-  FormProvider,
-  type Control,
-  type FieldValues,
-} from 'react-hook-form'
+import { useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import {
@@ -36,20 +31,17 @@ import { InfoRow, InfoRowValue } from '@/shadcn/components/common/info-row.tsx'
 import { Field, FieldGroup, FieldLabel } from '@/shadcn/components/ui/field.tsx'
 import { FormFieldWrapper } from '@/components/form/FormFieldWrapper'
 import { Textarea } from '@/components/field/Textarea.tsx'
-import { DynamicFormFields } from '@/components/form/DynamicFormFields'
-import { useDynamicFormSchema } from '@/components/form/useDynamicFormSchema'
+import { formatValue } from '@/admin/module/case-file/case-file.utils'
 import { FormBlocker } from '@/components/form/FormBlocker.tsx'
 
-const staticSchema = z.object({
+const schema = z.object({
   verdict: z.enum(['approved', 'rejected'], {
     error: 'Bitte wähle ein Ergebnis aus',
   }),
-  notes: z.string(),
+  memo: z.string(),
 })
 
-type SubmitFormData = z.infer<typeof staticSchema> & {
-  form_data: Record<string, unknown>
-}
+type SubmitFormData = z.infer<typeof schema>
 
 interface PreInspectionSubmitPageProps {
   token: string
@@ -62,26 +54,16 @@ export function PreInspectionSubmitPage({
 
   const [confirmOpen, setConfirmOpen] = useState(false)
 
-  const schema = useDynamicFormSchema(
-    staticSchema,
-    inspection.pre_inspection_form_template?.schema
-  )
-
   const form = useForm<SubmitFormData>({
-    resolver: zodResolver(schema) as never,
-    defaultValues: { verdict: undefined, notes: '', form_data: {} },
+    resolver: zodResolver(schema),
+    defaultValues: { verdict: undefined, memo: '' },
   })
 
   const submitMutation = useMutation({
     mutationFn: (data: SubmitFormData) =>
       submitPublicInspection(token, {
-        verdict: data.verdict!,
-        notes: data.notes || null,
-        form_data: inspection.pre_inspection_form_template
-          ? data.form_data
-          : undefined,
-        form_template_version_id:
-          inspection.pre_inspection_form_template?.version_id ?? null,
+        verdict: data.verdict,
+        memo: data.memo || null,
       }),
     onError: () => setConfirmOpen(false),
   })
@@ -116,7 +98,8 @@ export function PreInspectionSubmitPage({
               <CardTitle>Vorkontrolle</CardTitle>
               <CardTitleIcon icon={ClipboardCheck} />
               <CardDescription>
-                Bitte fülle das folgende Formular aus und reiche es ein.
+                Prüfe die Angaben der Bewerber:in und halte dein Ergebnis fest.
+                Abweichungen notierst du in der Notiz.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -139,26 +122,45 @@ export function PreInspectionSubmitPage({
                   </InfoRow>
                 </div>
                 <div>
-                  <InfoRow label="Kontrolle für">
-                    {inspection.animal_type.title}
+                  <InfoRow label="Vorkontrolle für">
+                    {[
+                      inspection.animal.name,
+                      [inspection.animal.animal_type, inspection.animal.breed]
+                        .filter(Boolean)
+                        .join(', '),
+                    ]
+                      .filter(Boolean)
+                      .join(' – ')}
                   </InfoRow>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {inspection.pre_inspection_form_template && (
+          {inspection.case_file.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle>Kontrolldaten</CardTitle>
+                <CardTitle>Angaben der Bewerber:in</CardTitle>
+                <CardDescription>
+                  Stimmt etwas nicht, z. B. die Wohnfläche, beschreibe es in der
+                  Notiz. Die Vermittlung korrigiert die Angaben danach.
+                </CardDescription>
               </CardHeader>
-              <CardContent>
-                <DynamicFormFields
-                  schema={inspection.pre_inspection_form_template.schema}
-                  uiSchema={inspection.pre_inspection_form_template.ui_schema}
-                  control={form.control as unknown as Control<FieldValues>}
-                  namePrefix="form_data"
-                />
+              <CardContent className="space-y-6">
+                {inspection.case_file.map((group) => (
+                  <section key={group.id} className="space-y-3">
+                    <h3 className="font-heading text-lg">{group.title}</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {group.fields
+                        .filter((field) => field.type !== 'info')
+                        .map((field) => (
+                          <InfoRow key={field.key} label={field.label}>
+                            {formatValue(field, field.value)}
+                          </InfoRow>
+                        ))}
+                    </div>
+                  </section>
+                ))}
               </CardContent>
             </Card>
           )}
@@ -199,9 +201,10 @@ export function PreInspectionSubmitPage({
                 />
 
                 <Textarea
-                  name="notes"
+                  name="memo"
                   control={form.control}
-                  label="Notizen"
+                  label="Notiz"
+                  description="Nur für dich und die Vermittlung sichtbar – nie für die Bewerber:in."
                   rows={6}
                 />
               </FieldGroup>

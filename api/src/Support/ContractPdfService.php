@@ -11,13 +11,13 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use setasign\Fpdi\Fpdi;
 use setasign\Fpdi\PdfParser\StreamReader;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Taily\Enums\ContractSignerRole;
 use Taily\Models\Adoption;
 use Taily\Models\Animal;
 use Taily\Models\ContractSigner;
 use Taily\Models\ContractSigningAuditEvent;
 use Taily\Models\ContractSigningProcess;
+use Taily\Models\ContractTemplate;
 
 class ContractPdfService
 {
@@ -42,12 +42,10 @@ class ContractPdfService
      * appendSignaturePages() imports the very same way at completion, which
      * means nothing can be silently dropped between the document that was
      * signed and the document that is delivered.
-     *
-     * @throws NotFoundHttpException if the template key is unknown.
      */
-    public function generate(Adoption $adoption, string $templateKey): string
+    public function generate(Adoption $adoption, ContractTemplate $template): string
     {
-        $pdf = $this->render($this->renderBody($adoption, $templateKey));
+        $pdf = $this->render($this->renderBody($adoption, $template));
         $pdf->render();
         $this->stampPageNumbers($pdf->getDomPDF());
 
@@ -61,14 +59,10 @@ class ContractPdfService
      * `taily:preview-contract` command, which writes it to a file for
      * template debugging in a browser, where the edit-reload loop is a
      * fraction of a PDF render.
-     *
-     * @throws NotFoundHttpException if the template key is unknown.
      */
-    public function renderBody(Adoption $adoption, string $templateKey): string
+    public function renderBody(Adoption $adoption, ContractTemplate $template): string
     {
-        [$view, $data] = $this->resolveViewAndData($adoption, $templateKey);
-
-        return view($view, $data)->render();
+        return view('taily::contracts.configured', $this->viewData($adoption, $template))->render();
     }
 
     /**
@@ -114,7 +108,7 @@ class ContractPdfService
      * rewrite the document they already hold. The live record is the
      * fallback for a signer whose events predate those snapshots.
      *
-     * @return Collection<int, array{signer: ContractSigner, name: string|null, email: string|null, events: EloquentCollection<int, ContractSigningAuditEvent>}>
+     * @return Collection<int, array{signer: ContractSigner, name: string, email: string, events: EloquentCollection<int, ContractSigningAuditEvent>}>
      */
     private function signerSections(ContractSigningProcess $process): Collection
     {
@@ -125,8 +119,8 @@ class ContractPdfService
 
                 return [
                     'signer' => $signer,
-                    'name' => $events->first()?->subjectName() ?? $signer->person->full_name,
-                    'email' => $events->first()?->subjectEmail() ?? $signer->person->email,
+                    'name' => $events->first()?->subjectName() ?? $signer->name,
+                    'email' => $events->first()?->subjectEmail() ?? $signer->email,
                     'events' => $events,
                 ];
             })
@@ -197,30 +191,24 @@ class ContractPdfService
     }
 
     /**
-     * @return array{0: string, 1: array<string, mixed>}
+     * Every template renders through the one generic view (ADR-017); an
+     * installation that needs more overrides that view.
      *
-     * @throws NotFoundHttpException if the template key is unknown.
+     * @return array<string, mixed>
      */
-    private function resolveViewAndData(Adoption $adoption, string $templateKey): array
+    private function viewData(Adoption $adoption, ContractTemplate $template): array
     {
-        // Indexed directly (not via the "taily.contracts.{$templateKey}" dot
-        // path) so a configured key containing a dot, e.g. "regional.v1",
-        // resolves to itself instead of being parsed as a nested path.
-        $templates = config('taily.contracts', []);
-        $template = $templates[$templateKey] ?? null;
+        $adoption->load(['animal.animalType', 'animal.media', 'mediator.organization']);
 
-        abort_if($template === null, 404, 'Unbekannte Vertragsvorlage.');
+        $printout = app(ContractTemplateService::class)->printout($template, $adoption);
 
-        $adoption->load(['animal.animalType', 'animal.media', 'mediator.organization', 'applicant']);
-
-        return ["taily::{$template['view']}", [
+        return [
+            'template' => $template,
             'adoption' => $adoption,
-            'animal' => $adoption->animal,
-            'animalPhoto' => $this->animalPhotoDataUri($adoption->animal),
-            'applicant' => $adoption->applicant,
-            'mediator' => $adoption->mediator,
-            'organization' => $adoption->mediator?->organization,
-        ]];
+            'sections' => $printout['sections'],
+            'animalPhoto' => $printout['photo'] ? $this->animalPhotoDataUri($adoption->animal) : null,
+            'body' => app(ContractTemplateService::class)->bodyHtml($template),
+        ];
     }
 
     /**

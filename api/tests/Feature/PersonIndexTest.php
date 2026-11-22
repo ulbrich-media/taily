@@ -51,7 +51,8 @@ class PersonIndexTest extends TestCase
 
         return Adoption::create([
             'animal_id' => $animal->id,
-            'applicant_id' => $applicant->id,
+            ...Adoption::applicantDataFrom($applicant),
+            'applicant_person_id' => $applicant->id,
             'status' => $status,
         ]);
     }
@@ -170,12 +171,12 @@ class PersonIndexTest extends TestCase
         $pending = $this->person('Paul', 'Pending');
         $this->adopt($pending, 'pending');
         $done = $this->person('Dora', 'Done');
-        $this->adopt($done, 'done');
+        $doneAdoption = $this->adopt($done, 'done');
         $canceled = $this->person('Carl', 'Canceled');
         $this->adopt($canceled, 'canceled');
         $this->person('Nina', 'Nothing');
 
-        PreInspection::create(['person_id' => $done->id, 'animal_type_id' => $this->dogs->id]);
+        PreInspection::create(['adoption_id' => $doneAdoption->id]);
 
         $this->assertSame(['Canceled', 'Done', 'Pending', 'Running'], $this->names($this->list('filter[has_adoptions]=1')));
         $this->assertSame(['Nothing'], $this->names($this->list('filter[has_adoptions]=0')));

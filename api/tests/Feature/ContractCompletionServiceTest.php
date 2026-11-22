@@ -17,10 +17,12 @@ use Taily\Models\Person;
 use Taily\Support\ContractCompletionService;
 use Taily\Support\ContractPdfService;
 use Taily\Support\ContractSigningService;
+use Taily\Tests\Concerns\CreatesContractTemplates;
 use Taily\Tests\TestCase;
 
 class ContractCompletionServiceTest extends TestCase
 {
+    use CreatesContractTemplates;
     use RefreshDatabase;
 
     protected function setUp(): void
@@ -57,7 +59,8 @@ class ContractCompletionServiceTest extends TestCase
         return Adoption::create([
             'animal_id' => $animal->id,
             'mediator_id' => $mediator->id,
-            'applicant_id' => $applicant->id,
+            ...Adoption::applicantDataFrom($applicant),
+            'applicant_person_id' => $applicant->id,
             'contract_signed' => false,
         ]);
     }
@@ -69,7 +72,7 @@ class ContractCompletionServiceTest extends TestCase
         $pdfService = new ContractPdfService;
         $signingService = new ContractSigningService;
 
-        $process = $signingService->start($adoption, 'default', $pdfService->generate($adoption, 'default'));
+        $process = $signingService->start($adoption, 'default', $pdfService->generate($adoption, $this->contractTemplate($adoption)));
         $signingService->recordMediatorSignature($process, 'Maria Vermittlerin', true, true, true);
         $signingService->recordAdopterSignature($process, 'Anna Übernehmerin', true, true, true);
 

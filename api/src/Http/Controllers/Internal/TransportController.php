@@ -5,9 +5,12 @@ namespace Taily\Http\Controllers\Internal;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Taily\Enums\AdoptionStep;
 use Taily\Http\Controllers\Controller;
 use Taily\Http\Resources\TransportListResource;
+use Taily\Models\Adoption;
 use Taily\Models\Transport;
+use Taily\Support\CaseFile\CaseFileService;
 
 class TransportController extends Controller
 {
@@ -16,7 +19,7 @@ class TransportController extends Controller
         'adoptions',
         'adoptions.animal', 'adoptions.animal.animalType', 'adoptions.animal.media',
         'adoptions.mediator', 'adoptions.mediator.media',
-        'adoptions.applicant', 'adoptions.applicant.media',
+        'adoptions.applicantPerson', 'adoptions.applicantPerson.media',
         'adoptions.media',
     ];
 
@@ -44,6 +47,33 @@ class TransportController extends Controller
         }
 
         return TransportListResource::collection($query->get());
+    }
+
+    /**
+     * The transport-step checklist of every adoption on this run, so the
+     * mediator sees what is missing without opening each adoption
+     * (docs/features/transport.md#checklist).
+     */
+    public function checklist(Transport $transport, CaseFileService $caseFile): JsonResponse
+    {
+        $adoptions = $transport->adoptions()
+            ->with(['animal', 'mediator', 'fieldValues', 'requirements'])
+            ->get()
+            ->sortBy(fn (Adoption $adoption) => $adoption->animal?->name)
+            ->values();
+
+        $rows = $adoptions->map(fn (Adoption $adoption) => [
+            'adoption_id' => $adoption->id,
+            'animal' => ['id' => $adoption->animal_id, 'name' => $adoption->animal?->name],
+            'applicant' => ['person_id' => $adoption->applicant_person_id, 'full_name' => $adoption->applicant_full_name],
+            'checklist' => $caseFile->checklist($adoption, AdoptionStep::TRANSPORT)->toArray(),
+        ]);
+
+        return response()->json([
+            'complete' => $rows->filter(fn (array $row) => $row['checklist']['complete'])->count(),
+            'total' => $rows->count(),
+            'adoptions' => $rows,
+        ]);
     }
 
     public function store(Request $request): JsonResponse

@@ -4,8 +4,10 @@ namespace Taily\Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Taily\Enums\UserRole;
+use Taily\Models\Adoption;
 use Taily\Models\Animal;
 use Taily\Models\AnimalType;
+use Taily\Models\Person;
 use Taily\Models\TiervermittlungListing;
 use Taily\Models\User;
 use Taily\Tests\TestCase;
@@ -121,6 +123,42 @@ class ExportSettingsTest extends TestCase
 
         $this->assertStringNotContainsString('secret-key', $response->getContent());
         $this->assertStringStartsWith('2026-11-01', $response->json('status.last_delivery_at'));
+    }
+
+    public function test_the_status_lists_approved_animals_that_are_not_exported(): void
+    {
+        config(['taily.tiervermittlung.enabled' => true, 'taily.tiervermittlung.api_key' => 'secret-key']);
+
+        $type = AnimalType::create(['title' => 'Hund', 'tiervermittlung_species' => 'dog']);
+        $blocked = Animal::create(['animal_type_id' => $type->id, 'name' => 'Bello', 'gender' => 'male', 'do_publish' => true]);
+        Animal::create(['animal_type_id' => $type->id, 'name' => 'Luna', 'gender' => 'female']);
+        Animal::create(['animal_type_id' => $type->id, 'name' => 'Rex', 'gender' => 'male', 'do_publish' => true, 'is_deceased' => true]);
+        $adopted = Animal::create(['animal_type_id' => $type->id, 'name' => 'Max', 'gender' => 'male', 'do_publish' => true]);
+        $applicant = Person::create(['first_name' => 'Anna', 'last_name' => 'Adopter', 'email' => 'anna@example.com']);
+        Adoption::create(['animal_id' => $adopted->id, 'applicant_id' => $applicant->id, 'status' => 'done']);
+
+        $this->actingAs($this->user(UserRole::USER))
+            ->getJson(self::URL)
+            ->assertOk()
+            ->assertJsonCount(1, 'status.not_exported')
+            ->assertJsonPath('status.not_exported.0.animal_id', $blocked->id)
+            ->assertJsonPath('status.not_exported.0.animal_type_id', $type->id)
+            ->assertJsonPath('status.not_exported.0.name', 'Bello')
+            ->assertJsonPath('status.not_exported.0.reasons.0', 'Es gibt keinen Beschreibungstext.');
+    }
+
+    public function test_nothing_is_listed_as_not_exported_while_the_export_is_inactive(): void
+    {
+        $type = AnimalType::create(['title' => 'Hund', 'tiervermittlung_species' => 'dog']);
+        Animal::create(['animal_type_id' => $type->id, 'name' => 'Bello', 'gender' => 'male', 'do_publish' => true]);
+
+        config(['taily.tiervermittlung.enabled' => false, 'taily.tiervermittlung.api_key' => 'secret-key']);
+        $this->actingAs($this->user(UserRole::USER))->getJson(self::URL)
+            ->assertJsonPath('status.not_exported', []);
+
+        config(['taily.tiervermittlung.enabled' => true, 'taily.tiervermittlung.api_key' => '']);
+        $this->actingAs($this->user(UserRole::USER))->getJson(self::URL)
+            ->assertJsonPath('status.not_exported', []);
     }
 
     public function test_the_status_without_configuration(): void

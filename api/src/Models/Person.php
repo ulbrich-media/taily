@@ -178,11 +178,28 @@ class Person extends Model implements HasMedia
     }
 
     /**
-     * Get adoptions where this person is the applicant.
+     * Adoptions that reference this person as applicant. Adoptions that only
+     * share the email are found with Adoption::ofApplicant() (ADR-018).
      */
     public function adoptionsAsApplicant(): HasMany
     {
-        return $this->hasMany(Adoption::class, 'applicant_id');
+        return $this->hasMany(Adoption::class, 'applicant_person_id');
+    }
+
+    /**
+     * Adoptions of the person as applicant, for filters on the people list:
+     * referenced, or with the person's email once it is confirmed.
+     */
+    private static function applicantAdoptions(): Closure
+    {
+        return fn ($sub) => $sub->selectRaw('1')
+            ->from('adoptions')
+            ->where(fn ($of) => $of
+                ->whereColumn('adoptions.applicant_person_id', 'people.id')
+                ->orWhere(fn ($email) => $email
+                    ->where('people.email', '!=', '')
+                    ->where('adoptions.status', '!=', 'unconfirmed')
+                    ->whereRaw('adoptions.applicant_email = LOWER(TRIM(people.email))')));
     }
 
     /**
@@ -249,14 +266,16 @@ class Person extends Model implements HasMedia
      */
     public function scopeWhereHasAdoptions(Builder $query, bool $has = true): void
     {
-        $has ? $query->whereHas('adoptionsAsApplicant') : $query->whereDoesntHave('adoptionsAsApplicant');
+        $has ? $query->whereExists(self::applicantAdoptions()) : $query->whereNotExists(self::applicantAdoptions());
     }
 
     public function scopeWhereHasPreInspections(Builder $query, bool $has = true): void
     {
-        $inspections = fn ($sub) => $sub->selectRaw('1')
-            ->from('pre_inspections')
-            ->whereColumn('pre_inspections.person_id', 'people.id');
+        $adoptions = self::applicantAdoptions();
+        $inspections = fn ($sub) => $adoptions($sub)
+            ->whereExists(fn ($inspection) => $inspection->selectRaw('1')
+                ->from('pre_inspections')
+                ->whereColumn('pre_inspections.adoption_id', 'adoptions.id'));
 
         $has ? $query->whereExists($inspections) : $query->whereNotExists($inspections);
     }
@@ -277,7 +296,8 @@ class Person extends Model implements HasMedia
             }
         }
 
-        $query->whereHas('adoptionsAsApplicant', fn (Builder $adoption) => $adoption->whereIn('adoptions.status', $states));
+        $adoptions = self::applicantAdoptions();
+        $query->whereExists(fn ($sub) => $adoptions($sub)->whereIn('adoptions.status', $states));
     }
 
     /**

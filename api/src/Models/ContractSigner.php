@@ -15,9 +15,16 @@ class ContractSigner extends Model
 {
     use HasAccessToken, HasUuids;
 
+    protected $attributes = [
+        'name' => '',
+        'email' => '',
+    ];
+
     protected $fillable = [
         'signing_process_id',
         'person_id',
+        'name',
+        'email',
         'role',
         'signed_at',
         'typed_name',

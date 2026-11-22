@@ -24,8 +24,6 @@ const dogs = {
   id: 'type-1',
   title: 'Hund',
   tiervermittlung_species: 'dog',
-  pre_inspection_form_template_id: null,
-  pre_inspection_form_template: null,
   created_at: '',
   updated_at: '',
 } satisfies AnimalTypeResource

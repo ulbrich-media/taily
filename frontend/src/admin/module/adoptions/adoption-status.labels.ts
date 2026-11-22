@@ -1,6 +1,7 @@
 import type { AdoptionStatus, AdoptionStepStatus } from '@/api/types/adoptions'
 
 export const ADOPTION_STATUS_LABELS: Record<AdoptionStatus, string> = {
+  unconfirmed: 'E-Mail nicht bestätigt',
   pending: 'Zu prüfen',
   in_progress: 'In Bearbeitung',
   canceled: 'Abgebrochen',

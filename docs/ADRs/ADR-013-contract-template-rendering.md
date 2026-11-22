@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Accepted — template authoring (Blade views per template, `config('taily.contracts')`) is superseded by [ADR-017](ADR-017-contract-templates-as-configuration.md). PDF rendering, the frozen document, the FPDI appendix and the shared layout remain valid.
 
 ## Context
 

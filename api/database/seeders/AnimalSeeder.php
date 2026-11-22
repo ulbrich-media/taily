@@ -78,7 +78,7 @@ class AnimalSeeder extends Seeder
     {
         $intakeDate = $faker->dateTimeBetween('-3 years', '-1 month');
         $isDeceased = $faker->boolean(5);
-        $isBoardingAnimal = $faker->boolean(20);
+        $isBoardingAnimal = $faker->boolean(5);
 
         return Animal::create([
             // Tab 1: Basic & Description

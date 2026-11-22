@@ -5,6 +5,7 @@ namespace Taily\Http\Resources;
 use Illuminate\Http\Request;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Taily\Models\TiervermittlungListing;
+use Taily\Support\FrontendUriBuilder;
 use Taily\Support\Tiervermittlung\AnimalPayloadMapper;
 use Taily\Support\Tiervermittlung\TiervermittlungExport;
 
@@ -13,6 +14,9 @@ class AnimalDetailResource extends AnimalBaseResource
     public function toArray(Request $request): array
     {
         return array_merge(parent::toArray($request), [
+            // Taily's own application form, shared by copying this link (not the
+            // configurable external `application_url`).
+            'public_application_url' => FrontendUriBuilder::application($this->resource->id),
             'pictures' => $this->resource->when(
                 $this->resource->relationLoaded('media'),
                 fn () => $this->resource->getMedia('pictures')
@@ -36,7 +40,7 @@ class AnimalDetailResource extends AnimalBaseResource
                     ->all(),
             ),
             'tiervermittlung' => $this->when(
-                $this->resource->relationLoaded('tiervermittlungListing') && TiervermittlungExport::isEnabled(),
+                $this->resource->relationLoaded('tiervermittlungListing') && TiervermittlungExport::isActive(),
                 fn () => $this->tiervermittlung(),
             ),
         ]);
@@ -44,15 +48,20 @@ class AnimalDetailResource extends AnimalBaseResource
 
     /**
      * Whether the animal is exported to Tiervermittlung.de and what the
-     * platform answered on the last delivery. Absent when the export is off.
+     * platform answered on the last delivery. Absent when the export is not
+     * active (disabled or no API key).
      */
     private function tiervermittlung(): array
     {
         /** @var TiervermittlungListing|null $listing */
         $listing = $this->resource->tiervermittlungListing;
 
+        $mapper = app(AnimalPayloadMapper::class);
+
         return [
-            'exclusion_reasons' => app(AnimalPayloadMapper::class)->exclusionReasons($this->resource),
+            'exclusion_reasons' => $mapper->exclusionReasons($this->resource),
+            'blocked' => $mapper->isBlocked($this->resource),
+            'intentionally_excluded' => $mapper->isIntentionallyExcluded($this->resource),
             'listing' => $listing ? [
                 'status' => $listing->status,
                 'tv_id' => $listing->tv_id,

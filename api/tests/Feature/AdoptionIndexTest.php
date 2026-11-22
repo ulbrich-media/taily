@@ -8,6 +8,8 @@ use Taily\Enums\ContractSigningStatus;
 use Taily\Models\Adoption;
 use Taily\Models\Animal;
 use Taily\Models\AnimalType;
+use Taily\Models\FieldDefinition;
+use Taily\Models\FieldGroup;
 use Taily\Models\Person;
 use Taily\Models\PreInspection;
 use Taily\Models\Transport;
@@ -52,7 +54,8 @@ class AdoptionIndexTest extends TestCase
     {
         return Adoption::create(array_merge([
             'animal_id' => ($animal ?? $this->animal('Bello'))->id,
-            'applicant_id' => ($applicant ?? $this->person('Anna', 'Adopter'))->id,
+            ...Adoption::applicantDataFrom($__applicant = $applicant ?? $this->person('Anna', 'Adopter')),
+            'applicant_person_id' => $__applicant->id,
             'mediator_id' => $mediator?->id,
         ], $attributes));
     }
@@ -273,20 +276,40 @@ class AdoptionIndexTest extends TestCase
         );
     }
 
-    public function test_pre_inspection_status_only_considers_the_animals_type_of_the_applicants_inspections(): void
+    /**
+     * The step belongs to the adoption: another adoption's pre-inspection of
+     * the same applicant doesn't start it, a requested home video does, and
+     * only the mediator's confirmation finishes it.
+     */
+    public function test_pre_inspection_status_is_closed_by_the_mediators_confirmation(): void
     {
-        $cats = AnimalType::create(['title' => 'Katze']);
         $applicant = $this->person('Anna', 'Adopter');
-        $dogAdoption = $this->adoption(animal: $this->animal('Bello'), applicant: $applicant);
+        $earlier = $this->adoption(animal: $this->animal('Rex'), applicant: $applicant);
+        $adoption = $this->adoption(animal: $this->animal('Bello'), applicant: $applicant);
 
-        $inspection = PreInspection::create(['person_id' => $applicant->id, 'animal_type_id' => $cats->id]);
+        PreInspection::create(['adoption_id' => $earlier->id])->forceFill(['verdict' => 'approved', 'submitted_at' => now()])->save();
 
-        $this->assertSame('not_started', $dogAdoption->fresh()->pre_inspection_status);
-        $this->assertSame([$dogAdoption->id], $this->ids($this->list('filter[pre_inspection_status]=not_started')));
-        $this->assertSame([], $this->ids($this->list('filter[pre_inspection_status]=pending')));
+        // The earlier adoption's own pre-inspection is under way, unconfirmed.
+        $this->assertSame('pending', $earlier->fresh()->pre_inspection_status);
+        $this->assertSame('not_started', $adoption->fresh()->pre_inspection_status);
+        $this->assertSame([$adoption->id], $this->ids($this->list('filter[pre_inspection_status]=not_started')));
 
-        $inspection->forceFill(['submitted_at' => now()])->save();
-        $this->assertSame([$dogAdoption->id], $this->ids($this->list('filter[pre_inspection_status]=not_started')));
+        $group = FieldGroup::create(['animal_type_id' => $this->dogs->id, 'title' => 'Wohnsituation', 'position' => 0]);
+        $video = FieldDefinition::create([
+            'animal_type_id' => $this->dogs->id,
+            'key' => 'home_video', 'field_group_id' => $group->id, 'position' => 0, 'type' => 'video',
+            'label' => 'Hausvideo', 'collect_at' => 'application',
+        ]);
+        $adoption->requirements()->create(['field_definition_id' => $video->id, 'required_for' => 'pre_inspection']);
+
+        $this->assertSame('pending', $adoption->fresh()->pre_inspection_status);
+        $this->assertEqualsCanonicalizing([$earlier->id, $adoption->id], $this->ids($this->list('filter[pre_inspection_status]=pending')));
+
+        $adoption->update(['pre_inspection_confirmed_at' => now()]);
+
+        $this->assertSame('finished', $adoption->fresh()->pre_inspection_status);
+        $this->assertSame([$adoption->id], $this->ids($this->list('filter[pre_inspection_status]=finished')));
+        $this->assertSame([$earlier->id], $this->ids($this->list('filter[pre_inspection_status]=pending')));
     }
 
     public function test_rejects_invalid_query_parameters(): void
@@ -315,17 +338,17 @@ class AdoptionIndexTest extends TestCase
         // Pre-inspection pending (one submitted, one not), contract pending.
         $applicant = $this->person('Pia', 'Pending');
         $pending = $this->adoption(applicant: $applicant);
-        PreInspection::create(['person_id' => $applicant->id, 'animal_type_id' => $this->dogs->id])
-            ->forceFill(['submitted_at' => now()])->save();
-        PreInspection::create(['person_id' => $applicant->id, 'animal_type_id' => $this->dogs->id]);
+        PreInspection::create(['adoption_id' => $pending->id])
+            ->forceFill(['verdict' => 'approved', 'submitted_at' => now()])->save();
+        PreInspection::create(['adoption_id' => $pending->id]);
         $this->signingProcess($pending, ContractSigningStatus::AWAITING_ADOPTER_SIGNATURE);
         $adoptions[] = $pending;
 
         // Pre-inspection finished, contract signed, transport assigned (pending), handed over.
         $applicant = $this->person('Fiona', 'Finished');
-        $finished = $this->adoption(['contract_signed' => true, 'handed_over_at' => now()], applicant: $applicant);
-        PreInspection::create(['person_id' => $applicant->id, 'animal_type_id' => $this->dogs->id])
-            ->forceFill(['submitted_at' => now()])->save();
+        $finished = $this->adoption(['contract_signed' => true, 'handed_over_at' => now(), 'pre_inspection_confirmed_at' => now()], applicant: $applicant);
+        PreInspection::create(['adoption_id' => $finished->id])
+            ->forceFill(['verdict' => 'approved', 'submitted_at' => now()])->save();
         $finished->update(['transport_id' => Transport::create(['name' => 'Fahrt'])->id]);
         $adoptions[] = $finished;
 

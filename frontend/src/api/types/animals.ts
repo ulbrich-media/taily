@@ -82,6 +82,8 @@ export interface AnimalListResource extends AnimalBaseResource {
 // Returned by GET /animals/:id (show), POST /animals (store), PUT /animals/:id (update).
 // All relations are loaded.
 export interface AnimalDetailResource extends AnimalBaseResource {
+  // Taily's own application form for this animal, shared by copying the link.
+  public_application_url: string
   animal_type: AnimalTypeResource
   assigned_agent: PersonBaseResource | null
   owner: PersonBaseResource | null
@@ -110,5 +112,9 @@ export interface TiervermittlungListing {
 export interface AnimalTiervermittlungState {
   // Empty when the animal is exported.
   exclusion_reasons: string[]
+  // Approved for publishing but held back for a reason somebody can fix.
+  blocked: boolean
+  // Deceased or adopted: left out on purpose, the listing just goes away.
+  intentionally_excluded: boolean
   listing: TiervermittlungListing | null
 }

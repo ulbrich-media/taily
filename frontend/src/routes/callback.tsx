@@ -6,6 +6,8 @@ const CallbackAction = {
   Inspect: 'inspect',
   ContractSign: 'contract_sign',
   PasswordReset: 'password_reset',
+  ApplicationConfirm: 'application_confirm',
+  ApplicantLogin: 'applicant_login',
 } as const
 
 type CallbackAction = (typeof CallbackAction)[keyof typeof CallbackAction]
@@ -40,6 +42,16 @@ function CallbackPage() {
         )
       }
       return <Navigate to="/admin/invitation/$token" params={{ token }} />
+
+    case CallbackAction.ApplicationConfirm:
+      if (!token) return <Navigate to="/adopter" replace />
+      return (
+        <Navigate to="/adopter/confirm/$token" params={{ token }} replace />
+      )
+
+    case CallbackAction.ApplicantLogin:
+      if (!token) return <Navigate to="/adopter" replace />
+      return <Navigate to="/adopter/login/$token" params={{ token }} replace />
 
     case CallbackAction.Inspect:
       if (!token) {

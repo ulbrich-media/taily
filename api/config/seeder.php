@@ -66,7 +66,6 @@ return [
     |                               adoptions in total than a run holds, which
     |                               leaves a single smaller run
     |   empty_transports            upcoming runs with nothing booked on them
-    |   standalone_pre_inspections  inspections without an adoption behind them
     |   media                       percentage of records that get a picture —
     |                               not everything has one in practice, and
     |                               attaching media runs the image conversions
@@ -85,7 +84,6 @@ return [
             'adoption_stages' => AdoptionSeeder::DEFAULT_STAGE_WEIGHTS,
             'adoptions_per_transport' => [4, 15],
             'empty_transports' => 1,
-            'standalone_pre_inspections' => 1,
             'media' => ['people' => 20, 'animals' => 80],
         ],
 
@@ -98,7 +96,6 @@ return [
             'adoption_stages' => AdoptionSeeder::DEFAULT_STAGE_WEIGHTS,
             'adoptions_per_transport' => [4, 15],
             'empty_transports' => 2,
-            'standalone_pre_inspections' => 4,
             'media' => ['people' => 20, 'animals' => 80],
         ],
 
@@ -114,7 +111,6 @@ return [
             'adoption_stages' => AdoptionSeeder::DEFAULT_STAGE_WEIGHTS,
             'adoptions_per_transport' => [4, 15],
             'empty_transports' => 20,
-            'standalone_pre_inspections' => 200,
             'media' => ['people' => 0, 'animals' => 0],
         ],
 

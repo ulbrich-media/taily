@@ -18,10 +18,12 @@ use Taily\Models\ContractSigningProcess;
 use Taily\Models\Person;
 use Taily\Models\User;
 use Taily\Support\ContractSigningService;
+use Taily\Tests\Concerns\CreatesContractTemplates;
 use Taily\Tests\TestCase;
 
 class ContractSigningControllerTest extends TestCase
 {
+    use CreatesContractTemplates;
     use RefreshDatabase;
 
     protected function setUp(): void
@@ -43,6 +45,7 @@ class ContractSigningControllerTest extends TestCase
             'animal_type_id' => $animalType->id,
             'name' => 'Bello',
             'gender' => 'male',
+            'animal_number' => 'H-2026-001',
         ]);
 
         $mediatorId = null;
@@ -63,7 +66,8 @@ class ContractSigningControllerTest extends TestCase
         return Adoption::create([
             'animal_id' => $animal->id,
             'mediator_id' => $mediatorId,
-            'applicant_id' => $applicant->id,
+            ...Adoption::applicantDataFrom($applicant),
+            'applicant_person_id' => $applicant->id,
             'contract_signed' => $contractSigned,
         ]);
     }
@@ -85,7 +89,7 @@ class ContractSigningControllerTest extends TestCase
 
         $response = $this->actingAs($user)
             ->withHeader('referer', 'http://localhost')
-            ->postJson("/internal/adoptions/{$adoption->id}/contract/signing", ['template' => 'default']);
+            ->postJson("/internal/adoptions/{$adoption->id}/contract/signing", ['template' => $this->contractTemplate($adoption)->id]);
 
         $response->assertCreated();
         $this->assertSame(
@@ -112,7 +116,7 @@ class ContractSigningControllerTest extends TestCase
 
         $response = $this->actingAs($user)
             ->withHeader('referer', 'http://localhost')
-            ->postJson("/internal/adoptions/{$adoption->id}/contract/signing", ['template' => 'default']);
+            ->postJson("/internal/adoptions/{$adoption->id}/contract/signing", ['template' => $this->contractTemplate($adoption)->id]);
 
         $response->assertCreated();
         $this->assertSame('pending', $response->json('data.contract_status'));
@@ -134,7 +138,7 @@ class ContractSigningControllerTest extends TestCase
 
         $response = $this->actingAs($user)
             ->withHeader('referer', 'http://localhost')
-            ->postJson("/internal/adoptions/{$adoption->id}/contract/signing", ['template' => 'default']);
+            ->postJson("/internal/adoptions/{$adoption->id}/contract/signing", ['template' => $this->contractTemplate($adoption)->id]);
 
         $response->assertStatus(422);
         Mail::assertNothingSent();
@@ -149,7 +153,7 @@ class ContractSigningControllerTest extends TestCase
 
         $response = $this->actingAs($user)
             ->withHeader('referer', 'http://localhost')
-            ->postJson("/internal/adoptions/{$adoption->id}/contract/signing", ['template' => 'default']);
+            ->postJson("/internal/adoptions/{$adoption->id}/contract/signing", ['template' => $this->contractTemplate($adoption)->id]);
 
         $response->assertStatus(422);
         Mail::assertNothingSent();
@@ -164,7 +168,7 @@ class ContractSigningControllerTest extends TestCase
 
         $response = $this->actingAs($user)
             ->withHeader('referer', 'http://localhost')
-            ->postJson("/internal/adoptions/{$adoption->id}/contract/signing", ['template' => 'default']);
+            ->postJson("/internal/adoptions/{$adoption->id}/contract/signing", ['template' => $this->contractTemplate($adoption)->id]);
 
         $response->assertStatus(422);
         Mail::assertNothingSent();
@@ -179,7 +183,7 @@ class ContractSigningControllerTest extends TestCase
 
         $response = $this->actingAs($user)
             ->withHeader('referer', 'http://localhost')
-            ->postJson("/internal/adoptions/{$adoption->id}/contract/signing", ['template' => 'default']);
+            ->postJson("/internal/adoptions/{$adoption->id}/contract/signing", ['template' => $this->contractTemplate($adoption)->id]);
 
         $response->assertStatus(422);
         Mail::assertNothingSent();
@@ -206,12 +210,12 @@ class ContractSigningControllerTest extends TestCase
 
         $this->actingAs($user)
             ->withHeader('referer', 'http://localhost')
-            ->postJson("/internal/adoptions/{$adoption->id}/contract/signing", ['template' => 'default'])
+            ->postJson("/internal/adoptions/{$adoption->id}/contract/signing", ['template' => $this->contractTemplate($adoption)->id])
             ->assertCreated();
 
         $response = $this->actingAs($user)
             ->withHeader('referer', 'http://localhost')
-            ->postJson("/internal/adoptions/{$adoption->id}/contract/signing", ['template' => 'default']);
+            ->postJson("/internal/adoptions/{$adoption->id}/contract/signing", ['template' => $this->contractTemplate($adoption)->id]);
 
         $response->assertStatus(422);
     }
@@ -222,7 +226,7 @@ class ContractSigningControllerTest extends TestCase
 
         $response = $this
             ->withHeader('referer', 'http://localhost')
-            ->postJson("/internal/adoptions/{$adoption->id}/contract/signing", ['template' => 'default']);
+            ->postJson("/internal/adoptions/{$adoption->id}/contract/signing", ['template' => $this->contractTemplate($adoption)->id]);
 
         $response->assertStatus(401);
     }
@@ -231,7 +235,7 @@ class ContractSigningControllerTest extends TestCase
     {
         $this->actingAs($user)
             ->withHeader('referer', 'http://localhost')
-            ->postJson("/internal/adoptions/{$adoption->id}/contract/signing", ['template' => 'default'])
+            ->postJson("/internal/adoptions/{$adoption->id}/contract/signing", ['template' => $this->contractTemplate($adoption)->id])
             ->assertCreated();
 
         return $adoption->latestContractSigningProcess()->firstOrFail();

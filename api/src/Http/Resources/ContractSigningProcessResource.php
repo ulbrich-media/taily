@@ -25,7 +25,7 @@ class ContractSigningProcessResource extends JsonResource
                     ? $signer->latestInviteEvent?->occurred_at
                     : null,
                 'signed_at' => $signer->signed_at,
-                'full_name' => $signer->relationLoaded('person') ? $signer->person->full_name : null,
+                'full_name' => $signer->name,
                 'expires_at' => $signer->activeToken()?->expires_at,
             ])->values()),
         ];

@@ -59,7 +59,7 @@ class ContractSigningAuditEvent extends Model
     public function subjectName(): ?string
     {
         return self::present(match ($this->event_type->subject()) {
-            ContractSigningEventParty::SIGNER => $this->metadata['person_name'] ?? $this->signer?->person?->full_name,
+            ContractSigningEventParty::SIGNER => $this->metadata['person_name'] ?? $this->signer?->name,
             ContractSigningEventParty::ACTOR => $this->metadata['actor_name'] ?? $this->actor?->name,
             ContractSigningEventParty::SYSTEM => null,
         });
@@ -73,7 +73,7 @@ class ContractSigningAuditEvent extends Model
     public function subjectEmail(): ?string
     {
         return self::present(match ($this->event_type->subject()) {
-            ContractSigningEventParty::SIGNER => $this->metadata['person_email'] ?? $this->signer?->person?->email,
+            ContractSigningEventParty::SIGNER => $this->metadata['person_email'] ?? $this->signer?->email,
             ContractSigningEventParty::ACTOR => $this->metadata['actor_email'] ?? $this->actor?->email,
             ContractSigningEventParty::SYSTEM => null,
         });
