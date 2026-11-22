@@ -37,7 +37,7 @@ Follow-up inspections · Social media manager · Applicant portal
 
 ## Technology Stack
 
-- **Backend**: Laravel 12 (PHP 8.3)
+- **Backend**: Laravel 13 (PHP 8.3)
 - **Frontend**: React with Shadcn/ui components, TanStack Query, TanStack Router, react-hook-form, zod
 
 See [docs/ADRs](docs/ADRs) for architecture decisions.

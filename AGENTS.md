@@ -19,7 +19,7 @@ Taily system built with Laravel. Supports the adoption process from applicant as
 
 ## Key Technical Decisions
 
-1. **Laravel 12** with Blade templates (ADR-001, ADR-002)
+1. **Laravel 13** with Blade templates (ADR-001, ADR-002)
 2. **TailwindCSS + Shadcn/ui** for styling
 3. **Laravel Fortify** for authentication (ADR-008)
 4. **DDEV** runs in `api/` folder only
