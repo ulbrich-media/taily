@@ -36,7 +36,7 @@ class FieldCatalogueTest extends TestCase
 
         $this->assertSame(['Über dich'], array_column($catalogue->json('groups'), 'title'));
         $this->assertSame(
-            ['first_name', 'last_name', 'email', 'phone', 'mobile', 'date_of_birth', 'address'],
+            ['first_name', 'last_name', 'email', 'phone', 'date_of_birth', 'address'],
             array_column($catalogue->json('groups.0.fields'), 'key'),
         );
         $this->assertTrue($catalogue->json('groups.0.fields.0.built_in'));
@@ -207,7 +207,7 @@ class FieldCatalogueTest extends TestCase
 
         $catFields = FieldDefinition::where('animal_type_id', $cats->id)->pluck('condition', 'key');
         $this->assertSame(['field' => 'has_garden', 'equals' => true], $catFields['garden_size']);
-        $this->assertSame(9, $catFields->count());
+        $this->assertSame(8, $catFields->count());
 
         $adoption = Adoption::create([
             'animal_id' => Animal::create(['animal_type_id' => $cats->id, 'name' => 'Mimi', 'gender' => 'female'])->id,

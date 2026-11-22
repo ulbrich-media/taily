@@ -33,7 +33,6 @@ class FieldCatalogue
         ['key' => 'last_name', 'label' => 'Nachname', 'type' => 'text', 'required_for' => 'application'],
         ['key' => 'email', 'label' => 'E-Mail', 'type' => 'email', 'required_for' => 'application'],
         ['key' => 'phone', 'label' => 'Telefon', 'type' => 'phone', 'required_for' => null],
-        ['key' => 'mobile', 'label' => 'Mobil', 'type' => 'phone', 'required_for' => null],
         ['key' => 'date_of_birth', 'label' => 'Geburtsdatum', 'type' => 'date', 'required_for' => 'contract'],
         ['key' => 'address', 'label' => 'Anschrift', 'type' => 'address', 'required_for' => 'contract'],
     ];

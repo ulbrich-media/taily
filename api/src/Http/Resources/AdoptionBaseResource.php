@@ -61,7 +61,6 @@ class AdoptionBaseResource extends JsonResource
             'full_name' => $adoption->applicant_full_name,
             'email' => $adoption->applicant_email,
             'phone' => $adoption->applicant_phone,
-            'mobile' => $adoption->applicant_mobile,
             'date_of_birth' => $adoption->applicant_date_of_birth?->format('Y-m-d'),
             'street_line' => $adoption->applicant_street_line,
             'street_line_additional' => $adoption->applicant_street_line_additional,

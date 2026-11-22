@@ -57,7 +57,6 @@ export interface AdoptionApplicant {
   // Stored lowercased; links the applicant's adoptions.
   email: string
   phone: string
-  mobile: string
   date_of_birth: string | null
   street_line: string
   street_line_additional: string

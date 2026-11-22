@@ -29,7 +29,7 @@ class Adoption extends Model implements HasMedia
      * Built-in Case File fields name these in `applicant_attribute`; the
      * address parts together form the `address` field.
      */
-    public const APPLICANT_ATTRIBUTES = ['first_name', 'last_name', 'email', 'phone', 'mobile', 'date_of_birth'];
+    public const APPLICANT_ATTRIBUTES = ['first_name', 'last_name', 'email', 'phone', 'date_of_birth'];
 
     public const ADDRESS_PARTS = ['street_line', 'street_line_additional', 'postal_code', 'city', 'country_code'];
 
@@ -38,7 +38,6 @@ class Adoption extends Model implements HasMedia
         'applicant_last_name' => '',
         'applicant_email' => '',
         'applicant_phone' => '',
-        'applicant_mobile' => '',
         'applicant_street_line' => '',
         'applicant_street_line_additional' => '',
         'applicant_postal_code' => '',
@@ -57,7 +56,6 @@ class Adoption extends Model implements HasMedia
         'applicant_last_name',
         'applicant_email',
         'applicant_phone',
-        'applicant_mobile',
         'applicant_date_of_birth',
         'applicant_street_line',
         'applicant_street_line_additional',
@@ -139,6 +137,11 @@ class Adoption extends Model implements HasMedia
 
         foreach ([...self::APPLICANT_ATTRIBUTES, ...self::ADDRESS_PARTS] as $attribute) {
             $data["applicant_{$attribute}"] = $person->{$attribute} ?? ($attribute === 'date_of_birth' ? null : '');
+        }
+
+        // An applicant has one phone number; a Person may only have a mobile one.
+        if ($data['applicant_phone'] === '') {
+            $data['applicant_phone'] = $person->mobile ?? '';
         }
 
         return $data;
