@@ -47,7 +47,8 @@ class ProcessContractSigningRemindersTest extends TestCase
         return Adoption::create([
             'animal_id' => $animal->id,
             'mediator_id' => $mediator->id,
-            'applicant_id' => $applicant->id,
+            ...Adoption::applicantDataFrom($applicant),
+            'applicant_person_id' => $applicant->id,
             'contract_signed' => false,
         ]);
     }
@@ -124,7 +125,9 @@ class ProcessContractSigningRemindersTest extends TestCase
 
         $process = $this->startProcessWithMediatorTokenExpiringIn(-1);
         $secondSigner = $process->signers()->create([
-            'person_id' => $process->adoption->applicant_id,
+            'person_id' => $process->adoption->applicant_person_id,
+            'name' => $process->adoption->applicant_full_name,
+            'email' => $process->adoption->applicant_email,
             'role' => ContractSignerRole::ADOPTER,
         ]);
         $secondSigner->issueToken(now()->subDay());

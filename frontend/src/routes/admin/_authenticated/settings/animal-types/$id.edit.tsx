@@ -3,7 +3,6 @@ import { useBreadcrumbs } from '@/router/useBreadcrumbs'
 import { BreadcrumbNav } from '@/router/BreadcrumbNav'
 import { queryClient } from '@/lib/queryClient'
 import { listAnimalTypesQuery } from '@/admin/module/animal-types/api/queries'
-import { listFormTemplatesQuery } from '@/admin/module/form-templates/api/queries'
 import { AnimalTypeEditPage } from '@/admin/module/animal-types/pages/AnimalTypeEditPage'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { Route as AnimalTypesRoute } from '@/routes/admin/_authenticated/settings/animal-types/route'
@@ -18,10 +17,8 @@ export const Route = createFileRoute(
     }
   },
   loader: async ({ params }) => {
-    const [animalTypesData] = await Promise.all([
-      queryClient.ensureQueryData(listAnimalTypesQuery),
-      queryClient.ensureQueryData(listFormTemplatesQuery),
-    ])
+    const animalTypesData =
+      await queryClient.ensureQueryData(listAnimalTypesQuery)
 
     const animalType = animalTypesData.data.find((at) => at.id === params.id)
 
@@ -41,7 +38,6 @@ function RouteComponent() {
   const { id } = Route.useParams()
   const navigate = AnimalTypesRoute.useNavigate()
   const { data: animalTypesData } = useSuspenseQuery(listAnimalTypesQuery)
-  const { data: formTemplatesData } = useSuspenseQuery(listFormTemplatesQuery)
   const animalType = animalTypesData.data.find((at) => at.id === id)!
 
   const handleClose = () => {
@@ -51,7 +47,6 @@ function RouteComponent() {
   return (
     <AnimalTypeEditPage
       animalType={animalType}
-      formTemplates={formTemplatesData.data}
       onClose={handleClose}
       breadcrumb={<BreadcrumbNav items={breadcrumbs} size="sm" />}
     />

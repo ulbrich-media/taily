@@ -52,7 +52,8 @@ class AdoptionContractUpdateTest extends TestCase
         return Adoption::create([
             'animal_id' => $animal->id,
             'mediator_id' => $mediator->id,
-            'applicant_id' => $applicant->id,
+            ...Adoption::applicantDataFrom($applicant),
+            'applicant_person_id' => $applicant->id,
             'contract_signed' => $contractSigned,
         ]);
     }
@@ -66,7 +67,7 @@ class AdoptionContractUpdateTest extends TestCase
         ]);
 
         $process->signers()->create(['person_id' => $adoption->mediator_id, 'role' => ContractSignerRole::MEDIATOR]);
-        $process->signers()->create(['person_id' => $adoption->applicant_id, 'role' => ContractSignerRole::ADOPTER]);
+        $process->signers()->create(['person_id' => $adoption->applicant_person_id, 'role' => ContractSignerRole::ADOPTER]);
 
         return $process;
     }

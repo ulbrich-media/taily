@@ -6,40 +6,32 @@ export const preInspectionQueryKeys = {
   list: ['pre-inspections', 'list'] as const,
   listByPerson: (personId: string) =>
     ['pre-inspections', 'list', 'person', personId] as const,
-  listByPersonAndAnimalType: (personId: string, animalTypeId: string) =>
-    [
-      'pre-inspections',
-      'list',
-      'person',
-      personId,
-      'animal-type',
-      animalTypeId,
-    ] as const,
+  listRelated: (adoptionId: string) =>
+    ['pre-inspections', 'list', 'related', adoptionId] as const,
+  listByAdoption: (adoptionId: string) =>
+    ['pre-inspections', 'list', 'adoption', adoptionId] as const,
   detail: (id: string) => ['pre-inspections', 'detail', id] as const,
 }
 
-export const listPreInspectionsQuery = queryOptions({
-  queryKey: preInspectionQueryKeys.list,
-  queryFn: () => getPreInspections(),
-})
-
+// All pre-inspections of a person's adoptions — the cross-reference of what
+// a repeat applicant already went through.
 export const listPreInspectionsByPersonQuery = (personId: string) =>
   queryOptions({
     queryKey: preInspectionQueryKeys.listByPerson(personId),
     queryFn: () => getPreInspections({ person_id: personId }),
   })
 
-export const listPreInspectionsByPersonAndAnimalTypeQuery = (
-  personId: string,
-  animalTypeId: string
-) =>
+// Those of the applicant's other adoptions (same email or Person, ADR-018).
+export const listRelatedPreInspectionsQuery = (adoptionId: string) =>
   queryOptions({
-    queryKey: preInspectionQueryKeys.listByPersonAndAnimalType(
-      personId,
-      animalTypeId
-    ),
-    queryFn: () =>
-      getPreInspections({ person_id: personId, animal_type_id: animalTypeId }),
+    queryKey: preInspectionQueryKeys.listRelated(adoptionId),
+    queryFn: () => getPreInspections({ related_to_adoption_id: adoptionId }),
+  })
+
+export const listPreInspectionsByAdoptionQuery = (adoptionId: string) =>
+  queryOptions({
+    queryKey: preInspectionQueryKeys.listByAdoption(adoptionId),
+    queryFn: () => getPreInspections({ adoption_id: adoptionId }),
   })
 
 export const getPreInspectionQuery = (id: string) =>

@@ -1,34 +1,17 @@
-// Mirrors: api/app/Http/Resources/PreInspectionBaseResource.php
-//          api/app/Http/Resources/PreInspectionListResource.php
-//          api/app/Http/Resources/PreInspectionDetailResource.php
+// Mirrors: api/src/Http/Resources/PreInspectionBaseResource.php
+//          api/src/Http/Resources/PreInspectionListResource.php
 
-import type { AnimalTypeResource } from './animal-types'
 import type { PersonBaseResource } from './people'
-import type { JsonSchema, UiSchema } from './form-schemas'
 
-export type PreInspectionVerdict = 'pending' | 'approved' | 'rejected'
+// null while the inspector hasn't submitted yet.
+export type PreInspectionVerdict = 'approved' | 'rejected' | null
 
-export interface FormTemplateShape {
-  id: string
-  name?: string
-  schema: JsonSchema
-  ui_schema: UiSchema | null
-}
-
-export interface FormSubmissionShape {
-  form_template_version_id: string
-  data: Record<string, unknown>
-  template: FormTemplateShape | null
-}
-
-// Base scalar fields (no relations).
 interface PreInspectionBaseResource {
   id: string
-  person_id: string
-  animal_type_id: string
+  adoption_id: string
   inspector_id: string | null
   verdict: PreInspectionVerdict
-  notes: string
+  memo: string
   token: string | null
   expires_at: string | null
   submitted_at: string | null
@@ -36,15 +19,21 @@ interface PreInspectionBaseResource {
   updated_at: string
 }
 
-// Returned by GET /pre-inspections (index) and GET /pre-inspections/:id (show),
-// POST (store), PUT (update).
-// Relations loaded: person, animalType, inspector, accessTokens, formSubmission.
+// Returned by GET /pre-inspections (index, filtered by adoption or person),
+// GET /pre-inspections/:id, POST, PUT.
 export interface PreInspectionResource extends PreInspectionBaseResource {
-  status: PreInspectionVerdict
+  status: 'pending' | 'approved' | 'rejected'
   submission_url: string | null
-  person: PersonBaseResource
-  animal_type: AnimalTypeResource
   inspector: PersonBaseResource | null
-  pre_inspection_form_template: FormTemplateShape | null
-  form_submission: FormSubmissionShape | null
+  adoption: {
+    id: string
+    applicant_person_id: string | null
+    applicant_full_name: string
+    animal: {
+      id: string
+      name: string
+      animal_type_id: string
+      animal_type: string | null
+    } | null
+  }
 }

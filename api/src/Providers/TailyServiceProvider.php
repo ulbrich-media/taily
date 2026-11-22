@@ -9,6 +9,7 @@ use Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Mail\Markdown;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
@@ -71,6 +72,9 @@ class TailyServiceProvider extends ServiceProvider
         $this->configureMediaLibrary();
 
         JsonResource::withoutWrapping();
+
+        // Values in mails (an applicant's name) can't become Markdown links.
+        Markdown::withSecuredEncoding();
 
         $this->registerRoutes();
         $this->registerMiddlewareAlias();
@@ -255,6 +259,26 @@ class TailyServiceProvider extends ServiceProvider
 
         // Same dual-bucket shape as contract-sign, for the pre-inspection
         // submission endpoints, which previously had no throttle at all.
+        // Public applications and the applicant portal. Login links are also
+        // limited per email, so nobody can flood an inbox; applications are
+        // limited per email in ApplicantPortal::apply().
+        RateLimiter::for('applicant', function (Request $request) {
+            $limits = [Limit::perMinute(60)->by('applicant-ip:'.$request->ip())];
+
+            if ($request->isMethod('post') && $request->path() === 'internal/portal/login') {
+                $email = $request->input('email');
+                $email = is_string($email) ? mb_strtolower(trim($email)) : '';
+                $limits[] = Limit::perMinute(3)->by('applicant-email:'.$email);
+                $limits[] = Limit::perDay(10)->by('applicant-email-day:'.$email);
+            }
+
+            if ($request->isMethod('post') && $request->route('animal') !== null) {
+                $limits[] = Limit::perMinute(5)->by('applicant-apply-ip:'.$request->ip());
+            }
+
+            return $limits;
+        });
+
         RateLimiter::for('inspect', function (Request $request) {
             return [
                 Limit::perMinute(20)->by('inspect-token:'.$request->route('token')),

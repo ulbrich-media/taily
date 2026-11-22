@@ -37,7 +37,6 @@ class ContractCompletionService
         $process->load([
             'adoption.animal.animalType',
             'adoption.mediator.organization',
-            'adoption.applicant',
             'signers.person',
             'auditEvents.signer.person',
         ]);
@@ -92,13 +91,13 @@ class ContractCompletionService
         $adopterSigner = $process->signers->firstWhere('role', ContractSignerRole::ADOPTER);
 
         foreach ([$mediatorSigner, $adopterSigner] as $signer) {
-            if (! $signer?->person?->email) {
+            if (! $signer?->email) {
                 continue;
             }
 
             try {
-                Mail::to($signer->person->email)->send(
-                    new ContractCompletionMail($adoption, $downloadUrl, $signer->person->full_name)
+                Mail::to($signer->email)->send(
+                    new ContractCompletionMail($adoption, $downloadUrl, $signer->name)
                 );
             } catch (Throwable $e) {
                 // The signature request is already finalized at this point,

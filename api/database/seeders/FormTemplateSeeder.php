@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Taily\Models\AnimalType;
 use Taily\Models\FormTemplate;
 
 class FormTemplateSeeder extends Seeder
@@ -124,10 +123,6 @@ class FormTemplateSeeder extends Seeder
         ]);
 
         $adoptionForm = FormTemplate::create(['name' => 'Vorkontrolle Hund']);
-
-        AnimalType::where('title', 'Hund')->update([
-            'pre_inspection_form_template_id' => $adoptionForm->id,
-        ]);
 
         $adoptionForm->versions()->create([
             'version' => 1,

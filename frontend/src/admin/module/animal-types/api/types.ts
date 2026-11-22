@@ -28,11 +28,9 @@ export interface DeleteAnimalTypeResponse {
 export interface CreateAnimalTypeRequest {
   title: string
   tiervermittlung_species?: TiervermittlungSpecies | null
-  pre_inspection_form_template_id?: string | null
 }
 
 export interface UpdateAnimalTypeRequest {
   title: string
   tiervermittlung_species?: TiervermittlungSpecies | null
-  pre_inspection_form_template_id?: string | null
 }

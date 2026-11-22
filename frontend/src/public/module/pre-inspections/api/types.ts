@@ -1,5 +1,11 @@
+// Mirrors: api/src/Http/Controllers/Internal/PreInspectionSubmissionController.php
+
+import type {
+  CaseFileFieldType,
+  CaseFileFieldOptions,
+} from '@/api/types/case-file'
+
 export interface PublicInspectionPerson {
-  id: string
   full_name: string
   street_line?: string
   street_line_additional?: string
@@ -8,28 +14,31 @@ export interface PublicInspectionPerson {
   country_code?: string
 }
 
-import type { JsonSchema, UiSchema } from '@/api/types/form-schemas'
-
-export interface PublicInspectionFormTemplate {
-  id: string
-  version_id: string
-  schema: JsonSchema
-  ui_schema: UiSchema | null
+export interface PublicInspectionField {
+  key: string
+  label: string
+  type: CaseFileFieldType
+  options: CaseFileFieldOptions | null
+  value: unknown
 }
 
 export interface PublicInspection {
   id: string
   person: PublicInspectionPerson
-  animal_type: {
+  animal: {
+    name: string | null
+    animal_type: string | null
+    breed: string | null
+  }
+  // Only the Case File fields marked visible to inspectors.
+  case_file: {
     id: string
     title: string
-  }
-  pre_inspection_form_template: PublicInspectionFormTemplate | null
+    fields: PublicInspectionField[]
+  }[]
 }
 
 export interface SubmitInspectionRequest {
   verdict: 'approved' | 'rejected'
-  notes?: string | null
-  form_data?: Record<string, unknown>
-  form_template_version_id?: string | null
+  memo?: string | null
 }

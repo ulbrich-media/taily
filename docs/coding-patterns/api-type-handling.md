@@ -94,7 +94,7 @@ avoided by defining separate list and detail types.
 ## Examples
 
 **Backend — properly nested resource:**
-[`api/app/Http/Resources/AnimalBaseResource.php`](../../api/app/Http/Resources/AnimalBaseResource.php)
+[`api/src/Http/Resources/AnimalBaseResource.php`](../../api/src/Http/Resources/AnimalBaseResource.php)
 
 **Frontend — central resource types:**
 [`frontend/src/api/types/animals.ts`](../../frontend/src/api/types/animals.ts)

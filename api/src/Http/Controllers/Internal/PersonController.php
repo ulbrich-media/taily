@@ -86,7 +86,7 @@ class PersonController extends Controller
                         $q->where('animal_types.id', $animalTypeId);
                     }
                 }),
-                'adopter' => $query->whereHas('adoptionsAsApplicant'),
+                'adopter' => $query->whereHasAdoptions(),
                 default => null,
             };
         } elseif ($animalTypeId) {

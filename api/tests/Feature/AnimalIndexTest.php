@@ -52,7 +52,8 @@ class AnimalIndexTest extends TestCase
     {
         return Adoption::create([
             'animal_id' => $animal->id,
-            'applicant_id' => $this->person('Anna', 'Adopter'.$animal->adoptions()->count().$status)->id,
+            ...Adoption::applicantDataFrom($__applicant = $this->person('Anna', 'Adopter'.$animal->adoptions()->count().$status)),
+            'applicant_person_id' => $__applicant->id,
             'status' => $status,
         ]);
     }

@@ -5,7 +5,10 @@ import { getAdoptionQuery } from '@/admin/module/adoptions/api/queries'
 import { AdoptionSidebar } from '@/admin/module/adoptions/components/AdoptionSidebar'
 import { Route as AdoptionDetailRoute } from './adoption/route'
 import { Route as HistoryRoute } from './history'
+import { Route as CaseFileRoute } from './case-file/index'
 import { Route as MediatorEditRoute } from './adoption/mediator.tsx'
+import { Route as ApplicantPersonRoute } from './adoption/applicant-person'
+import { Route as PersonRoute } from '@/routes/admin/_authenticated/people/$id/index'
 import { Edit, MoreVertical } from 'lucide-react'
 import { PageHeader, tabLinkClass } from '@/components/layout/PageHeader.tsx'
 import { useBreadcrumbs } from '@/router/useBreadcrumbs'
@@ -59,8 +62,14 @@ function RouteComponent() {
                 params={{ adoptionId }}
                 className={tabLinkClass}
               >
-                Vermittlung
+                Übersicht
               </AdoptionDetailRoute.Link>
+              <CaseFileRoute.Link
+                params={{ adoptionId }}
+                className={tabLinkClass}
+              >
+                Angaben
+              </CaseFileRoute.Link>
               <HistoryRoute.Link
                 params={{ adoptionId }}
                 className={tabLinkClass}
@@ -89,6 +98,31 @@ function RouteComponent() {
         <AdoptionSidebar
           adoption={adoption}
           mediatorEditLink={mediatorEditLink}
+          applicantPersonLink={
+            adoption.applicant_person_id ? (
+              <span className="flex flex-wrap justify-center gap-x-2">
+                <PersonRoute.Link
+                  params={{ id: adoption.applicant_person_id }}
+                  className="underline underline-offset-4"
+                >
+                  Verknüpfte Person
+                </PersonRoute.Link>
+                <ApplicantPersonRoute.Link
+                  params={{ adoptionId }}
+                  className="text-muted-foreground underline underline-offset-4"
+                >
+                  ändern
+                </ApplicantPersonRoute.Link>
+              </span>
+            ) : (
+              <ApplicantPersonRoute.Link
+                params={{ adoptionId }}
+                className="text-muted-foreground underline underline-offset-4"
+              >
+                Mit Person verknüpfen
+              </ApplicantPersonRoute.Link>
+            )
+          }
         />
 
         <div className="space-y-6 mt-6 lg:mt-0">

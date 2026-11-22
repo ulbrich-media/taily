@@ -13,6 +13,7 @@ use Taily\Http\Requests\CatalogIndexRequest;
 use Taily\Http\Resources\AnimalTypeResource;
 use Taily\Models\AnimalType;
 use Taily\Services\AnimalTraitService;
+use Taily\Support\CaseFile\FieldCatalogue;
 
 class AnimalTypeController extends Controller
 {
@@ -30,7 +31,7 @@ class AnimalTypeController extends Controller
     public function index(CatalogIndexRequest $request): AnonymousResourceCollection|JsonResponse
     {
         if (! $request->wantsListView()) {
-            $animalTypes = AnimalType::with('preInspectionFormTemplate')->get();
+            $animalTypes = AnimalType::all();
 
             return response()->json([
                 'data' => AnimalTypeResource::collection($animalTypes),
@@ -43,7 +44,7 @@ class AnimalTypeController extends Controller
         }
 
         return AnimalTypeResource::collection(
-            AnimalType::with('preInspectionFormTemplate')
+            AnimalType::query()
                 ->orderBy('title')
                 ->orderBy('id')
                 ->paginate($request->perPage())
@@ -58,11 +59,10 @@ class AnimalTypeController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255|unique:animal_types,title',
             'tiervermittlung_species' => ['nullable', Rule::enum(TiervermittlungSpecies::class)],
-            'pre_inspection_form_template_id' => 'nullable|uuid|exists:form_templates,id',
         ]);
 
         $animalType = AnimalType::create($validated);
-        $animalType->load('preInspectionFormTemplate');
+        app(FieldCatalogue::class)->ensureBuiltIns($animalType);
 
         return response()->json([
             'message' => 'Tierart erfolgreich angelegt.',
@@ -75,8 +75,6 @@ class AnimalTypeController extends Controller
      */
     public function show(AnimalType $animalType): JsonResponse
     {
-        $animalType->load('preInspectionFormTemplate');
-
         return response()->json([
             'message' => 'Tierart gefunden.',
             'data' => new AnimalTypeResource($animalType),
@@ -91,11 +89,9 @@ class AnimalTypeController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255|unique:animal_types,title,'.$animalType->id,
             'tiervermittlung_species' => ['nullable', Rule::enum(TiervermittlungSpecies::class)],
-            'pre_inspection_form_template_id' => 'nullable|uuid|exists:form_templates,id',
         ]);
 
         $animalType->update($validated);
-        $animalType->load('preInspectionFormTemplate');
 
         return response()->json([
             'message' => 'Tierart erfolgreich aktualisiert.',
@@ -119,6 +115,14 @@ class AnimalTypeController extends Controller
      */
     public function destroy(AnimalType $animalType): JsonResponse
     {
+        // Animals, and with them adoptions and their Case Files, would be
+        // deleted along with the type.
+        if ($animalType->animals()->exists()) {
+            return response()->json([
+                'message' => 'Diese Tierart kann nicht gelöscht werden, da ihr noch Tiere zugeordnet sind.',
+            ], 422);
+        }
+
         try {
             $animalType->delete();
         } catch (QueryException) {

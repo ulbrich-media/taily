@@ -1,53 +1,87 @@
 import { createFileRoute } from '@tanstack/react-router'
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardTitleIcon,
-} from '@/shadcn/components/ui/card'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { LogOut } from 'lucide-react'
 import { Button } from '@/shadcn/components/ui/button'
-import { Heart, ArrowLeft } from 'lucide-react'
-import { Route as RootRoute } from '@/routes/index'
+import { Spinner } from '@/shadcn/components/ui/spinner'
+import { ApiValidationError } from '@/lib/api'
+import {
+  applicantQueryKeys,
+  getPortalOverviewQuery,
+} from '@/public/module/applicant/api/queries'
+import { logout } from '@/public/module/applicant/api/requests'
+import {
+  clearSessionToken,
+  getSessionToken,
+} from '@/public/module/applicant/session'
+import { PortalLoginPage } from '@/public/module/applicant/pages/PortalLoginPage'
+import { PortalOverviewPage } from '@/public/module/applicant/pages/PortalOverviewPage'
+import { Route as AdoptionRoute } from './adoptions.$adoptionId'
 
+// The applicant portal: the login form without a session, the applicant's
+// adoptions with one (docs/features/applicant-portal.md).
 export const Route = createFileRoute('/adopter/')({
-  component: AdopterArea,
+  component: RouteComponent,
 })
 
-function AdopterArea() {
-  return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="container mx-auto px-4 py-16">
-        <Card className="max-w-2xl mx-auto">
-          <CardHeader>
-            <CardTitle className="text-3xl text-center justify-center">
-              Adoptanten-Bereich
-            </CardTitle>
-            <CardTitleIcon icon={Heart} />
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="text-center">
-              <p className="text-6xl mb-4">🐕</p>
-              <h2 className="text-2xl font-bold mb-4 text-foreground">
-                Demnächst verfügbar
-              </h2>
-              <p className="text-muted-foreground mb-6">
-                Der Adoptanten-Bereich befindet sich derzeit in der Entwicklung.
-                Hier kannst du bald verfügbare Tiere durchsuchen und
-                Adoptionsanträge stellen.
-              </p>
-            </div>
-            <div className="flex justify-center">
-              <Button asChild className="gap-2">
-                <RootRoute.Link>
-                  <ArrowLeft className="h-4 w-4" />
-                  Zurück zur Startseite
-                </RootRoute.Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+function RouteComponent() {
+  const queryClient = useQueryClient()
+  const hasSession = getSessionToken() !== null
+  const overview = useQuery({
+    ...getPortalOverviewQuery(),
+    enabled: hasSession,
+  })
+
+  const expired =
+    overview.error instanceof ApiValidationError &&
+    overview.error.status === 401
+
+  if (!hasSession || expired) {
+    if (expired) clearSessionToken()
+    return (
+      <PortalLoginPage
+        notice={
+          expired
+            ? 'Deine Sitzung ist abgelaufen. Lass dir einen neuen Link schicken.'
+            : undefined
+        }
+      />
+    )
+  }
+
+  if (!overview.data) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Spinner />
       </div>
-    </div>
+    )
+  }
+
+  const logoutAction = (
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={async () => {
+        await logout().catch(() => undefined)
+        clearSessionToken()
+        queryClient.removeQueries({ queryKey: applicantQueryKeys.all })
+      }}
+    >
+      <LogOut />
+      Abmelden
+    </Button>
+  )
+
+  return (
+    <PortalOverviewPage
+      overview={overview.data}
+      logoutAction={logoutAction}
+      renderOpenLink={(adoptionId, children) => (
+        <Button variant="outline" size="sm" asChild>
+          <AdoptionRoute.Link params={{ adoptionId }}>
+            {children}
+          </AdoptionRoute.Link>
+        </Button>
+      )}
+    />
   )
 }

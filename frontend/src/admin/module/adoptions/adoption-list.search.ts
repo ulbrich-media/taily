@@ -12,6 +12,7 @@ import {
 } from '@/components/list/list-schema'
 
 export const ADOPTION_STATUSES = [
+  'unconfirmed',
   'pending',
   'in_progress',
   'canceled',

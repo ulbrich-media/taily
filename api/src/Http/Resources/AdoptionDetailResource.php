@@ -13,7 +13,7 @@ class AdoptionDetailResource extends AdoptionBaseResource
         return array_merge(parent::toArray($request), [
             'animal' => $this->whenLoaded('animal', fn ($a) => new AnimalDetailResource($a)),
             'mediator' => $this->whenLoaded('mediator', fn ($m) => new PersonListResource($m)),
-            'applicant' => $this->whenLoaded('applicant', fn ($m) => new PersonDetailResource($m)),
+            'applicant_person' => $this->whenLoaded('applicantPerson', fn ($m) => $m ? new PersonListResource($m) : null),
             'transport' => $this->whenLoaded('transport', fn ($m) => new TransportListResource($m)),
             'contract_file' => $contractMedia ? [
                 'uuid' => $contractMedia->uuid,
@@ -21,6 +21,10 @@ class AdoptionDetailResource extends AdoptionBaseResource
                 'url' => $contractMedia->getTemporaryUrl(now()->addHour()),
             ] : null,
             'contract_source' => $this->resource->contract_source,
+            'pre_inspection_confirmed_by' => $this->whenLoaded(
+                'preInspectionConfirmedBy',
+                fn ($user) => $user ? ['id' => $user->id, 'name' => $user->name] : null
+            ),
             'contract_signing_process' => $this->whenLoaded(
                 'latestContractSigningProcess',
                 fn () => $this->resource->latestContractSigningProcess

@@ -29,8 +29,7 @@ type TriggerFormData = z.infer<typeof triggerSchema>
 interface TriggerPreInspectionDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  applicantId: string
-  animalTypeId: string
+  adoptionId: string
   inspectors: PeopleResponse
   onCreated: (id: string) => void
   breadcrumb?: ReactNode
@@ -39,8 +38,7 @@ interface TriggerPreInspectionDialogProps {
 export function TriggerPreInspectionDialog({
   open,
   onOpenChange,
-  applicantId,
-  animalTypeId,
+  adoptionId,
   inspectors,
   onCreated,
   breadcrumb,
@@ -57,10 +55,7 @@ export function TriggerPreInspectionDialog({
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: preInspectionQueryKeys.all })
       queryClient.invalidateQueries({
-        queryKey: preInspectionQueryKeys.listByPersonAndAnimalType(
-          applicantId,
-          animalTypeId
-        ),
+        queryKey: preInspectionQueryKeys.listByAdoption(adoptionId),
       })
       toast.success(data.message)
       onCreated(data.data.id)
@@ -77,8 +72,7 @@ export function TriggerPreInspectionDialog({
 
   const onSubmit = (data: TriggerFormData) => {
     createMutation.mutate({
-      person_id: applicantId,
-      animal_type_id: animalTypeId,
+      adoption_id: adoptionId,
       inspector_id: data.inspector_id || null,
     })
   }

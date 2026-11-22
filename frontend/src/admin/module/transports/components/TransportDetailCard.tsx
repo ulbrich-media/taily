@@ -20,12 +20,14 @@ interface TransportDetailCardProps {
   transport: TransportListResource
   actions?: ReactNode
   renderAdoptionDetailLink?: (adoption: AdoptionListResource) => ReactNode
+  checklist?: ReactNode
 }
 
 export function TransportDetailCard({
   transport,
   actions,
   renderAdoptionDetailLink,
+  checklist,
 }: TransportDetailCardProps) {
   return (
     <Card>
@@ -78,6 +80,9 @@ export function TransportDetailCard({
               <InfoRowEmptyValue />
             )}
           </InfoRow>
+          {checklist && transport.adoptions.length > 0 && (
+            <InfoRow label="Checkliste für den Transport">{checklist}</InfoRow>
+          )}
         </div>
       </CardContent>
       {actions && (

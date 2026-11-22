@@ -5,6 +5,7 @@ namespace Taily\Http\Resources;
 use Illuminate\Http\Request;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Taily\Models\TiervermittlungListing;
+use Taily\Support\FrontendUriBuilder;
 use Taily\Support\Tiervermittlung\AnimalPayloadMapper;
 use Taily\Support\Tiervermittlung\TiervermittlungExport;
 
@@ -13,6 +14,9 @@ class AnimalDetailResource extends AnimalBaseResource
     public function toArray(Request $request): array
     {
         return array_merge(parent::toArray($request), [
+            // Taily's own application form, shared by copying this link (not the
+            // configurable external `application_url`).
+            'public_application_url' => FrontendUriBuilder::application($this->resource->id),
             'pictures' => $this->resource->when(
                 $this->resource->relationLoaded('media'),
                 fn () => $this->resource->getMedia('pictures')

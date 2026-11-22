@@ -14,10 +14,12 @@ use Taily\Models\ContractSigningAuditEvent;
 use Taily\Models\ContractSigningProcess;
 use Taily\Models\Person;
 use Taily\Models\User;
+use Taily\Tests\Concerns\CreatesContractTemplates;
 use Taily\Tests\TestCase;
 
 class ContractPreviewControllerTest extends TestCase
 {
+    use CreatesContractTemplates;
     use RefreshDatabase;
 
     private const URL = '/dev/contracts/preview';
@@ -34,12 +36,15 @@ class ContractPreviewControllerTest extends TestCase
             'gender' => 'male',
         ]);
 
+        $this->contractTemplate($animalType);
+
         return Adoption::create([
             'animal_id' => $animal->id,
             'mediator_id' => $withMediator
                 ? Person::create(['first_name' => 'Maria', 'last_name' => 'Vermittlerin'])->id
                 : null,
-            'applicant_id' => Person::create(['first_name' => 'Anna', 'last_name' => 'Übernehmerin'])->id,
+            ...Adoption::applicantDataFrom($__applicant = Person::create(['first_name' => 'Anna', 'last_name' => 'Übernehmerin'])),
+            'applicant_person_id' => $__applicant->id,
             'contract_signed' => false,
         ]);
     }

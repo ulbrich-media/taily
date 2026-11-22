@@ -4,6 +4,8 @@ import { useBreadcrumbs } from '@/router/useBreadcrumbs'
 import { BreadcrumbNav } from '@/router/BreadcrumbNav'
 import { Route as UsersRoute } from '@/routes/admin/_authenticated/settings/users/route'
 import { Route as AnimalTypesRoute } from '@/routes/admin/_authenticated/settings/animal-types/route'
+import { Route as CaseFileRoute } from '@/routes/admin/_authenticated/settings/case-file/index'
+import { Route as ContractsRoute } from '@/routes/admin/_authenticated/settings/contracts/_list/index'
 import { Route as VaccinationsRoute } from '@/routes/admin/_authenticated/settings/vaccinations/route'
 import { Route as MedicalTestsRoute } from '@/routes/admin/_authenticated/settings/medical-tests/route'
 import { Route as OrganizationsRoute } from '@/routes/admin/_authenticated/settings/organizations/index'
@@ -32,6 +34,20 @@ function RouteComponent() {
           <AnimalTypesRoute.Link aria-label="Tierarten öffnen">
             Öffnen
           </AnimalTypesRoute.Link>
+        </Button>
+      }
+      caseFileAction={
+        <Button variant="default_outline" asChild>
+          <CaseFileRoute.Link aria-label="Angaben konfigurieren">
+            Öffnen
+          </CaseFileRoute.Link>
+        </Button>
+      }
+      contractsAction={
+        <Button variant="default_outline" asChild>
+          <ContractsRoute.Link aria-label="Vertragsvorlagen öffnen">
+            Öffnen
+          </ContractsRoute.Link>
         </Button>
       }
       vaccinationsAction={

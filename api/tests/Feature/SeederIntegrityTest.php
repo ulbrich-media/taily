@@ -124,7 +124,6 @@ class SeederIntegrityTest extends TestCase
             );
 
             $submitted = $adoption->preInspections
-                ->where('animal_type_id', $adoption->animal->animal_type_id)
                 ->whereNotNull('submitted_at')
                 ->max('submitted_at');
 
@@ -247,26 +246,29 @@ class SeederIntegrityTest extends TestCase
 
     public function test_the_animal_agrees_with_the_adoption_holding_it(): void
     {
-        foreach (Adoption::with('animal')->get() as $adoption) {
+        foreach (Adoption::with(['animal', 'mediator'])->get() as $adoption) {
             $label = "adoption {$adoption->id}";
 
             $this->assertFalse($adoption->animal->is_deceased, "$label: on a deceased animal");
             $this->assertFalse($adoption->animal->is_boarding_animal, "$label: on a boarding animal");
-            $this->assertNotSame($adoption->applicant_id, $adoption->mediator_id, "$label: applicant mediates their own adoption");
+            $this->assertFalse(
+                $adoption->applicant_email !== '' && $adoption->applicant_email === Adoption::normalizeEmail($adoption->mediator?->email),
+                "$label: applicant mediates their own adoption"
+            );
 
             if ($adoption->status === 'in_progress') {
                 $this->assertTrue($adoption->animal->is_reserved, "$label: running but the animal is not reserved");
             }
 
             if ($adoption->status === 'done') {
-                $this->assertSame($adoption->applicant_id, $adoption->animal->owner_id, "$label: handed over but the animal has another owner");
+                $this->assertSame($adoption->applicant_person_id, $adoption->animal->owner_id, "$label: handed over but the animal has another owner");
             }
         }
     }
 
     public function test_an_inspection_is_only_carried_out_by_someone_qualified_for_the_type(): void
     {
-        $inspections = PreInspection::with('inspector.inspectorAnimalTypes')->get();
+        $inspections = PreInspection::with(['inspector.inspectorAnimalTypes', 'adoption.animal'])->get();
 
         $this->assertNotEmpty($inspections);
 
@@ -274,13 +276,14 @@ class SeederIntegrityTest extends TestCase
             $this->assertNotNull($inspection->inspector, "inspection {$inspection->id}: nobody was assigned to carry it out");
 
             $this->assertTrue(
-                $inspection->inspector->inspectorAnimalTypes->contains('id', $inspection->animal_type_id),
+                $inspection->inspector->inspectorAnimalTypes->contains('id', $inspection->adoption->animal->animal_type_id),
                 "inspection {$inspection->id}: inspector does not handle this animal type"
             );
 
-            $this->assertNotSame(
-                $inspection->person_id,
-                $inspection->inspector_id,
+            // The applicant is the adoption's own data now (ADR-018); the email is what ties it to a person.
+            $email = $inspection->adoption->applicant_email;
+            $this->assertFalse(
+                $email !== '' && $email === Adoption::normalizeEmail($inspection->inspector->email),
                 "inspection {$inspection->id}: the applicant inspected their own home"
             );
         }

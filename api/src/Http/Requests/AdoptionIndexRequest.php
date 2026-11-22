@@ -24,7 +24,7 @@ class AdoptionIndexRequest extends FormRequest
 
     private const SORT_KEYS = ['created_at', 'updated_at', 'animal_name', 'applicant_name', 'mediator_name'];
 
-    private const STATUSES = ['pending', 'in_progress', 'canceled', 'done'];
+    private const STATUSES = ['unconfirmed', 'pending', 'in_progress', 'canceled', 'done'];
 
     // Values the derived step statuses can take, see the Adoption accessors.
     private const STEP_STATUSES = ['not_started', 'pending', 'finished'];
@@ -37,7 +37,7 @@ class AdoptionIndexRequest extends FormRequest
         'mediator_id',
         'animal_type_id',
         'animal_id',
-        'applicant_id',
+        'applicant_person_id',
         'pre_inspection_status',
         'contract_status',
         'transport_status',
@@ -79,7 +79,7 @@ class AdoptionIndexRequest extends FormRequest
             }],
             'filter.animal_type_id' => ['sometimes', 'uuid'],
             'filter.animal_id' => ['sometimes', 'uuid'],
-            'filter.applicant_id' => ['sometimes', 'uuid'],
+            'filter.applicant_person_id' => ['sometimes', 'uuid'],
             'filter.pre_inspection_status' => ['sometimes', 'array'],
             'filter.pre_inspection_status.*' => ['string', Rule::in(self::STEP_STATUSES)],
             'filter.contract_status' => ['sometimes', 'array'],

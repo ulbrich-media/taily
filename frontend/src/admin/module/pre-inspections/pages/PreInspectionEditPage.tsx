@@ -1,14 +1,8 @@
 import { type ReactNode, useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import {
-  useForm,
-  FormProvider,
-  type Control,
-  type FieldValues,
-} from 'react-hook-form'
+import { useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { useDynamicFormSchema } from '@/components/form/useDynamicFormSchema'
 import { Copy, Check } from 'lucide-react'
 import { preInspectionQueryKeys } from '@/admin/module/pre-inspections/api/queries'
 import {
@@ -43,8 +37,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/shadcn/components/ui/dialog'
-import { DynamicFormFields } from '@/components/form/DynamicFormFields'
-import { buildFormDataDefaults } from '@/components/form/jsonSchemaToZod'
 import { InfoRow } from '@/shadcn/components/common/info-row.tsx'
 
 // ---------------------------------------------------------------------------
@@ -57,18 +49,16 @@ const inspectorSchema = z.object({
 type InspectorFormData = z.infer<typeof inspectorSchema>
 
 // ---------------------------------------------------------------------------
-// Unified main form: form_data + verdict + notes
+// Main form: the inspector's verdict and memo (docs/features/pre-inspection.md)
 // ---------------------------------------------------------------------------
-const mainStaticSchema = z.object({
+const mainSchema = z.object({
   verdict: z.enum(['approved', 'rejected'], {
     error: 'Bitte wähle ein Ergebnis aus',
   }),
-  notes: z.string(),
+  memo: z.string(),
 })
 
-type MainFormData = z.infer<typeof mainStaticSchema> & {
-  form_data: Record<string, unknown>
-}
+type MainFormData = z.infer<typeof mainSchema>
 
 const VERDICT_OPTIONS = [
   { value: 'approved', label: 'Geeignet' },
@@ -132,13 +122,6 @@ export function PreInspectionEditPage({
   const isSubmitted = inspection.submitted_at !== null
   const [confirmOpen, setConfirmOpen] = useState(false)
 
-  // Template: pinned version post-submission, latest template pre-submission
-  const template = isSubmitted
-    ? inspection.form_submission?.template
-    : inspection.pre_inspection_form_template
-
-  const mainSchema = useDynamicFormSchema(mainStaticSchema, template?.schema)
-
   // ---------------------------------------------------------------------------
   // Inspector form — always available, decoupled
   // ---------------------------------------------------------------------------
@@ -165,30 +148,21 @@ export function PreInspectionEditPage({
   })
 
   // ---------------------------------------------------------------------------
-  // Main form — form_data + verdict + notes, submitted as a whole
+  // Main form — verdict + memo, submitted as a whole
   // ---------------------------------------------------------------------------
   const mainForm = useForm<MainFormData>({
-    resolver: zodResolver(mainSchema) as never,
+    resolver: zodResolver(mainSchema),
     defaultValues: {
-      verdict: isSubmitted
-        ? ((inspection.verdict === 'pending'
-            ? undefined
-            : inspection.verdict) as 'approved' | 'rejected' | undefined)
-        : undefined,
-      notes: inspection.notes ?? '',
-      form_data: buildFormDataDefaults(
-        template?.schema,
-        inspection.form_submission?.data ?? {}
-      ),
+      verdict: inspection.verdict ?? (undefined as never),
+      memo: inspection.memo ?? '',
     },
   })
 
   const mainMutation = useMutation({
     mutationFn: (data: MainFormData) =>
       updatePreInspection(inspection.id, {
-        verdict: data.verdict!,
-        notes: data.notes,
-        form_data: template ? data.form_data : undefined,
+        verdict: data.verdict,
+        memo: data.memo,
       }),
     onSuccess: (res) => {
       toast.success(res.message)
@@ -199,14 +173,8 @@ export function PreInspectionEditPage({
       )
       queryClient.invalidateQueries({ queryKey: preInspectionQueryKeys.all })
       mainForm.reset({
-        verdict: (res.data.verdict === 'pending'
-          ? undefined
-          : res.data.verdict) as 'approved' | 'rejected' | undefined,
-        notes: res.data.notes ?? '',
-        form_data: buildFormDataDefaults(
-          template?.schema,
-          res.data.form_submission?.data ?? {}
-        ),
+        verdict: res.data.verdict ?? (undefined as never),
+        memo: res.data.memo ?? '',
       })
     },
     onError: (err) => {
@@ -229,11 +197,11 @@ export function PreInspectionEditPage({
           <CardContent>
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <InfoRow label="Interessent">
-                  {inspection.person?.full_name}
+                <InfoRow label="Vermittlung von">
+                  {inspection.adoption.animal?.name}
                 </InfoRow>
-                <InfoRow label="Kontrolle für">
-                  {inspection.animal_type?.title}
+                <InfoRow label="Tierart">
+                  {inspection.adoption.animal?.animal_type}
                 </InfoRow>
                 <InfoRow label="Erstellt am">
                   {formatApiDate(inspection.created_at)}
@@ -307,7 +275,7 @@ export function PreInspectionEditPage({
           </Card>
         )}
 
-        {/* Unified form — form_data + verdict + notes */}
+        {/* Verdict and memo */}
         <FormProvider {...mainForm}>
           <form
             onSubmit={mainForm.handleSubmit((data) =>
@@ -316,24 +284,6 @@ export function PreInspectionEditPage({
             className="space-y-6"
           >
             <FormBlocker />
-
-            {template && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Kontrolldaten</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <DynamicFormFields
-                    schema={template.schema}
-                    uiSchema={template.ui_schema}
-                    control={
-                      mainForm.control as unknown as Control<FieldValues>
-                    }
-                    namePrefix="form_data"
-                  />
-                </CardContent>
-              </Card>
-            )}
 
             <Card>
               <CardHeader>
@@ -349,9 +299,10 @@ export function PreInspectionEditPage({
                     required
                   />
                   <Textarea
-                    name="notes"
+                    name="memo"
                     control={mainForm.control}
-                    label="Notizen"
+                    label="Notiz (intern)"
+                    description="Abweichungen zu den Angaben der Bewerber:in gehören hierher. Die Vermittler:in korrigiert die Angaben danach."
                     rows={6}
                   />
                 </FieldGroup>

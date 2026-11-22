@@ -3,11 +3,13 @@
 //          api/src/Http/Resources/AdoptionDetailResource.php
 
 import type { AnimalListResource, AnimalDetailResource } from './animals'
-import type { PersonListResource, PersonDetailResource } from './people'
+import type { PersonBaseResource, PersonListResource } from './people'
 import type { TransportListResource } from '@/api/types/transports.ts'
 
 export type AdoptionStepStatus = 'not_started' | 'pending' | 'finished'
-export type AdoptionStatus = 'pending' | 'in_progress' | 'canceled' | 'done'
+// 'unconfirmed': a public application whose email isn't confirmed yet.
+export type AdoptionStatus =
+  'unconfirmed' | 'pending' | 'in_progress' | 'canceled' | 'done'
 
 // Scalar fields shared by list and detail resources.
 // Use this when an Adoption is nested inside another resource.
@@ -16,7 +18,8 @@ export interface AdoptionBaseResource {
   // Foreign keys
   animal_id: string
   mediator_id: string | null
-  applicant_id: string
+  // An optional reference to a Person Taily manages; never a data source.
+  applicant_person_id: string | null
   transport_id: string | null
   // General status
   status: AdoptionStatus
@@ -26,6 +29,8 @@ export interface AdoptionBaseResource {
   notes: string
   // Pre-inspection step
   pre_inspection_notes: string
+  // The mediator's confirmation that closes the step.
+  pre_inspection_confirmed_at: string | null
   // Contract step
   contract_signed: boolean
   contract_signed_at: string | null
@@ -39,13 +44,32 @@ export interface AdoptionBaseResource {
   // Metadata
   created_at: string
   updated_at: string
+  // The applicant's own data (ADR-018)
+  applicant: AdoptionApplicant
+  applicant_person?: PersonBaseResource | null
+}
+
+export interface AdoptionApplicant {
+  person_id: string | null
+  first_name: string
+  last_name: string
+  full_name: string
+  // Stored lowercased; links the applicant's adoptions.
+  email: string
+  phone: string
+  date_of_birth: string | null
+  street_line: string
+  street_line_additional: string
+  postal_code: string
+  city: string
+  country_code: string
 }
 
 // Returned by GET /adoptions (index).
 export interface AdoptionListResource extends AdoptionBaseResource {
   animal: AnimalListResource
   mediator: PersonListResource | null
-  applicant: PersonListResource
+  applicant_person?: PersonListResource | null
 }
 
 export interface ContractFile {
@@ -54,7 +78,7 @@ export interface ContractFile {
   url: string
 }
 
-// Returned by GET /adoptions/contract-templates.
+// Returned by GET /adoptions/{id}/contract-templates; `key` is the template id.
 export interface ContractTemplate {
   key: string
   label: string
@@ -93,11 +117,26 @@ export interface ContractSigningProcess {
 export interface AdoptionDetailResource extends AdoptionBaseResource {
   animal: AnimalDetailResource
   mediator: PersonListResource | null
-  applicant: PersonDetailResource
+  applicant_person?: PersonListResource | null
   contract_file: ContractFile | null
   // 'digital' = completed native signing flow (locked against manual edits),
   // 'manual' = confirmed by hand, null = no signed contract yet.
   contract_source: ContractSource | null
   contract_signing_process: ContractSigningProcess | null
+  pre_inspection_confirmed_by: { id: string; name: string } | null
   transport: TransportListResource | null
+}
+
+// Returned by GET /adoptions/{id}/related: the applicant's other adoptions.
+export interface RelatedAdoption {
+  id: string
+  status: AdoptionStatus
+  created_at: string
+  applicant: { full_name: string; email: string }
+  animal: { id: string; name: string; animal_type: string | null } | null
+  // Why it counts as the same applicant.
+  matched_by: ('email' | 'person')[]
+  pre_inspection_status: AdoptionStepStatus
+  contract_signed: boolean
+  handed_over_at: string | null
 }

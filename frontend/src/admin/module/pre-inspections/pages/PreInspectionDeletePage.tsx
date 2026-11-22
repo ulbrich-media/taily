@@ -50,13 +50,9 @@ export function PreInspectionDeletePage({
           </AlertDialogMedia>
           <AlertDialogTitle>Vorkontrolle löschen</AlertDialogTitle>
           <AlertDialogDescription>
-            Möchtest du die Vorkontrolle von{' '}
+            Möchtest du die Vorkontrolle für die Vermittlung von{' '}
             <span className="font-medium text-foreground">
-              {inspection.person.full_name}
-            </span>{' '}
-            für{' '}
-            <span className="font-medium text-foreground">
-              {inspection.animal_type.title}
+              {inspection.adoption.animal?.name}
             </span>{' '}
             wirklich löschen? Dieser Vorgang kann nicht rückgängig gemacht
             werden!

@@ -2,6 +2,7 @@
 
 namespace Taily\Http\Controllers\Internal;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -9,32 +10,41 @@ use Illuminate\Validation\ValidationException;
 use Taily\Http\Controllers\Controller;
 use Taily\Http\Resources\PreInspectionDetailResource;
 use Taily\Http\Resources\PreInspectionListResource;
+use Taily\Models\Adoption;
 use Taily\Models\Person;
 use Taily\Models\PreInspection;
-use Taily\Support\PreInspectionService;
 
+/**
+ * Pre-inspections belong to an adoption (docs/features/pre-inspection.md).
+ * Listing by person gives the cross-reference of earlier pre-inspections a
+ * repeat applicant went through for other animals.
+ */
 class PreInspectionController extends Controller
 {
-    public function __construct(
-        private PreInspectionService $preInspectionService,
-    ) {}
+    private const RELATIONS = ['inspector', 'accessTokens', 'adoption.animal.animalType'];
 
     public function index(Request $request): AnonymousResourceCollection
     {
-        $query = PreInspection::with(['person', 'animalType', 'inspector', 'accessTokens'])
-            ->orderBy('created_at', 'desc');
-
         $filters = $request->validate([
+            'adoption_id' => 'sometimes|uuid',
             'person_id' => 'sometimes|uuid',
-            'animal_type_id' => 'sometimes|uuid',
+            // Those of the applicant's other adoptions (same email or Person).
+            'related_to_adoption_id' => 'sometimes|uuid',
         ]);
 
-        if (isset($filters['person_id'])) {
-            $query->where('person_id', $filters['person_id']);
+        $query = PreInspection::with(self::RELATIONS)->orderBy('created_at', 'desc');
+
+        if (isset($filters['adoption_id'])) {
+            $query->where('adoption_id', $filters['adoption_id']);
         }
 
-        if (isset($filters['animal_type_id'])) {
-            $query->where('animal_type_id', $filters['animal_type_id']);
+        if (isset($filters['person_id'])) {
+            $query->whereHas('adoption', fn (Builder $adoption) => ($person = Person::find($filters['person_id'])) ? $adoption->ofApplicant($person) : $adoption->whereRaw('1 = 0'));
+        }
+
+        if (isset($filters['related_to_adoption_id'])) {
+            $adoption = Adoption::find($filters['related_to_adoption_id']);
+            $query->whereHas('adoption', fn (Builder $related) => $adoption ? $related->relatedTo($adoption) : $related->whereRaw('1 = 0'));
         }
 
         return PreInspectionListResource::collection($query->get());
@@ -43,24 +53,22 @@ class PreInspectionController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'person_id' => 'required|uuid|exists:people,id',
-            'animal_type_id' => 'required|uuid|exists:animal_types,id',
+            'adoption_id' => 'required|uuid|exists:adoptions,id',
             'inspector_id' => 'nullable|uuid|exists:people,id',
         ]);
 
+        $adoption = Adoption::with('animal')->findOrFail($validated['adoption_id']);
+
         if (! empty($validated['inspector_id'])) {
-            $this->assertInspectorEligible($validated['inspector_id'], $validated['animal_type_id']);
+            $this->assertInspectorEligible($validated['inspector_id'], $adoption);
         }
 
-        $inspection = new PreInspection;
-        $inspection->person_id = $validated['person_id'];
-        $inspection->animal_type_id = $validated['animal_type_id'];
+        $inspection = new PreInspection(['adoption_id' => $adoption->id]);
         $inspection->inspector_id = $validated['inspector_id'] ?? null;
-        $inspection->notes = '';
         $inspection->save();
         $inspection->issueToken(now()->addDays(30));
 
-        $inspection->load($this->detailRelations());
+        $inspection->load(self::RELATIONS);
 
         return response()->json([
             'message' => 'Vorkontrolle erfolgreich angelegt.',
@@ -70,14 +78,11 @@ class PreInspectionController extends Controller
 
     public function show(PreInspection $preInspection): PreInspectionDetailResource
     {
-        $preInspection->load($this->detailRelations());
+        $preInspection->load(self::RELATIONS);
 
         return new PreInspectionDetailResource($preInspection);
     }
 
-    /**
-     * Update the assigned inspector.
-     */
     public function updateInspector(Request $request, PreInspection $preInspection): JsonResponse
     {
         $validated = $request->validate([
@@ -85,13 +90,13 @@ class PreInspectionController extends Controller
         ]);
 
         if ($validated['inspector_id'] !== null) {
-            $this->assertInspectorEligible($validated['inspector_id'], $preInspection->animal_type_id);
+            $this->assertInspectorEligible($validated['inspector_id'], $preInspection->adoption()->with('animal')->firstOrFail());
         }
 
         $preInspection->inspector_id = $validated['inspector_id'];
         $preInspection->save();
 
-        $preInspection->load($this->detailRelations());
+        $preInspection->load(self::RELATIONS);
 
         return response()->json([
             'message' => 'Kontrolleur erfolgreich aktualisiert.',
@@ -100,58 +105,37 @@ class PreInspectionController extends Controller
     }
 
     /**
-     * Pre-submission: first submission only (verdict + notes + form_data).
-     * When a form template is assigned via the animal type, form_data is
-     * required and validated against the schema.
-     * Post-submission: verdict, notes, and form_data can be edited freely.
+     * The mediator can record or correct verdict and memo at any time.
+     * Recording a verdict for the first time submits the pre-inspection,
+     * which also invalidates the inspector's link.
      */
     public function update(Request $request, PreInspection $preInspection): JsonResponse
     {
         $validated = $request->validate([
-            'verdict' => 'sometimes|in:approved,rejected',
-            'notes' => 'sometimes|nullable|string',
-            'form_data' => 'sometimes|nullable|array',
+            'verdict' => 'sometimes|nullable|in:approved,rejected',
+            'memo' => 'sometimes|nullable|string|max:10000',
         ]);
 
-        if (! $preInspection->isSubmitted()) {
-            if (! array_key_exists('verdict', $validated)) {
+        if (array_key_exists('verdict', $validated)) {
+            if ($validated['verdict'] === null && $preInspection->isSubmitted()) {
                 throw ValidationException::withMessages([
-                    'verdict' => ['Das Urteil ist erforderlich.'],
+                    'verdict' => ['Eine eingereichte Vorkontrolle braucht ein Ergebnis.'],
                 ]);
             }
 
-            $preInspection->load('animalType.preInspectionFormTemplate.latestVersion');
-            $latestVersion = $preInspection->animalType?->preInspectionFormTemplate?->latestVersion;
+            $preInspection->verdict = $validated['verdict'];
 
-            if ($latestVersion && ! array_key_exists('form_data', $validated)) {
-                throw ValidationException::withMessages([
-                    'form_data' => ['Formulardaten sind für diesen Tiertyp erforderlich.'],
-                ]);
+            if ($validated['verdict'] !== null && ! $preInspection->isSubmitted()) {
+                $preInspection->submitted_at = now();
             }
-
-            if ($latestVersion) {
-                $this->preInspectionService->validateFormDataOrFail($latestVersion, $validated['form_data'] ?? []);
-            }
-
-            $this->preInspectionService->submitFirstTime(
-                $preInspection,
-                $validated['verdict'],
-                $validated['notes'] ?? '',
-                $validated['form_data'] ?? null,
-                $latestVersion,
-            );
-
-            $preInspection->load($this->detailRelations());
-
-            return response()->json([
-                'message' => 'Vorkontrolle erfolgreich eingereicht.',
-                'data' => new PreInspectionDetailResource($preInspection),
-            ]);
         }
 
-        $this->preInspectionService->updateAfterSubmission($preInspection, $validated);
+        if (array_key_exists('memo', $validated)) {
+            $preInspection->memo = $validated['memo'] ?? '';
+        }
 
-        $preInspection->load($this->detailRelations());
+        $preInspection->save();
+        $preInspection->load(self::RELATIONS);
 
         return response()->json([
             'message' => 'Vorkontrolle erfolgreich aktualisiert.',
@@ -166,26 +150,21 @@ class PreInspectionController extends Controller
         return response()->json(['message' => 'Vorkontrolle erfolgreich gelöscht.']);
     }
 
-    private function detailRelations(): array
-    {
-        return [
-            'person',
-            'animalType.preInspectionFormTemplate.latestVersion',
-            'inspector',
-            'accessTokens',
-            'formSubmission.formTemplateVersion',
-        ];
-    }
-
-    private function assertInspectorEligible(string $inspectorId, string $animalTypeId): void
+    private function assertInspectorEligible(string $inspectorId, Adoption $adoption): void
     {
         $eligible = Person::whereKey($inspectorId)
-            ->whereHas('inspectorAnimalTypes', fn ($q) => $q->where('animal_types.id', $animalTypeId))
+            ->whereHas('inspectorAnimalTypes', fn ($q) => $q->where('animal_types.id', $adoption->animal?->animal_type_id))
             ->exists();
 
         if (! $eligible) {
             throw ValidationException::withMessages([
                 'inspector_id' => 'Die gewählte Person ist für diese Tierart nicht als Kontrolleur hinterlegt.',
+            ]);
+        }
+
+        if ($inspectorId === $adoption->applicant_person_id) {
+            throw ValidationException::withMessages([
+                'inspector_id' => 'Bewerber:innen können ihre eigene Vorkontrolle nicht durchführen.',
             ]);
         }
     }

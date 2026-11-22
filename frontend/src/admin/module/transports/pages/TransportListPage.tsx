@@ -20,6 +20,8 @@ interface TransportListPageProps {
   createActionForEmpty: ReactNode
   renderActions: (t: TransportListResource) => ReactNode
   renderAdoptionDetailLink?: (adoption: AdoptionListResource) => ReactNode
+  // What is still missing for the adoptions on a planned run.
+  renderChecklist?: (t: TransportListResource) => ReactNode
   breadcrumb?: ReactNode
 }
 
@@ -30,6 +32,7 @@ export function TransportListPage({
   createActionForEmpty,
   renderActions,
   renderAdoptionDetailLink,
+  renderChecklist,
   breadcrumb,
 }: TransportListPageProps) {
   const hasData = plannedTransports.length > 0 || doneTransports.length > 0
@@ -79,6 +82,7 @@ export function TransportListPage({
                 transport={transport}
                 actions={renderActions(transport)}
                 renderAdoptionDetailLink={renderAdoptionDetailLink}
+                checklist={renderChecklist?.(transport)}
               />
             ))}
           </div>

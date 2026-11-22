@@ -7,13 +7,15 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
-use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Taily\Enums\ContractSigningStatus;
 use Taily\Http\Controllers\Controller;
 use Taily\Http\Resources\AdoptionDetailResource;
 use Taily\Models\Adoption;
+use Taily\Models\ContractTemplate;
+use Taily\Support\CaseFile\CaseFileService;
 use Taily\Support\ContractPdfService;
+use Taily\Support\ContractTemplateService;
 use Taily\Support\UploadLimits;
 
 class AdoptionContractController extends Controller
@@ -21,7 +23,7 @@ class AdoptionContractController extends Controller
     private const DETAIL_RELATIONS = [
         'animal', 'animal.animalType', 'animal.media',
         'mediator', 'mediator.media',
-        'applicant', 'applicant.media',
+        'applicantPerson', 'applicantPerson.media',
         'media',
         'latestContractSigningProcess.signers.person',
         'latestContractSigningProcess.signers.latestInviteEvent',
@@ -88,16 +90,15 @@ class AdoptionContractController extends Controller
         ]);
     }
 
-    public function templates(): JsonResponse
+    /**
+     * The contract templates offered for the adoption's animal type.
+     */
+    public function templates(Adoption $adoption, ContractTemplateService $templates): JsonResponse
     {
-        $templates = collect(config('taily.contracts'))
-            ->map(fn (array $template, string $key) => [
-                'key' => $key,
-                'label' => $template['label'],
-            ])
-            ->values();
-
-        return response()->json($templates);
+        return response()->json($templates->offeredFor($adoption)->map(fn (ContractTemplate $template) => [
+            'key' => $template->id,
+            'label' => $template->name,
+        ])->values());
     }
 
     /**
@@ -111,15 +112,15 @@ class AdoptionContractController extends Controller
      * recognize it as a stateful frontend request, which isn't guaranteed
      * (e.g. rel="noreferrer", strict referrer policies, some extensions).
      */
-    public function generate(Request $request, Adoption $adoption): JsonResponse
+    public function generate(Request $request, Adoption $adoption, CaseFileService $caseFile, ContractTemplateService $templates): JsonResponse
     {
-        $validated = $request->validate([
-            'template' => ['required', 'string', Rule::in(array_keys(config('taily.contracts')))],
-        ]);
+        $template = $templates->chosen($adoption, $request->query('template'));
+
+        $caseFile->assertContractComplete($adoption, $template);
 
         $url = URL::temporarySignedRoute('adoptions.contract.download', now()->addHour(), [
             'adoption' => $adoption->id,
-            'template' => $validated['template'],
+            'template' => $template->id,
         ]);
 
         return response()->json(['url' => $url]);
@@ -131,11 +132,11 @@ class AdoptionContractController extends Controller
             abort(403);
         }
 
-        $validated = $request->validate([
-            'template' => ['required', 'string', Rule::in(array_keys(config('taily.contracts')))],
-        ]);
+        // The signature vouches for the choice; the template may have been
+        // archived since, which doesn't make the link invalid.
+        $template = ContractTemplate::findOrFail($request->query('template'));
 
-        $pdf = $contractPdfService->generate($adoption, $validated['template']);
+        $pdf = $contractPdfService->generate($adoption, $template);
 
         return response($pdf, 200, [
             'Content-Type' => 'application/pdf',

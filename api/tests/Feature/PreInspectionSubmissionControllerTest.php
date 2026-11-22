@@ -3,6 +3,8 @@
 namespace Taily\Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Taily\Models\Adoption;
+use Taily\Models\Animal;
 use Taily\Models\AnimalType;
 use Taily\Models\Person;
 use Taily\Models\PreInspection;
@@ -15,17 +17,15 @@ class PreInspectionSubmissionControllerTest extends TestCase
 
     private function createInspection(): PreInspection
     {
-        $person = Person::create([
-            'first_name' => 'Jane',
-            'last_name' => 'Doe',
-        ]);
-
         $animalType = AnimalType::create(['title' => 'Hund']);
 
-        $inspection = PreInspection::create([
-            'person_id' => $person->id,
-            'animal_type_id' => $animalType->id,
+        $adoption = Adoption::create([
+            'animal_id' => Animal::create(['animal_type_id' => $animalType->id, 'name' => 'Bello', 'gender' => 'male'])->id,
+            ...Adoption::applicantDataFrom($__applicant = Person::create(['first_name' => 'Jane', 'last_name' => 'Doe'])),
+            'applicant_person_id' => $__applicant->id,
         ]);
+
+        $inspection = PreInspection::create(['adoption_id' => $adoption->id]);
 
         $inspection->issueToken(now()->addDays(7));
 
@@ -42,6 +42,23 @@ class PreInspectionSubmissionControllerTest extends TestCase
         }
 
         $this->getJson("/internal/inspect/{$token}")->assertStatus(429);
+    }
+
+    public function test_the_link_closes_when_the_adoption_is_canceled_or_done(): void
+    {
+        $inspection = $this->createInspection();
+        $token = $inspection->activeToken()->token;
+
+        foreach (['canceled', 'done'] as $status) {
+            $inspection->adoption->update(['status' => $status]);
+            $this->getJson("/internal/inspect/{$token}")->assertNotFound();
+            $this->postJson("/internal/inspect/{$token}/submit", ['verdict' => 'approved'])->assertNotFound();
+        }
+
+        $inspection->adoption->update(['status' => 'in_progress']);
+        $this->getJson("/internal/inspect/{$token}")->assertOk();
+        $this->postJson("/internal/inspect/{$token}/submit", ['verdict' => 'approved'])->assertOk();
+        $this->assertNotNull($inspection->fresh()->submitted_at);
     }
 
     public function test_submit_rejects_a_request_from_the_spa_session_without_a_csrf_token(): void

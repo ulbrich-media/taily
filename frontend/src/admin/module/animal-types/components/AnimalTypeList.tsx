@@ -4,13 +4,11 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableCellEmpty,
   TableHead,
   TableHeader,
   TableRow,
 } from '@/shadcn/components/ui/table'
 import { ListCard, ListCardGrid } from '@/components/list/ListCardGrid'
-import { InfoRow } from '@/shadcn/components/common/info-row'
 
 interface AnimalTypeViewProps {
   animalTypes: AnimalTypeResource[]
@@ -26,7 +24,6 @@ export function AnimalTypeList({
       <TableHeader>
         <TableRow>
           <TableHead>Name</TableHead>
-          <TableHead>Formular Vorkontrolle</TableHead>
           {renderRowActions && <TableHead aria-label="Aktionen"></TableHead>}
         </TableRow>
       </TableHeader>
@@ -34,13 +31,6 @@ export function AnimalTypeList({
         {animalTypes.map((animalType) => (
           <TableRow key={animalType.id}>
             <TableCell className="font-medium">{animalType.title}</TableCell>
-            {animalType.pre_inspection_form_template?.name ? (
-              <TableCell>
-                {animalType.pre_inspection_form_template.name}
-              </TableCell>
-            ) : (
-              <TableCellEmpty />
-            )}
             {renderRowActions && (
               <TableCell className="text-right">
                 {renderRowActions(animalType)}
@@ -68,11 +58,7 @@ export function AnimalTypeCardGrid({
         <ListCard
           header={<p className="font-medium">{animalType.title}</p>}
           footer={renderRowActions?.(animalType)}
-        >
-          <InfoRow label="Formular Vorkontrolle">
-            {animalType.pre_inspection_form_template?.name}
-          </InfoRow>
-        </ListCard>
+        />
       )}
     </ListCardGrid>
   )

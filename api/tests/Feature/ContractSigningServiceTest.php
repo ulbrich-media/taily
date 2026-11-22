@@ -48,7 +48,8 @@ class ContractSigningServiceTest extends TestCase
         return Adoption::create([
             'animal_id' => $animal->id,
             'mediator_id' => $mediator->id,
-            'applicant_id' => $applicant->id,
+            ...Adoption::applicantDataFrom($applicant),
+            'applicant_person_id' => $applicant->id,
             'contract_signed' => false,
         ]);
     }
@@ -253,7 +254,7 @@ class ContractSigningServiceTest extends TestCase
         $this->expectException(ContractSigningStateException::class);
 
         try {
-            $this->service->cancel($process, $adoption->applicant, null);
+            $this->service->cancel($process, $adoption->applicantPerson, null);
         } finally {
             $this->assertSame(ContractSigningStatus::AWAITING_MEDIATOR_SIGNATURE, $process->fresh()->status);
             $this->assertNotNull($process->signers->first()->fresh()->activeToken());
