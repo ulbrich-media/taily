@@ -10,7 +10,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/shadcn/components/ui/card'
@@ -39,6 +38,8 @@ interface ContractTemplateFormPageProps {
   options: ContractFieldOptions
   onDone: () => void
   breadcrumb?: ReactNode
+  // Users who aren't admins see the template, but can't change it.
+  readOnly?: boolean
 }
 
 /**
@@ -52,6 +53,7 @@ export function ContractTemplateFormPage({
   options,
   onDone,
   breadcrumb,
+  readOnly = false,
 }: ContractTemplateFormPageProps) {
   const form = useForm<ContractTemplateFormData>({
     defaultValues: toFormData(template),
@@ -89,7 +91,11 @@ export function ContractTemplateFormPage({
       <PageHeader
         breadcrumb={breadcrumb}
         title={
-          template ? `„${template.name}“ bearbeiten` : 'Neue Vertragsvorlage'
+          !template
+            ? 'Neue Vertragsvorlage'
+            : readOnly
+              ? `„${template.name}“`
+              : `„${template.name}“ bearbeiten`
         }
         description="Pflichtfelder fehlen auf der Checkliste jeder Vermittlung dieser Tierart, bis sie ausgefüllt sind – vorher kann der Vertrag nicht erzeugt werden."
       />
@@ -110,97 +116,108 @@ export function ContractTemplateFormPage({
         >
           <FormBlocker />
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Vorlage</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <FieldGroup>
-                <TextInput
-                  name="name"
-                  control={form.control}
-                  label="Name"
-                  description="Unter diesem Namen wählt die Vermittlung die Vorlage aus."
-                  required
-                />
-                <TextInput
-                  name="title"
-                  control={form.control}
-                  label="Titel"
-                  description="Steht oben auf dem Vertrag."
-                  required
-                />
-                <SelectInput
-                  name="animal_type_id"
-                  control={form.control}
-                  label="Tierart"
-                  description="Die Vorlage steht nur für Vermittlungen dieser Tierart zur Auswahl."
-                  options={animalTypes.map((type) => ({
-                    value: type.id,
-                    label: type.title,
-                  }))}
-                  required
-                />
-              </FieldGroup>
-            </CardContent>
-          </Card>
-
-          {CONTRACT_SECTIONS.map((section) => (
-            <Card key={section}>
+          <fieldset disabled={readOnly} className="contents">
+            <Card>
               <CardHeader>
-                <CardTitle>{SECTION_LABELS[section]}</CardTitle>
+                <CardTitle>Vorlage</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <FieldGroup>
+                  <TextInput
+                    name="name"
+                    control={form.control}
+                    label="Name"
+                    description="Unter diesem Namen wählt die Vermittlung die Vorlage aus."
+                    required
+                  />
+                  <TextInput
+                    name="title"
+                    control={form.control}
+                    label="Titel"
+                    description="Steht oben auf dem Vertrag."
+                    required
+                  />
+                  <SelectInput
+                    name="animal_type_id"
+                    control={form.control}
+                    label="Tierart"
+                    description="Die Vorlage steht nur für Vermittlungen dieser Tierart zur Auswahl."
+                    options={animalTypes.map((type) => ({
+                      value: type.id,
+                      label: type.title,
+                    }))}
+                    required
+                  />
+                </FieldGroup>
+              </CardContent>
+            </Card>
+
+            {CONTRACT_SECTIONS.map((section) => (
+              <Card key={section}>
+                <CardHeader>
+                  <CardTitle>{SECTION_LABELS[section]}</CardTitle>
+                  <CardDescription>
+                    {SECTION_DESCRIPTIONS[section]}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {section === 'adopter' && animalTypeId === '' ? (
+                    <p className="text-sm text-muted-foreground">
+                      Wähle zuerst die Tierart, für die die Vorlage gilt.
+                    </p>
+                  ) : (
+                    <SectionFieldsEditor
+                      section={section}
+                      available={available[section]}
+                      options={options}
+                    />
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Vertragstext</CardTitle>
                 <CardDescription>
-                  {SECTION_DESCRIPTIONS[section]}
+                  Steht unter den Angaben. Eine Leerzeile beginnt einen neuen
+                  Absatz, „## “ am Zeilenanfang eine Überschrift, **fett** und
+                  *kursiv* sind möglich. Platzhalter gibt es nicht – alle Daten
+                  stehen in den Abschnitten oben.
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {section === 'adopter' && animalTypeId === '' ? (
-                  <p className="text-sm text-muted-foreground">
-                    Wähle zuerst die Tierart, für die die Vorlage gilt.
-                  </p>
-                ) : (
-                  <SectionFieldsEditor
-                    section={section}
-                    available={available[section]}
-                    options={options}
-                  />
-                )}
+                <Textarea
+                  name="body"
+                  control={form.control}
+                  label="Text"
+                  rows={16}
+                />
               </CardContent>
             </Card>
-          ))}
+          </fieldset>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Vertragstext</CardTitle>
-              <CardDescription>
-                Steht unter den Angaben. Eine Leerzeile beginnt einen neuen
-                Absatz, „## “ am Zeilenanfang eine Überschrift, **fett** und
-                *kursiv* sind möglich. Platzhalter gibt es nicht – alle Daten
-                stehen in den Abschnitten oben.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Textarea
-                name="body"
-                control={form.control}
-                label="Text"
-                rows={16}
-              />
-            </CardContent>
-            <CardFooter className="justify-end gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onDone}
-                disabled={mutation.isPending}
-              >
-                Abbrechen
+          <div className="flex justify-end gap-2">
+            {readOnly ? (
+              <Button type="button" variant="outline" onClick={onDone}>
+                Zurück
               </Button>
-              <Button type="submit" disabled={mutation.isPending}>
-                {mutation.isPending ? 'Speichern...' : 'Speichern'}
-              </Button>
-            </CardFooter>
-          </Card>
+            ) : (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={onDone}
+                  disabled={mutation.isPending}
+                >
+                  Abbrechen
+                </Button>
+                <Button type="submit" disabled={mutation.isPending}>
+                  {mutation.isPending ? 'Speichern...' : 'Speichern'}
+                </Button>
+              </>
+            )}
+          </div>
         </form>
       </FormProvider>
     </div>

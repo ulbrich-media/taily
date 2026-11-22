@@ -8,6 +8,11 @@ import { Route as ListRoute } from './index'
 export const Route = createFileRoute(
   '/admin/_authenticated/settings/contracts/_list/$templateId/archive'
 )({
+  beforeLoad: ({ context }) => {
+    if (!context.isAdmin) {
+      throw new Error('403: Forbidden - Admin access required')
+    }
+  },
   loader: async ({ params }) => {
     const templates = await queryClient.ensureQueryData(
       listContractTemplatesQuery()

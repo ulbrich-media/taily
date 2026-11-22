@@ -11,6 +11,11 @@ import { Route as ListRoute } from './_list/index'
 export const Route = createFileRoute(
   '/admin/_authenticated/settings/contracts/new'
 )({
+  beforeLoad: ({ context }) => {
+    if (!context.isAdmin) {
+      throw new Error('403: Forbidden - Admin access required')
+    }
+  },
   loader: () =>
     Promise.all([
       queryClient.ensureQueryData(listAnimalTypesQuery),

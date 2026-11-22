@@ -200,6 +200,27 @@ describe('ContractTemplateFormPage', () => {
     )
   })
 
+  it('shows the template read-only to users who are not admins', () => {
+    renderPage(
+      <ContractTemplateFormPage
+        template={template}
+        animalTypes={animalTypes}
+        options={options}
+        onDone={vi.fn()}
+        readOnly
+      />
+    )
+
+    expect(screen.getByLabelText(/^Name/)).toBeDisabled()
+    expect(
+      within(section('Tier')).getByRole('button', {
+        name: 'Tasso-ID des Tieres nach oben',
+      })
+    ).toBeDisabled()
+    expect(screen.queryByRole('button', { name: 'Speichern' })).toBeNull()
+    expect(screen.getByRole('button', { name: 'Zurück' })).toBeEnabled()
+  })
+
   it('flags an adopter field the new animal type lacks and shows the server error', async () => {
     const user = userEvent.setup()
     updateMock.mockRejectedValue(

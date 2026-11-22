@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { queryClient } from '@/lib/queryClient'
+import { useAuth } from '@/lib/auth.hook'
 import { useBreadcrumbs } from '@/router/useBreadcrumbs'
 import { BreadcrumbNav } from '@/router/BreadcrumbNav'
 import { listAnimalTypesQuery } from '@/admin/module/animal-types/api/queries'
@@ -27,6 +28,7 @@ export const Route = createFileRoute(
 
 function RouteComponent() {
   const breadcrumbs = useBreadcrumbs()
+  const { isAdmin } = useAuth()
   const { templateId } = Route.useParams()
   const navigate = ListRoute.useNavigate()
   const { data: template } = useSuspenseQuery(
@@ -44,6 +46,7 @@ function RouteComponent() {
       )}
       options={options}
       onDone={() => navigate({})}
+      readOnly={!isAdmin}
       breadcrumb={<BreadcrumbNav items={breadcrumbs} />}
     />
   )

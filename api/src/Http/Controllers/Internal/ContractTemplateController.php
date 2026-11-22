@@ -9,7 +9,8 @@ use Taily\Models\ContractTemplate;
 use Taily\Support\ContractTemplateService;
 
 /**
- * Administration of contract templates (ADR-017). Templates are archived
+ * Administration of contract templates (ADR-017). Every user can read them,
+ * like the other settings; only admins change them. Templates are archived
  * rather than deleted: signing processes refer to the template they were
  * generated from.
  */
@@ -18,7 +19,7 @@ class ContractTemplateController extends Controller
     public function __construct(
         private ContractTemplateService $templates,
     ) {
-        $this->middleware('admin');
+        $this->middleware('admin')->except(['index', 'show', 'fieldOptions']);
     }
 
     public function index(): JsonResponse

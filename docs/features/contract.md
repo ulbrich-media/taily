@@ -8,7 +8,7 @@ The Schutzvertrag defines the rights and responsibilities of both parties. It en
 
 ## Contract templates
 
-A contract template is configuration, not code. Admins manage templates under *Einstellungen → Verträge*. A template consists of:
+A contract template is configuration, not code. Admins manage templates under *Einstellungen → Verträge*; other users can view them there. A template consists of:
 
 - **Name** — the admin label, e.g. *Schutzvertrag Hund*; the mediator picks a template by it
 - **Title** — the printed title, e.g. *Schutzvertrag*

@@ -63,12 +63,17 @@ class ContractTemplateTest extends TestCase
         $this->assertNull(ContractTemplate::find($id)->archived_at);
     }
 
-    public function test_only_admins_configure_templates(): void
+    public function test_every_user_reads_templates_but_only_admins_configure_them(): void
     {
         $user = User::factory()->create(['name' => 'Uwe User', 'email' => 'uwe@example.com', 'role' => UserRole::USER]);
+        $id = $this->as($this->admin)->postJson('/internal/contract-templates', $this->payload())->json('data.id');
 
-        $this->as($user)->getJson('/internal/contract-templates')->assertForbidden();
+        $this->as($user)->getJson('/internal/contract-templates')->assertOk()->assertJsonCount(1);
+        $this->as($user)->getJson("/internal/contract-templates/{$id}")->assertOk();
+        $this->as($user)->getJson('/internal/contract-templates/field-options')->assertOk();
         $this->as($user)->postJson('/internal/contract-templates', $this->payload())->assertForbidden();
+        $this->as($user)->putJson("/internal/contract-templates/{$id}", $this->payload())->assertForbidden();
+        $this->as($user)->postJson("/internal/contract-templates/{$id}/archive")->assertForbidden();
     }
 
     public function test_a_template_only_prints_known_fields(): void

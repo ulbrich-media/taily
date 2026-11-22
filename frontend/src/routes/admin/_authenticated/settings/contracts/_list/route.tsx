@@ -1,7 +1,8 @@
 import { createFileRoute, Outlet } from '@tanstack/react-router'
 import { useSuspenseQuery } from '@tanstack/react-query'
-import { Archive, ArchiveRestore, Edit, Plus } from 'lucide-react'
+import { Archive, ArchiveRestore, Edit, Eye, Plus } from 'lucide-react'
 import { queryClient } from '@/lib/queryClient'
+import { useAuth } from '@/lib/auth.hook'
 import { useBreadcrumbs } from '@/router/useBreadcrumbs'
 import { BreadcrumbNav } from '@/router/BreadcrumbNav'
 import { Button } from '@/shadcn/components/ui/button'
@@ -20,6 +21,7 @@ export const Route = createFileRoute(
 
 function RouteComponent() {
   const breadcrumbs = useBreadcrumbs()
+  const { isAdmin } = useAuth()
   const { data: templates } = useSuspenseQuery(listContractTemplatesQuery())
 
   return (
@@ -28,31 +30,35 @@ function RouteComponent() {
         templates={templates}
         breadcrumb={<BreadcrumbNav items={breadcrumbs} />}
         createAction={
-          <Button asChild>
-            <NewRoute.Link>
-              <Plus />
-              Vorlage anlegen
-            </NewRoute.Link>
-          </Button>
+          isAdmin && (
+            <Button asChild>
+              <NewRoute.Link>
+                <Plus />
+                Vorlage anlegen
+              </NewRoute.Link>
+            </Button>
+          )
         }
         renderActions={(template) => (
           <>
             <Button size="icon-sm" variant="ghost" asChild>
               <EditRoute.Link
                 params={{ templateId: template.id }}
-                aria-label={`${template.name} bearbeiten`}
+                aria-label={`${template.name} ${isAdmin ? 'bearbeiten' : 'ansehen'}`}
               >
-                <Edit />
+                {isAdmin ? <Edit /> : <Eye />}
               </EditRoute.Link>
             </Button>
-            <Button size="icon-sm" variant="ghost" asChild>
-              <ArchiveRoute.Link
-                params={{ templateId: template.id }}
-                aria-label={`${template.name} ${template.archived_at ? 'wiederherstellen' : 'archivieren'}`}
-              >
-                {template.archived_at ? <ArchiveRestore /> : <Archive />}
-              </ArchiveRoute.Link>
-            </Button>
+            {isAdmin && (
+              <Button size="icon-sm" variant="ghost" asChild>
+                <ArchiveRoute.Link
+                  params={{ templateId: template.id }}
+                  aria-label={`${template.name} ${template.archived_at ? 'wiederherstellen' : 'archivieren'}`}
+                >
+                  {template.archived_at ? <ArchiveRestore /> : <Archive />}
+                </ArchiveRoute.Link>
+              </Button>
+            )}
           </>
         )}
       />
