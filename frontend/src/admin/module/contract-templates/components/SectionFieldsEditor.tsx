@@ -4,7 +4,7 @@ import {
   useFormContext,
   useWatch,
 } from 'react-hook-form'
-import { ArrowDown, ArrowUp, Trash2 } from 'lucide-react'
+import { ArrowDown, ArrowUp, Lock, Trash2 } from 'lucide-react'
 import type {
   ContractFieldOption,
   ContractFieldOptions,
@@ -34,8 +34,9 @@ interface SectionFieldsEditorProps {
 }
 
 /**
- * The ordered fields of one contract section. Each is required (blocks
- * generation while missing) or printed only when it has a value.
+ * The ordered fields of one contract section. The fixed fields come first
+ * and can't be changed; each configured one is required (blocks generation
+ * while missing) or printed only when it has a value.
  */
 export function SectionFieldsEditor({
   section,
@@ -51,12 +52,34 @@ export function SectionFieldsEditor({
   )
   const errors = formState.errors[name]
 
+  const fixed = options.fixed[section]
+
   return (
     <div className="space-y-3">
+      {fixed.length > 0 && (
+        <ul
+          className="divide-y rounded-md border bg-muted/40"
+          aria-label="Felder in jedem Vertrag"
+        >
+          {fixed.map((field) => (
+            <li
+              key={field.key}
+              className="flex flex-wrap items-center gap-2 p-3 text-sm"
+            >
+              <Lock className="size-4 text-muted-foreground" aria-hidden />
+              <span className="font-medium">{field.label}</span>
+              <Badge variant="outline">
+                {field.required ? 'Pflicht' : 'Wenn vorhanden'}
+              </Badge>
+              <span className="text-muted-foreground">
+                Steht in jedem Vertrag
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
       {fields.fields.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          Dieser Abschnitt wird nicht gedruckt.
-        </p>
+        <p className="text-sm text-muted-foreground">Keine weiteren Felder.</p>
       ) : (
         <ul className="divide-y rounded-md border">
           {fields.fields.map((field, index) => {

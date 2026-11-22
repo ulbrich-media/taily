@@ -192,6 +192,8 @@ The catalogue sets defaults. The mediator decides per adoption, from the field's
 
 Overrides are internal: the applicant sees their effect on what is required, never the override itself.
 
+The fields every contract prints — the applicant's name, email and address — can only be required earlier, never waived or moved past the contract (see [contract.md](./contract.md#contract-templates)).
+
 **Effective requirement** for a field on an adoption, in order of precedence:
 
 1. The adoption's override, if any.

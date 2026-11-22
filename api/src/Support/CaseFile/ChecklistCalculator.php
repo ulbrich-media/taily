@@ -59,14 +59,18 @@ final class ChecklistCalculator
         }
 
         $override = $state->overrides[$spec->key] ?? null;
-
-        if ($override !== null) {
-            return $override->waived ? null : $override->requiredFor;
-        }
-
         $contract = in_array($spec->key, $state->contractFieldKeys, true) ? AdoptionStep::CONTRACT : null;
 
-        return AdoptionStep::earliest($spec->requiredFor, $contract);
+        $requiredFor = $override !== null
+            ? ($override->waived ? null : $override->requiredFor)
+            : AdoptionStep::earliest($spec->requiredFor, $contract);
+
+        // A field every contract prints stays required for it, whatever the override.
+        if ($contract !== null && in_array($spec->key, $state->lockedContractKeys, true)) {
+            return AdoptionStep::earliest($requiredFor, $contract);
+        }
+
+        return $requiredFor;
     }
 
     /**

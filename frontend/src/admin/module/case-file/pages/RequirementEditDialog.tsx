@@ -64,14 +64,22 @@ export function RequirementEditDialog({
       ? 'Standard: Pflicht ab Vertrag'
       : 'Standard: optional'
 
+  // A field every contract prints can only be required earlier.
+  const steps = field.fixed_in_contract
+    ? ADOPTION_STEPS.slice(0, ADOPTION_STEPS.indexOf('contract') + 1)
+    : ADOPTION_STEPS
   const options = [
     { value: 'default', label: defaultLabel },
-    ...ADOPTION_STEPS.map((step) => ({
+    ...steps.map((step) => ({
       value: step,
       label: `Pflicht ab ${ADOPTION_STEP_LABELS[step]}`,
     })),
-    { value: 'optional', label: 'Optional' },
-    { value: 'waived', label: 'Für diese Vermittlung nicht nötig' },
+    ...(field.fixed_in_contract
+      ? []
+      : [
+          { value: 'optional', label: 'Optional' },
+          { value: 'waived', label: 'Für diese Vermittlung nicht nötig' },
+        ]),
   ]
 
   const mutation = useMutation({

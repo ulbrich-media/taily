@@ -91,7 +91,9 @@ _Avoid_: Shipment, Delivery run
 **Handover**: The moment the Animal is physically transferred to the Adopter. Completing a Handover transitions the Adoption to status `done` and the Applicant becomes an Adopter.
 _Avoid_: Transfer, Delivery, Pickup
 
-**Contract Template**: A configured contract: name, title, wording and three data sections (animal, mediator, adopter) of fields. Belongs to exactly one Animal Type; an Animal Type can have several and the Mediator picks one at generation. Fields a template marks as required are required for the contract Step of its Animal Type; optional ones are printed when present. Archived, never deleted. See ADR-017.
+**Contract Template**: A configured contract: name, title, wording and three data sections (animal, mediator, adopter) of fields. Belongs to exactly one Animal Type; an Animal Type can have several and the Mediator picks one at generation. Every template also prints the Fixed Contract Fields. Fields a template marks as required are required for the contract Step of its Animal Type; optional ones are printed when present. Archived, never deleted. See ADR-017.
+
+**Fixed Contract Field**: A field every Contract Template prints ahead of its own fields and that can't be configured: the Animal's name and photo, the Mediator's name, the Applicant's first and last name, email and address. Required for the contract Step and never waivable — except the photo, printed only when present.
 
 **Contract Field Registry**: The fixed list of Animal and Mediator columns a Contract Template can print (`animal.tasso_id`, `mediator.organization`, …). Adopter fields come from the Case File catalogue instead.
 _Avoid_: Placeholder, Merge field

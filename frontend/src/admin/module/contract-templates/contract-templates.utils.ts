@@ -68,9 +68,11 @@ export function fieldLabel(
   section: ContractSection,
   key: string
 ): string | undefined {
-  const pool =
-    section === 'adopter'
+  const pool = [
+    ...options.fixed[section],
+    ...(section === 'adopter'
       ? options.adopter.flatMap((entry) => entry.fields)
-      : options[section]
+      : options[section]),
+  ]
   return pool.find((option) => option.key === key)?.label
 }

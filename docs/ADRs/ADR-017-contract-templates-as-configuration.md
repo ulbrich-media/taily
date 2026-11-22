@@ -28,13 +28,15 @@ contract_templates
   name                      admin label, e.g. "Schutzvertrag Hund"
   title                     printed title, e.g. "Schutzvertrag"
   body                      contract wording (plain text; paragraphs and headings via Markdown)
-  animal_fields             ordered list of {key, required}, e.g. animal.name, animal.breed, animal.tasso_id
-  mediator_fields           e.g. mediator.full_name, mediator.phone
-  adopter_fields            e.g. first_name, last_name, date_of_birth, address, id_card_number
+  animal_fields             ordered list of {key, required}, e.g. animal.breed, animal.tasso_id
+  mediator_fields           e.g. mediator.organization, mediator.phone
+  adopter_fields            e.g. date_of_birth, id_card_number
   archived_at
 ```
 
 Each entry is `{key, required}`. Required entries become contract requirements and block generation; optional ones are printed when they have a value (a phone number, the animal's breed) and left out otherwise. Requiring every printed field would make a template either too strict or too sparse.
+
+**Fixed fields.** Every contract prints the same core, ahead of the configured fields: the animal's name and photo, the mediator's name, and the adopter's first and last name, email and address. A contract without its parties makes no sense, and the generic view can rely on that frame. These fields can't be configured or removed. They are required for the contract step of every animal type with a template, and the mediator **can't waive them** per adoption — only require them earlier. The photo is the exception: it is printed whenever the animal has one, but a contract can be generated without it. The sections of a template hold only the fields in addition to these.
 
 **One animal type per template.** Each animal type has its own Case File catalogue, so a template for one type can print exactly that type's fields. Sharing a template between types would limit its adopter fields to those every type has, and tie a change for dogs to the cats' contract. Keeping the same contract for two types means keeping two templates — little extra work for a rare need.
 
@@ -116,6 +118,10 @@ Inline merge fields read more naturally, but they need a placeholder syntax, an 
 ### A template shared by several animal types
 
 One template offered for several types would save keeping copies in sync. Rejected: its adopter fields would be limited to the fields every one of those catalogues has, and a field added for one type would change the others' contract. Sharing a contract across types is rare enough that a copy per type is the simpler rule.
+
+### Every field configurable
+
+The first version let a template print any selection, including none of the parties' names. Rejected: a template without names or the adopter's address isn't a usable contract, and a photo that may or may not be configured makes the layout depend on configuration. A waivable name or address would allow the same per adoption.
 
 ### Unprefixed keys in every section
 

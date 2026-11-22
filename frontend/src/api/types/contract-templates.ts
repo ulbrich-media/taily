@@ -33,4 +33,10 @@ export interface ContractFieldOptions {
   mediator: ContractFieldOption[]
   // The printable catalogue fields of each animal type.
   adopter: { animal_type_id: string; fields: ContractFieldOption[] }[]
+  // Printed in every contract ahead of the configured fields; not
+  // configurable. Required ones block generation, the photo doesn't.
+  fixed: Record<
+    ContractSection,
+    (ContractFieldOption & { required: boolean })[]
+  >
 }

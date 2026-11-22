@@ -13,12 +13,34 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * `{key, required}` entries. A template belongs to one animal type; its
  * required entries become requirements of the contract step for every
  * adoption of that type.
+ *
+ * Every contract also prints the fixed fields, ahead of the configured ones:
+ * the parties' names, the adopter's email and address, and the animal's
+ * photo when it has one. They are required — the photo excepted — and
+ * can't be configured, removed or waived.
  */
 class ContractTemplate extends Model
 {
     use HasUuids;
 
     public const SECTIONS = ['animal', 'mediator', 'adopter'];
+
+    /** @var array<string, list<array{key: string, required: bool}>> */
+    public const FIXED_FIELDS = [
+        'animal' => [
+            ['key' => 'animal.name', 'required' => true],
+            ['key' => 'animal.photo', 'required' => false],
+        ],
+        'mediator' => [
+            ['key' => 'mediator.full_name', 'required' => true],
+        ],
+        'adopter' => [
+            ['key' => 'first_name', 'required' => true],
+            ['key' => 'last_name', 'required' => true],
+            ['key' => 'email', 'required' => true],
+            ['key' => 'address', 'required' => true],
+        ],
+    ];
 
     protected $attributes = [
         'body' => '',
@@ -64,13 +86,23 @@ class ContractTemplate extends Model
     }
 
     /**
-     * The entries of one data section.
+     * The configured entries of one data section, without the fixed ones.
      *
      * @return list<array{key: string, required: bool}>
      */
     public function section(string $section): array
     {
         return array_values($this->{"{$section}_fields"} ?? []);
+    }
+
+    /**
+     * What one data section prints: the fixed entries, then the configured.
+     *
+     * @return list<array{key: string, required: bool}>
+     */
+    public function printedSection(string $section): array
+    {
+        return [...self::FIXED_FIELDS[$section], ...$this->section($section)];
     }
 
     /**
@@ -81,7 +113,7 @@ class ContractTemplate extends Model
     public function printedKeys(): array
     {
         return collect(self::SECTIONS)
-            ->flatMap(fn (string $section) => array_column($this->section($section), 'key'))
+            ->flatMap(fn (string $section) => array_column($this->printedSection($section), 'key'))
             ->values()
             ->all();
     }
@@ -94,8 +126,28 @@ class ContractTemplate extends Model
     public function requiredKeys(): array
     {
         return collect(self::SECTIONS)
-            ->flatMap(fn (string $section) => $this->section($section))
+            ->flatMap(fn (string $section) => $this->printedSection($section))
             ->filter(fn (array $entry) => $entry['required'] ?? true)
+            ->pluck('key')
+            ->values()
+            ->all();
+    }
+
+    public static function isFixed(string $key): bool
+    {
+        return collect(self::FIXED_FIELDS)->flatten(1)->contains('key', $key);
+    }
+
+    /**
+     * The fixed keys every contract requires. A mediator can't waive them.
+     *
+     * @return list<string>
+     */
+    public static function fixedRequiredKeys(): array
+    {
+        return collect(self::FIXED_FIELDS)
+            ->flatten(1)
+            ->filter(fn (array $entry) => $entry['required'])
             ->pluck('key')
             ->values()
             ->all();

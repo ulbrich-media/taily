@@ -8,31 +8,44 @@ import {
 } from './contract-templates.utils'
 
 const options: ContractFieldOptions = {
-  animal: [{ key: 'animal.name', label: 'Name des Tieres' }],
-  mediator: [{ key: 'mediator.full_name', label: 'Vermittler:in' }],
+  animal: [{ key: 'animal.breed', label: 'Rasse des Tieres' }],
+  mediator: [{ key: 'mediator.email', label: 'E-Mail der Vermittler:in' }],
   adopter: [
     {
       animal_type_id: 'dog',
       fields: [
-        { key: 'first_name', label: 'Vorname' },
+        { key: 'date_of_birth', label: 'Geburtsdatum' },
         { key: 'id_card_number', label: 'Ausweisnummer' },
       ],
     },
     {
       animal_type_id: 'cat',
-      fields: [{ key: 'first_name', label: 'Vorname' }],
+      fields: [{ key: 'date_of_birth', label: 'Geburtsdatum' }],
     },
   ],
+  fixed: {
+    animal: [
+      { key: 'animal.name', label: 'Name des Tieres', required: true },
+      { key: 'animal.photo', label: 'Foto des Tieres', required: false },
+    ],
+    mediator: [
+      { key: 'mediator.full_name', label: 'Vermittler:in', required: true },
+    ],
+    adopter: [
+      { key: 'first_name', label: 'Vorname', required: true },
+      { key: 'email', label: 'E-Mail', required: true },
+    ],
+  },
 }
 
 describe('adopterOptions', () => {
   it('offers the fields of the chosen animal type', () => {
     expect(adopterOptions(options, 'dog').map((o) => o.key)).toEqual([
-      'first_name',
+      'date_of_birth',
       'id_card_number',
     ])
     expect(adopterOptions(options, 'cat').map((o) => o.key)).toEqual([
-      'first_name',
+      'date_of_birth',
     ])
   })
 
@@ -42,7 +55,7 @@ describe('adopterOptions', () => {
 })
 
 describe('fieldLabel', () => {
-  it('finds adopter labels of any animal type', () => {
+  it('finds adopter labels of any animal type, and fixed fields', () => {
     expect(fieldLabel(options, 'adopter', 'id_card_number')).toBe(
       'Ausweisnummer'
     )

@@ -27,26 +27,19 @@ class ContractTemplateSeeder extends Seeder
 
             Bei Zuwiderhandlung gegen diesen Vertrag behält sich die vermittelnde Organisation das Recht vor, das Tier zurückzufordern.
             MD,
+        // The parties' names, the adopter's email and address and the
+        // animal's photo are fixed fields every contract prints.
         'animal_fields' => [
-            ['key' => 'animal.name', 'required' => true],
             ['key' => 'animal.animal_type', 'required' => true],
             ['key' => 'animal.breed', 'required' => false],
             ['key' => 'animal.color', 'required' => false],
             ['key' => 'animal.date_of_birth', 'required' => false],
             ['key' => 'animal.animal_number', 'required' => true],
-            ['key' => 'animal.photo', 'required' => false],
         ],
-        'mediator_fields' => [
-            ['key' => 'mediator.full_name', 'required' => true],
-            ['key' => 'mediator.organization', 'required' => false],
-        ],
+        'mediator_fields' => [],
         'adopter_fields' => [
-            ['key' => 'first_name', 'required' => true],
-            ['key' => 'last_name', 'required' => true],
             ['key' => 'date_of_birth', 'required' => true],
-            ['key' => 'address', 'required' => true],
             ['key' => 'id_card_number', 'required' => true],
-            ['key' => 'email', 'required' => false],
             ['key' => 'phone', 'required' => false],
         ],
     ];

@@ -77,6 +77,8 @@ export interface CaseFileField {
   // After overrides, contract fields and conditions.
   effective_required_for: AdoptionStep | null
   in_contract: boolean
+  // Printed in every contract: stays required for it, can't be waived.
+  fixed_in_contract: boolean
   condition: CaseFileCondition | null
   applies: boolean
   requires_review: boolean

@@ -153,6 +153,7 @@ class CaseFileService
             reviewStatuses: $reviews,
             overrides: $overrides,
             contractFieldKeys: $contractFieldKeys,
+            lockedContractKeys: ContractTemplate::fixedRequiredKeys(),
         );
     }
 
@@ -197,6 +198,7 @@ class CaseFileService
                         'required_for' => $definition->required_for?->value,
                         'effective_required_for' => $calculator->effectiveRequiredFor($spec, $state)?->value,
                         'in_contract' => in_array($definition->key, $state->contractFieldKeys, true),
+                        'fixed_in_contract' => ContractTemplate::isFixed($definition->key),
                         'condition' => $definition->condition,
                         'applies' => $calculator->applies($spec, $state),
                         'requires_review' => $definition->requires_review,
@@ -420,6 +422,12 @@ class CaseFileService
      */
     public function setRequirement(Adoption $adoption, FieldDefinition $definition, ?AdoptionStep $requiredFor, bool $waived): void
     {
+        if (ContractTemplate::isFixed($definition->key) && ($waived || $requiredFor === null || ! $requiredFor->isAtOrBefore(AdoptionStep::CONTRACT))) {
+            throw ValidationException::withMessages([
+                'required_for' => ['Jeder Vertrag enthält dieses Feld. Es bleibt spätestens für den Vertrag Pflicht.'],
+            ]);
+        }
+
         AdoptionRequirement::updateOrCreate(
             ['adoption_id' => $adoption->id, 'field_definition_id' => $definition->id],
             ['required_for' => $waived ? null : $requiredFor, 'waived' => $waived],

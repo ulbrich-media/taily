@@ -13,12 +13,14 @@ A contract template is configuration, not code. Admins manage templates under *E
 - **Name** — the admin label, e.g. *Schutzvertrag Hund*; the mediator picks a template by it
 - **Title** — the printed title, e.g. *Schutzvertrag*
 - **Animal type** — a template belongs to exactly one animal type; an animal type can have several templates. A contract used for dogs and cats is kept as two templates, one per type, so each can print exactly the fields of its type's Case File.
-- **Three data sections** — *Tier*, *Vermittler:in*, *Adoptant:in* — each an ordered list of fields, each marked *required* or not. Animal and mediator fields are a fixed set of what Taily knows about the animal (name, breed, Tasso-ID, photo, …) and the mediator (name, organization, …). Adopter fields are fields of the animal type's [Case File](./case-file.md) catalogue — built-in like the address or custom like the Ausweisnummer. Files and Info Blocks can't be printed.
+- **Three data sections** — *Tier*, *Vermittler:in*, *Adoptant:in*. Each starts with the **fixed fields** every contract prints: the animal's name and photo, the mediator's name, the adopter's first and last name, email and address. They can't be removed. After them come the template's own fields, in order, each marked *required* or not. Animal and mediator fields are a fixed set of what Taily knows about the animal (name, breed, Tasso-ID, photo, …) and the mediator (name, organization, …). Adopter fields are fields of the animal type's [Case File](./case-file.md) catalogue — built-in like the address or custom like the Ausweisnummer. Files and Info Blocks can't be printed.
 - **Wording** — the contract text, plain text with Markdown paragraphs and headings, no placeholders
 
 The header and footer of the document are the same for every template.
 
 Templates are archived, not deleted: a signing process keeps the id of the template it was generated from. A new installation starts with an example Schutzvertrag for every animal type.
+
+The fixed fields are required — except the photo, which is printed when the animal has one and left out otherwise. The mediator can't waive them for an adoption; a missing name, email or address has to be filled in before the contract can be generated.
 
 **Every field a template marks as required is required for the contract step** of adoptions of its animal type — the templates of one type are expected to differ in wording, not in data. Optional fields are printed when they have a value and left out otherwise; a field the catalogue no longer defines prints nothing. A catalogue field a template prints can't be archived until it is removed from the template. Taily therefore knows what a contract needs, and the [Checklist](./case-file.md#checklist) shows it long before generation: *"Für den Vertrag fehlen: Ausweisnummer, Tasso-ID des Tieres"*.
 

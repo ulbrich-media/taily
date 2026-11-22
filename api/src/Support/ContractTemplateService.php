@@ -15,6 +15,7 @@ use Taily\Models\ContractTemplate;
 use Taily\Models\FieldDefinition;
 use Taily\Support\CaseFile\CaseFileService;
 use Taily\Support\CaseFile\ContractFieldRegistry;
+use Taily\Support\CaseFile\FieldCatalogue;
 
 /**
  * Configures contract templates and turns one into what the contract prints
@@ -27,23 +28,32 @@ class ContractTemplateService
     ) {}
 
     /**
-     * Everything a template's sections can print: the registry's animal and
-     * mediator fields, and per animal type the catalogue fields that can be
-     * printed as text — files and Info Blocks can't.
+     * What a template's sections can print besides the fixed fields: the
+     * registry's animal and mediator fields, and per animal type the
+     * catalogue fields that can be printed as text — files and Info Blocks
+     * can't. `fixed` lists the fields every contract prints.
      *
      * @return array<string, mixed>
      */
     public function fieldOptions(): array
     {
+        $configurable = fn (array $options) => array_values(array_filter($options, fn (array $option) => ! ContractTemplate::isFixed($option['key'])));
+        $builtInLabels = array_column(FieldCatalogue::BUILT_INS, 'label', 'key');
+
         return [
-            'animal' => ContractFieldRegistry::options('animal'),
-            'mediator' => ContractFieldRegistry::options('mediator'),
+            'animal' => $configurable(ContractFieldRegistry::options('animal')),
+            'mediator' => $configurable(ContractFieldRegistry::options('mediator')),
             'adopter' => AnimalType::orderBy('title')->get()->map(fn (AnimalType $type) => [
                 'animal_type_id' => $type->id,
-                'fields' => $this->printableDefinitions($type->id)
+                'fields' => $configurable($this->printableDefinitions($type->id)
                     ->map(fn (FieldDefinition $definition) => ['key' => $definition->key, 'label' => $definition->label])
-                    ->values(),
+                    ->values()
+                    ->all()),
             ])->values(),
+            'fixed' => collect(ContractTemplate::FIXED_FIELDS)->map(fn (array $entries, string $section) => array_map(fn (array $entry) => [
+                ...$entry,
+                'label' => $section === 'adopter' ? $builtInLabels[$entry['key']] : ContractFieldRegistry::spec($entry['key'])->label,
+            ], $entries))->all(),
         ];
     }
 
@@ -133,7 +143,7 @@ class ContractTemplateService
         $sections = [];
 
         foreach (ContractTemplate::SECTIONS as $section) {
-            $sections[$section] = collect($template->section($section))
+            $sections[$section] = collect($template->printedSection($section))
                 ->reject(fn (array $entry) => $entry['key'] === 'animal.photo')
                 ->map(function (array $entry) use ($adoption, $definitions, $values) {
                     $key = $entry['key'];
@@ -156,7 +166,8 @@ class ContractTemplateService
 
         return [
             'sections' => $sections,
-            'photo' => in_array('animal.photo', array_column($template->section('animal'), 'key'), true),
+            // The photo is a fixed field: printed whenever the animal has one.
+            'photo' => true,
         ];
     }
 
@@ -181,13 +192,22 @@ class ContractTemplateService
     /**
      * Animal and mediator fields come from the registry. Adopter fields must
      * be printable fields of the template's animal type, so a template can't
-     * require something an adoption can't hold.
+     * require something an adoption can't hold. Fixed fields are printed
+     * anyway and can't be configured.
      *
      * @param  array<string, mixed>  $validated
      */
     private function assertKnownFields(array $validated): void
     {
         $errors = [];
+
+        foreach (ContractTemplate::SECTIONS as $section) {
+            foreach ($validated["{$section}_fields"] as $index => $entry) {
+                if (ContractTemplate::isFixed($entry['key'])) {
+                    $errors["{$section}_fields.{$index}.key"] = ['Dieses Feld steht immer im Vertrag.'];
+                }
+            }
+        }
 
         foreach (['animal', 'mediator'] as $section) {
             foreach ($validated["{$section}_fields"] as $index => $entry) {

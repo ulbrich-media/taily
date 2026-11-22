@@ -110,9 +110,20 @@ class ContractPdfServiceTest extends TestCase
         $this->assertStringContainsString('<strong>artgerecht</strong>', $html);
         // HTML in the wording is dropped, not rendered.
         $this->assertStringNotContainsString('<script>', $html);
-        // An optional field without a value is left out; an empty section too.
+        // An optional field without a value is left out.
         $this->assertStringNotContainsString('Rasse', $html);
-        $this->assertStringNotContainsString('Vermittler:in', $html);
+        // The fixed fields are printed although the template doesn't list them.
+        $this->assertStringContainsString('Bello', $html);
+        $this->assertStringContainsString('Maria Vermittlerin', $html);
+        $this->assertStringContainsString('Übernehmerin', $html);
+        // The photo is printed when the animal has one, and left out otherwise.
+        $this->assertStringNotContainsString('animal-photo"', $html);
+
+        Storage::fake('animal-pictures');
+        $adoption->animal->addMedia(UploadedFile::fake()->image('bello.jpg', 40, 30))->toMediaCollection('pictures');
+
+        $html = (new ContractPdfService)->renderBody($adoption->fresh(), $template->fresh());
+        $this->assertStringContainsString('class="animal-photo"', $html);
     }
 
     public function test_filename_includes_a_slugified_animal_name_and_the_adoption_id(): void
@@ -231,7 +242,8 @@ class ContractPdfServiceTest extends TestCase
         $this->assertStringContainsString('Braun-Wei', $text); // "ß" is dropped by the core-font-only extraction regex
         $this->assertStringContainsString('01.05.2020', $text);
         $this->assertStringContainsString('15.03.1990', $text);
-        $this->assertStringContainsString('Tierheim Musterstadt', $text);
+        // The example template doesn't print the mediator's organization.
+        $this->assertStringNotContainsString('Tierheim Musterstadt', $text);
 
         // What the layout draws around the document rather than the
         // template: the brand, this document's own title, the installation's

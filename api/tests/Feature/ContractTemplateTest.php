@@ -75,8 +75,13 @@ class ContractTemplateTest extends TestCase
     {
         $store = fn (array $overrides) => $this->as($this->admin)->postJson('/internal/contract-templates', $this->payload($overrides));
 
-        $store(['animal_fields' => [['key' => 'mediator.full_name', 'required' => true]]])
+        $store(['animal_fields' => [['key' => 'mediator.email', 'required' => true]]])
             ->assertUnprocessable()->assertJsonValidationErrors('animal_fields.0.key');
+        // Fixed fields are always printed and can't be configured.
+        foreach (['animal_fields' => 'animal.photo', 'mediator_fields' => 'mediator.full_name', 'adopter_fields' => 'email'] as $section => $key) {
+            $store([$section => [['key' => $key, 'required' => false]]])
+                ->assertUnprocessable()->assertJsonValidationErrors("{$section}.0.key");
+        }
         $store(['mediator_fields' => [['key' => 'mediator.shoe_size', 'required' => true]]])
             ->assertUnprocessable()->assertJsonValidationErrors('mediator_fields.0.key');
         // Files can't be printed.
@@ -99,8 +104,14 @@ class ContractTemplateTest extends TestCase
 
         $dogFields = array_column(collect($options->json('adopter'))->firstWhere('animal_type_id', $this->dogs->id)['fields'], 'key');
         $this->assertContains('id_card_number', $dogFields);
-        $this->assertContains('address', $dogFields);
+        $this->assertContains('date_of_birth', $dogFields);
         $this->assertNotContains('home_video', $dogFields);
+
+        // Fixed fields are listed apart and can't be picked.
+        $this->assertNotContains('address', $dogFields);
+        $this->assertNotContains('animal.photo', array_column($options->json('animal'), 'key'));
+        $this->assertSame(['key' => 'animal.photo', 'required' => false, 'label' => 'Foto des Tieres'], $options->json('fixed.animal.1'));
+        $this->assertSame(['first_name', 'last_name', 'email', 'address'], array_column($options->json('fixed.adopter'), 'key'));
     }
 
     public function test_required_fields_become_contract_requirements_of_the_templates_animal_type_only(): void
@@ -142,12 +153,53 @@ class ContractTemplateTest extends TestCase
     {
         $template = $this->as($this->admin)->postJson('/internal/contract-templates', $this->payload([
             'adopter_fields' => [['key' => 'phone', 'required' => false]],
-            'animal_fields' => [['key' => 'animal.name', 'required' => true]],
-        ]))->json('data.id');
+            'animal_fields' => [],
+            'mediator_fields' => [],
+        ]))->assertCreated()->json('data.id');
         $adoption = $this->adoption($this->dogs);
+        $this->fillFixedFields($adoption);
 
         // The phone is missing but optional for this template.
         $this->as($this->admin)->getJson("/internal/adoptions/{$adoption->id}/contract/generate?template={$template}")->assertOk();
+    }
+
+    public function test_fixed_fields_block_generation_and_cannot_be_waived(): void
+    {
+        $template = $this->as($this->admin)->postJson('/internal/contract-templates', $this->payload([
+            'animal_fields' => [], 'mediator_fields' => [], 'adopter_fields' => [],
+        ]))->assertCreated()->json('data.id');
+        $adoption = $this->adoption($this->dogs);
+
+        $message = $this->as($this->admin)->getJson("/internal/adoptions/{$adoption->id}/contract/generate?template={$template}")
+            ->assertUnprocessable()
+            ->json('errors.template.0');
+        $this->assertStringContainsString('Vermittler:in', $message);
+        $this->assertStringContainsString('E-Mail', $message);
+        $this->assertStringContainsString('Anschrift', $message);
+        // The animal's photo is printed when there is one, but never required.
+        $this->assertStringNotContainsString('Foto', $message);
+
+        $this->as($this->admin)->putJson("/internal/adoptions/{$adoption->id}/requirements/address", ['waived' => true])
+            ->assertUnprocessable()->assertJsonValidationErrors('required_for');
+        $this->as($this->admin)->putJson("/internal/adoptions/{$adoption->id}/requirements/address", ['waived' => false, 'required_for' => 'transport'])
+            ->assertUnprocessable()->assertJsonValidationErrors('required_for');
+        // Requiring it earlier is fine.
+        $this->as($this->admin)->putJson("/internal/adoptions/{$adoption->id}/requirements/address", ['waived' => false, 'required_for' => 'pre_inspection'])
+            ->assertOk();
+
+        $this->fillFixedFields($adoption);
+        $this->as($this->admin)->getJson("/internal/adoptions/{$adoption->id}/contract/generate?template={$template}")->assertOk();
+    }
+
+    private function fillFixedFields(Adoption $adoption): void
+    {
+        $adoption->update([
+            'mediator_id' => Person::create(['first_name' => 'Maria', 'last_name' => 'Vermittlerin'])->id,
+            'applicant_email' => 'anna@example.com',
+            'applicant_street_line' => 'Hauptstraße 1',
+            'applicant_postal_code' => '12345',
+            'applicant_city' => 'Musterstadt',
+        ]);
     }
 
     /**
@@ -161,8 +213,8 @@ class ContractTemplateTest extends TestCase
             'title' => 'Schutzvertrag',
             'body' => "## Bedingungen\n\nDas Tier wird artgerecht gehalten.",
             'animal_type_id' => $this->dogs->id,
-            'animal_fields' => [['key' => 'animal.name', 'required' => true]],
-            'mediator_fields' => [['key' => 'mediator.full_name', 'required' => false]],
+            'animal_fields' => [['key' => 'animal.breed', 'required' => true]],
+            'mediator_fields' => [['key' => 'mediator.email', 'required' => false]],
             'adopter_fields' => [['key' => 'id_card_number', 'required' => true], ['key' => 'phone', 'required' => false]],
         ];
     }

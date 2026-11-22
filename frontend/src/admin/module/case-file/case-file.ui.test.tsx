@@ -40,6 +40,7 @@ function field(overrides: Partial<CaseFileField>): CaseFileField {
     required_for: null,
     effective_required_for: null,
     in_contract: false,
+    fixed_in_contract: false,
     condition: null,
     applies: true,
     requires_review: false,

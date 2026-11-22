@@ -37,23 +37,36 @@ const animalTypes = [
 
 const options: ContractFieldOptions = {
   animal: [
-    { key: 'animal.name', label: 'Name des Tieres' },
+    { key: 'animal.breed', label: 'Rasse des Tieres' },
     { key: 'animal.tasso_id', label: 'Tasso-ID des Tieres' },
   ],
-  mediator: [{ key: 'mediator.full_name', label: 'Vermittler:in' }],
+  mediator: [{ key: 'mediator.email', label: 'E-Mail der Vermittler:in' }],
   adopter: [
     {
       animal_type_id: 'dog',
       fields: [
-        { key: 'first_name', label: 'Vorname' },
+        { key: 'date_of_birth', label: 'Geburtsdatum' },
         { key: 'id_card_number', label: 'Ausweisnummer' },
       ],
     },
     {
       animal_type_id: 'cat',
-      fields: [{ key: 'first_name', label: 'Vorname' }],
+      fields: [{ key: 'date_of_birth', label: 'Geburtsdatum' }],
     },
   ],
+  fixed: {
+    animal: [
+      { key: 'animal.name', label: 'Name des Tieres', required: true },
+      { key: 'animal.photo', label: 'Foto des Tieres', required: false },
+    ],
+    mediator: [
+      { key: 'mediator.full_name', label: 'Vermittler:in', required: true },
+    ],
+    adopter: [
+      { key: 'first_name', label: 'Vorname', required: true },
+      { key: 'email', label: 'E-Mail', required: true },
+    ],
+  },
 }
 
 const template: ContractTemplateResource = {
@@ -63,7 +76,7 @@ const template: ContractTemplateResource = {
   body: 'Text',
   animal_type: { id: 'dog', title: 'Hund' },
   animal_fields: [
-    { key: 'animal.name', required: true },
+    { key: 'animal.breed', required: true },
     { key: 'animal.tasso_id', required: false },
   ],
   mediator_fields: [],
@@ -124,7 +137,7 @@ describe('ContractTemplateFormPage', () => {
         name: 'Feld zum Abschnitt hinzufügen',
       })
     )
-    await user.click(screen.getByRole('option', { name: 'Name des Tieres' }))
+    await user.click(screen.getByRole('option', { name: 'Rasse des Tieres' }))
 
     await user.click(screen.getByRole('button', { name: 'Speichern' }))
 
@@ -133,7 +146,7 @@ describe('ContractTemplateFormPage', () => {
       title: 'Schutzvertrag',
       body: '',
       animal_type_id: 'dog',
-      animal_fields: [{ key: 'animal.name', required: true }],
+      animal_fields: [{ key: 'animal.breed', required: true }],
       mediator_fields: [],
       adopter_fields: [{ key: 'id_card_number', required: true }],
     })
@@ -154,6 +167,14 @@ describe('ContractTemplateFormPage', () => {
     )
 
     const animal = section('Tier')
+    // Fixed fields are listed, but can't be moved or removed.
+    const fixed = within(animal).getByRole('list', {
+      name: 'Felder in jedem Vertrag',
+    })
+    expect(within(fixed).getByText('Foto des Tieres')).toBeInTheDocument()
+    expect(within(fixed).getByText('Wenn vorhanden')).toBeInTheDocument()
+    expect(within(fixed).queryByRole('button')).toBeNull()
+
     await user.click(
       within(animal).getByRole('button', {
         name: 'Tasso-ID des Tieres nach oben',
@@ -172,7 +193,7 @@ describe('ContractTemplateFormPage', () => {
       expect.objectContaining({
         animal_fields: [
           { key: 'animal.tasso_id', required: false },
-          { key: 'animal.name', required: false },
+          { key: 'animal.breed', required: false },
         ],
         adopter_fields: [],
       })

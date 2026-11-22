@@ -156,6 +156,17 @@ class ChecklistCalculatorTest extends TestCase
         $this->assertSame([], $this->keys($calculator, $state, AdoptionStep::CONTRACT));
     }
 
+    public function test_a_field_every_contract_prints_stays_required_for_the_contract_despite_an_override(): void
+    {
+        $calculator = new ChecklistCalculator([$this->field('address', null, FieldType::ADDRESS)]);
+        $locked = fn (Override $override) => new CaseFileState(self::DOG, overrides: ['address' => $override], contractFieldKeys: ['address'], lockedContractKeys: ['address']);
+
+        $this->assertSame(['address'], $this->keys($calculator, $locked(new Override(null, waived: true)), AdoptionStep::CONTRACT));
+        $this->assertSame(['address'], $this->keys($calculator, $locked(new Override(AdoptionStep::TRANSPORT)), AdoptionStep::CONTRACT));
+        // An earlier step still applies.
+        $this->assertSame(['address'], $this->keys($calculator, $locked(new Override(AdoptionStep::PRE_INSPECTION)), AdoptionStep::PRE_INSPECTION));
+    }
+
     public function test_a_conditional_field_only_applies_when_its_condition_is_met(): void
     {
         $calculator = new ChecklistCalculator([
