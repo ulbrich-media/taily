@@ -1,0 +1,1 @@
+import{Ao as e,jo as t,ko as n}from"./index-WI5b-J9I.js";function r(r,i){return n({...r,enabled:!0,suspense:!0,throwOnError:e,placeholderData:void 0},t,i)}export{r as t};

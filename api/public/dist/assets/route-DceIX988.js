@@ -1,1 +1,0 @@
-import{Ta as e,ba as t}from"./index-Dw7ZkMcF.js";import{t as n}from"./jsx-runtime-Wy9s6hX0.js";var r=t(),i=n(),a=()=>{let t=(0,r.c)(1),n;return t[0]===Symbol.for(`react.memo_cache_sentinel`)?(n=(0,i.jsx)(e,{}),t[0]=n):n=t[0],n};export{a as component};

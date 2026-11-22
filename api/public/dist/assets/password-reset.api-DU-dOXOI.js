@@ -1,0 +1,1 @@
+import{a as e,i as t}from"./api-DI4kfi9k.js";async function n(n){return await e(),t(`forgot-password`,{method:`POST`,body:JSON.stringify({email:n})})}async function r(n){return await e(),t(`reset-password`,{method:`POST`,body:JSON.stringify(n)})}export{r as n,n as t};

@@ -1,1 +1,0 @@
-import{Ca as e,Sa as t,wa as n}from"./index-Dw7ZkMcF.js";function r(r,i){return t({...r,enabled:!0,suspense:!0,throwOnError:e,placeholderData:void 0},n,i)}export{r as t};
