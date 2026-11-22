@@ -6,7 +6,7 @@ A pre-inspection (German UI: *Vorkontrolle*) is a visit or video call in which a
 
 A pre-inspection belongs to one adoption, and so to one animal. That matters, because a Chihuahua has different requirements than a Husky, even though both are dogs: the inspector sees the animal and exactly what the applicant sent in for it.
 
-The flip side: a pre-inspection is not reused for the applicant's next adoption. Earlier pre-inspections of the same applicant — adoptions with the same email or the same referenced Person — are shown as a cross-reference on the adoption page (see [case-file.md](./case-file.md#second-adoption-by-the-same-applicant)), and the mediator can confirm the step based on them. A Person's page lists the pre-inspections of the adoptions that reference them or use their email.
+The flip side: a pre-inspection is not reused for the applicant's next adoption. Earlier pre-inspections of the same applicant — adoptions with the same confirmed email or the same referenced Person — are shown as a cross-reference on the adoption page (see [case-file.md](./case-file.md#second-adoption-by-the-same-applicant)), and the mediator can confirm the step based on them. A Person's page lists the pre-inspections of the adoptions that reference them or use their email.
 
 ## Verdict and memo
 
@@ -26,7 +26,7 @@ An adoption can have several pre-inspections (e.g. a second visit). The inspecto
 1. The mediator creates a pre-inspection from the adoption's pre-inspection step, optionally assigning an inspector. It is shown under the adoption.
 2. A pre-inspection-specific link becomes available, to copy or send to the inspector.
 3. The link opens a public page showing the animal and the applicant's Case File — **only fields visible to the inspector**, in the catalogue's groups, read-only. Contract data like the Ausweisnummer stays hidden. Fields whose [condition](./case-file.md#conditional-fields) isn't met are left out.
-4. The inspector submits verdict and memo. The link becomes invalid.
+4. The inspector submits verdict and memo. The link becomes invalid. It also stops working once the adoption is canceled or done, so the applicant's data isn't shown any longer.
 5. The mediator can edit verdict and memo in the admin at any time, and can delete a pre-inspection.
 
 The memo and verdict are internal: visible to the inspector and the mediator, never to the applicant.

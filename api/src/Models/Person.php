@@ -188,7 +188,7 @@ class Person extends Model implements HasMedia
 
     /**
      * Adoptions of the person as applicant, for filters on the people list:
-     * referenced, or with the person's email.
+     * referenced, or with the person's email once it is confirmed.
      */
     private static function applicantAdoptions(): Closure
     {
@@ -198,6 +198,7 @@ class Person extends Model implements HasMedia
                 ->whereColumn('adoptions.applicant_person_id', 'people.id')
                 ->orWhere(fn ($email) => $email
                     ->where('people.email', '!=', '')
+                    ->where('adoptions.status', '!=', 'unconfirmed')
                     ->whereRaw('adoptions.applicant_email = LOWER(TRIM(people.email))')));
     }
 

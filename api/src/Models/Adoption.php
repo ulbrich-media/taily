@@ -148,16 +148,19 @@ class Adoption extends Model implements HasMedia
     }
 
     /**
-     * Other adoptions of the same applicant: the same email or the same
-     * referenced Person.
+     * Other adoptions of the same applicant: the same confirmed email or the
+     * same referenced Person. An unconfirmed application's email may belong
+     * to someone else, so it links nothing until it is confirmed.
      */
     public function scopeRelatedTo(Builder $query, Adoption $adoption): void
     {
         $query->whereKeyNot($adoption->id)->where(function (Builder $related) use ($adoption) {
             $related->whereRaw('1 = 0');
 
-            if ($adoption->applicant_email !== '') {
-                $related->orWhere('applicant_email', $adoption->applicant_email);
+            if ($adoption->applicant_email !== '' && $adoption->status !== 'unconfirmed') {
+                $related->orWhere(fn (Builder $sameEmail) => $sameEmail
+                    ->where('applicant_email', $adoption->applicant_email)
+                    ->where('status', '!=', 'unconfirmed'));
             }
 
             if ($adoption->applicant_person_id !== null) {
@@ -167,7 +170,8 @@ class Adoption extends Model implements HasMedia
     }
 
     /**
-     * Adoptions of a Person as applicant: referenced, or with their email.
+     * Adoptions of a Person as applicant: referenced, or with their email
+     * once it is confirmed.
      */
     public function scopeOfApplicant(Builder $query, Person $person): void
     {
@@ -177,7 +181,9 @@ class Adoption extends Model implements HasMedia
             $of->where('applicant_person_id', $person->id);
 
             if ($email !== '') {
-                $of->orWhere('applicant_email', $email);
+                $of->orWhere(fn (Builder $sameEmail) => $sameEmail
+                    ->where('applicant_email', $email)
+                    ->where('status', '!=', 'unconfirmed'));
             }
         });
     }

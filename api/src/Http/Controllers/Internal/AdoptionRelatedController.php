@@ -37,7 +37,7 @@ class AdoptionRelatedController extends Controller
             ] : null,
             // Why it counts as the same applicant.
             'matched_by' => array_values(array_filter([
-                $adoption->applicant_email !== '' && $other->applicant_email === $adoption->applicant_email ? 'email' : null,
+                $adoption->applicant_email !== '' && $other->applicant_email === $adoption->applicant_email && $other->status !== 'unconfirmed' && $adoption->status !== 'unconfirmed' ? 'email' : null,
                 $adoption->applicant_person_id !== null && $other->applicant_person_id === $adoption->applicant_person_id ? 'person' : null,
             ])),
             'pre_inspection_status' => $other->pre_inspection_status,

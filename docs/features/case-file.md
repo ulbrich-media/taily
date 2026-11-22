@@ -252,7 +252,7 @@ The same groups, read-only, limited to fields visible to the inspector that appl
 
 ## Second adoption by the same applicant
 
-Values belong to the adoption — a snapshot of what was true for that decision — including the applicant's name, email and address. Adoptions of the same applicant are those with the same email or the same referenced Person. Reuse is explicit:
+Values belong to the adoption — a snapshot of what was true for that decision — including the applicant's name, email and address. Adoptions of the same applicant are those with the same confirmed email or the same referenced Person; an unconfirmed application isn't linked by its email (see [adoption.md](./adoption.md#application)). Reuse is explicit:
 
 - **Cross-reference** — the adoption overview lists the applicant's other adoptions (*Frühere Vermittlungen*, with why they match: same email, same Person) and their pre-inspections (read-only), e.g. *"Bereits eine Vorkontrolle für Bello (Hund) am 03.04., Ergebnis: geeignet"*.
 - **Taking over** — *"Angaben übernehmen"* on one of those adoptions. Everything that is empty here is filled from it, matched by field key, so a field the other animal type's catalogue also has is taken over too. Nothing is overwritten. Taken-over values of fields that need review have to be reviewed again — a landlord confirmation from half a year ago gets reviewed, not trusted blindly. The result lists the fields that were filled.

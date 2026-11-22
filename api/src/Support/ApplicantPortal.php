@@ -5,6 +5,7 @@ namespace Taily\Support;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 use Taily\Enums\AdoptionStep;
 use Taily\Mail\ApplicantLoginMail;
@@ -28,6 +29,14 @@ use function Illuminate\Support\defer;
  */
 class ApplicantPortal
 {
+    /**
+     * Applications per email address, so nobody can use the confirmation
+     * mail to flood an inbox. Only stored applications count.
+     */
+    private const APPLICATIONS_PER_HOUR = 3;
+
+    private const APPLICATIONS_PER_DAY = 10;
+
     /** Statuses the applicant may still change their data in. */
     private const EDITABLE = ['pending', 'in_progress'];
 
@@ -91,6 +100,16 @@ class ApplicantPortal
             );
         }
 
+        $limits = $this->applicationLimits($values['email'] ?? null);
+
+        foreach ($limits as $key => $limit) {
+            if (RateLimiter::tooManyAttempts($key, $limit['max'])) {
+                throw ValidationException::withMessages(['values.email' => [
+                    'Mit dieser E-Mail-Adresse wurden gerade zu viele Bewerbungen geschickt. Bitte versuche es später noch einmal.',
+                ]]);
+            }
+        }
+
         [$adoption, $token] = DB::transaction(function () use ($animal, $values, $allowed) {
             $adoption = Adoption::create(['animal_id' => $animal->id, 'status' => 'unconfirmed']);
             $this->caseFile->update($adoption, $values, null, $allowed);
@@ -104,9 +123,30 @@ class ApplicantPortal
             return [$adoption, $token];
         });
 
+        foreach ($limits as $key => $limit) {
+            RateLimiter::hit($key, $limit['decay']);
+        }
+
         Mail::to($adoption->applicant_email)->send(new ApplicationConfirmMail($adoption, $token));
 
         return $adoption;
+    }
+
+    /**
+     * @return array<string, array{max: int, decay: int}>
+     */
+    private function applicationLimits(mixed $email): array
+    {
+        $email = is_string($email) ? Adoption::normalizeEmail($email) : '';
+
+        if ($email === '') {
+            return [];
+        }
+
+        return [
+            "applicant-apply-email-hour:{$email}" => ['max' => self::APPLICATIONS_PER_HOUR, 'decay' => 3600],
+            "applicant-apply-email-day:{$email}" => ['max' => self::APPLICATIONS_PER_DAY, 'decay' => 86400],
+        ];
     }
 
     /**

@@ -44,6 +44,23 @@ class PreInspectionSubmissionControllerTest extends TestCase
         $this->getJson("/internal/inspect/{$token}")->assertStatus(429);
     }
 
+    public function test_the_link_closes_when_the_adoption_is_canceled_or_done(): void
+    {
+        $inspection = $this->createInspection();
+        $token = $inspection->activeToken()->token;
+
+        foreach (['canceled', 'done'] as $status) {
+            $inspection->adoption->update(['status' => $status]);
+            $this->getJson("/internal/inspect/{$token}")->assertNotFound();
+            $this->postJson("/internal/inspect/{$token}/submit", ['verdict' => 'approved'])->assertNotFound();
+        }
+
+        $inspection->adoption->update(['status' => 'in_progress']);
+        $this->getJson("/internal/inspect/{$token}")->assertOk();
+        $this->postJson("/internal/inspect/{$token}/submit", ['verdict' => 'approved'])->assertOk();
+        $this->assertNotNull($inspection->fresh()->submitted_at);
+    }
+
     public function test_submit_rejects_a_request_from_the_spa_session_without_a_csrf_token(): void
     {
         $this->enableCsrfEnforcement();

@@ -131,6 +131,27 @@ class ApplicantDataTest extends TestCase
         $this->assertSame([], $this->as()->getJson("/internal/adoptions/{$alone->id}/related")->json());
     }
 
+    public function test_an_unconfirmed_email_links_no_adoptions(): void
+    {
+        $person = Person::create(['first_name' => 'Anna', 'last_name' => 'Adopter', 'email' => 'anna@example.com']);
+        $confirmed = $this->adoption(['applicant_email' => 'anna@example.com']);
+        $unconfirmed = $this->adoption(['applicant_email' => 'anna@example.com', 'status' => 'unconfirmed']);
+
+        $this->assertSame([], $this->as()->getJson("/internal/adoptions/{$confirmed->id}/related")->json());
+        $this->assertSame([], $this->as()->getJson("/internal/adoptions/{$unconfirmed->id}/related")->json());
+        $this->as()->postJson("/internal/adoptions/{$unconfirmed->id}/case-file/import", [
+            'from_adoption_id' => $confirmed->id,
+        ])->assertJsonValidationErrors('from_adoption_id');
+
+        $ids = collect($this->as()->getJson("/internal/adoptions?filter[applicant_person_id]={$person->id}")->json('data'))->pluck('id');
+        $this->assertSame([$confirmed->id], $ids->all());
+
+        // A Person the mediator referenced on both still links them.
+        $confirmed->update(['applicant_person_id' => $person->id]);
+        $unconfirmed->update(['applicant_person_id' => $person->id]);
+        $this->assertSame([$confirmed->id], collect($this->as()->getJson("/internal/adoptions/{$unconfirmed->id}/related")->json())->pluck('id')->all());
+    }
+
     public function test_taking_over_fills_only_empty_fields(): void
     {
         $earlier = $this->adoption([

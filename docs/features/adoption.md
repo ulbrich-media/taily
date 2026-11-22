@@ -61,9 +61,11 @@ A public application creates an adoption for **one animal**.
 1. **The link.** The mediator copies the application link from the animal's menu (*Bewerbungslink kopieren*) and shares it, e.g. on the website. It opens `/apply/{animal}`. There is no public list of animals in Taily.
 2. **The form.** The form shows the catalogue fields of the animal's type that are visible to applicants and asked at application, in the catalogue's groups, with their Info Blocks and [conditions](./case-file.md#conditional-fields). Each field says whether it is needed now (*Pflicht*) or only later (*Nötig für: Vertrag*). Submitting reports every missing required field at once.
 3. **Unconfirmed.** The adoption is stored with status `unconfirmed`, with the applicant's data and Case File values on the adoption as usual. Mediators already see it, marked *"E-Mail nicht bestätigt"*.
-4. **Double opt-in.** Taily emails a confirmation link (an [Applicant Link](./applicant-portal.md#access-email-plus-magic-link)). Confirming sets the adoption to `pending` and opens the applicant's first [portal](./applicant-portal.md) session. From then on the confirmed email links the adoption to the applicant's other adoptions.
+4. **Double opt-in.** Taily emails a confirmation link (an [Applicant Link](./applicant-portal.md#access-email-plus-magic-link)). Confirming sets the adoption to `pending` and opens the applicant's first [portal](./applicant-portal.md) session. From then on the confirmed email links the adoption to the applicant's other adoptions. Until then it links nothing: anyone can type someone else's address into the form, so an unconfirmed application is neither listed under that applicant's earlier adoptions nor on a Person's page, and its data can't be taken over.
 
-Applications are refused for animals that are deceased, boarding animals, or already adopted (a `done` adoption exists). A reserved animal still takes applications; the mediator decides.
+Applications are refused for animals that are deceased, boarding animals, or already adopted (a `done` adoption exists). Their link only shows *"Keine Bewerbung möglich"*, without the animal's name or picture. A reserved animal still takes applications; the mediator decides.
+
+One email address can send at most 3 applications an hour and 10 a day; attempts that are refused for missing data don't count.
 
 An application never touches a Person or another adoption, so a public form can't be used to change someone else's data. Public applications have no mediator; one is assigned in the admin.
 
@@ -80,7 +82,7 @@ These adoptions start as `pending` and need no confirmation; the emails mediator
 
 The applicant's data belongs to this adoption only: a correction never changes another adoption or a Person ([ADR-018](../ADRs/ADR-018-applicant-data-on-the-adoption.md)).
 
-- **Earlier adoptions** — the adoption page lists the applicant's other adoptions (*Frühere Vermittlungen*): those with the same email, or referencing the same Person. Each shows why it matches, its status and its pre-inspections.
+- **Earlier adoptions** — the adoption page lists the applicant's other adoptions (*Frühere Vermittlungen*): those with the same confirmed email, or referencing the same Person. Each shows why it matches, its status and its pre-inspections.
 - **Taking over data** — from one of those adoptions, *"Angaben übernehmen"* fills every field that is still empty here. See [case-file.md](./case-file.md#second-adoption-by-the-same-applicant).
 - **Person reference** — the mediator can link or unlink a Person at any time (*Mit Person verknüpfen*). That sets only the reference; nothing is copied or synchronised. A Person's page lists the adoptions that reference them or use their email.
 

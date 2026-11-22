@@ -16,7 +16,7 @@ use Taily\Support\CaseFile\CaseFileService;
  */
 class PreInspectionSubmissionController extends Controller
 {
-    private const NOT_FOUND = 'Diese Vorkontrolle wurde nicht gefunden, ist abgelaufen oder wurde bereits eingereicht.';
+    private const NOT_FOUND = 'Diese Vorkontrolle wurde nicht gefunden, ist abgelaufen, wurde bereits eingereicht oder die Vermittlung ist abgeschlossen.';
 
     public function show(string $token, CaseFileService $caseFile): JsonResponse
     {
@@ -76,8 +76,7 @@ class PreInspectionSubmissionController extends Controller
         ]);
 
         $submitted = DB::transaction(function () use ($token, $validated) {
-            $inspection = PreInspection::whereHasValidToken($token)
-                ->whereNull('submitted_at')
+            $inspection = PreInspection::openByToken($token)
                 ->lockForUpdate()
                 ->first();
 

@@ -61,7 +61,8 @@ class ApplicantPortalTest extends TestCase
         $this->assertSame('Bello', $form->json('animal.name'));
 
         $this->bello->update(['is_deceased' => true]);
-        $this->assertFalse($this->getJson("/internal/apply/{$this->bello->id}")->json('accepts_applications'));
+        // Nothing about the animal then.
+        $this->getJson("/internal/apply/{$this->bello->id}")->assertExactJson(['accepts_applications' => false]);
         $this->apply()->assertUnprocessable()->assertJsonValidationErrors('animal');
     }
 
@@ -98,6 +99,28 @@ class ApplicantPortalTest extends TestCase
 
         // Single use.
         $this->postJson("/internal/apply/confirm/{$token}")->assertNotFound();
+    }
+
+    public function test_applications_are_limited_per_email_address(): void
+    {
+        // A rejected attempt doesn't count.
+        $this->apply(['living_space_sqm' => null])->assertUnprocessable();
+
+        foreach (range(1, 3) as $ignored) {
+            $this->apply()->assertCreated();
+        }
+
+        $this->apply(['email' => ' anna@example.COM'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('values.email');
+        $this->assertSame(3, Adoption::count());
+
+        // Past the per-IP limit of a minute.
+        $this->travel(2)->minutes();
+        $this->apply(['email' => 'bert@example.com'])->assertCreated();
+
+        $this->travel(61)->minutes();
+        $this->apply()->assertCreated();
     }
 
     public function test_logging_in_by_email_does_not_reveal_unknown_addresses(): void

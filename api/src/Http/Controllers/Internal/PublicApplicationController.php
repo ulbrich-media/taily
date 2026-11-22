@@ -20,6 +20,12 @@ class PublicApplicationController extends Controller
 
     public function show(Animal $animal): JsonResponse
     {
+        // Nothing about an animal that takes no applications: it may have
+        // died, be a boarding animal or be adopted already.
+        if (! $this->portal->acceptsApplications($animal)) {
+            return response()->json(['accepts_applications' => false]);
+        }
+
         $animal->load(['animalType', 'media']);
 
         return response()->json([
@@ -29,7 +35,7 @@ class PublicApplicationController extends Controller
                 'picture_url' => $animal->getProfilePictureMedia()?->getTemporaryUrl(now()->addHour(), 'thumbnail'),
                 'is_reserved' => (bool) $animal->is_reserved,
             ],
-            'accepts_applications' => $this->portal->acceptsApplications($animal),
+            'accepts_applications' => true,
             ...$this->portal->applicationForm($animal),
         ]);
     }

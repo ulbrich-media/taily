@@ -47,7 +47,7 @@ export function ApplicationPage({ animalId }: { animalId: string }) {
             <CardTitle>Keine Bewerbung möglich</CardTitle>
             <CardTitleIcon icon={PawPrint} />
             <CardDescription>
-              Für {form.animal.name} nehmen wir zurzeit keine Bewerbungen an.
+              Für dieses Tier nehmen wir zurzeit keine Bewerbungen an.
             </CardDescription>
           </CardHeader>
         </Card>

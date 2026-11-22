@@ -17,7 +17,7 @@ The applicant's email is compared trimmed and lowercased, so `Anna@Example.com` 
 
 Emails entered by a mediator are trusted without confirmation. A typo sends the link to a stranger — the same accepted risk as for the contract signing emails.
 
-Login requests, applications and portal requests are rate-limited, so the forms can't be used to flood a mailbox or guess links.
+Login requests, applications and portal requests are rate-limited, so the forms can't be used to flood a mailbox or guess links: per IP address, plus per email address 3 login links a minute and 10 a day, and 3 applications an hour and 10 a day. Behind a reverse proxy, Laravel's trusted proxies have to be configured, or every applicant shares the proxy's IP limit.
 
 ## Which adoptions are shown
 

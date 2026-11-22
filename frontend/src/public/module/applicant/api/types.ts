@@ -41,13 +41,15 @@ export interface ApplicantAnimal {
   picture_url: string | null
 }
 
-// GET /apply/{animal}
-export interface ApplicationForm {
-  animal: ApplicantAnimal & { is_reserved: boolean }
-  accepts_applications: boolean
-  groups: ApplicantGroup[]
-  open: ChecklistItem[]
-}
+// GET /apply/{animal}. An animal that takes no applications shows nothing.
+export type ApplicationForm =
+  | {
+      accepts_applications: true
+      animal: ApplicantAnimal & { is_reserved: boolean }
+      groups: ApplicantGroup[]
+      open: ChecklistItem[]
+    }
+  | { accepts_applications: false }
 
 export interface PortalStep {
   step: AdoptionStep
