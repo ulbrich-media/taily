@@ -55,10 +55,19 @@ Keep in mind that everyone with access to the project sees the errors and feedba
 
 With a frontend DSN configured, users can send feedback to the operator's Sentry project. It shows up under **User Feedback** in Sentry, together with the page, browser and release, and the matching Session Replay if one was recorded.
 
-- **"Feedback geben" button:** a floating button in the bottom right corner on every page, including the public pages applicants use. It opens a form with name, e-mail, description and an optional screenshot. Screenshots count against the Sentry attachments quota.
+- **"Feedback geben" button:** a floating button in the bottom left corner on every page, including the public pages applicants use. It opens a form with name, e-mail, description and an optional screenshot. Screenshots count against the Sentry attachments quota.
 - **"Problem melden" on the error screen:** when the app shows its error screen, users can describe what they were doing. The description is attached to the reported error.
 
 Without a frontend DSN, neither appears.
+
+## Readable stack traces
+
+The frontend ships with public source maps next to its JavaScript files. When an error comes in, Sentry downloads the matching map from the installation and shows the original file, line and code instead of minified code. Nothing needs to be uploaded or configured, as long as:
+
+- the installation is reachable from the internet, so Sentry's servers can fetch the maps, and
+- **Enable JavaScript source fetching** is on in the Sentry project's **General Settings** (on by default).
+
+Browsers only load the maps when the developer tools are open, so they don't slow the app down for users. The backend needs no source maps.
 
 ## Privacy
 

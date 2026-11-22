@@ -17,6 +17,10 @@ export default defineConfig(({ mode }) => {
     base: process.env.ASSET_BASE_URL ?? '/',
     build: {
       outDir: 'dist',
+      // Public source maps, so Sentry can fetch them and show readable
+      // production stack traces (see docs/features/error-monitoring.md).
+      // Browsers only load them when the dev tools are open.
+      sourcemap: true,
     },
     plugins: [
       tanstackRouter({
