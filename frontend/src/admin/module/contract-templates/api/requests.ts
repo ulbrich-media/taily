@@ -9,7 +9,7 @@ export interface ContractTemplateRequest {
   name: string
   title: string
   body: string
-  animal_type_ids: string[]
+  animal_type_id: string
   animal_fields: ContractTemplateField[]
   mediator_fields: ContractTemplateField[]
   adopter_fields: ContractTemplateField[]

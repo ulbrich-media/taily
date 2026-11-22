@@ -5,14 +5,14 @@ namespace Taily\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * A contract template (ADR-017): the printed title, the wording and three
  * data sections — animal, mediator, adopter — each an ordered list of
- * `{key, required}` entries. Required entries become requirements of the
- * contract step for every adoption of the animal types the template is
- * offered for.
+ * `{key, required}` entries. A template belongs to one animal type; its
+ * required entries become requirements of the contract step for every
+ * adoption of that type.
  */
 class ContractTemplate extends Model
 {
@@ -28,6 +28,7 @@ class ContractTemplate extends Model
     ];
 
     protected $fillable = [
+        'animal_type_id',
         'name',
         'title',
         'body',
@@ -47,9 +48,9 @@ class ContractTemplate extends Model
         ];
     }
 
-    public function animalTypes(): BelongsToMany
+    public function animalType(): BelongsTo
     {
-        return $this->belongsToMany(AnimalType::class);
+        return $this->belongsTo(AnimalType::class);
     }
 
     public function scopeActive(Builder $query): void
@@ -59,7 +60,7 @@ class ContractTemplate extends Model
 
     public function scopeOfferedFor(Builder $query, ?string $animalTypeId): void
     {
-        $query->active()->whereHas('animalTypes', fn (Builder $types) => $types->whereKey($animalTypeId));
+        $query->active()->where('animal_type_id', $animalTypeId);
     }
 
     /**

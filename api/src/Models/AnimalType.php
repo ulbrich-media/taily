@@ -40,9 +40,9 @@ class AnimalType extends Model
         return $this->hasMany(FieldDefinition::class);
     }
 
-    public function contractTemplates(): BelongsToMany
+    public function contractTemplates(): HasMany
     {
-        return $this->belongsToMany(ContractTemplate::class);
+        return $this->hasMany(ContractTemplate::class);
     }
 
     public function vaccinations(): HasMany

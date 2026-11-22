@@ -120,11 +120,7 @@ function TemplateCard({
       <CardContent className="space-y-3">
         <div className="flex flex-wrap gap-1.5">
           {template.archived_at && <Badge variant="outline">Archiviert</Badge>}
-          {template.animal_types.map((type) => (
-            <Badge key={type.id} variant="secondary">
-              {type.title}
-            </Badge>
-          ))}
+          <Badge variant="secondary">{template.animal_type.title}</Badge>
         </div>
         <dl className="grid gap-x-6 gap-y-1 text-sm sm:grid-cols-3">
           {CONTRACT_SECTIONS.map((section) => (

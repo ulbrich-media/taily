@@ -23,7 +23,7 @@ class ContractTemplateController extends Controller
 
     public function index(): JsonResponse
     {
-        $templates = ContractTemplate::with('animalTypes')->orderBy('name')->get();
+        $templates = ContractTemplate::with('animalType')->orderBy('name')->get()->sortBy(fn (ContractTemplate $template) => $template->animalType->title)->values();
 
         return response()->json($templates->map(fn (ContractTemplate $template) => $this->present($template)));
     }
@@ -35,7 +35,7 @@ class ContractTemplateController extends Controller
 
     public function show(ContractTemplate $contractTemplate): JsonResponse
     {
-        return response()->json($this->present($contractTemplate->load('animalTypes')));
+        return response()->json($this->present($contractTemplate->load('animalType')));
     }
 
     public function store(Request $request): JsonResponse
@@ -64,7 +64,7 @@ class ContractTemplateController extends Controller
 
         return response()->json([
             'message' => 'Vertragsvorlage archiviert.',
-            'data' => $this->present($contractTemplate->load('animalTypes')),
+            'data' => $this->present($contractTemplate->load('animalType')),
         ]);
     }
 
@@ -74,7 +74,7 @@ class ContractTemplateController extends Controller
 
         return response()->json([
             'message' => 'Vertragsvorlage wiederhergestellt.',
-            'data' => $this->present($contractTemplate->load('animalTypes')),
+            'data' => $this->present($contractTemplate->load('animalType')),
         ]);
     }
 
@@ -88,10 +88,7 @@ class ContractTemplateController extends Controller
             'name' => $template->name,
             'title' => $template->title,
             'body' => $template->body,
-            'animal_types' => $template->animalTypes
-                ->sortBy('title')
-                ->map(fn ($type) => ['id' => $type->id, 'title' => $type->title])
-                ->values(),
+            'animal_type' => ['id' => $template->animalType->id, 'title' => $template->animalType->title],
             'animal_fields' => $template->section('animal'),
             'mediator_fields' => $template->section('mediator'),
             'adopter_fields' => $template->section('adopter'),

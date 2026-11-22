@@ -49,7 +49,7 @@ class ContractTemplateTest extends TestCase
         $response = $this->as($this->admin)->postJson('/internal/contract-templates', $this->payload())->assertCreated();
 
         $this->assertSame('Schutzvertrag Hund', $response->json('data.name'));
-        $this->assertSame([['id' => $this->dogs->id, 'title' => 'Hund']], $response->json('data.animal_types'));
+        $this->assertSame(['id' => $this->dogs->id, 'title' => 'Hund'], $response->json('data.animal_type'));
         $this->assertSame([['key' => 'id_card_number', 'required' => true], ['key' => 'phone', 'required' => false]], $response->json('data.adopter_fields'));
 
         $id = $response->json('data.id');
@@ -82,15 +82,12 @@ class ContractTemplateTest extends TestCase
         // Files can't be printed.
         $store(['adopter_fields' => [['key' => 'home_video', 'required' => true]]])
             ->assertUnprocessable()->assertJsonValidationErrors('adopter_fields.0.key');
-        $store(['animal_type_ids' => []])
-            ->assertUnprocessable()->assertJsonValidationErrors('animal_type_ids');
+        $store(['animal_type_id' => null])
+            ->assertUnprocessable()->assertJsonValidationErrors('animal_type_id');
 
-        // The cat catalogue has no ID card number, so a template for both types can't print it.
-        $message = $store(['animal_type_ids' => [$this->dogs->id, $this->cats->id]])
-            ->assertUnprocessable()
-            ->json('errors')['adopter_fields.0.key'][0];
-        $this->assertStringContainsString('Katze', $message);
-        $this->assertStringNotContainsString('Hund', $message);
+        // The cat catalogue has no ID card number, so a cat template can't print it.
+        $store(['animal_type_id' => $this->cats->id])
+            ->assertUnprocessable()->assertJsonValidationErrors('adopter_fields.0.key');
     }
 
     public function test_field_options_list_the_printable_catalogue_fields_per_animal_type(): void
@@ -106,7 +103,7 @@ class ContractTemplateTest extends TestCase
         $this->assertNotContains('home_video', $dogFields);
     }
 
-    public function test_required_fields_become_contract_requirements_of_the_offered_animal_types_only(): void
+    public function test_required_fields_become_contract_requirements_of_the_templates_animal_type_only(): void
     {
         $this->as($this->admin)->postJson('/internal/contract-templates', $this->payload([
             'animal_fields' => [['key' => 'animal.tasso_id', 'required' => true], ['key' => 'animal.color', 'required' => false]],
@@ -163,7 +160,7 @@ class ContractTemplateTest extends TestCase
             'name' => 'Schutzvertrag Hund',
             'title' => 'Schutzvertrag',
             'body' => "## Bedingungen\n\nDas Tier wird artgerecht gehalten.",
-            'animal_type_ids' => [$this->dogs->id],
+            'animal_type_id' => $this->dogs->id,
             'animal_fields' => [['key' => 'animal.name', 'required' => true]],
             'mediator_fields' => [['key' => 'mediator.full_name', 'required' => false]],
             'adopter_fields' => [['key' => 'id_card_number', 'required' => true], ['key' => 'phone', 'required' => false]],

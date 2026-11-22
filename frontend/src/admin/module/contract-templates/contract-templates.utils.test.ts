@@ -26,18 +26,18 @@ const options: ContractFieldOptions = {
 }
 
 describe('adopterOptions', () => {
-  it('offers the fields every chosen animal type has', () => {
-    expect(adopterOptions(options, ['dog']).map((o) => o.key)).toEqual([
+  it('offers the fields of the chosen animal type', () => {
+    expect(adopterOptions(options, 'dog').map((o) => o.key)).toEqual([
       'first_name',
       'id_card_number',
     ])
-    expect(adopterOptions(options, ['dog', 'cat']).map((o) => o.key)).toEqual([
+    expect(adopterOptions(options, 'cat').map((o) => o.key)).toEqual([
       'first_name',
     ])
   })
 
   it('offers nothing without an animal type', () => {
-    expect(adopterOptions(options, [])).toEqual([])
+    expect(adopterOptions(options, '')).toEqual([])
   })
 })
 
@@ -70,7 +70,7 @@ describe('toFormData', () => {
       name: '',
       title: 'Schutzvertrag',
       body: '',
-      animal_type_ids: [],
+      animal_type_id: '',
       animal_fields: [],
       mediator_fields: [],
       adopter_fields: [],

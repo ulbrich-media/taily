@@ -61,7 +61,7 @@ const template: ContractTemplateResource = {
   name: 'Schutzvertrag Hund',
   title: 'Schutzvertrag',
   body: 'Text',
-  animal_types: [{ id: 'dog', title: 'Hund' }],
+  animal_type: { id: 'dog', title: 'Hund' },
   animal_fields: [
     { key: 'animal.name', required: true },
     { key: 'animal.tasso_id', required: false },
@@ -107,9 +107,10 @@ describe('ContractTemplateFormPage', () => {
     await user.type(screen.getByLabelText(/^Name/), 'Schutzvertrag Hund')
     // The adopter section needs an animal type first.
     expect(
-      within(section('Adoptant:in')).getByText(/Wähle zuerst die Tierarten/)
+      within(section('Adoptant:in')).getByText(/Wähle zuerst die Tierart/)
     ).toBeInTheDocument()
-    await user.click(screen.getByLabelText('Hund'))
+    await user.click(screen.getByRole('combobox', { name: /Tierart/ }))
+    await user.click(screen.getByRole('option', { name: 'Hund' }))
 
     await user.click(
       within(section('Adoptant:in')).getByRole('combobox', {
@@ -131,7 +132,7 @@ describe('ContractTemplateFormPage', () => {
       name: 'Schutzvertrag Hund',
       title: 'Schutzvertrag',
       body: '',
-      animal_type_ids: ['dog'],
+      animal_type_id: 'dog',
       animal_fields: [{ key: 'animal.name', required: true }],
       mediator_fields: [],
       adopter_fields: [{ key: 'id_card_number', required: true }],
@@ -178,11 +179,13 @@ describe('ContractTemplateFormPage', () => {
     )
   })
 
-  it('flags an adopter field another chosen animal type lacks and shows the server error', async () => {
+  it('flags an adopter field the new animal type lacks and shows the server error', async () => {
     const user = userEvent.setup()
     updateMock.mockRejectedValue(
       new ApiValidationError('invalid', {
-        'adopter_fields.0.key': ['Das Feld fehlt in den Angaben für: Katze.'],
+        'adopter_fields.0.key': [
+          'Dieses Feld gibt es in den Angaben der Tierart nicht.',
+        ],
       })
     )
 
@@ -197,13 +200,14 @@ describe('ContractTemplateFormPage', () => {
 
     const adopter = section('Adoptant:in')
     expect(within(adopter).queryByText('Nicht verfügbar')).toBeNull()
-    await user.click(screen.getByLabelText('Katze'))
+    await user.click(screen.getByRole('combobox', { name: /Tierart/ }))
+    await user.click(screen.getByRole('option', { name: 'Katze' }))
     expect(within(adopter).getByText('Nicht verfügbar')).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'Speichern' }))
     expect(
       await within(adopter).findByText(
-        'Das Feld fehlt in den Angaben für: Katze.'
+        'Dieses Feld gibt es in den Angaben der Tierart nicht.'
       )
     ).toBeInTheDocument()
   })

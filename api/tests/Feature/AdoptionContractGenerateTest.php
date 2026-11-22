@@ -67,11 +67,8 @@ class AdoptionContractGenerateTest extends TestCase
         $template = $this->contractTemplate($adoption);
 
         // Archived templates and templates for other animal types aren't offered.
-        ContractTemplate::create([...ContractTemplateSeeder::DEFAULT, 'name' => 'Alt', 'archived_at' => now()])
-            ->animalTypes()->attach($adoption->animal->animal_type_id);
+        ContractTemplate::create([...ContractTemplateSeeder::DEFAULT, 'name' => 'Alt', 'archived_at' => now(), 'animal_type_id' => $adoption->animal->animal_type_id]);
         $this->contractTemplate(AnimalType::create(['title' => 'Katze']));
-        ContractTemplate::create([...ContractTemplateSeeder::DEFAULT, 'name' => 'Nur Katzen'])
-            ->animalTypes()->attach(AnimalType::firstWhere('title', 'Katze')->id);
 
         $response = $this->actingAs($user)
             ->withHeader('referer', 'http://localhost')

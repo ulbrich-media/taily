@@ -15,7 +15,7 @@ export interface ContractTemplateResource {
   name: string
   title: string
   body: string
-  animal_types: { id: string; title: string }[]
+  animal_type: { id: string; title: string }
   animal_fields: ContractTemplateField[]
   mediator_fields: ContractTemplateField[]
   adopter_fields: ContractTemplateField[]

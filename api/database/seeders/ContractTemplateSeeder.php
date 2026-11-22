@@ -7,8 +7,8 @@ use Taily\Models\AnimalType;
 use Taily\Models\ContractTemplate;
 
 /**
- * The example Schutzvertrag every installation starts with (ADR-017),
- * offered for every animal type. It replaces the Blade template that used
+ * The example Schutzvertrag every installation starts with (ADR-017), one
+ * copy per animal type. It replaces the Blade template that used
  * to ship as `contracts/default.blade.php`.
  */
 class ContractTemplateSeeder extends Seeder
@@ -59,11 +59,15 @@ class ContractTemplateSeeder extends Seeder
     /**
      * @param  iterable<AnimalType>  $animalTypes
      */
-    public static function createDefault(iterable $animalTypes): ContractTemplate
+    public static function createDefault(iterable $animalTypes): void
     {
-        $template = ContractTemplate::create(self::DEFAULT);
-        $template->animalTypes()->sync(collect($animalTypes)->pluck('id'));
+        foreach ($animalTypes as $animalType) {
+            self::createDefaultFor($animalType);
+        }
+    }
 
-        return $template;
+    public static function createDefaultFor(AnimalType $animalType): ContractTemplate
+    {
+        return ContractTemplate::create([...self::DEFAULT, 'animal_type_id' => $animalType->id]);
     }
 }

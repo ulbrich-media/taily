@@ -86,8 +86,7 @@ class ContractTemplateService
             'name' => ['required', 'string', 'max:255'],
             'title' => ['required', 'string', 'max:255'],
             'body' => ['present', 'nullable', 'string', 'max:50000'],
-            'animal_type_ids' => ['required', 'array', 'min:1'],
-            'animal_type_ids.*' => ['uuid', 'distinct', 'exists:animal_types,id'],
+            'animal_type_id' => ['required', 'uuid', 'exists:animal_types,id'],
             ...collect(ContractTemplate::SECTIONS)->flatMap(fn (string $section) => [
                 "{$section}_fields" => ['present', 'array'],
                 "{$section}_fields.*.key" => ['required', 'string', 'distinct'],
@@ -96,13 +95,14 @@ class ContractTemplateService
         ], attributes: [
             'name' => 'Name',
             'title' => 'Titel',
-            'animal_type_ids' => 'Tierarten',
+            'animal_type_id' => 'Tierart',
         ])->validate();
 
         $this->assertKnownFields($validated);
 
         return DB::transaction(function () use ($template, $validated) {
             $template->fill([
+                'animal_type_id' => $validated['animal_type_id'],
                 'name' => $validated['name'],
                 'title' => $validated['title'],
                 'body' => $validated['body'] ?? '',
@@ -114,9 +114,7 @@ class ContractTemplateService
                 ])->all(),
             ])->save();
 
-            $template->animalTypes()->sync($validated['animal_type_ids']);
-
-            return $template->load('animalTypes');
+            return $template->load('animalType');
         });
     }
 
@@ -182,8 +180,8 @@ class ContractTemplateService
 
     /**
      * Animal and mediator fields come from the registry. Adopter fields must
-     * be printable fields of every animal type the template is offered for,
-     * so a template can't require something an adoption can't hold.
+     * be printable fields of the template's animal type, so a template can't
+     * require something an adoption can't hold.
      *
      * @param  array<string, mixed>  $validated
      */
@@ -199,13 +197,11 @@ class ContractTemplateService
             }
         }
 
-        $types = AnimalType::whereIn('id', $validated['animal_type_ids'])->get();
+        $printable = $this->printableDefinitions($validated['animal_type_id']);
 
         foreach ($validated['adopter_fields'] as $index => $entry) {
-            $missingIn = $types->reject(fn (AnimalType $type) => $this->printableDefinitions($type->id)->contains('key', $entry['key']));
-
-            if ($missingIn->isNotEmpty()) {
-                $errors["adopter_fields.{$index}.key"] = ['Das Feld fehlt in den Angaben für: '.$missingIn->pluck('title')->join(', ').'.'];
+            if (! $printable->contains('key', $entry['key'])) {
+                $errors["adopter_fields.{$index}.key"] = ['Dieses Feld gibt es in den Angaben der Tierart nicht.'];
             }
         }
 

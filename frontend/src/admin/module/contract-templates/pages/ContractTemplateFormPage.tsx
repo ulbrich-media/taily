@@ -1,11 +1,5 @@
 import type { ReactNode } from 'react'
-import {
-  Controller,
-  FormProvider,
-  useForm,
-  useWatch,
-  type Path,
-} from 'react-hook-form'
+import { FormProvider, useForm, useWatch, type Path } from 'react-hook-form'
 import {
   CONTRACT_SECTIONS,
   type ContractFieldOptions,
@@ -21,16 +15,11 @@ import {
   CardTitle,
 } from '@/shadcn/components/ui/card'
 import { Button } from '@/shadcn/components/ui/button'
-import { Checkbox } from '@/shadcn/components/ui/checkbox'
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from '@/shadcn/components/ui/field'
+import { FieldGroup } from '@/shadcn/components/ui/field'
 import { FormBlocker } from '@/components/form/FormBlocker'
 import { TextInput } from '@/components/field/TextInput'
 import { Textarea } from '@/components/field/Textarea'
+import { SelectInput } from '@/components/field/SelectInput'
 import { ApiValidationError } from '@/lib/api'
 import { createContractTemplate, updateContractTemplate } from '../api/requests'
 import {
@@ -54,8 +43,8 @@ interface ContractTemplateFormPageProps {
 
 /**
  * A contract template (ADR-017): a printed title, three data sections and
- * the wording. Required fields become requirements of the contract step for
- * every adoption of the chosen animal types.
+ * the wording, for one animal type. Required fields become requirements of
+ * the contract step for every adoption of that type.
  */
 export function ContractTemplateFormPage({
   template,
@@ -67,9 +56,9 @@ export function ContractTemplateFormPage({
   const form = useForm<ContractTemplateFormData>({
     defaultValues: toFormData(template),
   })
-  const animalTypeIds = useWatch({
+  const animalTypeId = useWatch({
     control: form.control,
-    name: 'animal_type_ids',
+    name: 'animal_type_id',
   })
 
   const mutation = useContractTemplateMutation(
@@ -83,17 +72,16 @@ export function ContractTemplateFormPage({
   const onError = (error: unknown) => {
     if (!(error instanceof ApiValidationError) || !error.errors) return
     for (const [key, messages] of Object.entries(error.errors)) {
-      const name = (
-        key.startsWith('animal_type_ids') ? 'animal_type_ids' : key
-      ) as Path<ContractTemplateFormData>
-      form.setError(name, { message: messages[0] })
+      form.setError(key as Path<ContractTemplateFormData>, {
+        message: messages[0],
+      })
     }
   }
 
   const available = {
     animal: options.animal,
     mediator: options.mediator,
-    adopter: adopterOptions(options, animalTypeIds),
+    adopter: adopterOptions(options, animalTypeId),
   }
 
   return (
@@ -103,7 +91,7 @@ export function ContractTemplateFormPage({
         title={
           template ? `„${template.name}“ bearbeiten` : 'Neue Vertragsvorlage'
         }
-        description="Pflichtfelder fehlen auf der Checkliste jeder Vermittlung der gewählten Tierarten, bis sie ausgefüllt sind – vorher kann der Vertrag nicht erzeugt werden."
+        description="Pflichtfelder fehlen auf der Checkliste jeder Vermittlung dieser Tierart, bis sie ausgefüllt sind – vorher kann der Vertrag nicht erzeugt werden."
       />
 
       <FormProvider {...form}>
@@ -142,33 +130,16 @@ export function ContractTemplateFormPage({
                   description="Steht oben auf dem Vertrag."
                   required
                 />
-                <Controller
+                <SelectInput
+                  name="animal_type_id"
                   control={form.control}
-                  name="animal_type_ids"
-                  render={({ field, fieldState }) => (
-                    <Field data-invalid={!!fieldState.error}>
-                      <FieldLabel>Tierarten</FieldLabel>
-                      {animalTypes.map((type) => (
-                        <Field key={type.id} orientation="horizontal">
-                          <Checkbox
-                            id={`animal-type-${type.id}`}
-                            checked={field.value.includes(type.id)}
-                            onCheckedChange={(checked) =>
-                              field.onChange(
-                                checked
-                                  ? [...field.value, type.id]
-                                  : field.value.filter((id) => id !== type.id)
-                              )
-                            }
-                          />
-                          <FieldLabel htmlFor={`animal-type-${type.id}`}>
-                            {type.title}
-                          </FieldLabel>
-                        </Field>
-                      ))}
-                      <FieldError errors={[fieldState.error]} />
-                    </Field>
-                  )}
+                  label="Tierart"
+                  description="Die Vorlage steht nur für Vermittlungen dieser Tierart zur Auswahl."
+                  options={animalTypes.map((type) => ({
+                    value: type.id,
+                    label: type.title,
+                  }))}
+                  required
                 />
               </FieldGroup>
             </CardContent>
@@ -183,9 +154,9 @@ export function ContractTemplateFormPage({
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {section === 'adopter' && animalTypeIds.length === 0 ? (
+                {section === 'adopter' && animalTypeId === '' ? (
                   <p className="text-sm text-muted-foreground">
-                    Wähle zuerst die Tierarten, für die die Vorlage gilt.
+                    Wähle zuerst die Tierart, für die die Vorlage gilt.
                   </p>
                 ) : (
                   <SectionFieldsEditor
