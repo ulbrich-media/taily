@@ -9,10 +9,12 @@ use Illuminate\Support\Facades\Schema;
  * Applicant data on the adoption (ADR-018): the applicant's identity moves
  * from the Person into fixed adoption columns, the Person becomes an
  * optional reference, and contract signers keep their own name and email.
+ * The applicant has one phone number; a Person's mobile number is taken
+ * when they have no other.
  */
 return new class extends Migration
 {
-    private const PARTS = ['first_name', 'last_name', 'email', 'phone', 'mobile', 'street_line', 'street_line_additional', 'postal_code', 'city', 'country_code'];
+    private const PARTS = ['first_name', 'last_name', 'email', 'phone', 'street_line', 'street_line_additional', 'postal_code', 'city', 'country_code'];
 
     public function up(): void
     {
@@ -21,8 +23,7 @@ return new class extends Migration
             $table->string('applicant_last_name')->default('')->after('applicant_first_name');
             $table->string('applicant_email')->default('')->after('applicant_last_name')->index();
             $table->string('applicant_phone')->default('')->after('applicant_email');
-            $table->string('applicant_mobile')->default('')->after('applicant_phone');
-            $table->date('applicant_date_of_birth')->nullable()->after('applicant_mobile');
+            $table->date('applicant_date_of_birth')->nullable()->after('applicant_phone');
             $table->string('applicant_street_line')->default('')->after('applicant_date_of_birth');
             $table->string('applicant_street_line_additional')->default('')->after('applicant_street_line');
             $table->string('applicant_postal_code')->default('')->after('applicant_street_line_additional');
@@ -36,6 +37,10 @@ return new class extends Migration
 
             foreach (self::PARTS as $part) {
                 $values["applicant_{$part}"] = $part === 'email' ? mb_strtolower(trim((string) $row->email)) : (string) ($row->{$part} ?? '');
+            }
+
+            if ($values['applicant_phone'] === '') {
+                $values['applicant_phone'] = (string) ($row->mobile ?? '');
             }
 
             DB::table('adoptions')->where('id', $row->id)->update($values);
