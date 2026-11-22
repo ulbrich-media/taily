@@ -2,6 +2,14 @@
 
 All notable changes to Taily are documented here.
 
+# [0.16.0](https://github.com/ulbrich-media/taily/compare/v0.15.0...v0.16.0) (2026-11-22)
+
+
+### Features
+
+* adoption case file, contract templates and applicant portal ([#307](https://github.com/ulbrich-media/taily/issues/307)) ([b8ed333](https://github.com/ulbrich-media/taily/commit/b8ed33399fb81d330d55eea07c71aa654677b71a))
+* **tiervermittlung:** show export problems on export page and sidebar ([#306](https://github.com/ulbrich-media/taily/issues/306)) ([6f8fe24](https://github.com/ulbrich-media/taily/commit/6f8fe24d8315f63b279a4fef406d5f0b2cadd10b))
+
 # [0.15.0](https://github.com/ulbrich-media/taily/compare/v0.14.1...v0.15.0) (2026-11-20)
 
 
