@@ -1,0 +1,2 @@
+import{No as e,Tt as t}from"./index-BBRrHiDV.js";import{a as n,n as r}from"./jsx-runtime-Wy9s6hX0.js";var i=e(),a=n(r());function o(){let e=(0,i.c)(3),n=t.useNavigate(),r,o;return e[0]===n?(r=e[1],o=e[2]):(r=()=>{n({replace:!0})},o=[n],e[0]=n,e[1]=r,e[2]=o),(0,a.useEffect)(r,o),null}export{o as component};
+//# sourceMappingURL=_adoptionId-Bs_JaAdo.js.map

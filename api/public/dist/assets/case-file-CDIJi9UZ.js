@@ -1,1 +1,2 @@
 var e=[`application`,`pre_inspection`,`contract`,`transport`,`handover`],t={application:`Bewerbung`,pre_inspection:`Vorkontrolle`,contract:`Vertrag`,transport:`Transport`,handover:`Übergabe`};export{t as n,e as t};
+//# sourceMappingURL=case-file-CDIJi9UZ.js.map

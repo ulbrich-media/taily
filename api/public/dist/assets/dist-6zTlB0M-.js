@@ -1,1 +1,2 @@
 import{t as e}from"./dist-us2MqDN4.js";import{a as t,n}from"./jsx-runtime-Wy9s6hX0.js";var r=t(n(),1),i=Object.defineProperty,a=(e,t)=>i(e,`name`,{value:t,configurable:!0}),o=r.useInsertionEffect;function s(t){let n=r.useRef(t);return typeof o==`function`?o(()=>{n.current=t}):e(()=>{n.current=t}),r.useMemo(()=>((...e)=>n.current?.(...e)),[])}a(s,`useCallbackRef`);export{s as t};
+//# sourceMappingURL=dist-6zTlB0M-.js.map
