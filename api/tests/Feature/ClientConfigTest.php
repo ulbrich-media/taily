@@ -22,8 +22,8 @@ class ClientConfigTest extends TestCase
             'taily.sentry.frontend_traces_sample_rate' => 0.1,
             'taily.sentry.frontend_replays_session_sample_rate' => 0.0,
             'taily.sentry.frontend_replays_on_error_sample_rate' => 1.0,
-            'sentry.environment' => 'production',
-            'sentry.release' => 'v1.2.3',
+            'taily.sentry.environment' => 'production',
+            'taily.sentry.release' => 'v1.2.3',
         ]);
 
         $this->getJson('/internal/client-config')
@@ -40,12 +40,9 @@ class ClientConfigTest extends TestCase
             ]);
     }
 
-    public function test_environment_falls_back_to_the_app_environment(): void
+    public function test_environment_defaults_to_the_app_environment(): void
     {
-        config([
-            'taily.sentry.frontend_dsn' => 'https://key@o1.ingest.sentry.io/2',
-            'sentry.environment' => null,
-        ]);
+        config(['taily.sentry.frontend_dsn' => 'https://key@o1.ingest.sentry.io/2']);
 
         $this->getJson('/internal/client-config')
             ->assertOk()

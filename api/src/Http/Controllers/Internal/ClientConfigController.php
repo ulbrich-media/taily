@@ -35,9 +35,8 @@ class ClientConfigController extends Controller
 
         return [
             'dsn' => $dsn,
-            // Matches the backend so both projects filter by the same values.
-            'environment' => config('sentry.environment') ?: app()->environment(),
-            'release' => config('sentry.release'),
+            'environment' => (string) config('taily.sentry.environment'),
+            'release' => config('taily.sentry.release'),
             'traces_sample_rate' => (float) config('taily.sentry.frontend_traces_sample_rate'),
             'replays_session_sample_rate' => (float) config('taily.sentry.frontend_replays_session_sample_rate'),
             'replays_on_error_sample_rate' => (float) config('taily.sentry.frontend_replays_on_error_sample_rate'),

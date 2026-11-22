@@ -78,6 +78,10 @@ return [
 
     'sentry' => [
         'frontend_dsn' => env('SENTRY_FRONTEND_DSN', ''),
+        // Same values the backend reports with (sentry-laravel falls back to
+        // the app environment too), so both projects filter alike.
+        'environment' => env('SENTRY_ENVIRONMENT') ?: env('APP_ENV', 'production'),
+        'release' => env('SENTRY_RELEASE'),
         'frontend_traces_sample_rate' => (float) env('SENTRY_FRONTEND_TRACES_SAMPLE_RATE', 0.0),
         // Session Replay masks all text and media by default.
         'frontend_replays_session_sample_rate' => (float) env('SENTRY_FRONTEND_REPLAYS_SESSION_SAMPLE_RATE', 0.0),
