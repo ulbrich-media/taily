@@ -73,7 +73,9 @@ Browsers only load the maps when the developer tools are open, so they don't slo
 
 Taily stores personal data of applicants and adopters, and error reports can contain parts of it. Enabling Sentry makes Sentry a processor of that data, so the organization needs to cover it in its privacy documentation (and usually a data processing agreement with Sentry). Sentry offers an EU data region.
 
-- Personal data such as IP addresses and user details is not sent by default (`SENTRY_SEND_DEFAULT_PII=false`).
+- Backend: personal data such as IP addresses and user details is not sent by default (`SENTRY_SEND_DEFAULT_PII=false`).
+- Frontend: the SDK infers no IP address or user details and sends no cookies, request bodies or URL query strings (`dataCollection` in `frontend/src/lib/sentry.ts`). Access tokens in URL paths (invitations, pre-inspections, contracts, applicant confirmation and login) are replaced with `[Filtered]` in events, breadcrumbs, spans and replays.
+- Sentry can still derive the IP address from the incoming request. Enable **Prevent Storing of IP Addresses** in the Sentry project settings (Security & Privacy) for both projects.
 - Session Replay is off by default. When enabled, it masks all text and blocks all media.
 - Feedback is sent deliberately by the user, but its text and screenshots can still show personal data. Screenshots are not masked.
 

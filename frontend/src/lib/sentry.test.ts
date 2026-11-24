@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import * as Sentry from '@sentry/react'
 import type { AnyRouter } from '@tanstack/react-router'
 import { initSentry, showCrashReportDialog } from './sentry'
+import { scrubSentryData } from './sentryScrub'
 
 vi.mock('@sentry/react', () => ({
   init: vi.fn(),
@@ -70,6 +71,39 @@ describe('initSentry', () => {
         replaysOnErrorSampleRate: 1,
       })
     )
+  })
+
+  it('does not collect user data, cookies, bodies or query strings', async () => {
+    mockClientConfig({
+      sentry: {
+        dsn: 'https://key@o1.ingest.sentry.io/2',
+        environment: 'production',
+        release: null,
+        instance: '',
+        traces_sample_rate: 0,
+        replays_session_sample_rate: 0,
+        replays_on_error_sample_rate: 1,
+      },
+    })
+
+    await initSentry(router)
+
+    expect(Sentry.init).toHaveBeenCalledWith(
+      expect.objectContaining({
+        dataCollection: {
+          userInfo: false,
+          cookies: false,
+          httpBodies: [],
+          urlQueryParams: false,
+        },
+        beforeSend: scrubSentryData,
+        beforeSendTransaction: scrubSentryData,
+        beforeBreadcrumb: scrubSentryData,
+      })
+    )
+    expect(Sentry.replayIntegration).toHaveBeenCalledWith({
+      beforeAddRecordingEvent: scrubSentryData,
+    })
   })
 
   it('does not start Sentry when the operator configured none', async () => {

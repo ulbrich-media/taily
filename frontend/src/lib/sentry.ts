@@ -2,6 +2,7 @@ import * as Sentry from '@sentry/react'
 import type { ErrorInfo } from 'react'
 import type { AnyRouter } from '@tanstack/react-router'
 import { API_URL, apiRequest } from './api'
+import { scrubSentryData } from './sentryScrub'
 
 /** Frontend Sentry settings, configured by the operator on the backend. */
 export interface SentryClientConfig {
@@ -55,7 +56,7 @@ export function startSentry(
     integrations: [
       Sentry.tanstackRouterBrowserTracingIntegration(router),
       // Text and media are masked by default; Taily handles personal data.
-      Sentry.replayIntegration(),
+      Sentry.replayIntegration({ beforeAddRecordingEvent: scrubSentryData }),
       // "Feedback geben" button; feedback goes to the operator's project.
       Sentry.feedbackIntegration(feedbackOptions),
     ],
@@ -64,6 +65,18 @@ export function startSentry(
     tracePropagationTargets: [new URL(API_URL).origin],
     replaysSessionSampleRate: config.replays_session_sample_rate,
     replaysOnErrorSampleRate: config.replays_on_error_sample_rate,
+    // Taily handles personal data: no IP inference or user data, no cookies,
+    // request bodies or query strings (they carry tokens and emails).
+    dataCollection: {
+      userInfo: false,
+      cookies: false,
+      httpBodies: [],
+      urlQueryParams: false,
+    },
+    // Tokens in URL paths, which the SDK does not filter.
+    beforeSend: scrubSentryData,
+    beforeSendTransaction: scrubSentryData,
+    beforeBreadcrumb: scrubSentryData,
   })
 
   // Reserves space for the feedback button, see index.css.
