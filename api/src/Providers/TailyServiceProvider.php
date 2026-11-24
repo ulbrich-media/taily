@@ -31,6 +31,7 @@ use Taily\Http\Middleware\PublicApiCors;
 use Taily\Http\Middleware\SetReferrerPolicyHeader;
 use Taily\Models\User;
 use Taily\Support\MediaUrlGenerator;
+use Taily\Support\SentryScrubber;
 use Taily\Support\Tiervermittlung\TiervermittlungClient;
 use Taily\Support\UploadLimits;
 
@@ -54,6 +55,7 @@ class TailyServiceProvider extends ServiceProvider
         config(['auth.providers.users.model' => User::class]);
 
         $this->configureSentryInstanceTag();
+        $this->configureSentryPrivacy();
 
         $this->app->bind(TiervermittlungClient::class, fn () => new TiervermittlungClient(
             config('taily.tiervermittlung.base_url'),
@@ -120,6 +122,36 @@ class TailyServiceProvider extends ServiceProvider
         $tags['instance'] = $instance;
 
         config(['sentry.tags' => $tags]);
+    }
+
+    /**
+     * Limits what sentry-laravel collects, since Taily handles personal data:
+     * no user info, cookies, request bodies, query strings or SQL bindings,
+     * and access tokens in URL paths are filtered. Runs in register() for the
+     * same reason as the instance tag. Options an operator configured
+     * explicitly in config/sentry.php are kept.
+     */
+    protected function configureSentryPrivacy(): void
+    {
+        $defaults = [
+            'data_collection' => [
+                'user_info' => false,
+                'cookies' => ['mode' => 'off'],
+                'http_bodies' => [],
+                'url_query_params' => ['mode' => 'off'],
+                'database_query_data' => false,
+            ],
+            // Array callables, so `config:cache` still works.
+            'before_send' => [SentryScrubber::class, 'beforeSend'],
+            'before_send_transaction' => [SentryScrubber::class, 'beforeSend'],
+            'before_breadcrumb' => [SentryScrubber::class, 'beforeBreadcrumb'],
+        ];
+
+        foreach ($defaults as $key => $value) {
+            if (config("sentry.$key") === null) {
+                config(["sentry.$key" => $value]);
+            }
+        }
     }
 
     /**

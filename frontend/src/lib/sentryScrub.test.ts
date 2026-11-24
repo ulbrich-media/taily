@@ -26,6 +26,8 @@ describe('scrubTokens', () => {
 
   it.each([
     '/admin/login',
+    '/inspect/$token',
+    '/internal/contracts/{token}/submit',
     '/admin/login?redirect=%2Fadmin',
     '/admin/settings/contracts/0193-template-id',
     '/apply/01a204d7-b860-752b-87fe-f5db61bd414d',
