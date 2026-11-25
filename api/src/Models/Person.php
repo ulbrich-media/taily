@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\DB;
+use LogicException;
 use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -111,15 +112,24 @@ class Person extends Model implements HasMedia
 
     /**
      * Get the person's roles as an array.
+     *
+     * The inspectorAnimalTypes, fosterAnimalTypes and mediatorAnimalTypes
+     * relations must be loaded; there is deliberately no lazy fallback, so a
+     * missing eager-load fails loudly instead of causing an N+1.
+     *
+     * @throws LogicException when a role relation is not loaded
      */
     public function getRolesAttribute(): array
     {
         $roles = [];
 
-        // The list eager-loads the animal types, so no query per row is needed.
-        $has = fn (string $relation) => $this->relationLoaded($relation)
-            ? $this->getRelation($relation)->isNotEmpty()
-            : $this->{$relation}()->exists();
+        $has = function (string $relation): bool {
+            if (! $this->relationLoaded($relation)) {
+                throw new LogicException("Relation [{$relation}] must be loaded to compute roles.");
+            }
+
+            return $this->getRelation($relation)->isNotEmpty();
+        };
 
         if ($has('inspectorAnimalTypes')) {
             $roles[] = 'Kontrolleur';

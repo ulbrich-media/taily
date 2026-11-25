@@ -27,7 +27,13 @@ class PersonBaseResource extends JsonResource
             'mobile' => $this->resource->mobile,
             'created_at' => $this->resource->created_at,
             'updated_at' => $this->resource->updated_at,
-            'roles' => $this->resource->roles,
+            // Only computed when all role relations are eager-loaded (avoids N+1 in nested lists)
+            'roles' => $this->when(
+                $this->resource->relationLoaded('inspectorAnimalTypes')
+                && $this->resource->relationLoaded('fosterAnimalTypes')
+                && $this->resource->relationLoaded('mediatorAnimalTypes'),
+                fn () => $this->resource->roles,
+            ),
             // Relations (only included when eager-loaded)
             'organization' => $this->whenLoaded('organization', fn ($v) => $v ? new OrganizationResource($v) : null),
             'inspector_animal_types' => AnimalTypeResource::collection($this->whenLoaded('inspectorAnimalTypes')),
