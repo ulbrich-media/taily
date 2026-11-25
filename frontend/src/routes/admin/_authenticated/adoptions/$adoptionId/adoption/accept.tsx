@@ -1,0 +1,49 @@
+import { createFileRoute } from '@tanstack/react-router'
+import { useBreadcrumbs } from '@/router/useBreadcrumbs'
+import { BreadcrumbNav } from '@/router/BreadcrumbNav'
+import { queryClient } from '@/lib/queryClient.ts'
+import { listPeopleQuery } from '@/admin/module/people/api/queries.ts'
+import { getAdoptionQuery } from '@/admin/module/adoptions/api/queries.ts'
+import { AdoptionAcceptPage } from '@/admin/module/adoptions/pages/AdoptionAcceptPage.tsx'
+import { useSuspenseQuery } from '@tanstack/react-query'
+import { useAuth } from '@/lib/auth.hook.tsx'
+import { Route as AdoptionDetailRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/route'
+
+export const Route = createFileRoute(
+  '/admin/_authenticated/adoptions/$adoptionId/adoption/accept'
+)({
+  loader: async ({ params }) => {
+    await queryClient.ensureQueryData(listPeopleQuery)
+    await queryClient.ensureQueryData(getAdoptionQuery(params.adoptionId))
+  },
+  component: RouteComponent,
+  staticData: {
+    breadcrumb: 'Vermittlung annehmen',
+    dialog: true,
+  },
+})
+
+function RouteComponent() {
+  const breadcrumbs = useBreadcrumbs()
+  const { adoptionId } = Route.useParams()
+  const navigate = AdoptionDetailRoute.useNavigate()
+  const { user } = useAuth()
+  const { data: adoption } = useSuspenseQuery(getAdoptionQuery(adoptionId))
+  const { data: persons } = useSuspenseQuery(listPeopleQuery)
+
+  const mediators = persons.filter((p) => p.mediator_animal_types?.length > 0)
+
+  const handleClose = () => {
+    navigate({ params: { adoptionId } })
+  }
+
+  return (
+    <AdoptionAcceptPage
+      adoption={adoption}
+      mediators={mediators}
+      currentPersonId={user?.person_id}
+      onClose={handleClose}
+      breadcrumb={<BreadcrumbNav items={breadcrumbs} size="sm" />}
+    />
+  )
+}
