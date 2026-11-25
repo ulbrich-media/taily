@@ -374,7 +374,7 @@ class TailyServiceProvider extends ServiceProvider
 
     protected function registerFilesystemDisks(): void
     {
-        $disks = ['animal-pictures', 'person-pictures', 'adoption-contract'];
+        $disks = ['animal-pictures', 'person-pictures', 'adoption-contract', 'contract-signing-document'];
 
         foreach ($disks as $disk) {
             if (! config("filesystems.disks.{$disk}")) {
