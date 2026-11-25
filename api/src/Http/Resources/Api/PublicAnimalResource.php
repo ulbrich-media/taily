@@ -64,7 +64,7 @@ class PublicAnimalResource extends JsonResource
             'media' => $this->resource->getMedia('pictures')
                 ->sortBy('order_column')
                 ->values()
-                ->map(fn (Media $media) => $this->resource->formatMedia($media)),
+                ->map(fn (Media $media) => $this->formatMedia($media)),
         ];
     }
 }
