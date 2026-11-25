@@ -153,6 +153,26 @@ class AdoptionAcceptDeclineTest extends TestCase
         Mail::assertNothingSent();
     }
 
+    public function test_decline_stays_pending_when_the_mail_cannot_be_sent(): void
+    {
+        $this->signIn();
+        $this->withoutExceptionHandling();
+        Mail::shouldReceive('to')->andThrow(new \RuntimeException('SMTP down'));
+        $adoption = $this->adoption();
+
+        try {
+            $this->postJson("/internal/adoptions/{$adoption->id}/decline", ['internal_reason' => 'Intern']);
+            $this->fail('Expected the mail failure to surface.');
+        } catch (\RuntimeException $e) {
+            $this->assertSame('SMTP down', $e->getMessage());
+        }
+
+        $fresh = $adoption->fresh();
+        $this->assertSame('pending', $fresh->status);
+        $this->assertNull($fresh->canceled_reason);
+        $this->assertNull($fresh->canceled_at);
+    }
+
     public function test_authentication_is_required(): void
     {
         $adoption = $this->adoption();

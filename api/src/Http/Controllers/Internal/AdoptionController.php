@@ -5,6 +5,7 @@ namespace Taily\Http\Controllers\Internal;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 use Taily\Http\Controllers\Controller;
@@ -186,17 +187,21 @@ class AdoptionController extends Controller
             'applicant_reason' => 'Grund für die Bewerber:in',
         ]);
 
-        $adoption->update([
-            'status' => 'canceled',
-            'canceled_at' => now(),
-            'canceled_reason' => $validated['internal_reason'],
-        ]);
+        // If the mail cannot be sent, the cancellation rolls back so the
+        // mediator can simply retry instead of leaving the applicant uninformed.
+        DB::transaction(function () use ($adoption, $validated) {
+            $adoption->update([
+                'status' => 'canceled',
+                'canceled_at' => now(),
+                'canceled_reason' => $validated['internal_reason'],
+            ]);
 
-        if ($adoption->applicant_email !== '') {
-            Mail::to($adoption->applicant_email)->send(
-                new ApplicationDeclinedMail($adoption, trim((string) ($validated['applicant_reason'] ?? ''))),
-            );
-        }
+            if ($adoption->applicant_email !== '') {
+                Mail::to($adoption->applicant_email)->send(
+                    new ApplicationDeclinedMail($adoption, trim((string) ($validated['applicant_reason'] ?? ''))),
+                );
+            }
+        });
 
         $adoption->load(self::DETAIL_RELATIONS);
 
