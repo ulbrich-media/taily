@@ -75,7 +75,9 @@ Browsers only load the maps when the developer tools are open, so they don't slo
 
 Taily stores personal data of applicants and adopters, and error reports can contain parts of it. Enabling Sentry makes Sentry a processor of that data, so the organization needs to cover it in its privacy documentation (and usually a data processing agreement with Sentry). Sentry offers an EU data region.
 
-- Personal data such as IP addresses and user details is not sent by default (`SENTRY_SEND_DEFAULT_PII=false`).
+- Backend: personal data such as IP addresses and user details is not sent by default (`SENTRY_SEND_DEFAULT_PII=false`). Taily also sets sentry-laravel's `data_collection` so no user info, cookies, request bodies, query strings or SQL bindings are collected, and filters access tokens in URL paths, also in logs sent through `sentry_logs` (`before_send`, `before_send_transaction`, `before_breadcrumb`, `before_send_log`, see `Taily\Support\SentryScrubber`). An operator who sets one of these options in their own `config/sentry.php` replaces Taily's value.
+- Frontend: the SDK infers no IP address or user details and sends no cookies, request bodies or URL query strings (`dataCollection` in `frontend/src/lib/sentry.ts`). Access tokens in URL paths (invitations, pre-inspections, contracts, applicant confirmation and login) are replaced with `[Filtered]` in events, breadcrumbs, spans and replay metadata. Session Replay does not record pages whose URL carries a token: the recording stores the page URL in frames no hook can filter, so Replay stops there (dropping its buffer) and resumes buffering on the next page.
+- Sentry can still derive the IP address from the incoming request. Enable **Prevent Storing of IP Addresses** in the Sentry project settings (Security & Privacy) for both projects.
 - Session Replay is off by default. When enabled, it masks all text and blocks all media.
 - Feedback is sent deliberately by the user, but its text and screenshots can still show personal data. Screenshots are not masked.
 

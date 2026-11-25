@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import * as Sentry from '@sentry/react'
 import type { AnyRouter } from '@tanstack/react-router'
 import { initSentry, showCrashReportDialog } from './sentry'
+import { scrubSentryData } from './sentryScrub'
 
 vi.mock('@sentry/react', () => ({
   init: vi.fn(),
@@ -12,9 +13,28 @@ vi.mock('@sentry/react', () => ({
   lastEventId: vi.fn(() => 'event-1'),
   showReportDialog: vi.fn(),
   reactErrorHandler: vi.fn(() => vi.fn()),
+  addEventProcessor: vi.fn(),
+  getReplay: vi.fn(),
 }))
 
-const router = {} as AnyRouter
+type ResolvedListener = (event: { toLocation: { href: string } }) => void
+let onResolved: ResolvedListener | undefined
+const router = {
+  subscribe: vi.fn((_event: string, listener: ResolvedListener) => {
+    onResolved = listener
+    return () => {}
+  }),
+} as unknown as AnyRouter
+
+const sentryConfig = {
+  dsn: 'https://key@o1.ingest.sentry.io/2',
+  environment: 'production',
+  release: null,
+  instance: '',
+  traces_sample_rate: 0,
+  replays_session_sample_rate: 0,
+  replays_on_error_sample_rate: 1,
+}
 
 function mockClientConfig(body: unknown, status = 200) {
   vi.stubGlobal(
@@ -72,6 +92,40 @@ describe('initSentry', () => {
     )
   })
 
+  it('does not collect user data, cookies, bodies or query strings', async () => {
+    mockClientConfig({
+      sentry: {
+        dsn: 'https://key@o1.ingest.sentry.io/2',
+        environment: 'production',
+        release: null,
+        instance: '',
+        traces_sample_rate: 0,
+        replays_session_sample_rate: 0,
+        replays_on_error_sample_rate: 1,
+      },
+    })
+
+    await initSentry(router)
+
+    expect(Sentry.init).toHaveBeenCalledWith(
+      expect.objectContaining({
+        dataCollection: {
+          userInfo: false,
+          cookies: false,
+          httpBodies: [],
+          urlQueryParams: false,
+        },
+        beforeSend: scrubSentryData,
+        beforeSendSpan: scrubSentryData,
+        beforeSendTransaction: scrubSentryData,
+        beforeBreadcrumb: scrubSentryData,
+      })
+    )
+    expect(Sentry.replayIntegration).toHaveBeenCalledWith({
+      beforeAddRecordingEvent: scrubSentryData,
+    })
+  })
+
   it('does not start Sentry when the operator configured none', async () => {
     mockClientConfig({ sentry: null })
 
@@ -88,6 +142,65 @@ describe('initSentry', () => {
 
     await expect(initSentry(router)).resolves.toBeUndefined()
     expect(Sentry.init).not.toHaveBeenCalled()
+  })
+})
+
+describe('startSentry privacy hooks', () => {
+  const replay = {
+    stop: vi.fn(() => Promise.resolve()),
+    startBuffering: vi.fn(),
+  }
+
+  beforeEach(() => {
+    replay.stop.mockClear()
+    replay.startBuffering.mockClear()
+    vi.mocked(Sentry.getReplay).mockReturnValue(
+      replay as unknown as ReturnType<typeof Sentry.getReplay>
+    )
+    vi.mocked(Sentry.addEventProcessor).mockClear()
+    window.history.replaceState({}, '', '/apply/1')
+  })
+
+  it('scrubs tokens from replay metadata', async () => {
+    mockClientConfig({ sentry: sentryConfig })
+    await initSentry(router)
+
+    const processor = vi.mocked(Sentry.addEventProcessor).mock.calls[0][0]
+    const replayEvent = {
+      type: 'replay_event',
+      urls: ['https://x/inspect/abc123'],
+    }
+    const errorEvent = { type: undefined, message: 'https://x/inspect/abc123' }
+
+    expect(processor(replayEvent as never, {})).toEqual({
+      type: 'replay_event',
+      urls: ['https://x/inspect/[Filtered]'],
+    })
+    // Other events are scrubbed by beforeSend instead.
+    expect(processor(errorEvent as never, {})).toBe(errorEvent)
+  })
+
+  it('stops Replay on token routes and resumes buffering afterwards', async () => {
+    mockClientConfig({ sentry: sentryConfig })
+    await initSentry(router)
+    expect(replay.stop).not.toHaveBeenCalled()
+
+    onResolved?.({ toLocation: { href: '/callback?action=inspect&token=abc' } })
+    onResolved?.({ toLocation: { href: '/inspect/abc' } })
+    expect(replay.stop).toHaveBeenCalledOnce()
+    expect(replay.stop).toHaveBeenCalledWith({ flush: false })
+
+    onResolved?.({ toLocation: { href: '/apply/1' } })
+    expect(replay.startBuffering).toHaveBeenCalledOnce()
+  })
+
+  it('does not record a page opened directly with a token', async () => {
+    window.history.replaceState({}, '', '/contracts/abc123')
+    mockClientConfig({ sentry: sentryConfig })
+
+    await initSentry(router)
+
+    expect(replay.stop).toHaveBeenCalledWith({ flush: false })
   })
 })
 
