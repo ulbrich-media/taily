@@ -19,7 +19,11 @@ function SelectGroup({
 function SelectValue({
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Value>) {
-  return <SelectPrimitive.Value data-slot="select-value" {...props} />
+  // translate="no": browser page translation rewrites text nodes and makes
+  // React fail with "removeChild" when the selected value changes.
+  return (
+    <SelectPrimitive.Value data-slot="select-value" translate="no" {...props} />
+  )
 }
 
 function SelectTrigger({
