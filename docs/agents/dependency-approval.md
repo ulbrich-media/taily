@@ -1,14 +1,12 @@
 # Adding a new dependency for agent-implemented work
 
-`/implement` can never run `composer require` or `npm install <pkg>` itself — see
-`.claude/skills/implement/SKILL.md`. No human is present mid-run to grant the consent `AGENTS.md`'s
-Restrictions section requires, so it stops and reports `blocked_reason` instead. Installing the
-dependency yourself, deliberately, on a branch is the consent — no separate approval comment needed.
+Agents never run `composer require` or `npm install <pkg>` themselves. No human is present mid-run to
+grant the consent `AGENTS.md`'s Restrictions section requires, so the agent stops and reports what it
+needs instead. Installing the dependency yourself, deliberately, on a branch is the consent — no
+separate approval comment needed.
 
-`/refine` blocks a plan's Status (`🚫 Blocked — new dependency required`) whenever it needs a package
-that isn't installed yet. To clear it, get the dependency merged into `development`, then re-run
-`/refine` — build mode of `/implement` always checks out `development` HEAD, so anything not merged
-there yet is invisible to it regardless of what branch it lives on.
+To clear the block, get the dependency merged into `development`, then re-run the agent task so it
+starts from a `development` that includes the package.
 
 ## Procedure
 
@@ -35,13 +33,12 @@ there yet is invisible to it regardless of what branch it lives on.
    ```
 2. **Merge that PR into `development`** once CI passes. It's dependency-only with no code changes, so
    it's low-risk and safe to merge immediately — don't bundle it with unrelated changes.
-3. **Re-run `@claude refine` on the original issue** to clear the block, then `@claude implement`.
-   Build mode checks out `development`, which now includes the dependency.
+3. **Re-run the agent task** on the original issue. It now starts from `development` with the
+   dependency included.
 
-## Why not let `/implement` do this itself
+## Why agents don't do this themselves
 
-`use_commit_signing`/the file-ops MCP server can create commits, but `composer require`/`npm install`
-need real package-resolution network access and write a lockfile as a side effect that isn't reviewable
-the way a code diff is — bypassing that review is exactly what `AGENTS.md`'s consent requirement exists
-to prevent. Keeping it a small, separate, human-authored PR also means it merges (and can be reverted)
-independently of the feature work that depends on it.
+`composer require`/`npm install` need real package-resolution network access and write a lockfile as a
+side effect that isn't reviewable the way a code diff is — bypassing that review is exactly what
+`AGENTS.md`'s consent requirement exists to prevent. Keeping it a small, separate, human-authored PR
+also means it merges (and can be reverted) independently of the feature work that depends on it.
