@@ -1,5 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { AlertCircle } from 'lucide-react'
+import { ErrorInfoComponent } from '@/components/ErrorInfoComponent'
+import { ApiValidationError } from '@/lib/api'
 import { queryClient } from '@/lib/queryClient'
 import {
   Card,
@@ -17,7 +19,7 @@ export const Route = createFileRoute('/apply/$animalId')({
   loader: ({ params }) =>
     queryClient.ensureQueryData(getApplicationFormQuery(params.animalId)),
   component: RouteComponent,
-  errorComponent: NotFound,
+  errorComponent: RouteError,
 })
 
 function RouteComponent() {
@@ -25,7 +27,18 @@ function RouteComponent() {
   return <ApplicationPage animalId={animalId} />
 }
 
-function NotFound() {
+// Only a real 404 means "not found"; everything else uses the generic error screen.
+function RouteError({ error }: { error: unknown }) {
+  if (!(error instanceof ApiValidationError && error.status === 404)) {
+    return (
+      <ApplicantLayout>
+        <div className="mx-auto w-full sm:max-w-md">
+          <ErrorInfoComponent error={error} />
+        </div>
+      </ApplicantLayout>
+    )
+  }
+
   return (
     <ApplicantLayout>
       <Card className="mx-auto w-full sm:max-w-md">

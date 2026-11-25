@@ -20,7 +20,9 @@ Backend (Laravel) and frontend (React) report to separate Sentry projects, each 
    SENTRY_FRONTEND_TRACES_SAMPLE_RATE=0.1
    ```
 
-4. Clear the config cache (`php artisan config:cache`) and check the backend with `php artisan sentry:test`.
+4. Clear the config cache (`php artisan config:cache`) and check the backend:
+   - `php artisan about --only=sentry` must show a **Sentry** section with *Enabled: YES*. If the section is missing, Laravel has not loaded the Sentry package: run `php artisan package:discover` (installs created from taily-app v0.1.0 never run it on update, see the taily-app README).
+   - `php artisan sentry:test` sends a test event directly. It does not prove that exceptions in requests are reported.
 
 ## Options
 
@@ -73,11 +75,15 @@ Browsers only load the maps when the developer tools are open, so they don't slo
 
 Taily stores personal data of applicants and adopters, and error reports can contain parts of it. Enabling Sentry makes Sentry a processor of that data, so the organization needs to cover it in its privacy documentation (and usually a data processing agreement with Sentry). Sentry offers an EU data region.
 
-- Personal data such as IP addresses and user details is not sent by default (`SENTRY_SEND_DEFAULT_PII=false`).
+- Backend: personal data such as IP addresses and user details is not sent by default (`SENTRY_SEND_DEFAULT_PII=false`). Taily also sets sentry-laravel's `data_collection` so no user info, cookies, request bodies, query strings or SQL bindings are collected, and filters access tokens in URL paths, also in logs sent through `sentry_logs` (`before_send`, `before_send_transaction`, `before_breadcrumb`, `before_send_log`, see `Taily\Support\SentryScrubber`). An operator who sets one of these options in their own `config/sentry.php` replaces Taily's value.
+- Frontend: the SDK infers no IP address or user details and sends no cookies, request bodies or URL query strings (`dataCollection` in `frontend/src/lib/sentry.ts`). Access tokens in URL paths (invitations, pre-inspections, contracts, applicant confirmation and login) are replaced with `[Filtered]` in events, breadcrumbs, spans and replay metadata. Session Replay does not record pages whose URL carries a token: the recording stores the page URL in frames no hook can filter, so Replay stops there (dropping its buffer) and resumes buffering on the next page.
+- Sentry can still derive the IP address from the incoming request. Enable **Prevent Storing of IP Addresses** in the Sentry project settings (Security & Privacy) for both projects.
 - Session Replay is off by default. When enabled, it masks all text and blocks all media.
 - Feedback is sent deliberately by the user, but its text and screenshots can still show personal data. Screenshots are not masked.
 
 ## How it works
+
+Backend exceptions are reported by `TailyServiceProvider`, which hooks Sentry into Laravel's exception handler. Installs therefore need nothing in their own `bootstrap/app.php` (sentry-laravel's usual `Integration::handles()` call), and get changes through `composer update`.
 
 The frontend assets are built once per release and shared by all installations, so the frontend DSN cannot be part of the build. On startup the frontend requests `GET /internal/client-config`, which returns the frontend Sentry settings (or `null` when no DSN is set), and only then initialises Sentry. Errors that happen before that request completes are not reported.
 
