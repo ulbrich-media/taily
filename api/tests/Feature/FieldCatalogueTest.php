@@ -84,6 +84,25 @@ class FieldCatalogueTest extends TestCase
         $create(['key' => 'hint', 'type' => 'info', 'required_for' => 'application'])->assertJsonValidationErrors('required_for');
     }
 
+    public function test_choice_validation_messages_are_german(): void
+    {
+        $dogs = $this->type('Hund');
+        $group = FieldGroup::where('animal_type_id', $dogs->id)->value('id');
+        $create = fn (array $choices) => $this->as($this->admin)->postJson("/internal/field-groups/{$group}/fields", [
+            'label' => 'Feld', 'collect_at' => 'application', 'key' => 'housing', 'type' => 'select',
+            'options' => ['choices' => $choices],
+        ]);
+
+        $create([['value' => '', 'label' => 'Wohnung']])
+            ->assertJsonValidationErrors(['options.choices.0.value' => 'Jede Auswahlmöglichkeit braucht einen Wert.']);
+        $create([['value' => 'apartment', 'label' => '']])
+            ->assertJsonValidationErrors(['options.choices.0.label' => 'Jede Auswahlmöglichkeit braucht eine Bezeichnung.']);
+        $create([['value' => 'a', 'label' => 'A'], ['value' => 'a', 'label' => 'B']])
+            ->assertJsonValidationErrors(['options.choices.0.value' => 'Jeder Wert darf nur einmal vorkommen.']);
+        $create([['value' => str_repeat('a', 65), 'label' => 'A']])
+            ->assertJsonValidationErrors(['options.choices.0.value' => 'Ein Wert darf höchstens 64 Zeichen lang sein.']);
+    }
+
     public function test_a_condition_depends_on_an_earlier_yes_no_or_choice_field(): void
     {
         $dogs = $this->type('Hund');
