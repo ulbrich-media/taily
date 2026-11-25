@@ -169,7 +169,7 @@ class AdoptionAcceptDeclineTest extends TestCase
 
         $fresh = $adoption->fresh();
         $this->assertSame('pending', $fresh->status);
-        $this->assertNull($fresh->canceled_reason);
+        $this->assertSame('', $fresh->canceled_reason);
         $this->assertNull($fresh->canceled_at);
     }
 
