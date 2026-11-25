@@ -1,2 +1,0 @@
-import{No as e}from"./index-BBRrHiDV.js";import{t}from"./jsx-runtime-Wy9s6hX0.js";var n=e(),r=t(),i=()=>{let e=(0,n.c)(1),t;return e[0]===Symbol.for(`react.memo_cache_sentinel`)?(t=(0,r.jsx)(`p`,{className:`text-muted-foreground`,children:`Lege zuerst eine Tierart an, um ihre Angaben zu konfigurieren.`}),e[0]=t):t=e[0],t};export{i as component};
-//# sourceMappingURL=case-file-B2NVyoYB.js.map

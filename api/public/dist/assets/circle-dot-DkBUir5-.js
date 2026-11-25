@@ -1,0 +1,2 @@
+import{t as e}from"./createLucideIcon-DfZi8RcS.js";var t={name:`circle-dot`,size:24,node:[[`circle`,{cx:`12`,cy:`12`,r:`1`,key:`41hilf`}],[`circle`,{cx:`12`,cy:`12`,r:`10`,key:`1mglay`}]]};t.node;var n=e(t);export{n as t};
+//# sourceMappingURL=circle-dot-DkBUir5-.js.map

@@ -1,2 +1,0 @@
-import{No as e,Ro as t}from"./index-BBRrHiDV.js";import{t as n}from"./jsx-runtime-Wy9s6hX0.js";var r=e(),i=n(),a=()=>{let e=(0,r.c)(1),n;return e[0]===Symbol.for(`react.memo_cache_sentinel`)?(n=(0,i.jsx)(t,{}),e[0]=n):n=e[0],n};export{a as component};
-//# sourceMappingURL=_formTemplateId-UBdiA8Kq.js.map
