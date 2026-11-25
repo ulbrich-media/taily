@@ -2,6 +2,15 @@
 
 All notable changes to Taily are documented here.
 
+## [0.17.2](https://github.com/ulbrich-media/taily/compare/v0.17.1...v0.17.2) (2026-11-25)
+
+
+### Bug Fixes
+
+* **case-file-catalogue:** unstick field form after choice errors ([#346](https://github.com/ulbrich-media/taily/issues/346)) ([4221930](https://github.com/ulbrich-media/taily/commit/4221930ff8a5936ff20496fce0d95c59f4e0714b))
+* register contract-signing-document disk ([#349](https://github.com/ulbrich-media/taily/issues/349)) ([ef6db62](https://github.com/ulbrich-media/taily/commit/ef6db6211e2cab0293c8a6ae6f81d76c2e33aac9))
+* stop N+1 on person roles in nested lists ([#348](https://github.com/ulbrich-media/taily/issues/348)) ([6a23616](https://github.com/ulbrich-media/taily/commit/6a23616930e0a1a38c91cfa54f2980ca10c8b092))
+
 ## [0.17.1](https://github.com/ulbrich-media/taily/compare/v0.17.0...v0.17.1) (2026-11-25)
 
 
