@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { FILTERED, scrubSentryData, scrubTokens } from './sentryScrub'
+import {
+  FILTERED,
+  isTokenUrl,
+  scrubSentryData,
+  scrubTokens,
+} from './sentryScrub'
 
 describe('scrubTokens', () => {
   it.each([
@@ -34,6 +39,19 @@ describe('scrubTokens', () => {
     'Failed to execute removeChild on Node',
   ])('leaves %s unchanged', (input) => {
     expect(scrubTokens(input)).toBe(input)
+  })
+})
+
+describe('isTokenUrl', () => {
+  it.each([
+    ['/inspect/abc123', true],
+    ['https://taily.example/callback?action=inspect&token=abc', true],
+    ['/admin/reset-password?token=abc&email=a%40b.de', true],
+    ['/inspect/$token', false],
+    ['/apply/01a204d7-b860-752b-87fe-f5db61bd414d', false],
+    ['/admin/login', false],
+  ])('%s → %s', (url, expected) => {
+    expect(isTokenUrl(url)).toBe(expected)
   })
 })
 

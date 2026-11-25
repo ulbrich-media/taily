@@ -17,6 +17,7 @@ class SentryPrivacyTest extends TestCase
             'sentry.before_send' => null,
             'sentry.before_send_transaction' => null,
             'sentry.before_breadcrumb' => null,
+            'sentry.before_send_log' => null,
         ]);
 
         (new TailyServiceProvider($this->app))->register();
@@ -24,6 +25,7 @@ class SentryPrivacyTest extends TestCase
         $this->assertSame([SentryScrubber::class, 'beforeSend'], config('sentry.before_send'));
         $this->assertSame([SentryScrubber::class, 'beforeSend'], config('sentry.before_send_transaction'));
         $this->assertSame([SentryScrubber::class, 'beforeBreadcrumb'], config('sentry.before_breadcrumb'));
+        $this->assertSame([SentryScrubber::class, 'beforeSendLog'], config('sentry.before_send_log'));
 
         // The SDK accepts the values and applies them.
         $options = new Options([
@@ -31,6 +33,7 @@ class SentryPrivacyTest extends TestCase
             'before_send' => config('sentry.before_send'),
             'before_send_transaction' => config('sentry.before_send_transaction'),
             'before_breadcrumb' => config('sentry.before_breadcrumb'),
+            'before_send_log' => config('sentry.before_send_log'),
         ]);
         $policy = DataCollectionPolicy::fromOptions($options);
         $collection = $policy->getDataCollection();

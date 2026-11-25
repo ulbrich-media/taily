@@ -7,6 +7,8 @@ use PHPUnit\Framework\TestCase;
 use Sentry\Breadcrumb;
 use Sentry\Event;
 use Sentry\ExceptionDataBag;
+use Sentry\Logs\Log;
+use Sentry\Logs\LogLevel;
 use Sentry\Tracing\Span;
 use Taily\Support\SentryScrubber;
 
@@ -94,5 +96,67 @@ class SentryScrubberTest extends TestCase
         $this->assertSame('/internal/contracts/{token}', $event->getTransaction());
         $this->assertSame('GET https://taily.example/internal/contracts/'.self::F, $span->getDescription());
         $this->assertSame(['url' => 'https://taily.example/internal/contracts/'.self::F, 'http.response.status_code' => 200], $span->getData());
+    }
+
+    public function test_drops_message_parameters_when_the_message_held_a_token(): void
+    {
+        $event = Event::createEvent();
+        $event->setMessage('Failed for /internal/contracts/%s', ['abc123'], 'Failed for /internal/contracts/abc123');
+
+        SentryScrubber::beforeSend($event);
+
+        $this->assertSame([], $event->getMessageParams());
+        $this->assertSame('Failed for /internal/contracts/'.self::F, $event->getMessageFormatted());
+    }
+
+    public function test_keeps_message_parameters_without_a_token(): void
+    {
+        $event = Event::createEvent();
+        $event->setMessage('Animal %s not found', ['42'], 'Animal 42 not found');
+
+        SentryScrubber::beforeSend($event);
+
+        $this->assertSame(['42'], $event->getMessageParams());
+    }
+
+    public function test_scrubs_public_properties_of_objects(): void
+    {
+        $plain = new \DateTimeImmutable('2026-01-01');
+        $result = SentryScrubber::scrubArray([
+            'link' => (object) ['url' => '/internal/inspect/abc123', 'n' => 1],
+            'date' => $plain,
+        ]);
+
+        $this->assertSame(['url' => '/internal/inspect/'.self::F, 'n' => 1], $result['link']);
+        $this->assertSame($plain, $result['date']);
+    }
+
+    public function test_stops_at_a_reference_cycle(): void
+    {
+        $data = ['url' => '/internal/inspect/abc123'];
+        $data['self'] = &$data;
+
+        // Returns at all (no endless recursion) and leaves no token behind.
+        $result = SentryScrubber::scrubArray($data);
+
+        $this->assertSame('/internal/inspect/'.self::F, $result['url']);
+        $this->assertStringNotContainsString('abc123', print_r($result, true));
+    }
+
+    public function test_scrubs_a_log(): void
+    {
+        $log = new Log(microtime(true), 'trace', LogLevel::error(), 'No route internal/inspect/abc123');
+        $log->setAttribute('sentry.message.template', 'No route internal/inspect/%s');
+        $log->setAttribute('sentry.message.parameter.0', 'abc123');
+        $log->setAttribute('url', '/internal/contracts/abc123/submit');
+        $log->setAttribute('status', 404);
+
+        SentryScrubber::beforeSendLog($log);
+
+        $attributes = $log->attributes()->toSimpleArray();
+        $this->assertSame('No route internal/inspect/'.self::F, $log->getBody());
+        $this->assertArrayNotHasKey('sentry.message.parameter.0', $attributes);
+        $this->assertSame('/internal/contracts/'.self::F.'/submit', $attributes['url']);
+        $this->assertSame(404, $attributes['status']);
     }
 }

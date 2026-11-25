@@ -21,6 +21,14 @@ export function scrubTokens(value: string): string {
 }
 
 /**
+ * Whether a URL carries an access token, in its path or as a `token` query
+ * parameter (e.g. /callback?action=inspect&token=…, /admin/reset-password).
+ */
+export function isTokenUrl(url: string): boolean {
+  return scrubTokens(url) !== url || /[?&]token=/.test(url)
+}
+
+/**
  * Replaces tokens in every string of the given value. Objects and arrays are
  * changed in place (Sentry events and replay frames can be large), so the
  * same value is returned; usable directly as a `beforeSend`-style hook.

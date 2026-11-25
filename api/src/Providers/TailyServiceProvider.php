@@ -167,6 +167,7 @@ class TailyServiceProvider extends ServiceProvider
             'before_send' => [SentryScrubber::class, 'beforeSend'],
             'before_send_transaction' => [SentryScrubber::class, 'beforeSend'],
             'before_breadcrumb' => [SentryScrubber::class, 'beforeBreadcrumb'],
+            'before_send_log' => [SentryScrubber::class, 'beforeSendLog'],
         ];
 
         foreach ($defaults as $key => $value) {

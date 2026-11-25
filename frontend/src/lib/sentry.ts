@@ -2,7 +2,7 @@ import * as Sentry from '@sentry/react'
 import type { ErrorInfo } from 'react'
 import type { AnyRouter } from '@tanstack/react-router'
 import { API_URL, apiRequest } from './api'
-import { scrubSentryData } from './sentryScrub'
+import { isTokenUrl, scrubSentryData } from './sentryScrub'
 
 /** Frontend Sentry settings, configured by the operator on the backend. */
 export interface SentryClientConfig {
@@ -75,12 +75,49 @@ export function startSentry(
     },
     // Tokens in URL paths, which the SDK does not filter.
     beforeSend: scrubSentryData,
+    // Spans are streamed by default; the transaction hook covers `static`.
+    beforeSendSpan: scrubSentryData,
     beforeSendTransaction: scrubSentryData,
     beforeBreadcrumb: scrubSentryData,
   })
 
+  // Replay metadata (the list of visited URLs) bypasses beforeSend.
+  Sentry.addEventProcessor((event) =>
+    event.type === 'replay_event' ? scrubSentryData(event) : event
+  )
+
+  pauseReplayOnTokenRoutes(router, config.replays_on_error_sample_rate > 0)
+
   // Reserves space for the feedback button, see index.css.
   document.documentElement.classList.add('has-feedback-widget')
+}
+
+/**
+ * Stops Session Replay while a URL with an access token is open. The recording
+ * itself stores the page URL in frames that no hook can filter, so those pages
+ * are not recorded at all; the pending buffer is dropped. Buffering for errors
+ * resumes on the next page without a token.
+ */
+function pauseReplayOnTokenRoutes(router: AnyRouter, resumeBuffering: boolean) {
+  let paused = false
+
+  const sync = (href: string) => {
+    const replay = Sentry.getReplay()
+    if (!replay) return
+
+    if (isTokenUrl(href)) {
+      if (!paused) {
+        paused = true
+        void replay.stop({ flush: false })
+      }
+    } else if (paused) {
+      paused = false
+      if (resumeBuffering) replay.startBuffering()
+    }
+  }
+
+  sync(window.location.href)
+  router.subscribe('onResolved', ({ toLocation }) => sync(toLocation.href))
 }
 
 const feedbackOptions = {
