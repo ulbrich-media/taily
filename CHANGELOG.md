@@ -2,6 +2,15 @@
 
 All notable changes to Taily are documented here.
 
+## [0.17.1](https://github.com/ulbrich-media/taily/compare/v0.17.0...v0.17.1) (2026-11-25)
+
+
+### Bug Fixes
+
+* **apply:** harden select against page translation, honest error screen ([#340](https://github.com/ulbrich-media/taily/issues/340)) ([950849d](https://github.com/ulbrich-media/taily/commit/950849dfa446fd92aec0e8bd905fb9639c582136))
+* limit data the Sentry SDKs collect ([#338](https://github.com/ulbrich-media/taily/issues/338)) ([f72537b](https://github.com/ulbrich-media/taily/commit/f72537bcf9baecd30ab5858c8fd16598ffc78a68))
+* report backend exceptions to Sentry on installs ([#339](https://github.com/ulbrich-media/taily/issues/339)) ([7915f6d](https://github.com/ulbrich-media/taily/commit/7915f6dbe6c217a19f6d28a7663b8ca69b431560))
+
 # [0.17.0](https://github.com/ulbrich-media/taily/compare/v0.16.0...v0.17.0) (2026-11-22)
 
 
