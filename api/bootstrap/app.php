@@ -2,7 +2,6 @@
 
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
-use Sentry\Laravel\Integration;
 
 return Application::configure(basePath: dirname(__DIR__))
     // Listeners are always wired explicitly via Event::listen() in the
@@ -21,8 +20,9 @@ return Application::configure(basePath: dirname(__DIR__))
     // withMiddleware() itself must stay: it defines Laravel's default
     // global middleware and the `web` / `api` groups.
     ->withMiddleware()
+    // Sentry exception reporting is registered by TailyServiceProvider, so
+    // installs get it without changing their own bootstrap/app.php.
     ->withExceptions(function (Exceptions $exceptions): void {
-        // No-op unless SENTRY_LARAVEL_DSN is set.
-        Integration::handles($exceptions);
+        //
     })->create()
     ->useAppPath(dirname(__DIR__).'/src');

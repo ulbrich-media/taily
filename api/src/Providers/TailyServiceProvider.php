@@ -4,7 +4,9 @@ namespace Taily\Providers;
 
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Contracts\Http\Kernel;
+use Illuminate\Foundation\Exceptions\Handler;
 use Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Http\Request;
@@ -17,6 +19,7 @@ use Illuminate\Support\ServiceProvider;
 use Laravel\Sanctum\Http\Middleware\CheckAbilities;
 use Laravel\Sanctum\Http\Middleware\CheckForAnyAbility;
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
+use Sentry\Laravel\Integration;
 use Taily\Console\Commands\CheckTiervermittlung;
 use Taily\Console\Commands\ProcessContractSigningReminders;
 use Taily\Console\Commands\ReconcileTiervermittlung;
@@ -33,6 +36,7 @@ use Taily\Models\User;
 use Taily\Support\MediaUrlGenerator;
 use Taily\Support\Tiervermittlung\TiervermittlungClient;
 use Taily\Support\UploadLimits;
+use Throwable;
 
 class TailyServiceProvider extends ServiceProvider
 {
@@ -54,6 +58,7 @@ class TailyServiceProvider extends ServiceProvider
         config(['auth.providers.users.model' => User::class]);
 
         $this->configureSentryInstanceTag();
+        $this->registerSentryExceptionReporting();
 
         $this->app->bind(TiervermittlungClient::class, fn () => new TiervermittlungClient(
             config('taily.tiervermittlung.base_url'),
@@ -101,6 +106,23 @@ class TailyServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__.'/../../config/taily.php' => config_path('taily.php'),
         ], 'taily-config');
+    }
+
+    /**
+     * Reports exceptions to Sentry. sentry-laravel expects this in the app's
+     * bootstrap/app.php (`Integration::handles()`), but installs never get
+     * that file updated, so Taily registers it itself. A no-op while no DSN
+     * is configured.
+     */
+    protected function registerSentryExceptionReporting(): void
+    {
+        $this->callAfterResolving(ExceptionHandler::class, function (ExceptionHandler $handler): void {
+            if ($handler instanceof Handler) {
+                $handler->reportable(static function (Throwable $exception): void {
+                    Integration::captureUnhandledException($exception);
+                });
+            }
+        });
     }
 
     /**
