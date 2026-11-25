@@ -153,6 +153,17 @@ export function FieldDefinitionPage({
     }
   }
 
+  const onSubmit = form.handleSubmit(async (data) => {
+    // Awaited, so the form is still submitting when the success
+    // handler navigates away and FormBlocker lets it pass.
+    try {
+      await mutation.mutateAsync(data)
+      form.reset(data)
+    } catch (error) {
+      onError(error)
+    }
+  })
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -163,16 +174,13 @@ export function FieldDefinitionPage({
 
       <FormProvider {...form}>
         <form
-          onSubmit={form.handleSubmit(async (data) => {
-            // Awaited, so the form is still submitting when the success
-            // handler navigates away and FormBlocker lets it pass.
-            try {
-              await mutation.mutateAsync(data)
-              form.reset(data)
-            } catch (error) {
-              onError(error)
-            }
-          })}
+          onSubmit={(event) => {
+            // Server errors are set on names without a registered input
+            // (e.g. `choices`), which handleSubmit never clears. Drop them
+            // first so they cannot block the next submit.
+            form.clearErrors()
+            return onSubmit(event)
+          }}
           className="space-y-6"
         >
           <FormBlocker />
