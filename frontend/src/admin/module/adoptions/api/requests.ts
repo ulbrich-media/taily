@@ -10,10 +10,12 @@ import {
   type AdoptionListParams,
 } from '../adoption-list.search'
 import type {
+  AcceptAdoptionRequest,
   Adoption,
   AdoptionResponse,
   AdoptionsResponse,
   CreateAdoptionRequest,
+  DeclineAdoptionRequest,
   GenerateContractResponse,
   UpdateAdoptionRequest,
   UpdateContractRequest,
@@ -89,6 +91,28 @@ export async function updateAdoption(
 ): Promise<AdoptionResponse> {
   return apiRequest<AdoptionResponse>(`adoptions/${id}`, {
     method: 'PATCH',
+    body: JSON.stringify(data),
+  })
+}
+
+// pending → in_progress, optionally naming the mediator. Sends no email.
+export async function acceptAdoption(
+  id: string,
+  data: AcceptAdoptionRequest
+): Promise<AdoptionResponse> {
+  return apiRequest<AdoptionResponse>(`adoptions/${id}/accept`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
+// pending → canceled and an email to the applicant.
+export async function declineAdoption(
+  id: string,
+  data: DeclineAdoptionRequest
+): Promise<AdoptionResponse> {
+  return apiRequest<AdoptionResponse>(`adoptions/${id}/decline`, {
+    method: 'POST',
     body: JSON.stringify(data),
   })
 }

@@ -17,7 +17,7 @@ Every adoption has a general status that gives the mediator a quick overview:
 | Status | German UI | Meaning |
 |---|---|---|
 | `unconfirmed` | E-Mail nicht bestätigt | A public application whose email address hasn't been confirmed yet (see [Application](#application)) |
-| `pending` | Zu prüfen | The application has arrived, but the mediator hasn't started working on it yet |
+| `pending` | Zu prüfen | The application has arrived and waits for the mediator to [accept or decline](#accepting-or-declining-an-application) it |
 | `in_progress` | In Bearbeitung | The mediator is actively working through the adoption |
 | `canceled` | Abgebrochen | The adoption was stopped. A reason is always documented |
 | `done` | Abgeschlossen | The animal has been handed over. The adoption is complete |
@@ -94,9 +94,18 @@ The animal of an adoption can be changed in the admin — e.g. *"Bello ist reser
 
 The applicant logs in with their email and a magic link, sees all their adoptions and edits their data. See [applicant-portal.md](./applicant-portal.md).
 
+## Accepting or declining an application
+
+A `pending` adoption waits for the mediator's decision on the adoption detail page. Nothing moves it on by itself: starting a step does not change the status.
+
+- **Accept** (*Annehmen*) asks who the mediator is. The Person behind the logged-in user is pre-selected if they are a mediator, otherwise the adoption's current mediator. Confirming sets the mediator (if chosen, replacing a previous one) and moves the adoption to `in_progress`. No email goes out.
+- **Decline** (*Ablehnen*) is a cancellation plus an email to the applicant. It needs an **internal reason**, kept as the cancellation reason and shown when the adoption is checked later. An optional **reason for the applicant** is not stored; it is only part of the email. The email never contains the internal reason. Without an applicant email (mediator-created adoptions) the decline still succeeds and nothing is sent.
+
+Both are only possible from `pending`; any other status is rejected. A declined adoption can be reopened like any canceled one.
+
 ## Cancellation
 
-An adoption can be canceled at any point, regardless of which steps are done. The mediator documents a reason, kept separate from the general notes so it is easy to see why the adoption ended. The reason is internal; the portal only shows that the application ended. A canceled adoption can be reopened.
+An adoption can be canceled at any point, regardless of which steps are done. The mediator documents a reason, kept separate from the general notes so it is easy to see why the adoption ended. The reason is internal; the portal only shows that the application ended. A canceled adoption can be reopened. A plain cancellation sends no email; to inform the applicant, [decline](#accepting-or-declining-an-application) a `pending` application instead.
 
 ## The owner after handover
 

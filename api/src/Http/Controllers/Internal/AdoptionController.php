@@ -5,12 +5,15 @@ namespace Taily\Http\Controllers\Internal;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\ValidationException;
 use Taily\Http\Controllers\Controller;
 use Taily\Http\Requests\AdoptionIndexRequest;
 use Taily\Http\Resources\AdoptionDetailResource;
 use Taily\Http\Resources\AdoptionListResource;
 use Taily\Http\Resources\AnimalListResource;
 use Taily\Http\Resources\PersonListResource;
+use Taily\Mail\ApplicationDeclinedMail;
 use Taily\Models\Adoption;
 use Taily\Models\Animal;
 use Taily\Models\Person;
@@ -141,6 +144,75 @@ class AdoptionController extends Controller
             'message' => 'Vermittlung erfolgreich aktualisiert.',
             'data' => new AdoptionDetailResource($adoption),
         ]);
+    }
+
+    /**
+     * The mediator takes on a confirmed application: pending → in_progress,
+     * optionally naming the mediator. Sends no email.
+     */
+    public function accept(Request $request, Adoption $adoption): JsonResponse
+    {
+        $this->ensurePending($adoption, 'angenommen');
+
+        $validated = $request->validate([
+            'mediator_id' => 'sometimes|nullable|exists:people,id',
+        ], attributes: [
+            'mediator_id' => 'Vermittler:in',
+        ]);
+
+        $adoption->update([...$validated, 'status' => 'in_progress']);
+        $adoption->load(self::DETAIL_RELATIONS);
+
+        return response()->json([
+            'message' => 'Bewerbung angenommen.',
+            'data' => new AdoptionDetailResource($adoption),
+        ]);
+    }
+
+    /**
+     * Declining is a cancellation with a required internal reason (kept in
+     * `canceled_reason`) and an email to the applicant. The optional applicant
+     * reason is only part of that email.
+     */
+    public function decline(Request $request, Adoption $adoption): JsonResponse
+    {
+        $this->ensurePending($adoption, 'abgelehnt');
+
+        $validated = $request->validate([
+            'internal_reason' => 'required|string|max:65535',
+            'applicant_reason' => 'nullable|string|max:65535',
+        ], attributes: [
+            'internal_reason' => 'Interner Grund',
+            'applicant_reason' => 'Grund für die Bewerber:in',
+        ]);
+
+        $adoption->update([
+            'status' => 'canceled',
+            'canceled_at' => now(),
+            'canceled_reason' => $validated['internal_reason'],
+        ]);
+
+        if ($adoption->applicant_email !== '') {
+            Mail::to($adoption->applicant_email)->send(
+                new ApplicationDeclinedMail($adoption, trim((string) ($validated['applicant_reason'] ?? ''))),
+            );
+        }
+
+        $adoption->load(self::DETAIL_RELATIONS);
+
+        return response()->json([
+            'message' => 'Bewerbung abgelehnt.',
+            'data' => new AdoptionDetailResource($adoption),
+        ]);
+    }
+
+    private function ensurePending(Adoption $adoption, string $verb): void
+    {
+        if ($adoption->status !== 'pending') {
+            throw ValidationException::withMessages([
+                'status' => "Nur offene Bewerbungen können {$verb} werden.",
+            ]);
+        }
     }
 
     public function destroy(Adoption $adoption): JsonResponse

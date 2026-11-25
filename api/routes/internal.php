@@ -234,6 +234,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Adoptions
     Route::get('/adoptions/options', [AdoptionController::class, 'options']);
     Route::apiResource('adoptions', AdoptionController::class);
+    Route::post('/adoptions/{adoption}/accept', [AdoptionController::class, 'accept']);
+    Route::post('/adoptions/{adoption}/decline', [AdoptionController::class, 'decline']);
     Route::get('/adoptions/{adoption}/contract-templates', [AdoptionContractController::class, 'templates']);
     Route::put('/adoptions/{adoption}/contract', [AdoptionContractController::class, 'store']);
     Route::get('/adoptions/{adoption}/contract/generate', [AdoptionContractController::class, 'generate']);
