@@ -4,6 +4,8 @@ namespace Taily\Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\TestResponse;
+use LogicException;
+use Taily\Http\Resources\PersonBaseResource;
 use Taily\Models\Adoption;
 use Taily\Models\Animal;
 use Taily\Models\AnimalType;
@@ -239,6 +241,24 @@ class PersonIndexTest extends TestCase
         $person->fosterAnimalTypes()->attach($this->dogs);
 
         $this->assertSame(['Pflegestelle', 'Vermittler'], $this->list('per_page=5')->json('data.0.roles'));
-        $this->assertSame(['Pflegestelle', 'Vermittler'], $person->fresh()->roles);
+        $loaded = $person->fresh()->load(['inspectorAnimalTypes', 'fosterAnimalTypes', 'mediatorAnimalTypes']);
+        $this->assertSame(['Pflegestelle', 'Vermittler'], $loaded->roles);
+    }
+
+    public function test_roles_throw_when_relations_are_not_loaded(): void
+    {
+        $person = $this->person('Mia', 'Mediator');
+
+        $this->expectException(LogicException::class);
+        $person->fresh()->roles;
+    }
+
+    public function test_resource_omits_roles_when_relations_are_not_loaded(): void
+    {
+        $person = $this->person('Mia', 'Mediator');
+
+        $json = (new PersonBaseResource($person->fresh()))->resolve();
+
+        $this->assertArrayNotHasKey('roles', $json);
     }
 }

@@ -308,6 +308,11 @@ class FieldCatalogue
             'key.not_in' => 'Dieser Schlüssel ist für ein Standardfeld reserviert.',
             'key.unique' => 'Diesen Schlüssel gibt es für diese Tierart schon.',
             'options.choices.required' => 'Lege mindestens eine Auswahlmöglichkeit an.',
+            'options.choices.*.value.required' => 'Jede Auswahlmöglichkeit braucht einen Wert.',
+            'options.choices.*.value.max' => 'Ein Wert darf höchstens 64 Zeichen lang sein.',
+            'options.choices.*.value.distinct' => 'Jeder Wert darf nur einmal vorkommen.',
+            'options.choices.*.label.required' => 'Jede Auswahlmöglichkeit braucht eine Bezeichnung.',
+            'options.choices.*.label.max' => 'Eine Bezeichnung darf höchstens 255 Zeichen lang sein.',
         ], [
             'label' => 'Bezeichnung', 'key' => 'Schlüssel', 'type' => 'Typ',
             'collect_at' => 'Erfragt ab', 'required_for' => 'Pflicht ab',

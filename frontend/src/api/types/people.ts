@@ -34,7 +34,7 @@ export interface PersonBaseResource {
   mobile: string
   created_at: string
   updated_at: string
-  roles: string[]
+  roles?: string[]
 }
 
 // Relations loaded in both list and detail person endpoints.
