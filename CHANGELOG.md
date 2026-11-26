@@ -2,6 +2,19 @@
 
 All notable changes to Taily are documented here.
 
+# [0.18.0](https://github.com/ulbrich-media/taily/compare/v0.17.2...v0.18.0) (2026-11-26)
+
+
+### Bug Fixes
+
+* call formatMedia on resource in PublicAnimalResource ([#354](https://github.com/ulbrich-media/taily/issues/354)) ([f3a1c6c](https://github.com/ulbrich-media/taily/commit/f3a1c6ccf159574c37e51a661ae5f59a8eaa1f42))
+
+
+### Features
+
+* **adoption:** let the mediator accept or decline an application ([#351](https://github.com/ulbrich-media/taily/issues/351)) ([7648a73](https://github.com/ulbrich-media/taily/commit/7648a73499ad11465d4be9fb251bda9cd455ee82))
+* **tiervermittlung:** export real zip and city for animals in Germany ([#355](https://github.com/ulbrich-media/taily/issues/355)) ([ad0396c](https://github.com/ulbrich-media/taily/commit/ad0396cfa4c7ecc378c76688e9b3dbc0723a3730))
+
 ## [0.17.2](https://github.com/ulbrich-media/taily/compare/v0.17.1...v0.17.2) (2026-11-25)
 
 
