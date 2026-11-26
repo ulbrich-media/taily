@@ -67,6 +67,8 @@ export interface AnimalBaseResource {
   compatibilities: string[]
   personality_traits: string[]
   application_url: string | null
+  // Reported back by the public website; read-only in the admin.
+  website_url: string | null
   is_deceased: boolean
   date_of_death: string | null
   // Metadata
