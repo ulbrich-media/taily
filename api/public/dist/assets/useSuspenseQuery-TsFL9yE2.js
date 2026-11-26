@@ -1,2 +1,0 @@
-import{Fo as e,No as t,Po as n}from"./index-DpFAa9CT.js";function r(r,i){return t({...r,enabled:!0,suspense:!0,throwOnError:n,placeholderData:void 0},e,i)}export{r as t};
-//# sourceMappingURL=useSuspenseQuery-TsFL9yE2.js.map
