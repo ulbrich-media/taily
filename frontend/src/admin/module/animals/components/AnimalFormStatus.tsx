@@ -13,11 +13,9 @@ import {
 import {
   InputGroup,
   InputGroupAddon,
-  InputGroupButton,
   InputGroupInput,
 } from '@/shadcn/components/ui/input-group.tsx'
-import { Copy } from 'lucide-react'
-import { toast } from 'sonner'
+import { CopyButton } from '@/components/field/CopyButton.tsx'
 import { Switch as SwitchComponent } from '@/shadcn/components/ui/switch.tsx'
 import type { AnimalDetailResource } from '@/api/types/animals'
 import { FormSection } from '@/components/form/FormSection'
@@ -107,15 +105,6 @@ export function AnimalFormStatus({
       date_of_death: toDateFieldValue(defaultValues?.date_of_death),
     },
   })
-
-  const copyWebsiteUrl = () => {
-    const url = defaultValues?.website_url
-    if (!url) return
-    navigator.clipboard
-      .writeText(url)
-      .then(() => toast.success('Website-URL kopiert'))
-      .catch(() => toast.error('Der Link konnte nicht kopiert werden.'))
-  }
 
   const handleFormSubmit = async (data: AnimalFormStatusData) => {
     await onSubmit(data)
@@ -216,6 +205,10 @@ export function AnimalFormStatus({
                 control={form.control}
                 label="Bewerbungs-URL"
                 info="Link zum Bewerbungsformular zur Adoption dieses Tieres. Muss eine vollständige URL sein (z.B. https://...)."
+                copyable={{
+                  label: 'Bewerbungs-URL kopieren',
+                  successMessage: 'Bewerbungs-URL kopiert',
+                }}
               />
 
               <Field>
@@ -228,14 +221,11 @@ export function AnimalFormStatus({
                     placeholder="Noch nicht von der Website gemeldet"
                   />
                   <InputGroupAddon align="inline-end">
-                    <InputGroupButton
-                      size="icon-xs"
-                      aria-label="Website-URL kopieren"
-                      disabled={!defaultValues?.website_url}
-                      onClick={copyWebsiteUrl}
-                    >
-                      <Copy />
-                    </InputGroupButton>
+                    <CopyButton
+                      value={defaultValues?.website_url}
+                      label="Website-URL kopieren"
+                      successMessage="Website-URL kopiert"
+                    />
                   </InputGroupAddon>
                 </InputGroup>
                 <FieldDescription>
