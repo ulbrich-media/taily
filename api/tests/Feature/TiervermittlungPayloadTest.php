@@ -42,6 +42,8 @@ class TiervermittlungPayloadTest extends TestCase
             'name' => 'Bello',
             'gender' => 'male',
             'current_country' => 'DE',
+            'current_postal_code' => '80331',
+            'current_city' => 'München',
             'do_publish' => true,
             'publish_description' => 'Bello ist ein freundlicher Rüde, der gern spazieren geht und Menschen mag.',
         ], $attributes));
@@ -246,7 +248,7 @@ class TiervermittlungPayloadTest extends TestCase
             'forAdoption' => true,
             'reserved' => true,
             'chip' => ['present' => true, 'tasso' => true, 'findefix' => false],
-            'location' => ['country' => 'DE'],
+            'location' => ['country' => 'DE', 'zip' => '80331', 'city' => 'München'],
             'images' => [[
                 'id' => $media->uuid,
                 'url' => route('api.media.serve', ['mediaUuid' => $media->uuid, 'conversion' => 'export']),
@@ -400,24 +402,24 @@ class TiervermittlungPayloadTest extends TestCase
         $this->assertSame(['country' => 'DE', 'zip' => '80331', 'city' => 'München'], $payload['location']);
     }
 
-    public function test_it_leaves_out_zip_and_city_for_animals_in_germany_without_a_location(): void
+    public function test_animals_in_germany_without_zip_or_city_are_not_exported(): void
     {
-        $payload = $this->mapper->payload($this->animal(['current_country' => 'DE']));
+        $withoutLocation = $this->animal(['current_postal_code' => '', 'current_city' => '   ']);
+        $withoutCity = $this->animal(['current_postal_code' => '50667', 'current_city' => '']);
 
-        $this->assertSame(['country' => 'DE'], $payload['location']);
+        $this->assertSame([
+            'Die PLZ des Aufenthaltsorts ist nicht angegeben.',
+            'Der Ort des Aufenthaltsorts ist nicht angegeben.',
+        ], $this->mapper->exclusionReasons($withoutLocation));
+        $this->assertSame(['Der Ort des Aufenthaltsorts ist nicht angegeben.'], $this->mapper->exclusionReasons($withoutCity));
+        $this->assertTrue($this->mapper->isBlocked($withoutLocation));
     }
 
-    public function test_it_leaves_out_blank_location_parts_independently(): void
+    public function test_animals_abroad_do_not_need_zip_or_city(): void
     {
-        $onlyZip = $this->mapper->payload($this->animal([
-            'current_country' => 'DE', 'current_postal_code' => '50667', 'current_city' => '   ',
-        ]));
-        $onlyCity = $this->mapper->payload($this->animal([
-            'current_country' => 'DE', 'current_postal_code' => '', 'current_city' => 'Köln',
-        ]));
+        $animal = $this->animal(['current_country' => 'RO', 'current_postal_code' => '', 'current_city' => '']);
 
-        $this->assertSame(['country' => 'DE', 'zip' => '50667'], $onlyZip['location']);
-        $this->assertSame(['country' => 'DE', 'city' => 'Köln'], $onlyCity['location']);
+        $this->assertSame([], $this->mapper->exclusionReasons($animal));
     }
 
     public function test_it_ignores_a_stored_location_for_animals_abroad(): void

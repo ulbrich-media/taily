@@ -55,6 +55,8 @@ class TiervermittlungExportTest extends TestCase
             'name' => $name,
             'gender' => 'male',
             'current_country' => 'DE',
+            'current_postal_code' => '80331',
+            'current_city' => 'München',
             'do_publish' => true,
             'publish_description' => "{$name} ist ein freundlicher Hund, der ein Zuhause sucht.",
         ], $attributes));
@@ -259,6 +261,7 @@ class TiervermittlungExportTest extends TestCase
             'do_publish' => true, 'publish_description' => 'Text', 'current_country' => 'DE',
         ]);
         $this->animal('Ohne Land', ['current_country' => '']);
+        $this->animal('Ohne PLZ und Ort', ['current_postal_code' => '', 'current_city' => '']);
 
         $this->sync();
 

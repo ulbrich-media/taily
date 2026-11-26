@@ -250,14 +250,14 @@ export function AnimalFormBasic({
                 name="current_postal_code"
                 control={form.control}
                 label="PLZ"
-                info="Postleitzahl des Ortes, an dem das Tier lebt (z. B. Pflegestelle). Wird für Tiere in Deutschland an Tiervermittlung.de gesendet."
+                info="Postleitzahl des Ortes, an dem das Tier lebt (z. B. Pflegestelle). Für Tiere in Deutschland Pflicht für den Export zu Tiervermittlung.de."
               />
 
               <TextInput
                 name="current_city"
                 control={form.control}
                 label="Ort"
-                info="Ort, an dem das Tier lebt (z. B. Pflegestelle). Wird für Tiere in Deutschland an Tiervermittlung.de gesendet."
+                info="Ort, an dem das Tier lebt (z. B. Pflegestelle). Für Tiere in Deutschland Pflicht für den Export zu Tiervermittlung.de."
               />
 
               <SelectInput
