@@ -87,6 +87,17 @@ class AnimalPayloadMapper
             $reasons[] = 'Das Aufenthaltsland ist nicht angegeben.';
         }
 
+        // The platform requires zip and city for Germany only.
+        if ($animal->current_country === 'DE') {
+            if (trim($animal->current_postal_code) === '') {
+                $reasons[] = 'Die PLZ des Aufenthaltsorts ist nicht angegeben.';
+            }
+
+            if (trim($animal->current_city) === '') {
+                $reasons[] = 'Der Ort des Aufenthaltsorts ist nicht angegeben.';
+            }
+        }
+
         if (! preg_match(AnimalNumberGenerator::PATTERN, (string) $animal->animal_number)) {
             $reasons[] = 'Die Tiernummer enthält Zeichen, die Tiervermittlung.de nicht akzeptiert (erlaubt: Buchstaben, Ziffern, - und _).';
         }
@@ -266,21 +277,13 @@ class AnimalPayloadMapper
     {
         $location = ['country' => $animal->current_country];
 
-        // Zip and city are only sent for Germany, and each only when known.
-        // When missing, the platform falls back to the organization's address
-        // and answers with a hint in `warnungen`. The Bundesland is derived by
-        // the platform from the zip code and is never sent.
+        // Zip and city are only sent for Germany, where the platform requires
+        // them; animals without them are kept out of the export (see
+        // `exclusionReasons`). The Bundesland is derived by the platform from
+        // the zip code and is never sent.
         if ($animal->current_country === 'DE') {
-            $zip = trim($animal->current_postal_code);
-            $city = trim($animal->current_city);
-
-            if ($zip !== '') {
-                $location['zip'] = $zip;
-            }
-
-            if ($city !== '') {
-                $location['city'] = $city;
-            }
+            $location['zip'] = trim($animal->current_postal_code);
+            $location['city'] = trim($animal->current_city);
         }
 
         return $location;
