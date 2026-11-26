@@ -112,6 +112,7 @@ class Animal extends Model implements HasMedia
         'publish_title',
         'publish_description',
         'application_url',
+        'website_url',
         'is_deceased',
         'date_of_death',
     ];

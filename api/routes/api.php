@@ -26,6 +26,10 @@ Route::middleware(['auth:sanctum', 'ability:animals:read:adoptable'])->group(fun
     Route::get('/animals', [AnimalController::class, 'index']);
 });
 
+Route::middleware(['auth:sanctum', 'ability:animals:write:website-url'])->group(function () {
+    Route::put('/animals/{animal}/website-url', [AnimalController::class, 'updateWebsiteUrl']);
+});
+
 Route::middleware(['auth:sanctum', 'ability:animals:read:types'])->group(function () {
     Route::get('/animal-types', [AnimalTypeController::class, 'index']);
 });
