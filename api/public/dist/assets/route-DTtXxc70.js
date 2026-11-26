@@ -1,0 +1,2 @@
+import{t as e}from"./compiler-runtime-BZIuLiLt.js";import{Io as t}from"./index-DpFAa9CT.js";import{t as n}from"./jsx-runtime-Wy9s6hX0.js";var r=e(),i=n(),a=()=>{let e=(0,r.c)(1),n;return e[0]===Symbol.for(`react.memo_cache_sentinel`)?(n=(0,i.jsx)(t,{}),e[0]=n):n=e[0],n};export{a as component};
+//# sourceMappingURL=route-DTtXxc70.js.map
