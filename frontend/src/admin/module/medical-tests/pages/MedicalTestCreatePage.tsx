@@ -5,7 +5,6 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { medicalTestQueryKeys } from '@/admin/module/medical-tests/api/queries'
 import { createMedicalTest } from '@/admin/module/medical-tests/api/requests'
-import type { AnimalTypeResource } from '@/api/types/animal-types'
 import {
   Dialog,
   DialogContent,
@@ -20,25 +19,24 @@ import { FieldGroup } from '@/shadcn/components/ui/field.tsx'
 import { toast } from 'sonner'
 import { FormBlocker } from '@/components/form/FormBlocker'
 import { TextInput } from '@/components/field/TextInput'
-import { SelectInput } from '@/components/field/SelectInput'
 import { zFieldString } from '@/components/field/TextInput.utils.ts'
 
 const createMedicalTestSchema = z.object({
   title: zFieldString({ required: true }),
   description: zFieldString(),
-  animal_type_id: z.string().min(1, 'Bitte wähle eine Tierart aus'),
 })
 
 type CreateMedicalTestFormData = z.infer<typeof createMedicalTestSchema>
 
 interface MedicalTestCreatePageProps {
-  animalTypes: AnimalTypeResource[]
+  /** The test always belongs to this animal type. */
+  animalTypeId: string
   onClose: () => void
   breadcrumb?: ReactNode
 }
 
 export function MedicalTestCreatePage({
-  animalTypes,
+  animalTypeId,
   onClose,
   breadcrumb,
 }: MedicalTestCreatePageProps) {
@@ -50,7 +48,6 @@ export function MedicalTestCreatePage({
     defaultValues: {
       title: '',
       description: '',
-      animal_type_id: animalTypes.length === 1 ? animalTypes[0].id : '',
     },
   })
 
@@ -61,11 +58,7 @@ export function MedicalTestCreatePage({
       toast.success(data.message)
 
       if (keepOpen) {
-        form.reset({
-          title: '',
-          description: '',
-          animal_type_id: form.getValues('animal_type_id'),
-        })
+        form.reset({ title: '', description: '' })
         setKeepOpen(false)
       } else {
         onClose()
@@ -78,7 +71,7 @@ export function MedicalTestCreatePage({
   })
 
   const onSubmit = async (data: CreateMedicalTestFormData) => {
-    await createMutation.mutateAsync(data)
+    await createMutation.mutateAsync({ ...data, animal_type_id: animalTypeId })
   }
 
   const handleSaveAndNew = () => {
@@ -94,7 +87,7 @@ export function MedicalTestCreatePage({
         <DialogHeader>
           <DialogTitle>Neuen Test erstellen</DialogTitle>
           <DialogDescription>
-            Erstelle einen neuen Test für eine Tierart.
+            Erstelle einen neuen Test für diese Tierart.
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -102,18 +95,6 @@ export function MedicalTestCreatePage({
             <FormBlocker />
 
             <FieldGroup>
-              <SelectInput
-                name="animal_type_id"
-                control={form.control}
-                label="Tierart"
-                required
-                options={animalTypes.map((animalType) => ({
-                  value: animalType.id,
-                  label: animalType.title,
-                }))}
-                placeholder="Tierart auswählen"
-              />
-
               <TextInput
                 name="title"
                 control={form.control}

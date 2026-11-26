@@ -1,15 +1,14 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { queryClient } from '@/lib/queryClient.ts'
-import { listMedicalTestsQuery } from '@/admin/module/medical-tests/api/queries'
-import { listAnimalTypesQuery } from '@/admin/module/animal-types/api/queries'
-import { MedicalTestEditPage } from '@/admin/module/medical-tests/pages/MedicalTestEditPage'
 import { useSuspenseQuery } from '@tanstack/react-query'
-import { Route as MedicalTestsRoute } from '@/routes/admin/_authenticated/settings/medical-tests/route'
 import { useBreadcrumbs } from '@/router/useBreadcrumbs'
 import { BreadcrumbNav } from '@/router/BreadcrumbNav'
+import { queryClient } from '@/lib/queryClient.ts'
+import { listMedicalTestsByAnimalTypeQuery } from '@/admin/module/medical-tests/api/queries'
+import { MedicalTestEditPage } from '@/admin/module/medical-tests/pages/MedicalTestEditPage'
+import { Route as MedicalTestsRoute } from './route'
 
 export const Route = createFileRoute(
-  '/admin/_authenticated/settings/medical-tests/$id/edit'
+  '/admin/_authenticated/settings/animal-types/$animalTypeId/medical-tests/$id/edit'
 )({
   staticData: { dialog: true },
   beforeLoad: ({ context }) => {
@@ -18,19 +17,15 @@ export const Route = createFileRoute(
     }
   },
   loader: async ({ params }) => {
-    const medicalTestId = params.id
-
     const medicalTests = await queryClient.ensureQueryData(
-      listMedicalTestsQuery
+      listMedicalTestsByAnimalTypeQuery(params.animalTypeId)
     )
 
-    const medicalTest = medicalTests.find((t) => t.id === medicalTestId)
+    const medicalTest = medicalTests.find((t) => t.id === params.id)
 
     if (!medicalTest) {
       throw new Response('Medical test not found', { status: 404 })
     }
-
-    await queryClient.ensureQueryData(listAnimalTypesQuery)
 
     return { breadcrumb: `${medicalTest.title} bearbeiten` }
   },
@@ -39,10 +34,11 @@ export const Route = createFileRoute(
 
 function RouteComponent() {
   const breadcrumbs = useBreadcrumbs()
-  const { id } = Route.useParams()
+  const { animalTypeId, id } = Route.useParams()
   const navigate = MedicalTestsRoute.useNavigate()
-  const { data: medicalTests } = useSuspenseQuery(listMedicalTestsQuery)
-  const { data: animalTypesData } = useSuspenseQuery(listAnimalTypesQuery)
+  const { data: medicalTests } = useSuspenseQuery(
+    listMedicalTestsByAnimalTypeQuery(animalTypeId)
+  )
   const medicalTest = medicalTests.find((t) => t.id === id)!
 
   const handleClose = () => {
@@ -52,7 +48,6 @@ function RouteComponent() {
   return (
     <MedicalTestEditPage
       medicalTest={medicalTest}
-      animalTypes={animalTypesData.data}
       onClose={handleClose}
       breadcrumb={<BreadcrumbNav items={breadcrumbs} size="sm" />}
     />

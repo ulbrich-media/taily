@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react'
 import {
-  FlaskConical,
   Users,
   TriangleAlert,
   Building2,
@@ -24,7 +23,6 @@ interface SettingsPageProps {
   animalTypesAction: ReactNode
   caseFileAction: ReactNode
   contractsAction: ReactNode
-  medicalTestsAction: ReactNode
   organizationsAction: ReactNode
   formTemplatesAction: ReactNode
   exportAction: ReactNode
@@ -36,7 +34,6 @@ export function SettingsPage({
   animalTypesAction,
   caseFileAction,
   contractsAction,
-  medicalTestsAction,
   organizationsAction,
   formTemplatesAction,
   exportAction,
@@ -96,14 +93,6 @@ export function SettingsPage({
             description:
               'Lege Titel, Vertragstext und die gedruckten Angaben fest – Pflichtfelder erscheinen auf der Checkliste jeder Vermittlung.',
             actions: contractsAction,
-          },
-          {
-            icon: FlaskConical,
-            title: 'Tests',
-            subtitle: 'Medizinische Tests',
-            description:
-              'Verwalte die verfügbaren medizinischen Tests der Tiere.',
-            actions: medicalTestsAction,
           },
           {
             icon: Building2,
