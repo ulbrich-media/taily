@@ -2,6 +2,13 @@
 
 All notable changes to Taily are documented here.
 
+## [0.18.1](https://github.com/ulbrich-media/taily/compare/v0.18.0...v0.18.1) (2026-11-26)
+
+
+### Bug Fixes
+
+* **tiervermittlung:** keep animals in Germany without zip or city out of the export ([#357](https://github.com/ulbrich-media/taily/issues/357)) ([0278d8f](https://github.com/ulbrich-media/taily/commit/0278d8fda8213b2cd6d3799b7dc120c383303116)), closes [#355](https://github.com/ulbrich-media/taily/issues/355)
+
 # [0.18.0](https://github.com/ulbrich-media/taily/compare/v0.17.2...v0.18.0) (2026-11-26)
 
 
