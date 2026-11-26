@@ -46,6 +46,8 @@ class AnimalBaseResource extends JsonResource
             // Tab 4: Organization, Marketing & Status
             'current_location' => $this->resource->current_location,
             'current_country' => $this->resource->current_country,
+            'current_postal_code' => $this->resource->current_postal_code,
+            'current_city' => $this->resource->current_city,
             'alternate_transport_trace' => $this->resource->alternate_transport_trace,
             'alternate_arrival_location' => $this->resource->alternate_arrival_location,
             'do_publish' => $this->resource->do_publish,

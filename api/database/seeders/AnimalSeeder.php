@@ -118,7 +118,9 @@ class AnimalSeeder extends Seeder
             'sponsor_external' => $faker->boolean(10) ? $faker->name() : '',
             // Tab 4: Organization, Marketing & Status
             'current_location' => $faker->randomElement(SpeciesCatalog::locations()),
-            'current_country' => $faker->boolean(80) ? 'DE' : $faker->randomElement(['RO', 'ES', 'GR', 'BG', 'HU']),
+            'current_country' => $country = $faker->boolean(80) ? 'DE' : $faker->randomElement(['RO', 'ES', 'GR', 'BG', 'HU']),
+            'current_postal_code' => $country === 'DE' && $faker->boolean(70) ? $faker->numerify('#####') : '',
+            'current_city' => $country === 'DE' && $faker->boolean(70) ? $faker->city() : '',
             'alternate_transport_trace' => $faker->boolean(15) ? 'ALT'.$faker->numerify('######') : '',
             'alternate_arrival_location' => $faker->boolean(10) ? $faker->randomElement(SpeciesCatalog::locations()) : '',
             'do_publish' => $faker->boolean(85),

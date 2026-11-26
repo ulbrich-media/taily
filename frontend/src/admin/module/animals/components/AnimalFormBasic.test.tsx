@@ -33,6 +33,8 @@ const animal = {
   name: 'Bello',
   gender: 'male',
   current_country: 'RO',
+  current_postal_code: '80331',
+  current_city: 'München',
 } as Partial<AnimalDetailResource>
 
 describe('AnimalFormBasic', () => {
@@ -60,6 +62,24 @@ describe('AnimalFormBasic', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalled())
-    expect(onSubmit.mock.calls[0][0]).toMatchObject({ current_country: '' })
+    expect(onSubmit.mock.calls[0][0]).toMatchObject({
+      current_country: '',
+      current_postal_code: '80331',
+      current_city: 'München',
+    })
+  })
+
+  it('labels the old free-text location as deprecated and shows PLZ and Ort', () => {
+    render(
+      <AnimalFormBasic
+        animalTypes={[dogs]}
+        defaultValues={animal}
+        onSubmit={vi.fn()}
+      />
+    )
+
+    expect(screen.getByLabelText(/Aufenthaltsort \(veraltet\)/)).toBeVisible()
+    expect(screen.getByLabelText(/^PLZ/)).toHaveValue('80331')
+    expect(screen.getByLabelText(/^Ort/)).toHaveValue('München')
   })
 })
