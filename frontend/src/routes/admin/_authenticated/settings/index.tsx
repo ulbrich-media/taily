@@ -31,7 +31,7 @@ function RouteComponent() {
       }
       animalTypesAction={
         <Button variant="default_outline" asChild>
-          <AnimalTypesRoute.Link aria-label="Tierarten öffnen">
+          <AnimalTypesRoute.Link aria-label="Tierarten und ihre Konfiguration öffnen">
             Öffnen
           </AnimalTypesRoute.Link>
         </Button>

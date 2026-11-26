@@ -78,9 +78,10 @@ export function SettingsPage({
           },
           {
             icon: PawPrint,
-            title: 'Tierarten',
-            subtitle: 'Verfügbare Tierarten',
-            description: 'Verwalte die Tierarten, die vermittelt werden.',
+            title: 'Tierarten & ihre Konfiguration',
+            subtitle: 'Alles, was zu einer Tierart gehört',
+            description:
+              'Verwalte die Tierarten, die vermittelt werden, und ihre Einstellungen.',
             actions: animalTypesAction,
           },
           {

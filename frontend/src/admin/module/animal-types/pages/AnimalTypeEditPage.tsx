@@ -1,4 +1,3 @@
-import { type ReactNode } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -7,14 +6,12 @@ import { animalTypeQueryKeys } from '@/admin/module/animal-types/api/queries'
 import { updateAnimalType } from '@/admin/module/animal-types/api/requests'
 import type { AnimalTypeResource } from '@/api/types/animal-types'
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogBreadcrumb,
-} from '@/shadcn/components/ui/dialog'
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/shadcn/components/ui/card'
 import { Button } from '@/shadcn/components/ui/button'
 import { FieldGroup } from '@/shadcn/components/ui/field'
 import { toast } from 'sonner'
@@ -28,7 +25,6 @@ import {
   TIERVERMITTLUNG_SPECIES_OPTIONS,
   toSpeciesFormValue,
 } from '@/admin/module/animal-types/tiervermittlung-species'
-import { Mark } from '@/components/typo/mark.tsx'
 
 const updateAnimalTypeSchema = z.object({
   title: zFieldString({ required: true }),
@@ -39,14 +35,13 @@ type UpdateAnimalTypeFormData = z.infer<typeof updateAnimalTypeSchema>
 
 interface AnimalTypeEditPageProps {
   animalType: AnimalTypeResource
-  onClose: () => void
-  breadcrumb?: ReactNode
+  /** Non-admins see the values but cannot change them. */
+  readOnly?: boolean
 }
 
 export function AnimalTypeEditPage({
   animalType,
-  onClose,
-  breadcrumb,
+  readOnly = false,
 }: AnimalTypeEditPageProps) {
   const queryClient = useQueryClient()
 
@@ -68,13 +63,14 @@ export function AnimalTypeEditPage({
           data.tiervermittlung_species
         ),
       }),
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: animalTypeQueryKeys.list })
       queryClient.invalidateQueries({
         queryKey: animalTypeQueryKeys.detail(animalType.id),
       })
       toast.success(data.message)
-      onClose()
+      // The page stays open, so the saved values become the new baseline.
+      form.reset(variables)
     },
     onError: (error) => {
       toast.error(
@@ -90,52 +86,47 @@ export function AnimalTypeEditPage({
   }
 
   return (
-    <Dialog open onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
-            <Mark>{animalType.title}</Mark> bearbeiten
-          </DialogTitle>
-          <DialogDescription>Bearbeite die Tierart.</DialogDescription>
-        </DialogHeader>
+    <Card>
+      <CardHeader>
+        <CardTitle>Basisdaten</CardTitle>
+        <CardDescription>
+          Name und Zuordnung der Tierart auf Tiervermittlung.de.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
         <FormProvider {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormBlocker />
 
-            <FieldGroup>
-              <TextInput
-                name="title"
-                control={form.control}
-                label="Name"
-                required
-              />
+            <fieldset disabled={readOnly} className="contents">
+              <FieldGroup>
+                <TextInput
+                  name="title"
+                  control={form.control}
+                  label="Name"
+                  required
+                />
 
-              <SelectInput
-                name="tiervermittlung_species"
-                control={form.control}
-                label="Tierart auf Tiervermittlung.de"
-                info="Tiere dieser Art werden unter dieser Tierart an Tiervermittlung.de exportiert, sofern der Export aktiviert ist."
-                options={TIERVERMITTLUNG_SPECIES_OPTIONS}
-              />
-            </FieldGroup>
+                <SelectInput
+                  name="tiervermittlung_species"
+                  control={form.control}
+                  label="Tierart auf Tiervermittlung.de"
+                  info="Tiere dieser Art werden unter dieser Tierart an Tiervermittlung.de exportiert, sofern der Export aktiviert ist."
+                  options={TIERVERMITTLUNG_SPECIES_OPTIONS}
+                />
+              </FieldGroup>
+            </fieldset>
 
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onClose}
-                disabled={updateMutation.isPending}
-              >
-                Abbrechen
-              </Button>
-              <Button type="submit" disabled={updateMutation.isPending}>
-                {updateMutation.isPending ? 'Aktualisiere...' : 'Speichern'}
-              </Button>
-            </DialogFooter>
-            <DialogBreadcrumb>{breadcrumb}</DialogBreadcrumb>
+            {!readOnly && (
+              <div className="flex justify-end">
+                <Button type="submit" disabled={updateMutation.isPending}>
+                  {updateMutation.isPending ? 'Aktualisiere...' : 'Speichern'}
+                </Button>
+              </div>
+            )}
           </form>
         </FormProvider>
-      </DialogContent>
-    </Dialog>
+      </CardContent>
+    </Card>
   )
 }
