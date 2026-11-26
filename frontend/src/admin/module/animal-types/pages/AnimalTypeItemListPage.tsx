@@ -27,7 +27,8 @@ interface AnimalTypeItemListPageProps<T extends AnimalTypeItem> {
   emptyDescription: string
   items: PaginatedResponse<T>
   search: AnimalTypeItemListSearch
-  animalTypes: AnimalTypeResource[]
+  /** Omit when the list is scoped to one animal type: no filter and no column then. */
+  animalTypes?: AnimalTypeResource[]
   /** True while the previous result is shown and the next one is loading. */
   isUpdating?: boolean
   onSearchChange: (patch: Partial<AnimalTypeItemListSearch>) => void
@@ -54,20 +55,22 @@ export function AnimalTypeItemListPage<T extends AnimalTypeItem>({
   renderRowActions,
   breadcrumb,
 }: AnimalTypeItemListPageProps<T>) {
-  const filters = [
-    defineFilter({
-      type: 'single',
-      key: 'animal_type_id',
-      label: 'Tierart',
-      allLabel: 'Alle Tierarten',
-      options: animalTypes.map((type) => ({
-        value: type.id,
-        label: type.title,
-      })),
-      value: search.animal_type_id,
-      onChange: (animal_type_id) => onSearchChange({ animal_type_id }),
-    }),
-  ]
+  const filters = animalTypes
+    ? [
+        defineFilter({
+          type: 'single',
+          key: 'animal_type_id',
+          label: 'Tierart',
+          allLabel: 'Alle Tierarten',
+          options: animalTypes.map((type) => ({
+            value: type.id,
+            label: type.title,
+          })),
+          value: search.animal_type_id,
+          onChange: (animal_type_id) => onSearchChange({ animal_type_id }),
+        }),
+      ]
+    : []
 
   return (
     <ListPage
@@ -99,12 +102,17 @@ export function AnimalTypeItemListPage<T extends AnimalTypeItem>({
         onReset: () => onSearchChange(resetSearchPatch),
       }}
       renderTable={(rows) => (
-        <AnimalTypeItemList items={rows} renderRowActions={renderRowActions} />
+        <AnimalTypeItemList
+          items={rows}
+          renderRowActions={renderRowActions}
+          showAnimalType={!!animalTypes}
+        />
       )}
       renderCards={(rows, className) => (
         <AnimalTypeItemCardGrid
           items={rows}
           renderRowActions={renderRowActions}
+          showAnimalType={!!animalTypes}
           className={className}
         />
       )}

@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react'
 import {
-  Syringe,
   FlaskConical,
   Users,
   TriangleAlert,
@@ -25,7 +24,6 @@ interface SettingsPageProps {
   animalTypesAction: ReactNode
   caseFileAction: ReactNode
   contractsAction: ReactNode
-  vaccinationsAction: ReactNode
   medicalTestsAction: ReactNode
   organizationsAction: ReactNode
   formTemplatesAction: ReactNode
@@ -38,7 +36,6 @@ export function SettingsPage({
   animalTypesAction,
   caseFileAction,
   contractsAction,
-  vaccinationsAction,
   medicalTestsAction,
   organizationsAction,
   formTemplatesAction,
@@ -99,13 +96,6 @@ export function SettingsPage({
             description:
               'Lege Titel, Vertragstext und die gedruckten Angaben fest – Pflichtfelder erscheinen auf der Checkliste jeder Vermittlung.',
             actions: contractsAction,
-          },
-          {
-            icon: Syringe,
-            title: 'Impfungen',
-            subtitle: 'Verfügbare Impfungen',
-            description: 'Verwalte die verfügbaren Impfungen der Tiere.',
-            actions: vaccinationsAction,
           },
           {
             icon: FlaskConical,

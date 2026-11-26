@@ -9,7 +9,8 @@ import type { AnimalTypeItemListSearch } from '@/admin/module/animal-types/anima
 interface VaccinationListPageProps {
   vaccinations: PaginatedResponse<VaccinationResource>
   search: AnimalTypeItemListSearch
-  animalTypes: AnimalTypeResource[]
+  /** Omit inside an animal type's page, where the list is scoped already. */
+  animalTypes?: AnimalTypeResource[]
   /** True while the previous result is shown and the next one is loading. */
   isUpdating?: boolean
   onSearchChange: (patch: Partial<AnimalTypeItemListSearch>) => void
