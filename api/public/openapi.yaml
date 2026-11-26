@@ -74,7 +74,8 @@ paths:
           in: path
           required: true
           schema:
-            type: integer
+            type: string
+            format: uuid
           description: ID of the animal (the `id` field from `/animals`).
       requestBody:
         required: true
@@ -228,7 +229,8 @@ components:
                  created_at, updated_at, vaccinations, medical_tests, media]
       properties:
         id:
-          type: integer
+          type: string
+          format: uuid
         animal_type_id:
           type: integer
           nullable: true

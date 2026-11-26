@@ -10,6 +10,14 @@ import {
   FieldLabel,
   FieldSeparator,
 } from '@/shadcn/components/ui/field.tsx'
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from '@/shadcn/components/ui/input-group.tsx'
+import { Copy } from 'lucide-react'
+import { toast } from 'sonner'
 import { Switch as SwitchComponent } from '@/shadcn/components/ui/switch.tsx'
 import type { AnimalDetailResource } from '@/api/types/animals'
 import { FormSection } from '@/components/form/FormSection'
@@ -99,6 +107,15 @@ export function AnimalFormStatus({
       date_of_death: toDateFieldValue(defaultValues?.date_of_death),
     },
   })
+
+  const copyWebsiteUrl = () => {
+    const url = defaultValues?.website_url
+    if (!url) return
+    navigator.clipboard
+      .writeText(url)
+      .then(() => toast.success('Website-URL kopiert'))
+      .catch(() => toast.error('Der Link konnte nicht kopiert werden.'))
+  }
 
   const handleFormSubmit = async (data: AnimalFormStatusData) => {
     await onSubmit(data)
@@ -200,6 +217,32 @@ export function AnimalFormStatus({
                 label="Bewerbungs-URL"
                 info="Link zum Bewerbungsformular zur Adoption dieses Tieres. Muss eine vollständige URL sein (z.B. https://...)."
               />
+
+              <Field>
+                <FieldLabel htmlFor="website_url">Website-URL</FieldLabel>
+                <InputGroup>
+                  <InputGroupInput
+                    id="website_url"
+                    readOnly
+                    value={defaultValues?.website_url ?? ''}
+                    placeholder="Noch nicht von der Website gemeldet"
+                  />
+                  <InputGroupAddon align="inline-end">
+                    <InputGroupButton
+                      size="icon-xs"
+                      aria-label="Website-URL kopieren"
+                      disabled={!defaultValues?.website_url}
+                      onClick={copyWebsiteUrl}
+                    >
+                      <Copy />
+                    </InputGroupButton>
+                  </InputGroupAddon>
+                </InputGroup>
+                <FieldDescription>
+                  Link zu diesem Tier auf der Website. Wird von der Website
+                  automatisch gemeldet.
+                </FieldDescription>
+              </Field>
             </FormGrid>
           </FormSection>
 

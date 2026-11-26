@@ -18,8 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/shadcn/components/ui/dropdown-menu.tsx'
-import { Link2, MoreVertical } from 'lucide-react'
-import { toast } from 'sonner'
+import { MoreVertical } from 'lucide-react'
 import { Button } from '@/shadcn/components/ui/button.tsx'
 
 export const Route = createFileRoute(
@@ -97,27 +96,6 @@ function RouteComponent() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem
-                    onClick={() =>
-                      copyApplicationLink(animal.public_application_url)
-                    }
-                  >
-                    <Link2 />
-                    Bewerbungslink kopieren
-                  </DropdownMenuItem>
-                  {animal.website_url && (
-                    <DropdownMenuItem
-                      onClick={() =>
-                        copyLink(
-                          animal.website_url as string,
-                          'Link auf der Website kopiert'
-                        )
-                      }
-                    >
-                      <Link2 />
-                      Link auf der Website kopieren
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuItem
                     onClick={() => console.log('Delete animal', animalId)}
                     className="text-destructive"
                   >
@@ -139,23 +117,4 @@ function RouteComponent() {
       </div>
     </>
   )
-}
-
-/**
- * The public application form has no listing: applicants only reach it
- * through this link, shared by the organization (e.g. on its website).
- */
-function copyApplicationLink(url: string) {
-  copyLink(url, 'Bewerbungslink kopiert')
-}
-
-function copyLink(url: string, successMessage: string) {
-  navigator.clipboard
-    .writeText(url)
-    .then(() =>
-      toast.success(successMessage, {
-        description: url,
-      })
-    )
-    .catch(() => toast.error('Der Link konnte nicht kopiert werden.'))
 }
