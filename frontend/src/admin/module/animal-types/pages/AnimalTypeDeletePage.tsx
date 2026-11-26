@@ -19,11 +19,14 @@ import { Trash2Icon } from 'lucide-react'
 interface AnimalTypeDeletePageProps {
   animalType: AnimalTypeResource
   onClose: () => void
+  /** Called instead of onClose once the type is deleted. */
+  onDeleted?: () => void
 }
 
 export function AnimalTypeDeletePage({
   animalType,
   onClose,
+  onDeleted,
 }: AnimalTypeDeletePageProps) {
   const queryClient = useQueryClient()
 
@@ -32,7 +35,8 @@ export function AnimalTypeDeletePage({
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: animalTypeQueryKeys.list })
       toast.success(data.message)
-      onClose()
+      // The open page belongs to the deleted type, so leave it for the list.
+      ;(onDeleted ?? onClose)()
     },
     onError: (error) => {
       toast.error(error.message)
