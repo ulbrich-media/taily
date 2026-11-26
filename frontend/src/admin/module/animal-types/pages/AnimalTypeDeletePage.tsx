@@ -36,7 +36,8 @@ export function AnimalTypeDeletePage({
       queryClient.invalidateQueries({ queryKey: animalTypeQueryKeys.list })
       toast.success(data.message)
       // The open page belongs to the deleted type, so leave it for the list.
-      ;(onDeleted ?? onClose)()
+      const leave = onDeleted ?? onClose
+      leave()
     },
     onError: (error) => {
       toast.error(error.message)

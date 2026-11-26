@@ -4,7 +4,7 @@ import {
   stripSearchParams,
 } from '@tanstack/react-router'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { PlusIcon, Settings2, Trash2 } from 'lucide-react'
+import { PlusIcon, Settings2 } from 'lucide-react'
 import { AnimalTypeListPage } from '@/admin/module/animal-types/pages/AnimalTypeListPage'
 import { useBreadcrumbs } from '@/router/useBreadcrumbs'
 import { BreadcrumbNav } from '@/router/BreadcrumbNav'
@@ -21,7 +21,6 @@ import { Button } from '@/shadcn/components/ui/button'
 import type { AnimalTypeResource } from '@/api/types/animal-types'
 import { Route as CreateRoute } from '@/routes/admin/_authenticated/settings/animal-types/_list/create'
 import { Route as DetailRoute } from '@/routes/admin/_authenticated/settings/animal-types/$animalTypeId/index'
-import { Route as DeleteRoute } from '@/routes/admin/_authenticated/settings/animal-types/$animalTypeId/delete'
 
 export const Route = createFileRoute(
   '/admin/_authenticated/settings/animal-types/_list'
@@ -83,17 +82,6 @@ function RouteComponent() {
           <Settings2 /> {isAdmin ? 'Konfigurieren' : 'Ansehen'}
         </DetailRoute.Link>
       </Button>
-      {isAdmin && (
-        <Button size="icon-sm" variant="destructive_outline" asChild>
-          <DeleteRoute.Link
-            params={{ animalTypeId: animalType.id }}
-            aria-label="Löschen"
-            title="Löschen"
-          >
-            <Trash2 />
-          </DeleteRoute.Link>
-        </Button>
-      )}
     </div>
   )
 
