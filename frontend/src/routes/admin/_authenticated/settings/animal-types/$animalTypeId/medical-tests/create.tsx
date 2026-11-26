@@ -2,21 +2,15 @@ import { createFileRoute } from '@tanstack/react-router'
 import { MedicalTestCreatePage } from '@/admin/module/medical-tests/pages/MedicalTestCreatePage'
 import { useBreadcrumbs } from '@/router/useBreadcrumbs'
 import { BreadcrumbNav } from '@/router/BreadcrumbNav'
-import { queryClient } from '@/lib/queryClient.ts'
-import { listAnimalTypesQuery } from '@/admin/module/animal-types/api/queries'
-import { useSuspenseQuery } from '@tanstack/react-query'
-import { Route as MedicalTestsRoute } from '@/routes/admin/_authenticated/settings/medical-tests/route'
+import { Route as MedicalTestsRoute } from './route'
 
 export const Route = createFileRoute(
-  '/admin/_authenticated/settings/medical-tests/create'
+  '/admin/_authenticated/settings/animal-types/$animalTypeId/medical-tests/create'
 )({
   beforeLoad: ({ context }) => {
     if (!context.isAdmin) {
       throw new Error('403: Forbidden - Admin access required')
     }
-  },
-  loader: async () => {
-    await queryClient.ensureQueryData(listAnimalTypesQuery)
   },
   component: RouteComponent,
   staticData: {
@@ -27,8 +21,8 @@ export const Route = createFileRoute(
 
 function RouteComponent() {
   const breadcrumbs = useBreadcrumbs()
+  const { animalTypeId } = Route.useParams()
   const navigate = MedicalTestsRoute.useNavigate()
-  const { data: animalTypesData } = useSuspenseQuery(listAnimalTypesQuery)
 
   const handleClose = () => {
     navigate({ search: true })
@@ -36,7 +30,7 @@ function RouteComponent() {
 
   return (
     <MedicalTestCreatePage
-      animalTypes={animalTypesData.data}
+      animalTypeId={animalTypeId}
       onClose={handleClose}
       breadcrumb={<BreadcrumbNav items={breadcrumbs} size="sm" />}
     />

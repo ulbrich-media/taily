@@ -6,7 +6,6 @@ import { Route as UsersRoute } from '@/routes/admin/_authenticated/settings/user
 import { Route as AnimalTypesRoute } from '@/routes/admin/_authenticated/settings/animal-types/route'
 import { Route as CaseFileRoute } from '@/routes/admin/_authenticated/settings/case-file/index'
 import { Route as ContractsRoute } from '@/routes/admin/_authenticated/settings/contracts/_list/index'
-import { Route as MedicalTestsRoute } from '@/routes/admin/_authenticated/settings/medical-tests/route'
 import { Route as OrganizationsRoute } from '@/routes/admin/_authenticated/settings/organizations/index'
 import { Route as FormTemplatesRoute } from '@/routes/admin/_authenticated/settings/form-templates/index'
 import { Route as ExportRoute } from '@/routes/admin/_authenticated/settings/export'
@@ -47,13 +46,6 @@ function RouteComponent() {
           <ContractsRoute.Link aria-label="Vertragsvorlagen öffnen">
             Öffnen
           </ContractsRoute.Link>
-        </Button>
-      }
-      medicalTestsAction={
-        <Button variant="default_outline" asChild>
-          <MedicalTestsRoute.Link aria-label="Medizinische Tests öffnen">
-            Öffnen
-          </MedicalTestsRoute.Link>
         </Button>
       }
       organizationsAction={
