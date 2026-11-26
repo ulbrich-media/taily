@@ -1,15 +1,14 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { useSuspenseQuery } from '@tanstack/react-query'
 import { useBreadcrumbs } from '@/router/useBreadcrumbs'
 import { BreadcrumbNav } from '@/router/BreadcrumbNav'
 import { queryClient } from '@/lib/queryClient.ts'
-import { listVaccinationsQuery } from '@/admin/module/vaccinations/api/queries'
-import { listAnimalTypesQuery } from '@/admin/module/animal-types/api/queries'
+import { listVaccinationsByAnimalTypeQuery } from '@/admin/module/vaccinations/api/queries'
 import { VaccinationEditPage } from '@/admin/module/vaccinations/pages/VaccinationEditPage'
-import { useSuspenseQuery } from '@tanstack/react-query'
-import { Route as VaccinationsRoute } from '@/routes/admin/_authenticated/settings/vaccinations/route'
+import { Route as VaccinationsRoute } from './route'
 
 export const Route = createFileRoute(
-  '/admin/_authenticated/settings/vaccinations/$id/edit'
+  '/admin/_authenticated/settings/animal-types/$animalTypeId/vaccinations/$id/edit'
 )({
   staticData: { dialog: true },
   beforeLoad: ({ context }) => {
@@ -18,19 +17,15 @@ export const Route = createFileRoute(
     }
   },
   loader: async ({ params }) => {
-    const vaccinationId = params.id
-
     const vaccinations = await queryClient.ensureQueryData(
-      listVaccinationsQuery
+      listVaccinationsByAnimalTypeQuery(params.animalTypeId)
     )
 
-    const vaccination = vaccinations.find((v) => v.id === vaccinationId)
+    const vaccination = vaccinations.find((v) => v.id === params.id)
 
     if (!vaccination) {
       throw new Response('Vaccination not found', { status: 404 })
     }
-
-    await queryClient.ensureQueryData(listAnimalTypesQuery)
 
     return {
       breadcrumb: `${vaccination.title} bearbeiten`,
@@ -41,10 +36,11 @@ export const Route = createFileRoute(
 
 function RouteComponent() {
   const breadcrumbs = useBreadcrumbs()
-  const { id } = Route.useParams()
+  const { animalTypeId, id } = Route.useParams()
   const navigate = VaccinationsRoute.useNavigate()
-  const { data: vaccinations } = useSuspenseQuery(listVaccinationsQuery)
-  const { data: animalTypesData } = useSuspenseQuery(listAnimalTypesQuery)
+  const { data: vaccinations } = useSuspenseQuery(
+    listVaccinationsByAnimalTypeQuery(animalTypeId)
+  )
   const vaccination = vaccinations.find((v) => v.id === id)!
 
   const handleClose = () => {
@@ -54,7 +50,6 @@ function RouteComponent() {
   return (
     <VaccinationEditPage
       vaccination={vaccination}
-      animalTypes={animalTypesData.data}
       onClose={handleClose}
       breadcrumb={<BreadcrumbNav items={breadcrumbs} size="sm" />}
     />

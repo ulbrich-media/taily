@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/shadcn/components/ui/dropdown-menu'
 import { Route as BasicRoute } from './index'
+import { Route as VaccinationsRoute } from './vaccinations/route'
 import { Route as DeleteRoute } from './delete'
 
 export const Route = createFileRoute(
@@ -54,6 +55,12 @@ function RouteComponent() {
               >
                 Basis
               </BasicRoute.Link>
+              <VaccinationsRoute.Link
+                params={{ animalTypeId }}
+                className={tabLinkClass}
+              >
+                Impfungen
+              </VaccinationsRoute.Link>
 
               {isAdmin && (
                 <DropdownMenu>

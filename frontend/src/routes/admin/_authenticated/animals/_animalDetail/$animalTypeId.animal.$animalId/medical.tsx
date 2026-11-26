@@ -5,7 +5,7 @@ import { listVaccinationsByAnimalTypeQuery } from '@/admin/module/vaccinations/a
 import { listMedicalTestsByAnimalTypeQuery } from '@/admin/module/medical-tests/api/queries'
 import { AnimalEditMedicalPage } from '@/admin/module/animals/pages/AnimalEditMedicalPage.tsx'
 import { useSuspenseQuery } from '@tanstack/react-query'
-import { Route as VaccinationsRoute } from '@/routes/admin/_authenticated/settings/vaccinations/route'
+import { Route as VaccinationsRoute } from '@/routes/admin/_authenticated/settings/animal-types/$animalTypeId/vaccinations/route'
 import { Route as MedicalTestsRoute } from '@/routes/admin/_authenticated/settings/medical-tests/route'
 
 export const Route = createFileRoute(
@@ -41,7 +41,9 @@ function RouteComponent() {
   )
 
   const vaccinationsLink = (
-    <VaccinationsRoute.Link>Impfungen verwalten</VaccinationsRoute.Link>
+    <VaccinationsRoute.Link params={{ animalTypeId: animal.animal_type_id }}>
+      Impfungen verwalten
+    </VaccinationsRoute.Link>
   )
 
   const medicalTestsLink = (
