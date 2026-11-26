@@ -243,12 +243,28 @@ components:
         current_location:
           type: string
           nullable: true
+          deprecated: true
+          description: |
+            Free-text location. Deprecated: use `current_postal_code` and
+            `current_city` instead.
         current_country:
           type: string
           description: |
             ISO 3166-1 alpha-2 code of the country the animal currently lives
             in, e.g. `DE`. Empty string when unknown.
           example: DE
+        current_postal_code:
+          type: string
+          description: |
+            Postal code of the place the animal currently lives (e.g. a foster
+            home). Empty string when unknown.
+          example: "80331"
+        current_city:
+          type: string
+          description: |
+            City of the place the animal currently lives. Empty string when
+            unknown.
+          example: München
         do_publish:
           type: boolean
           description: Always `true` for animals returned by this endpoint.

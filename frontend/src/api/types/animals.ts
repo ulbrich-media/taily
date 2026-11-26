@@ -56,6 +56,8 @@ export interface AnimalBaseResource {
   // Tab 4: Organization, Marketing & Status
   current_location: string | null
   current_country: string
+  current_postal_code: string
+  current_city: string
   alternate_transport_trace: string | null
   alternate_arrival_location: string | null
   do_publish: boolean

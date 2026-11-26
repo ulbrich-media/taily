@@ -52,6 +52,8 @@ const animalFormBasicSchema = z.object({
   origin_country: zFieldString(),
   current_location: zFieldString(),
   current_country: z.string(),
+  current_postal_code: zFieldString({ maxLength: 16 }),
+  current_city: zFieldString(),
   intake_date: zFieldDate,
   character_description: zFieldString({ maxLength: STRING_LENGTH_TEXTAREA }),
   contract_notes: zFieldString({ maxLength: STRING_LENGTH_TEXTAREA }),
@@ -105,6 +107,8 @@ export function AnimalFormBasic({
       origin_country: defaultValues?.origin_country || '',
       current_location: defaultValues?.current_location || '',
       current_country: defaultValues?.current_country || '',
+      current_postal_code: defaultValues?.current_postal_code || '',
+      current_city: defaultValues?.current_city || '',
       intake_date: toDateFieldValue(defaultValues?.intake_date),
       character_description: defaultValues?.character_description || '',
       contract_notes: defaultValues?.contract_notes || '',
@@ -238,8 +242,8 @@ export function AnimalFormBasic({
               <TextInput
                 name="current_location"
                 control={form.control}
-                label="Aufenthaltsort"
-                info="Aktueller Standort des Tieres"
+                label="Aufenthaltsort (veraltet)"
+                info="Veraltet: bitte PLZ und Ort verwenden. Freitext wird nicht an Tiervermittlung.de gesendet."
               />
 
               <SelectInput
@@ -264,6 +268,20 @@ export function AnimalFormBasic({
                     <X />
                   </Button>
                 }
+              />
+
+              <TextInput
+                name="current_postal_code"
+                control={form.control}
+                label="PLZ"
+                info="Postleitzahl des Ortes, an dem das Tier lebt (z. B. Pflegestelle). Wird für Tiere in Deutschland an Tiervermittlung.de gesendet."
+              />
+
+              <TextInput
+                name="current_city"
+                control={form.control}
+                label="Ort"
+                info="Ort, an dem das Tier lebt (z. B. Pflegestelle). Wird für Tiere in Deutschland an Tiervermittlung.de gesendet."
               />
 
               <DateInput
