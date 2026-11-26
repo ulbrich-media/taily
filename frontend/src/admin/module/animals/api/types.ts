@@ -29,6 +29,8 @@ export interface CreateAnimalRequest {
   origin_country?: string
   current_location?: string
   current_country?: string
+  current_postal_code?: string
+  current_city?: string
   intake_date?: string | null
   character_description?: string
   contract_notes?: string

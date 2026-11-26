@@ -72,6 +72,8 @@ export function AnimalCreatePage({
       origin_country: data.origin_country || undefined,
       current_location: data.current_location || undefined,
       current_country: data.current_country || undefined,
+      current_postal_code: data.current_postal_code || undefined,
+      current_city: data.current_city || undefined,
       intake_date: toApiDate(data.intake_date),
       character_description: data.character_description || undefined,
       contract_notes: data.contract_notes || undefined,

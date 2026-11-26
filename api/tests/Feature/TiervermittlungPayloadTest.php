@@ -246,7 +246,7 @@ class TiervermittlungPayloadTest extends TestCase
             'forAdoption' => true,
             'reserved' => true,
             'chip' => ['present' => true, 'tasso' => true, 'findefix' => false],
-            'location' => ['country' => 'DE', 'zip' => '-', 'city' => '-'],
+            'location' => ['country' => 'DE'],
             'images' => [[
                 'id' => $media->uuid,
                 'url' => route('api.media.serve', ['mediaUuid' => $media->uuid, 'conversion' => 'export']),
@@ -389,11 +389,44 @@ class TiervermittlungPayloadTest extends TestCase
         $this->assertArrayNotHasKey('city', $payload['location']);
     }
 
-    public function test_it_sends_placeholder_zip_and_city_for_animals_in_germany(): void
+    public function test_it_sends_the_recorded_zip_and_city_for_animals_in_germany(): void
+    {
+        $payload = $this->mapper->payload($this->animal([
+            'current_country' => 'DE',
+            'current_postal_code' => ' 80331 ',
+            'current_city' => 'München',
+        ]));
+
+        $this->assertSame(['country' => 'DE', 'zip' => '80331', 'city' => 'München'], $payload['location']);
+    }
+
+    public function test_it_leaves_out_zip_and_city_for_animals_in_germany_without_a_location(): void
     {
         $payload = $this->mapper->payload($this->animal(['current_country' => 'DE']));
 
-        $this->assertSame(['country' => 'DE', 'zip' => '-', 'city' => '-'], $payload['location']);
+        $this->assertSame(['country' => 'DE'], $payload['location']);
+    }
+
+    public function test_it_leaves_out_blank_location_parts_independently(): void
+    {
+        $onlyZip = $this->mapper->payload($this->animal([
+            'current_country' => 'DE', 'current_postal_code' => '50667', 'current_city' => '   ',
+        ]));
+        $onlyCity = $this->mapper->payload($this->animal([
+            'current_country' => 'DE', 'current_postal_code' => '', 'current_city' => 'Köln',
+        ]));
+
+        $this->assertSame(['country' => 'DE', 'zip' => '50667'], $onlyZip['location']);
+        $this->assertSame(['country' => 'DE', 'city' => 'Köln'], $onlyCity['location']);
+    }
+
+    public function test_it_ignores_a_stored_location_for_animals_abroad(): void
+    {
+        $payload = $this->mapper->payload($this->animal([
+            'current_country' => 'RO', 'current_postal_code' => '80331', 'current_city' => 'München',
+        ]));
+
+        $this->assertSame(['country' => 'RO'], $payload['location']);
     }
 
     public function test_adopted_animals_are_removed_as_placed(): void

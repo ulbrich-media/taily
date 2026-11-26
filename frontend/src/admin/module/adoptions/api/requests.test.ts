@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { apiRequest } from '@/lib/api'
-import { getAdoptions } from './requests'
+import { acceptAdoption, declineAdoption, getAdoptions } from './requests'
 
 vi.mock('@/lib/api', () => ({ apiRequest: vi.fn() }))
 
@@ -47,5 +47,40 @@ describe('getAdoptions', () => {
     await getAdoptions()
 
     expect(apiRequestMock).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('acceptAdoption', () => {
+  it('posts the chosen mediator to the accept endpoint', async () => {
+    apiRequestMock.mockResolvedValueOnce({})
+
+    await acceptAdoption('adoption-1', { mediator_id: 'person-1' })
+
+    expect(apiRequestMock).toHaveBeenCalledWith('adoptions/adoption-1/accept', {
+      method: 'POST',
+      body: JSON.stringify({ mediator_id: 'person-1' }),
+    })
+  })
+})
+
+describe('declineAdoption', () => {
+  it('posts both reasons to the decline endpoint', async () => {
+    apiRequestMock.mockResolvedValueOnce({})
+
+    await declineAdoption('adoption-1', {
+      internal_reason: 'Intern',
+      applicant_reason: 'Für dich',
+    })
+
+    expect(apiRequestMock).toHaveBeenCalledWith(
+      'adoptions/adoption-1/decline',
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          internal_reason: 'Intern',
+          applicant_reason: 'Für dich',
+        }),
+      }
+    )
   })
 })

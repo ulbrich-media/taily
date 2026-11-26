@@ -38,15 +38,6 @@ class AnimalPayloadMapper
      */
     public const IMAGE_CONVERSION = 'export';
 
-    /**
-     * Taily only knows the country an animal lives in. The platform requires
-     * zip and city only for Germany (DE), so this placeholder is sent there
-     * until a concrete location is tracked; for other countries nothing is
-     * sent. The Bundesland is derived by the platform from the zip code and
-     * is never sent.
-     */
-    public const UNKNOWN_LOCATION_PART = '-';
-
     private CompatibilityMapping $compatibility;
 
     public function __construct(?CompatibilityMapping $compatibility = null)
@@ -275,9 +266,21 @@ class AnimalPayloadMapper
     {
         $location = ['country' => $animal->current_country];
 
+        // Zip and city are only sent for Germany, and each only when known.
+        // When missing, the platform falls back to the organization's address
+        // and answers with a hint in `warnungen`. The Bundesland is derived by
+        // the platform from the zip code and is never sent.
         if ($animal->current_country === 'DE') {
-            $location['zip'] = self::UNKNOWN_LOCATION_PART;
-            $location['city'] = self::UNKNOWN_LOCATION_PART;
+            $zip = trim($animal->current_postal_code);
+            $city = trim($animal->current_city);
+
+            if ($zip !== '') {
+                $location['zip'] = $zip;
+            }
+
+            if ($city !== '') {
+                $location['city'] = $city;
+            }
         }
 
         return $location;

@@ -42,6 +42,17 @@ export interface CreateAdoptionRequest {
   applicant_phone?: string
 }
 
+export interface AcceptAdoptionRequest {
+  mediator_id: string | null
+}
+
+export interface DeclineAdoptionRequest {
+  // Kept on the adoption as the cancellation reason.
+  internal_reason: string
+  // Only part of the email to the applicant.
+  applicant_reason?: string
+}
+
 export interface UpdateAdoptionRequest {
   animal_id?: string
   // Links or unlinks a Person; the applicant's data stays as it is.

@@ -36,6 +36,8 @@ interface AdoptionDetailPageProps {
   editPreInspectionAction: (hasNote: boolean) => ReactNode
   newInspectionAction: ReactNode
   cancelAction: ReactNode
+  acceptAction: ReactNode
+  declineAction: ReactNode
   reopenAction: ReactNode
   assignTransportAction: ReactNode
   removeTransportAction: ReactNode | null
@@ -58,12 +60,15 @@ export function AdoptionDetailPage({
   editPreInspectionAction,
   newInspectionAction,
   cancelAction,
+  acceptAction,
+  declineAction,
   reopenAction,
   assignTransportAction,
   removeTransportAction,
   renderInspectionDetailLink,
 }: AdoptionDetailPageProps) {
   const isCanceled = adoption.status === 'canceled'
+  const isPending = adoption.status === 'pending'
   const canCancel =
     adoption.status === 'pending' || adoption.status === 'in_progress'
 
@@ -86,6 +91,8 @@ export function AdoptionDetailPage({
 
           <div className="flex justify-end gap-2">
             {editInternalNotesAction(!!adoption.notes)}
+            {isPending && declineAction}
+            {isPending && acceptAction}
             {canCancel && cancelAction}
             {isCanceled && reopenAction}
           </div>

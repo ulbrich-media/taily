@@ -16,6 +16,7 @@ import { AdoptionDetailPage } from '@/admin/module/adoptions/pages/AdoptionDetai
 import { Button } from '@/shadcn/components/ui/button'
 import {
   Ban,
+  Check,
   ChevronDown,
   CopyPlus,
   Edit,
@@ -41,6 +42,8 @@ import { Route as ContractRoute } from '@/routes/admin/_authenticated/adoptions/
 import { Route as ContractSigningRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/contract-signing'
 import { Route as ContractSigningCancelRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/contract-signing-cancel'
 import { Route as CancelRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/cancel'
+import { Route as AcceptRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/accept'
+import { Route as DeclineRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/decline'
 import { Route as ReopenRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/reopen'
 import { Route as TransportAssignRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/transport-assign'
 import { Route as TransportRemoveRoute } from '@/routes/admin/_authenticated/adoptions/$adoptionId/adoption/transport-remove'
@@ -175,6 +178,24 @@ function RouteComponent() {
         <Ban />
         Vermittlung abbrechen
       </CancelRoute.Link>
+    </Button>
+  )
+
+  const acceptAction = (
+    <Button size="sm" asChild>
+      <AcceptRoute.Link params={{ adoptionId }}>
+        <Check />
+        Annehmen
+      </AcceptRoute.Link>
+    </Button>
+  )
+
+  const declineAction = (
+    <Button size="sm" variant="outline" asChild>
+      <DeclineRoute.Link params={{ adoptionId }}>
+        <X />
+        Ablehnen
+      </DeclineRoute.Link>
     </Button>
   )
 
@@ -319,6 +340,8 @@ function RouteComponent() {
         editContractAction={editContractAction}
         cancelSigningAction={cancelSigningAction}
         cancelAction={cancelAction}
+        acceptAction={acceptAction}
+        declineAction={declineAction}
         reopenAction={reopenAction}
         editPreInspectionAction={editPreInspectionAction}
         newInspectionAction={newInspectionAction}

@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Superseded — the `claude-code-action` workflows (`claude-implement`, `claude-refine`) and their skills were removed; autonomous Claude-based development is now handled by Dispatch. Kept as a historical record.
 
 ## Context
 
@@ -17,7 +17,7 @@ The hard part of the custom route isn't the AI calls or the skills — it's secu
 
 ## Decision
 
-Use `anthropics/claude-code-action@v1` as the execution engine for AI-assisted GitHub automation, one purpose-built workflow/job per command (see [docs/ai-github-automation.md](../ai-github-automation.md) for the current implementation).
+Use `anthropics/claude-code-action@v1` as the execution engine for AI-assisted GitHub automation, one purpose-built workflow/job per command (documented in `docs/ai-github-automation.md`, since removed).
 
 Key choices within that:
 
@@ -27,7 +27,7 @@ Key choices within that:
 - **Tool access explicitly allowlisted per job**, kept to the minimum each command's skill needs (see the security model doc for specifics). No general `Bash`, no `Write`/`Edit` by default.
 - **Public repo, gated to maintainers/collaborators** via `author_association` — random public commenters can't trigger it or burn API spend.
 
-The first slice built on this foundation is issue planning (the `/refine` command — see [docs/ai-github-automation.md](../ai-github-automation.md)). Implementation (issue → code → PR), PR review, and review-feedback loops are planned to follow the same pattern.
+The first slice built on this foundation is issue planning (the `/refine` command, since removed). Implementation (issue → code → PR), PR review, and review-feedback loops are planned to follow the same pattern.
 
 ## Consequences
 
