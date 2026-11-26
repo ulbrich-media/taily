@@ -243,7 +243,21 @@ export function AnimalFormBasic({
                 name="current_location"
                 control={form.control}
                 label="Aufenthaltsort (veraltet)"
-                info="Veraltet: bitte PLZ und Ort verwenden. Freitext wird nicht an Tiervermittlung.de gesendet."
+                info="Veraltet: bitte PLZ und Ort verwenden."
+              />
+
+              <TextInput
+                name="current_postal_code"
+                control={form.control}
+                label="PLZ"
+                info="Postleitzahl des Ortes, an dem das Tier lebt (z. B. Pflegestelle). Wird für Tiere in Deutschland an Tiervermittlung.de gesendet."
+              />
+
+              <TextInput
+                name="current_city"
+                control={form.control}
+                label="Ort"
+                info="Ort, an dem das Tier lebt (z. B. Pflegestelle). Wird für Tiere in Deutschland an Tiervermittlung.de gesendet."
               />
 
               <SelectInput
@@ -268,20 +282,6 @@ export function AnimalFormBasic({
                     <X />
                   </Button>
                 }
-              />
-
-              <TextInput
-                name="current_postal_code"
-                control={form.control}
-                label="PLZ"
-                info="Postleitzahl des Ortes, an dem das Tier lebt (z. B. Pflegestelle). Wird für Tiere in Deutschland an Tiervermittlung.de gesendet."
-              />
-
-              <TextInput
-                name="current_city"
-                control={form.control}
-                label="Ort"
-                info="Ort, an dem das Tier lebt (z. B. Pflegestelle). Wird für Tiere in Deutschland an Tiervermittlung.de gesendet."
               />
 
               <DateInput
