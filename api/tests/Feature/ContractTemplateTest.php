@@ -76,6 +76,22 @@ class ContractTemplateTest extends TestCase
         $this->as($user)->postJson("/internal/contract-templates/{$id}/archive")->assertForbidden();
     }
 
+    public function test_the_list_can_be_filtered_by_animal_type(): void
+    {
+        $this->as($this->admin)->postJson('/internal/contract-templates', $this->payload())->assertCreated();
+        $this->as($this->admin)->postJson('/internal/contract-templates', $this->payload([
+            'name' => 'Schutzvertrag Katze',
+            'animal_type_id' => $this->cats->id,
+            'adopter_fields' => [],
+        ]))->assertCreated();
+
+        $this->as($this->admin)->getJson('/internal/contract-templates')->assertOk()->assertJsonCount(2);
+        $this->as($this->admin)->getJson("/internal/contract-templates?animal_type_id={$this->cats->id}")
+            ->assertOk()
+            ->assertJsonCount(1)
+            ->assertJsonPath('0.name', 'Schutzvertrag Katze');
+    }
+
     public function test_a_template_only_prints_known_fields(): void
     {
         $store = fn (array $overrides) => $this->as($this->admin)->postJson('/internal/contract-templates', $this->payload($overrides));

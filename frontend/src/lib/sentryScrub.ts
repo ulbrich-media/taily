@@ -10,11 +10,11 @@
 
 export const FILTERED = '[Filtered]'
 
-// The segment after one of these path parts is a token. `/settings/contracts/`
-// holds contract template IDs in the admin, which are no secrets. Route
-// patterns (`$token`, `{token}`) are kept.
+// The segment after one of these path parts is a token.
+// `/settings/animal-types/<id>/contracts/` holds contract template IDs in the
+// admin, which are no secrets. Route patterns (`$token`, `{token}`) are kept.
 const TOKEN_PATH =
-  /(\/(?:invitations?|inspect|confirm|login|(?<!settings\/)contracts)\/)(?![{$])[^/?#\s"'<>]+/g
+  /(\/(?:invitations?|inspect|confirm|login|(?<!\/animal-types\/[^/]+\/)contracts)\/)(?![{$])[^/?#\s"'<>]+/g
 
 export function scrubTokens(value: string): string {
   return value.replace(TOKEN_PATH, `$1${FILTERED}`)

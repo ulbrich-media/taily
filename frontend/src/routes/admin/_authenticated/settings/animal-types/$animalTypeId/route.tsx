@@ -18,6 +18,7 @@ import {
 import { Route as BasicRoute } from './index'
 import { Route as VaccinationsRoute } from './vaccinations/route'
 import { Route as MedicalTestsRoute } from './medical-tests/route'
+import { Route as ContractsRoute } from './contracts/route'
 import { Route as DeleteRoute } from './delete'
 
 export const Route = createFileRoute(
@@ -68,6 +69,12 @@ function RouteComponent() {
               >
                 Tests
               </MedicalTestsRoute.Link>
+              <ContractsRoute.Link
+                params={{ animalTypeId }}
+                className={tabLinkClass}
+              >
+                Verträge
+              </ContractsRoute.Link>
 
               {isAdmin && (
                 <DropdownMenu>

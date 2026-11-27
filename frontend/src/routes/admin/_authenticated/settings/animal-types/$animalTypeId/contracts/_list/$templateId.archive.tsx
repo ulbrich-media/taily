@@ -6,7 +6,7 @@ import { ContractTemplateArchiveDialog } from '@/admin/module/contract-templates
 import { Route as ListRoute } from './index'
 
 export const Route = createFileRoute(
-  '/admin/_authenticated/settings/contracts/_list/$templateId/archive'
+  '/admin/_authenticated/settings/animal-types/$animalTypeId/contracts/_list/$templateId/archive'
 )({
   beforeLoad: ({ context }) => {
     if (!context.isAdmin) {
@@ -15,7 +15,7 @@ export const Route = createFileRoute(
   },
   loader: async ({ params }) => {
     const templates = await queryClient.ensureQueryData(
-      listContractTemplatesQuery()
+      listContractTemplatesQuery(params.animalTypeId)
     )
     if (!templates.some((t) => t.id === params.templateId)) throw notFound()
   },
@@ -24,9 +24,11 @@ export const Route = createFileRoute(
 })
 
 function RouteComponent() {
-  const { templateId } = Route.useParams()
+  const { animalTypeId, templateId } = Route.useParams()
   const navigate = ListRoute.useNavigate()
-  const { data: templates } = useSuspenseQuery(listContractTemplatesQuery())
+  const { data: templates } = useSuspenseQuery(
+    listContractTemplatesQuery(animalTypeId)
+  )
   const template = templates.find((t) => t.id === templateId)
 
   // Gone after a concurrent change; the list shows the current state.

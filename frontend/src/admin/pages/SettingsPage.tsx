@@ -6,7 +6,6 @@ import {
   ClipboardList,
   PawPrint,
   ListChecks,
-  FileSignature,
   Upload,
 } from 'lucide-react'
 import {
@@ -22,7 +21,6 @@ interface SettingsPageProps {
   usersAction: ReactNode
   animalTypesAction: ReactNode
   caseFileAction: ReactNode
-  contractsAction: ReactNode
   organizationsAction: ReactNode
   formTemplatesAction: ReactNode
   exportAction: ReactNode
@@ -33,7 +31,6 @@ export function SettingsPage({
   usersAction,
   animalTypesAction,
   caseFileAction,
-  contractsAction,
   organizationsAction,
   formTemplatesAction,
   exportAction,
@@ -85,14 +82,6 @@ export function SettingsPage({
             description:
               'Lege fest, welche Angaben Bewerber:innen machen, wann sie gebraucht werden und wer sie sieht.',
             actions: caseFileAction,
-          },
-          {
-            icon: FileSignature,
-            title: 'Verträge',
-            subtitle: 'Vorlagen für den Schutzvertrag',
-            description:
-              'Lege Titel, Vertragstext und die gedruckten Angaben fest – Pflichtfelder erscheinen auf der Checkliste jeder Vermittlung.',
-            actions: contractsAction,
           },
           {
             icon: Building2,

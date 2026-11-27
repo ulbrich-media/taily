@@ -9,14 +9,16 @@ import type { ContractTemplateRequest } from './api/requests'
 
 export type ContractTemplateFormData = ContractTemplateRequest
 
+/** The animal type always comes from the open animal type, never the form. */
 export function toFormData(
+  animalTypeId: string,
   template?: ContractTemplateResource
 ): ContractTemplateFormData {
   return {
     name: template?.name ?? '',
     title: template?.title ?? 'Schutzvertrag',
     body: template?.body ?? '',
-    animal_type_id: template?.animal_type.id ?? '',
+    animal_type_id: animalTypeId,
     animal_fields: template?.animal_fields ?? [],
     mediator_fields: template?.mediator_fields ?? [],
     adopter_fields: template?.adopter_fields ?? [],

@@ -3,8 +3,6 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 import { Archive, ArchiveRestore, Edit, Eye, Plus } from 'lucide-react'
 import { queryClient } from '@/lib/queryClient'
 import { useAuth } from '@/lib/auth.hook'
-import { useBreadcrumbs } from '@/router/useBreadcrumbs'
-import { BreadcrumbNav } from '@/router/BreadcrumbNav'
 import { Button } from '@/shadcn/components/ui/button'
 import { listContractTemplatesQuery } from '@/admin/module/contract-templates/api/queries'
 import { ContractTemplateListPage } from '@/admin/module/contract-templates/pages/ContractTemplateListPage'
@@ -13,26 +11,30 @@ import { Route as EditRoute } from '../$templateId'
 import { Route as ArchiveRoute } from './$templateId.archive'
 
 export const Route = createFileRoute(
-  '/admin/_authenticated/settings/contracts/_list'
+  '/admin/_authenticated/settings/animal-types/$animalTypeId/contracts/_list'
 )({
-  loader: () => queryClient.ensureQueryData(listContractTemplatesQuery()),
+  loader: ({ params }) =>
+    queryClient.ensureQueryData(
+      listContractTemplatesQuery(params.animalTypeId)
+    ),
   component: RouteComponent,
 })
 
 function RouteComponent() {
-  const breadcrumbs = useBreadcrumbs()
   const { isAdmin } = useAuth()
-  const { data: templates } = useSuspenseQuery(listContractTemplatesQuery())
+  const { animalTypeId } = Route.useParams()
+  const { data: templates } = useSuspenseQuery(
+    listContractTemplatesQuery(animalTypeId)
+  )
 
   return (
     <>
       <ContractTemplateListPage
         templates={templates}
-        breadcrumb={<BreadcrumbNav items={breadcrumbs} />}
         createAction={
           isAdmin && (
             <Button asChild>
-              <NewRoute.Link>
+              <NewRoute.Link params={{ animalTypeId }}>
                 <Plus />
                 Vorlage anlegen
               </NewRoute.Link>
@@ -43,7 +45,7 @@ function RouteComponent() {
           <>
             <Button size="icon-sm" variant="ghost" asChild>
               <EditRoute.Link
-                params={{ templateId: template.id }}
+                params={{ animalTypeId, templateId: template.id }}
                 aria-label={`${template.name} ${isAdmin ? 'bearbeiten' : 'ansehen'}`}
               >
                 {isAdmin ? <Edit /> : <Eye />}
@@ -52,7 +54,7 @@ function RouteComponent() {
             {isAdmin && (
               <Button size="icon-sm" variant="ghost" asChild>
                 <ArchiveRoute.Link
-                  params={{ templateId: template.id }}
+                  params={{ animalTypeId, templateId: template.id }}
                   aria-label={`${template.name} ${template.archived_at ? 'wiederherstellen' : 'archivieren'}`}
                 >
                   {template.archived_at ? <ArchiveRestore /> : <Archive />}
