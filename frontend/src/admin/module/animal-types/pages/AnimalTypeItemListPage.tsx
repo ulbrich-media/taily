@@ -77,13 +77,15 @@ export function AnimalTypeItemListPage<T extends AnimalTypeItem>({
       title={title}
       description={description}
       breadcrumb={breadcrumb}
+      headerVariant={animalTypes ? 'page' : 'section'}
       createAction={createAction}
       toolbar={
         <ListFiltersToolbar
           search={search}
           onChange={onSearchChange}
-          resetPatch={resetSearchPatch}
-          canReset={hasActiveAnimalTypeItemFilters(search)}
+          // Scoped to one animal type there is nothing to filter or reset.
+          resetPatch={animalTypes ? resetSearchPatch : undefined}
+          canReset={!!animalTypes && hasActiveAnimalTypeItemFilters(search)}
           filters={filters}
           label={`${itemLabel} filtern`}
         />
@@ -98,7 +100,7 @@ export function AnimalTypeItemListPage<T extends AnimalTypeItem>({
         title: emptyTitle,
         descriptionFiltered: 'Mit den gewählten Filtern gibt es keine Treffer.',
         descriptionEmpty: emptyDescription,
-        filtered: hasActiveAnimalTypeItemFilters(search),
+        filtered: !!animalTypes && hasActiveAnimalTypeItemFilters(search),
         onReset: () => onSearchChange(resetSearchPatch),
       }}
       renderTable={(rows) => (

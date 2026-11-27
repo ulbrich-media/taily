@@ -4,7 +4,6 @@ import { MoreVertical, Trash2 } from 'lucide-react'
 import { queryClient } from '@/lib/queryClient'
 import { useAuth } from '@/lib/auth.hook'
 import { getAnimalTypeQuery } from '@/admin/module/animal-types/api/queries'
-import { AnimalTypeSidebar } from '@/admin/module/animal-types/components/AnimalTypeSidebar'
 import { PageHeader, tabLinkClass } from '@/components/layout/PageHeader'
 import { useBreadcrumbs } from '@/router/useBreadcrumbs'
 import { BreadcrumbNav } from '@/router/BreadcrumbNav'
@@ -95,7 +94,7 @@ function RouteComponent() {
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem asChild className="text-destructive">
                       <DeleteRoute.Link params={{ animalTypeId }}>
-                        <Trash2 />
+                        <Trash2 className="text-destructive" />
                         Löschen
                       </DeleteRoute.Link>
                     </DropdownMenuItem>
@@ -107,12 +106,8 @@ function RouteComponent() {
         />
       </div>
 
-      <div className="lg:grid lg:grid-cols-[320px_1fr] lg:gap-6">
-        <AnimalTypeSidebar animalType={animalType} />
-
-        <div className="space-y-6 mt-6 lg:mt-0">
-          <Outlet />
-        </div>
+      <div className="space-y-6">
+        <Outlet />
       </div>
     </>
   )

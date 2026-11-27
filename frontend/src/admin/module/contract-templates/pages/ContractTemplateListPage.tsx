@@ -47,6 +47,7 @@ export function ContractTemplateListPage({
   return (
     <div className="space-y-6">
       <PageHeader
+        variant="section"
         title="Verträge"
         description="Vorlagen für den Schutzvertrag. Die Vermittlung wählt beim Erzeugen eine der Vorlagen dieser Tierart."
         actions={createAction}
