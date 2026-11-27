@@ -6,7 +6,6 @@ import { AnimalTypeDeletePage } from '@/admin/module/animal-types/pages/AnimalTy
 export const Route = createFileRoute(
   '/admin/_authenticated/settings/animal-types/$animalTypeId/delete'
 )({
-  staticData: { dialog: true },
   beforeLoad: ({ context }) => {
     if (!context.isAdmin) {
       throw new Error('403: Forbidden - Admin access required')

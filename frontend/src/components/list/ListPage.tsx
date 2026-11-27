@@ -24,6 +24,8 @@ interface ListPageProps<T> {
   title: string
   description: string
   breadcrumb?: ReactNode
+  /** 'section' for lists inside a page that has its own title. */
+  headerVariant?: 'page' | 'section'
   createAction?: ReactNode
   /** The filter toolbar, rendered above the list. */
   toolbar: ReactNode
@@ -54,6 +56,7 @@ export function ListPage<T>({
   title,
   description,
   breadcrumb,
+  headerVariant,
   createAction,
   toolbar,
   list,
@@ -85,6 +88,7 @@ export function ListPage<T>({
         description={description}
         actions={createAction}
         breadcrumb={breadcrumb}
+        variant={headerVariant}
       />
 
       {/* scroll-mt clears the sticky header when scrolled into view */}

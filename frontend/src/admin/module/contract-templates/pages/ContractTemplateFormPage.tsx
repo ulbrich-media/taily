@@ -82,6 +82,7 @@ export function ContractTemplateFormPage({
   return (
     <div className="space-y-6">
       <PageHeader
+        variant="section"
         title={
           !template
             ? 'Neue Vertragsvorlage'
@@ -108,7 +109,7 @@ export function ContractTemplateFormPage({
         >
           <FormBlocker />
 
-          <fieldset disabled={readOnly} className="contents">
+          <fieldset disabled={readOnly} className="contents space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle>Vorlage</CardTitle>

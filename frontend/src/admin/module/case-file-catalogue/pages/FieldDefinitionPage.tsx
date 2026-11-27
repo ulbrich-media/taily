@@ -167,6 +167,7 @@ export function FieldDefinitionPage({
   return (
     <div className="space-y-6">
       <PageHeader
+        variant="section"
         breadcrumb={breadcrumb}
         title={field ? `„${field.label}“ bearbeiten` : 'Neues Feld'}
         description={`Angaben für ${catalogue.animal_type.title}`}
