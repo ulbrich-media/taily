@@ -8,7 +8,7 @@ import { CatalogueCopyDialog } from '@/admin/module/case-file-catalogue/pages/Ca
 import { Route as EditorRoute } from './index'
 
 export const Route = createFileRoute(
-  '/admin/_authenticated/settings/case-file/$animalTypeId/_editor/copy'
+  '/admin/_authenticated/settings/animal-types/$animalTypeId/case-file/_editor/copy'
 )({
   staticData: { breadcrumb: 'Kopieren', dialog: true },
   component: RouteComponent,

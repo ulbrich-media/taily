@@ -4,7 +4,6 @@ import { useBreadcrumbs } from '@/router/useBreadcrumbs'
 import { BreadcrumbNav } from '@/router/BreadcrumbNav'
 import { Route as UsersRoute } from '@/routes/admin/_authenticated/settings/users/route'
 import { Route as AnimalTypesRoute } from '@/routes/admin/_authenticated/settings/animal-types/route'
-import { Route as CaseFileRoute } from '@/routes/admin/_authenticated/settings/case-file/index'
 import { Route as OrganizationsRoute } from '@/routes/admin/_authenticated/settings/organizations/index'
 import { Route as FormTemplatesRoute } from '@/routes/admin/_authenticated/settings/form-templates/index'
 import { Route as ExportRoute } from '@/routes/admin/_authenticated/settings/export'
@@ -31,13 +30,6 @@ function RouteComponent() {
           <AnimalTypesRoute.Link aria-label="Tierarten und ihre Konfiguration öffnen">
             Öffnen
           </AnimalTypesRoute.Link>
-        </Button>
-      }
-      caseFileAction={
-        <Button variant="default_outline" asChild>
-          <CaseFileRoute.Link aria-label="Angaben konfigurieren">
-            Öffnen
-          </CaseFileRoute.Link>
         </Button>
       }
       organizationsAction={

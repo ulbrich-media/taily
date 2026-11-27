@@ -3,13 +3,10 @@ import { queryClient } from '@/lib/queryClient'
 import { getCatalogueQuery } from '@/admin/module/case-file-catalogue/api/queries'
 
 export const Route = createFileRoute(
-  '/admin/_authenticated/settings/case-file/$animalTypeId'
+  '/admin/_authenticated/settings/animal-types/$animalTypeId/case-file'
 )({
-  loader: async ({ params }) => {
-    const catalogue = await queryClient.ensureQueryData(
-      getCatalogueQuery(params.animalTypeId)
-    )
-    return { breadcrumb: catalogue.animal_type.title }
-  },
+  staticData: { breadcrumb: 'Angaben' },
+  loader: ({ params }) =>
+    queryClient.ensureQueryData(getCatalogueQuery(params.animalTypeId)),
   component: Outlet,
 })

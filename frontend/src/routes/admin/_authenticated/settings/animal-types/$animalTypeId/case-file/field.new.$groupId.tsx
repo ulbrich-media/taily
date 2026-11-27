@@ -4,21 +4,19 @@ import { queryClient } from '@/lib/queryClient'
 import { useBreadcrumbs } from '@/router/useBreadcrumbs'
 import { BreadcrumbNav } from '@/router/BreadcrumbNav'
 import { getCatalogueQuery } from '@/admin/module/case-file-catalogue/api/queries'
-import { FieldGroupDialog } from '@/admin/module/case-file-catalogue/pages/FieldGroupDialog'
-import { Route as EditorRoute } from './index'
+import { FieldDefinitionPage } from '@/admin/module/case-file-catalogue/pages/FieldDefinitionPage'
+import { Route as EditorRoute } from './_editor/index'
 
 export const Route = createFileRoute(
-  '/admin/_authenticated/settings/case-file/$animalTypeId/_editor/group/$groupId/edit'
+  '/admin/_authenticated/settings/animal-types/$animalTypeId/case-file/field/new/$groupId'
 )({
   loader: async ({ params }) => {
     const catalogue = await queryClient.ensureQueryData(
       getCatalogueQuery(params.animalTypeId)
     )
-    const group = catalogue.groups.find((g) => g.id === params.groupId)
-    if (!group) throw notFound()
-    return { breadcrumb: `${group.title} bearbeiten` }
+    if (!catalogue.groups.some((g) => g.id === params.groupId)) throw notFound()
   },
-  staticData: { dialog: true },
+  staticData: { breadcrumb: 'Neues Feld' },
   component: RouteComponent,
 })
 
@@ -27,14 +25,13 @@ function RouteComponent() {
   const { animalTypeId, groupId } = Route.useParams()
   const navigate = EditorRoute.useNavigate()
   const { data: catalogue } = useSuspenseQuery(getCatalogueQuery(animalTypeId))
-  const group = catalogue.groups.find((g) => g.id === groupId)!
 
   return (
-    <FieldGroupDialog
-      animalTypeId={animalTypeId}
-      group={group}
-      onClose={() => navigate({ params: { animalTypeId } })}
-      breadcrumb={<BreadcrumbNav items={breadcrumbs} size="sm" />}
+    <FieldDefinitionPage
+      catalogue={catalogue}
+      groupId={groupId}
+      onDone={() => navigate({ params: { animalTypeId } })}
+      breadcrumb={<BreadcrumbNav items={breadcrumbs} />}
     />
   )
 }

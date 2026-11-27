@@ -2,36 +2,35 @@ import { createFileRoute, notFound } from '@tanstack/react-router'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { queryClient } from '@/lib/queryClient'
 import { getCatalogueQuery } from '@/admin/module/case-file-catalogue/api/queries'
-import { FieldArchiveDialog } from '@/admin/module/case-file-catalogue/pages/FieldArchiveDialog'
-import type { CatalogueResource } from '@/api/types/case-file-catalogue'
+import { FieldGroupDeleteDialog } from '@/admin/module/case-file-catalogue/pages/FieldGroupDeleteDialog'
 import { Route as EditorRoute } from './index'
 
-function findField(catalogue: CatalogueResource, id: string) {
-  return catalogue.groups.flatMap((g) => g.fields).find((f) => f.id === id)
-}
-
 export const Route = createFileRoute(
-  '/admin/_authenticated/settings/case-file/$animalTypeId/_editor/field/$fieldId/archive'
+  '/admin/_authenticated/settings/animal-types/$animalTypeId/case-file/_editor/group/$groupId/delete'
 )({
   loader: async ({ params }) => {
     const catalogue = await queryClient.ensureQueryData(
       getCatalogueQuery(params.animalTypeId)
     )
-    if (!findField(catalogue, params.fieldId)) throw notFound()
+    if (!catalogue.groups.some((g) => g.id === params.groupId)) throw notFound()
   },
-  staticData: { breadcrumb: 'Archivieren', dialog: true },
+  staticData: { breadcrumb: 'Abschnitt löschen', dialog: true },
   component: RouteComponent,
 })
 
 function RouteComponent() {
-  const { animalTypeId, fieldId } = Route.useParams()
+  const { animalTypeId, groupId } = Route.useParams()
   const navigate = EditorRoute.useNavigate()
   const { data: catalogue } = useSuspenseQuery(getCatalogueQuery(animalTypeId))
+  const group = catalogue.groups.find((g) => g.id === groupId)
+
+  // The group is gone once the deletion went through.
+  if (!group) return null
 
   return (
-    <FieldArchiveDialog
+    <FieldGroupDeleteDialog
       animalTypeId={animalTypeId}
-      field={findField(catalogue, fieldId)!}
+      group={group}
       onClose={() => navigate({ params: { animalTypeId } })}
     />
   )

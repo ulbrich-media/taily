@@ -1,12 +1,7 @@
 import { createFileRoute, Outlet } from '@tanstack/react-router'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { Archive, ArchiveRestore, Copy, Edit, Plus, Trash2 } from 'lucide-react'
-import { queryClient } from '@/lib/queryClient'
-import { useBreadcrumbs } from '@/router/useBreadcrumbs'
-import { BreadcrumbNav } from '@/router/BreadcrumbNav'
-import { tabLinkClass } from '@/components/layout/PageHeader'
 import { Button } from '@/shadcn/components/ui/button'
-import { listAnimalTypesQuery } from '@/admin/module/animal-types/api/queries'
 import { getCatalogueQuery } from '@/admin/module/case-file-catalogue/api/queries'
 import { CatalogueEditorPage } from '@/admin/module/case-file-catalogue/pages/CatalogueEditorPage'
 import { Route as GroupNewRoute } from './group.new'
@@ -18,37 +13,19 @@ import { Route as FieldNewRoute } from '../field.new.$groupId'
 import { Route as FieldEditRoute } from '../field.$fieldId'
 
 export const Route = createFileRoute(
-  '/admin/_authenticated/settings/case-file/$animalTypeId/_editor'
+  '/admin/_authenticated/settings/animal-types/$animalTypeId/case-file/_editor'
 )({
-  loader: () => queryClient.ensureQueryData(listAnimalTypesQuery),
   component: RouteComponent,
 })
 
 function RouteComponent() {
-  const breadcrumbs = useBreadcrumbs()
   const { animalTypeId } = Route.useParams()
   const { data: catalogue } = useSuspenseQuery(getCatalogueQuery(animalTypeId))
-  const { data: animalTypes } = useSuspenseQuery(listAnimalTypesQuery)
-
-  const sortedTypes = [...animalTypes.data].sort((a, b) =>
-    a.title.localeCompare(b.title)
-  )
 
   return (
     <>
       <CatalogueEditorPage
         catalogue={catalogue}
-        breadcrumb={<BreadcrumbNav items={breadcrumbs} />}
-        animalTypeLinks={sortedTypes.map((type) => (
-          <Route.Link
-            key={type.id}
-            to="/admin/settings/case-file/$animalTypeId"
-            params={{ animalTypeId: type.id }}
-            className={tabLinkClass}
-          >
-            {type.title}
-          </Route.Link>
-        ))}
         copyAction={
           <Button variant="outline" asChild>
             <CopyRoute.Link params={{ animalTypeId }}>

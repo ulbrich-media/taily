@@ -7,7 +7,6 @@ import type {
   CatalogueGroup,
   CatalogueResource,
 } from '@/api/types/case-file-catalogue'
-import { PageHeader } from '@/components/layout/PageHeader'
 import {
   Card,
   CardAction,
@@ -33,9 +32,6 @@ import {
 
 interface CatalogueEditorPageProps {
   catalogue: CatalogueResource
-  breadcrumb?: ReactNode
-  // Links to the same editor for the other animal types.
-  animalTypeLinks: ReactNode
   addGroupAction: ReactNode
   copyAction: ReactNode
   renderGroupActions: (group: CatalogueGroup) => ReactNode
@@ -49,8 +45,6 @@ interface CatalogueEditorPageProps {
  */
 export function CatalogueEditorPage({
   catalogue,
-  breadcrumb,
-  animalTypeLinks,
   addGroupAction,
   copyAction,
   renderGroupActions,
@@ -84,12 +78,10 @@ export function CatalogueEditorPage({
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        breadcrumb={breadcrumb}
-        title={`Angaben für ${catalogue.animal_type.title}`}
-        description="Was eine Vermittlung dieser Tierart erfragt, in welcher Reihenfolge und ab welchem Schritt es gebraucht wird."
-        links={animalTypeLinks}
-      />
+      <p className="text-sm text-muted-foreground">
+        Was eine Vermittlung dieser Tierart erfragt, in welcher Reihenfolge und
+        ab welchem Schritt es gebraucht wird.
+      </p>
 
       <div className="flex flex-wrap justify-end gap-2">
         {copyAction}

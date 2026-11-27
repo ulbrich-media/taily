@@ -5,7 +5,7 @@ import { FieldGroupDialog } from '@/admin/module/case-file-catalogue/pages/Field
 import { Route as EditorRoute } from './index'
 
 export const Route = createFileRoute(
-  '/admin/_authenticated/settings/case-file/$animalTypeId/_editor/group/new'
+  '/admin/_authenticated/settings/animal-types/$animalTypeId/case-file/_editor/group/new'
 )({
   staticData: { breadcrumb: 'Neuer Abschnitt', dialog: true },
   component: RouteComponent,

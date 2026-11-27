@@ -17,7 +17,7 @@ function findField(catalogue: CatalogueResource, id: string) {
 }
 
 export const Route = createFileRoute(
-  '/admin/_authenticated/settings/case-file/$animalTypeId/field/$fieldId'
+  '/admin/_authenticated/settings/animal-types/$animalTypeId/case-file/field/$fieldId'
 )({
   loader: async ({ params }) => {
     const catalogue = await queryClient.ensureQueryData(
