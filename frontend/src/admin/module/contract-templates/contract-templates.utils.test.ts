@@ -79,11 +79,11 @@ describe('fieldSummary', () => {
 
 describe('toFormData', () => {
   it('starts a new template empty, titled Schutzvertrag', () => {
-    expect(toFormData()).toEqual({
+    expect(toFormData('dog')).toEqual({
       name: '',
       title: 'Schutzvertrag',
       body: '',
-      animal_type_id: '',
+      animal_type_id: 'dog',
       animal_fields: [],
       mediator_fields: [],
       adopter_fields: [],

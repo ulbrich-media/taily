@@ -30,11 +30,6 @@ globalThis.ResizeObserver ??= class {
 Element.prototype.hasPointerCapture ??= () => false
 Element.prototype.scrollIntoView ??= () => {}
 
-const animalTypes = [
-  { id: 'dog', title: 'Hund' },
-  { id: 'cat', title: 'Katze' },
-]
-
 const options: ContractFieldOptions = {
   animal: [
     { key: 'animal.breed', label: 'Rasse des Tieres' },
@@ -111,19 +106,15 @@ describe('ContractTemplateFormPage', () => {
 
     renderPage(
       <ContractTemplateFormPage
-        animalTypes={animalTypes}
+        animalTypeId="dog"
         options={options}
         onDone={onDone}
       />
     )
 
     await user.type(screen.getByLabelText(/^Name/), 'Schutzvertrag Hund')
-    // The adopter section needs an animal type first.
-    expect(
-      within(section('Adoptant:in')).getByText(/Wähle zuerst die Tierart/)
-    ).toBeInTheDocument()
-    await user.click(screen.getByRole('combobox', { name: /Tierart/ }))
-    await user.click(screen.getByRole('option', { name: 'Hund' }))
+    // The animal type comes from the URL, so the form has no select for it.
+    expect(screen.queryByRole('combobox', { name: /Tierart/ })).toBeNull()
 
     await user.click(
       within(section('Adoptant:in')).getByRole('combobox', {
@@ -160,7 +151,7 @@ describe('ContractTemplateFormPage', () => {
     renderPage(
       <ContractTemplateFormPage
         template={template}
-        animalTypes={animalTypes}
+        animalTypeId="dog"
         options={options}
         onDone={vi.fn()}
       />
@@ -204,7 +195,7 @@ describe('ContractTemplateFormPage', () => {
     renderPage(
       <ContractTemplateFormPage
         template={template}
-        animalTypes={animalTypes}
+        animalTypeId="dog"
         options={options}
         onDone={vi.fn()}
         readOnly
@@ -221,7 +212,7 @@ describe('ContractTemplateFormPage', () => {
     expect(screen.getByRole('button', { name: 'Zurück' })).toBeEnabled()
   })
 
-  it('flags an adopter field the new animal type lacks and shows the server error', async () => {
+  it('flags an adopter field the animal type lacks and shows the server error', async () => {
     const user = userEvent.setup()
     updateMock.mockRejectedValue(
       new ApiValidationError('invalid', {
@@ -234,16 +225,13 @@ describe('ContractTemplateFormPage', () => {
     renderPage(
       <ContractTemplateFormPage
         template={template}
-        animalTypes={animalTypes}
+        animalTypeId="cat"
         options={options}
         onDone={vi.fn()}
       />
     )
 
     const adopter = section('Adoptant:in')
-    expect(within(adopter).queryByText('Nicht verfügbar')).toBeNull()
-    await user.click(screen.getByRole('combobox', { name: /Tierart/ }))
-    await user.click(screen.getByRole('option', { name: 'Katze' }))
     expect(within(adopter).getByText('Nicht verfügbar')).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'Speichern' }))

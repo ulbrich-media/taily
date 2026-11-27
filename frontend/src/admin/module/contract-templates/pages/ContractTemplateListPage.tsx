@@ -28,11 +28,10 @@ interface ContractTemplateListPageProps {
   templates: ContractTemplateResource[]
   createAction: ReactNode
   renderActions: (template: ContractTemplateResource) => ReactNode
-  breadcrumb?: ReactNode
 }
 
 /**
- * The contract templates of the installation. Archived templates are no
+ * The contract templates of one animal type. Archived templates are no
  * longer offered and require nothing, but stay for the contracts made with
  * them.
  */
@@ -40,7 +39,6 @@ export function ContractTemplateListPage({
   templates,
   createAction,
   renderActions,
-  breadcrumb,
 }: ContractTemplateListPageProps) {
   const [showArchived, setShowArchived] = useState(false)
   const active = templates.filter((template) => !template.archived_at)
@@ -49,9 +47,8 @@ export function ContractTemplateListPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        breadcrumb={breadcrumb}
         title="Verträge"
-        description="Vorlagen für den Schutzvertrag. Die Vermittlung wählt beim Erzeugen eine der Vorlagen, die für die Tierart gelten."
+        description="Vorlagen für den Schutzvertrag. Die Vermittlung wählt beim Erzeugen eine der Vorlagen dieser Tierart."
         actions={createAction}
       />
 
@@ -118,10 +115,11 @@ function TemplateCard({
         </CardAction>
       </CardHeader>
       <CardContent className="space-y-3">
-        <div className="flex flex-wrap gap-1.5">
-          {template.archived_at && <Badge variant="outline">Archiviert</Badge>}
-          <Badge variant="secondary">{template.animal_type.title}</Badge>
-        </div>
+        {template.archived_at && (
+          <div className="flex flex-wrap gap-1.5">
+            <Badge variant="outline">Archiviert</Badge>
+          </div>
+        )}
         <dl className="grid gap-x-6 gap-y-1 text-sm sm:grid-cols-3">
           {CONTRACT_SECTIONS.map((section) => (
             <div key={section}>
