@@ -12,6 +12,11 @@ export const ADOPTION_STEPS: AdoptionStep[] = [
   'handover',
 ]
 
+/** Whether `target` lies at or before `step` in the adoption flow. */
+export function stepReached(step: AdoptionStep, target: AdoptionStep): boolean {
+  return ADOPTION_STEPS.indexOf(target) <= ADOPTION_STEPS.indexOf(step)
+}
+
 export const ADOPTION_STEP_LABELS: Record<AdoptionStep, string> = {
   application: 'Bewerbung',
   pre_inspection: 'Vorkontrolle',

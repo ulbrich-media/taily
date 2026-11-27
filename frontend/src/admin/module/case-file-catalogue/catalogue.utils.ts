@@ -1,5 +1,5 @@
 import type { AdoptionStep, CaseFileFieldType } from '@/api/types/case-file'
-import { ADOPTION_STEPS, ADOPTION_STEP_LABELS } from '@/api/types/case-file'
+import { ADOPTION_STEP_LABELS, stepReached } from '@/api/types/case-file'
 import {
   fieldApplies,
   isFileField,
@@ -216,20 +216,20 @@ export const PREVIEW_ROLE_LABELS: Record<PreviewRole, string> = {
   mediator: 'Vermittler:in',
 }
 
-/** Whether `target` lies at or before `step` in the adoption flow. */
-export function stepReached(step: AdoptionStep, target: AdoptionStep): boolean {
-  return ADOPTION_STEPS.indexOf(target) <= ADOPTION_STEPS.indexOf(step)
-}
-
 /**
  * The catalogue as a person in the given role sees it at the given step:
  * no archived fields, nothing collected later, nothing hidden for the role.
- * Conditions are not evaluated here — they depend on the entered values.
+ * When `conditions` is given, fields whose condition is not met are dropped
+ * too.
  */
 export function previewFields(
   groups: CatalogueGroup[],
   step: AdoptionStep,
-  role: PreviewRole
+  role: PreviewRole,
+  conditions?: {
+    values: CaseFileValues
+    fieldsByKey: Map<string, CatalogueField>
+  }
 ): CatalogueGroup[] {
   return groups
     .map((group) => ({
@@ -241,7 +241,9 @@ export function previewFields(
           (role === 'mediator' ||
             (role === 'applicant'
               ? field.visible_to_applicant
-              : field.visible_to_inspector))
+              : field.visible_to_inspector)) &&
+          (!conditions ||
+            fieldApplies(field, conditions.values, conditions.fieldsByKey))
       ),
     }))
     .filter((group) => group.fields.length > 0)

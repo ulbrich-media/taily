@@ -25,7 +25,6 @@ import {
 } from '@/shadcn/components/ui/select'
 import { CaseFileFieldInput } from '@/admin/module/case-file/components/CaseFileFieldInput'
 import {
-  fieldApplies,
   stepLabel,
   type CaseFileValues,
 } from '@/admin/module/case-file/case-file.utils'
@@ -76,14 +75,9 @@ export function CataloguePreview({ groups }: CataloguePreviewProps) {
       .map((field) => [field.key, field])
   )
 
-  const visibleGroups = previewFields(groups, step, role)
-    .map((group) => ({
-      ...group,
-      fields: group.fields.filter((field) =>
-        fieldApplies(field, liveValues, fieldsByKey)
-      ),
-    }))
-    .filter((group) => group.fields.length > 0)
+  const visibleGroupsFor = (values: CaseFileValues) =>
+    previewFields(groups, step, role, { values, fieldsByKey })
+  const visibleGroups = visibleGroupsFor(liveValues)
 
   const reset = () => {
     form.clearErrors()
@@ -92,15 +86,9 @@ export function CataloguePreview({ groups }: CataloguePreviewProps) {
 
   const validate = () => {
     reset()
-    const visible = previewFields(groups, step, role).flatMap(
-      (group) => group.fields
-    )
-    const errors = validatePreview(
-      visible,
-      form.getValues('values') ?? {},
-      fieldsByKey,
-      step
-    )
+    const values = form.getValues('values') ?? {}
+    const visible = visibleGroupsFor(values).flatMap((group) => group.fields)
+    const errors = validatePreview(visible, values, fieldsByKey, step)
     for (const [key, message] of Object.entries(errors)) {
       form.setError(`values.${key}`, { message })
     }
