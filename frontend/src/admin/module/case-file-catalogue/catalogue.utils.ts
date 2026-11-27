@@ -1,5 +1,12 @@
 import type { AdoptionStep, CaseFileFieldType } from '@/api/types/case-file'
-import { ADOPTION_STEP_LABELS } from '@/api/types/case-file'
+import { ADOPTION_STEPS, ADOPTION_STEP_LABELS } from '@/api/types/case-file'
+import {
+  fieldApplies,
+  isFileField,
+  isPresent,
+  toApiValue,
+  type CaseFileValues,
+} from '@/admin/module/case-file/case-file.utils'
 import type {
   CatalogueField,
   CatalogueGroup,
@@ -199,4 +206,121 @@ export function toRequest(
         : { field: data.condition_field, in: data.condition_in }
 
   return request
+}
+
+export type PreviewRole = 'applicant' | 'inspector' | 'mediator'
+
+export const PREVIEW_ROLE_LABELS: Record<PreviewRole, string> = {
+  applicant: 'Bewerber:in',
+  inspector: 'Kontrolleur:in',
+  mediator: 'Vermittler:in',
+}
+
+/** Whether `target` lies at or before `step` in the adoption flow. */
+export function stepReached(step: AdoptionStep, target: AdoptionStep): boolean {
+  return ADOPTION_STEPS.indexOf(target) <= ADOPTION_STEPS.indexOf(step)
+}
+
+/**
+ * The catalogue as a person in the given role sees it at the given step:
+ * no archived fields, nothing collected later, nothing hidden for the role.
+ * Conditions are not evaluated here — they depend on the entered values.
+ */
+export function previewFields(
+  groups: CatalogueGroup[],
+  step: AdoptionStep,
+  role: PreviewRole
+): CatalogueGroup[] {
+  return groups
+    .map((group) => ({
+      ...group,
+      fields: group.fields.filter(
+        (field) =>
+          !field.archived_at &&
+          stepReached(step, field.collect_at) &&
+          (role === 'mediator' ||
+            (role === 'applicant'
+              ? field.visible_to_applicant
+              : field.visible_to_inspector))
+      ),
+    }))
+    .filter((group) => group.fields.length > 0)
+}
+
+/** The step a field is required from, if that step is reached. */
+export function requiredAt(
+  field: CatalogueField,
+  step: AdoptionStep
+): AdoptionStep | null {
+  if (field.type === 'info' || !field.required_for) return null
+  return stepReached(step, field.required_for) ? field.required_for : null
+}
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+function isValidDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
+  const date = new Date(`${value}T00:00:00Z`)
+  return !Number.isNaN(date.getTime()) && date.toISOString().startsWith(value)
+}
+
+/**
+ * Checks the entered values against the catalogue configuration and returns
+ * one German message per field key. Fields that do not apply are skipped, as
+ * are info and file fields. The server stays authoritative.
+ */
+export function validatePreview(
+  fields: CatalogueField[],
+  values: CaseFileValues,
+  fieldsByKey: Map<string, CatalogueField>,
+  step: AdoptionStep
+): Record<string, string> {
+  const errors: Record<string, string> = {}
+
+  for (const field of fields) {
+    if (field.type === 'info' || isFileField(field)) continue
+    if (!fieldApplies(field, values, fieldsByKey)) continue
+
+    const value = toApiValue(field, values[field.key])
+
+    if (!isPresent(field, value)) {
+      if (requiredAt(field, step)) errors[field.key] = 'Pflichtfeld fehlt.'
+      continue
+    }
+
+    switch (field.type) {
+      case 'number':
+      case 'integer': {
+        const { min, max } = field.options ?? {}
+        if (typeof value !== 'number') {
+          errors[field.key] = 'Bitte eine Zahl eingeben.'
+        } else if (field.type === 'integer' && !Number.isInteger(value)) {
+          errors[field.key] = 'Bitte eine ganze Zahl eingeben.'
+        } else if (min !== undefined && value < min) {
+          errors[field.key] = `Der Wert muss mindestens ${min} sein.`
+        } else if (max !== undefined && value > max) {
+          errors[field.key] = `Der Wert darf höchstens ${max} sein.`
+        }
+        break
+      }
+      case 'select':
+      case 'radio':
+        if (!field.options?.choices?.some((c) => c.value === value)) {
+          errors[field.key] = 'Bitte eine der Optionen wählen.'
+        }
+        break
+      case 'email':
+        if (!EMAIL_PATTERN.test(String(value))) {
+          errors[field.key] = 'Bitte eine gültige E-Mail-Adresse eingeben.'
+        }
+        break
+      case 'date':
+        if (!isValidDate(String(value))) {
+          errors[field.key] = 'Bitte ein gültiges Datum eingeben.'
+        }
+        break
+    }
+  }
+
+  return errors
 }
