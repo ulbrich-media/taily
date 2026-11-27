@@ -7,6 +7,11 @@ import { Route as EditorRoute } from './index'
 export const Route = createFileRoute(
   '/admin/_authenticated/settings/animal-types/$animalTypeId/case-file/_editor/group/new'
 )({
+  beforeLoad: ({ context }) => {
+    if (!context.isAdmin) {
+      throw new Error('403: Forbidden - Admin access required')
+    }
+  },
   staticData: { breadcrumb: 'Neuer Abschnitt', dialog: true },
   component: RouteComponent,
 })

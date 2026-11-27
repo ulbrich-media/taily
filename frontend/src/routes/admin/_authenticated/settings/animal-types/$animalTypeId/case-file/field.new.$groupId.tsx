@@ -10,6 +10,11 @@ import { Route as EditorRoute } from './_editor/index'
 export const Route = createFileRoute(
   '/admin/_authenticated/settings/animal-types/$animalTypeId/case-file/field/new/$groupId'
 )({
+  beforeLoad: ({ context }) => {
+    if (!context.isAdmin) {
+      throw new Error('403: Forbidden - Admin access required')
+    }
+  },
   loader: async ({ params }) => {
     const catalogue = await queryClient.ensureQueryData(
       getCatalogueQuery(params.animalTypeId)
