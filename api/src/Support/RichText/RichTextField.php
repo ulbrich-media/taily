@@ -63,13 +63,21 @@ enum RichTextField: string
 
     /**
      * The Tiptap extensions for this field: the one place that decides what
-     * HTML output is produced for it.
+     * HTML output is produced for it and what is parsed back. Headings accept
+     * every level; the sanitizer moves them into HEADING_LEVELS.
      *
+     * @param  bool  $withHeadings  load headings even when the field has none, so the sanitizer can turn them into paragraphs
      * @return list<Extension>
      */
-    public function extensions(): array
+    public function extensions(bool $withHeadings = false): array
     {
-        return self::extensionsFor($this->features());
+        $features = $this->features();
+
+        if ($withHeadings) {
+            $features[] = self::HEADING;
+        }
+
+        return self::extensionsFor($features);
     }
 
     /**
@@ -80,16 +88,14 @@ enum RichTextField: string
      */
     public static function allExtensions(): array
     {
-        // All heading levels: the sanitizer moves them into range afterwards.
-        return self::extensionsFor([self::BOLD, self::ITALIC, self::HEADING, self::LIST, self::LINK], [1, 2, 3, 4, 5, 6]);
+        return self::extensionsFor([self::BOLD, self::ITALIC, self::HEADING, self::LIST, self::LINK]);
     }
 
     /**
      * @param  list<string>  $features
-     * @param  list<int>  $headingLevels
      * @return list<Extension>
      */
-    private static function extensionsFor(array $features, array $headingLevels = self::HEADING_LEVELS): array
+    private static function extensionsFor(array $features): array
     {
         $extensions = [new Document, new Paragraph, new Text, new HardBreak];
 
@@ -102,7 +108,7 @@ enum RichTextField: string
         }
 
         if (in_array(self::HEADING, $features, true)) {
-            $extensions[] = new Heading(['levels' => $headingLevels]);
+            $extensions[] = new Heading(['levels' => [1, 2, 3, 4, 5, 6]]);
         }
 
         if (in_array(self::LIST, $features, true)) {
@@ -110,7 +116,10 @@ enum RichTextField: string
         }
 
         if (in_array(self::LINK, $features, true)) {
-            $extensions[] = new Link(['allowedProtocols' => ['http', 'https', 'mailto']]);
+            $extensions[] = new Link([
+                'allowedProtocols' => ['http', 'https', 'mailto'],
+                'isAllowedUri' => RichTextSanitizer::isAllowedHref(...),
+            ]);
         }
 
         return $extensions;

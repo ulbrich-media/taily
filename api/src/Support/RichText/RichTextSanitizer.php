@@ -2,14 +2,18 @@
 
 namespace Taily\Support\RichText;
 
+use Tiptap\Editor;
+
 /**
- * Cuts a Tiptap document down to what a field allows. It walks the tree with
- * a whitelist of nodes (`doc`, `paragraph`, `text`, `heading` levels 2-3,
- * `bulletList`, `orderedList`, `listItem`, `hardBreak`) and marks (`bold`,
- * `italic`, `link` to http(s)/mailto). Disallowed marks are dropped, disallowed
- * nodes are unwrapped to their content and unknown nodes without text
- * vanish. Heading levels outside 2-3 are moved into that range. A document
- * without any text gives null, which is stored as `''`.
+ * Cuts a Tiptap document down to what a field allows. Each top-level block is
+ * rendered to HTML and parsed back with only the field's extensions loaded
+ * (`RichTextField::extensions()`): unknown nodes keep their text, unknown marks
+ * and links that fail `isAllowedHref()` disappear. A pass over the result then
+ * tidies the structure the parser leaves loose: heading levels move into 2-3
+ * (or become paragraphs in a field without headings), loose text gets a
+ * paragraph, list items start with a paragraph, neighbouring text with the
+ * same marks is merged and empty blocks vanish. A document without any text
+ * gives null, which is stored as `''`.
  *
  * @psalm-type Node = array<string, mixed>
  */
@@ -20,23 +24,38 @@ final class RichTextSanitizer
     private const MAX_HREF_LENGTH = 2048;
 
     /**
-     * @return Node|null the cleaned `doc`, or null when empty or not a document
+     * @return Node|null the cleaned `doc`, or null when empty, too deeply nested or not a document
      */
     public function sanitize(mixed $value, RichTextField $field): ?array
     {
         $doc = RichText::parse($value);
 
-        if ($doc === null) {
+        if ($doc === null || $this->depth($doc) > self::MAX_DEPTH) {
             return null;
         }
 
-        $blocks = $this->blocks($this->children($doc), $field, 0);
+        // Headings are always loaded here; the pass below decides what becomes of them.
+        $extensions = $field->extensions(withHeadings: true);
+        $blocks = [];
 
-        if (! $this->hasText($blocks)) {
-            return null;
+        // One block at a time, so text of unrelated unknown nodes is not glued together.
+        foreach ($this->children($doc) as $block) {
+            $html = (new Editor(['extensions' => $extensions, 'content' => RichText::doc($block)]))->getHTML();
+
+            if ($html === '') {
+                continue;
+            }
+
+            $parsed = (new Editor(['extensions' => $extensions, 'content' => $html]))->getDocument();
+
+            if (is_array($parsed)) {
+                array_push($blocks, ...$this->children($parsed));
+            }
         }
 
-        return ['type' => 'doc', 'content' => $blocks];
+        $clean = ['type' => 'doc', 'content' => $this->blocks($blocks, $field)];
+
+        return $this->hasText($clean) ? $clean : null;
     }
 
     public static function isAllowedHref(mixed $href): bool
@@ -50,17 +69,13 @@ final class RichTextSanitizer
      * @param  list<Node>  $nodes
      * @return list<Node>
      */
-    private function blocks(array $nodes, RichTextField $field, int $depth): array
+    private function blocks(array $nodes, RichTextField $field): array
     {
-        if ($depth > self::MAX_DEPTH) {
-            return [];
-        }
-
         $blocks = [];
         $inline = [];
 
-        $flush = function () use (&$blocks, &$inline, $field): void {
-            $content = $this->inline($inline, $field);
+        $flush = function () use (&$blocks, &$inline): void {
+            $content = $this->tidy($inline);
             $inline = [];
 
             if ($content !== []) {
@@ -69,64 +84,31 @@ final class RichTextSanitizer
         };
 
         foreach ($nodes as $node) {
-            switch ($this->type($node)) {
+            switch ($node['type'] ?? null) {
                 case 'text':
                 case 'hardBreak':
                     $inline[] = $node;
                     break;
 
-                case 'paragraph':
+                case 'bulletList':
+                case 'orderedList':
                     $flush();
-                    $content = $this->inline($this->children($node), $field);
+                    $items = $this->listItems($this->children($node), $field);
 
-                    if ($content !== []) {
-                        $blocks[] = ['type' => 'paragraph', 'content' => $content];
+                    if ($items !== []) {
+                        $blocks[] = ['type' => $node['type'], 'content' => $items];
                     }
                     break;
 
-                case 'heading':
+                default:
                     $flush();
-                    $content = $this->inline($this->children($node), $field);
+                    $content = $this->tidy($this->children($node));
 
                     if ($content === []) {
                         break;
                     }
 
-                    if ($field->allows(RichTextField::HEADING)) {
-                        $level = $node['attrs']['level'] ?? 2;
-                        $level = is_numeric($level) ? (int) $level : 2;
-                        $blocks[] = [
-                            'type' => 'heading',
-                            'attrs' => ['level' => max(RichTextField::HEADING_LEVELS[0], min(RichTextField::HEADING_LEVELS[1], $level))],
-                            'content' => $content,
-                        ];
-                    } else {
-                        $blocks[] = ['type' => 'paragraph', 'content' => $content];
-                    }
-                    break;
-
-                case 'bulletList':
-                case 'orderedList':
-                    $flush();
-                    $items = $this->listItems($this->children($node), $field, $depth + 1);
-
-                    if ($items === []) {
-                        break;
-                    }
-
-                    if ($field->allows(RichTextField::LIST)) {
-                        $blocks[] = ['type' => $this->type($node), 'content' => $items];
-                    } else {
-                        foreach ($items as $item) {
-                            array_push($blocks, ...$item['content']);
-                        }
-                    }
-                    break;
-
-                default:
-                    // Unknown or misplaced node: keep what it contains.
-                    $flush();
-                    array_push($blocks, ...$this->blocks($this->children($node), $field, $depth + 1));
+                    $blocks[] = $this->textBlock($node, $content, $field);
             }
         }
 
@@ -136,19 +118,40 @@ final class RichTextSanitizer
     }
 
     /**
+     * A paragraph or heading: headings move into range or become paragraphs.
+     *
+     * @param  Node  $node
+     * @param  list<Node>  $content
+     * @return Node
+     */
+    private function textBlock(array $node, array $content, RichTextField $field): array
+    {
+        if (($node['type'] ?? null) !== 'heading' || ! $field->allows(RichTextField::HEADING)) {
+            return ['type' => 'paragraph', 'content' => $content];
+        }
+
+        $level = $node['attrs']['level'] ?? RichTextField::HEADING_LEVELS[0];
+        $level = is_numeric($level) ? (int) $level : RichTextField::HEADING_LEVELS[0];
+
+        return [
+            'type' => 'heading',
+            'attrs' => ['level' => max(RichTextField::HEADING_LEVELS[0], min(RichTextField::HEADING_LEVELS[1], $level))],
+            'content' => $content,
+        ];
+    }
+
+    /**
      * @param  list<Node>  $nodes
      * @return list<Node>
      */
-    private function listItems(array $nodes, RichTextField $field, int $depth): array
+    private function listItems(array $nodes, RichTextField $field): array
     {
         $items = [];
 
         foreach ($nodes as $node) {
-            $content = $this->type($node) === 'listItem'
-                ? $this->blocks($this->children($node), $field, $depth)
-                : $this->blocks([$node], $field, $depth);
+            $content = $this->blocks(($node['type'] ?? null) === 'listItem' ? $this->children($node) : [$node], $field);
 
-            if (! $this->hasText($content)) {
+            if (! $this->hasText(['content' => $content])) {
                 continue;
             }
 
@@ -164,52 +167,8 @@ final class RichTextSanitizer
     }
 
     /**
-     * Inline content: text with its marks and hard breaks. Wrappers around
-     * them are unwrapped.
-     *
-     * @param  list<Node>  $nodes
-     * @return list<Node>
-     */
-    private function inline(array $nodes, RichTextField $field, int $depth = 0): array
-    {
-        if ($depth > self::MAX_DEPTH) {
-            return [];
-        }
-
-        $result = [];
-
-        foreach ($nodes as $node) {
-            $type = $this->type($node);
-
-            if ($type === 'text') {
-                $text = $node['text'] ?? null;
-                $text = is_string($text) ? preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F]/', '', $text) : null;
-
-                if ($text === null || $text === '') {
-                    continue;
-                }
-
-                $item = ['type' => 'text', 'text' => $text];
-                $marks = $this->marks($node['marks'] ?? null, $field);
-
-                if ($marks !== []) {
-                    $item['marks'] = $marks;
-                }
-
-                $result[] = $item;
-            } elseif ($type === 'hardBreak') {
-                $result[] = ['type' => 'hardBreak'];
-            } else {
-                array_push($result, ...$this->inline($this->children($node), $field, $depth + 1));
-            }
-        }
-
-        return $this->tidy($result);
-    }
-
-    /**
-     * Merges neighbouring text with the same marks and drops hard breaks at
-     * the edges.
+     * Inline content: text with its marks and hard breaks. Merges neighbouring
+     * text with the same marks and drops hard breaks at the edges.
      *
      * @param  list<Node>  $nodes
      * @return list<Node>
@@ -219,13 +178,31 @@ final class RichTextSanitizer
         $merged = [];
 
         foreach ($nodes as $node) {
+            if (($node['type'] ?? null) === 'hardBreak') {
+                $merged[] = ['type' => 'hardBreak'];
+
+                continue;
+            }
+
+            $text = is_string($node['text'] ?? null) ? preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F]/', '', $node['text']) : null;
+
+            if (($node['type'] ?? null) !== 'text' || $text === null || $text === '') {
+                continue;
+            }
+
+            $item = ['type' => 'text', 'text' => $text];
+            $marks = $this->marks($node['marks'] ?? null);
+
+            if ($marks !== []) {
+                $item['marks'] = $marks;
+            }
+
             $last = count($merged) - 1;
 
-            if ($last >= 0 && $node['type'] === 'text' && $merged[$last]['type'] === 'text'
-                && ($merged[$last]['marks'] ?? []) === ($node['marks'] ?? [])) {
-                $merged[$last]['text'] .= $node['text'];
+            if ($last >= 0 && $merged[$last]['type'] === 'text' && ($merged[$last]['marks'] ?? []) === ($item['marks'] ?? [])) {
+                $merged[$last]['text'] .= $text;
             } else {
-                $merged[] = $node;
+                $merged[] = $item;
             }
         }
 
@@ -241,57 +218,57 @@ final class RichTextSanitizer
     }
 
     /**
+     * Marks as the parser reads them from the rendered HTML; a link keeps only
+     * its address, not the rel and target the renderer adds.
+     *
      * @return list<Node>
      */
-    private function marks(mixed $marks, RichTextField $field): array
+    private function marks(mixed $marks): array
     {
-        if (! is_array($marks)) {
-            return [];
-        }
+        $clean = [];
 
-        $bold = $italic = false;
-        $href = null;
-
-        foreach ($marks as $mark) {
+        foreach (is_array($marks) ? $marks : [] as $mark) {
             if (! is_array($mark)) {
                 continue;
             }
 
-            switch ($mark['type'] ?? null) {
-                case 'bold':
-                    $bold = $field->allows(RichTextField::BOLD);
-                    break;
-                case 'italic':
-                    $italic = $field->allows(RichTextField::ITALIC);
-                    break;
-                case 'link':
-                    $candidate = is_array($mark['attrs'] ?? null) ? trim((string) ($mark['attrs']['href'] ?? '')) : '';
-
-                    if ($field->allows(RichTextField::LINK) && self::isAllowedHref($candidate)) {
-                        $href = $candidate;
-                    }
-                    break;
+            if (($mark['type'] ?? null) === 'link') {
+                $mark = ['type' => 'link', 'attrs' => ['href' => $mark['attrs']['href'] ?? '']];
+            } else {
+                $mark = ['type' => $mark['type'] ?? ''];
             }
+
+            $clean[] = $mark;
         }
 
-        return array_values(array_filter([
-            $bold ? ['type' => 'bold'] : null,
-            $italic ? ['type' => 'italic'] : null,
-            $href !== null ? ['type' => 'link', 'attrs' => ['href' => $href]] : null,
-        ]));
+        return $clean;
     }
 
     /**
-     * @param  list<Node>  $nodes
+     * @param  Node  $node
      */
-    private function hasText(array $nodes): bool
+    private function depth(array $node): int
     {
-        foreach ($nodes as $node) {
-            if ($node['type'] === 'text' && trim((string) $node['text']) !== '') {
-                return true;
-            }
+        $deepest = 0;
 
-            if ($this->hasText($this->children($node))) {
+        foreach ($this->children($node) as $child) {
+            $deepest = max($deepest, $this->depth($child));
+        }
+
+        return $deepest + 1;
+    }
+
+    /**
+     * @param  Node  $node
+     */
+    private function hasText(array $node): bool
+    {
+        if (($node['type'] ?? null) === 'text' && trim((string) ($node['text'] ?? '')) !== '') {
+            return true;
+        }
+
+        foreach ($this->children($node) as $child) {
+            if ($this->hasText($child)) {
                 return true;
             }
         }
@@ -308,13 +285,5 @@ final class RichTextSanitizer
         $content = $node['content'] ?? null;
 
         return is_array($content) ? array_values(array_filter($content, 'is_array')) : [];
-    }
-
-    /**
-     * @param  Node  $node
-     */
-    private function type(array $node): string
-    {
-        return is_string($node['type'] ?? null) ? $node['type'] : '';
     }
 }
