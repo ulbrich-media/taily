@@ -25,10 +25,6 @@ use Tiptap\Nodes\Text;
  */
 final class RichTextRenderer
 {
-    private const TEXT = 'text';
-
-    private const MARKDOWN = 'markdown';
-
     public function __construct(
         private RichTextSanitizer $sanitizer = new RichTextSanitizer,
     ) {}
@@ -68,33 +64,33 @@ final class RichTextRenderer
 
     public function toText(mixed $value, RichTextField $field): string
     {
-        return $this->render($value, $field, self::TEXT);
+        return $this->render($value, $field, new PlainTextWriter);
     }
 
     public function toMarkdown(mixed $value, RichTextField $field): string
     {
-        return $this->render($value, $field, self::MARKDOWN);
+        return $this->render($value, $field, new MarkdownWriter);
     }
 
-    private function render(mixed $value, RichTextField $field, string $format): string
+    private function render(mixed $value, RichTextField $field, RichTextWriter $writer): string
     {
         $doc = $this->sanitizer->sanitize($value, $field);
 
-        return $doc === null ? '' : $this->blocks($doc['content'], $format, 0);
+        return $doc === null ? '' : $this->blocks($doc['content'], $writer, 0);
     }
 
     /**
      * @param  list<Node>  $blocks
      */
-    private function blocks(array $blocks, string $format, int $depth): string
+    private function blocks(array $blocks, RichTextWriter $writer, int $depth): string
     {
         $parts = [];
 
         foreach ($blocks as $block) {
             $part = match ($block['type']) {
-                'heading' => ($format === self::MARKDOWN ? str_repeat('#', (int) $block['attrs']['level']).' ' : '').$this->inline($block['content'], $format),
-                'bulletList', 'orderedList' => $this->list($block, $format, $depth),
-                default => $this->paragraph($block['content'] ?? [], $format),
+                'heading' => $writer->heading((int) $block['attrs']['level'], $this->inline($block['content'], $writer)),
+                'bulletList', 'orderedList' => $this->list($block, $writer, $depth),
+                default => $writer->paragraph($this->inline($block['content'] ?? [], $writer)),
             };
 
             if ($part !== '') {
@@ -109,13 +105,13 @@ final class RichTextRenderer
     /**
      * @param  Node  $list
      */
-    private function list(array $list, string $format, int $depth): string
+    private function list(array $list, RichTextWriter $writer, int $depth): string
     {
         $lines = [];
 
         foreach ($list['content'] as $index => $item) {
             $marker = $list['type'] === 'orderedList' ? ($index + 1).'. ' : '- ';
-            $body = $this->blocks($item['content'], $format, $depth + 1);
+            $body = $this->blocks($item['content'], $writer, $depth + 1);
             $lines[] = $marker.str_replace("\n", "\n".str_repeat(' ', strlen($marker)), $body);
         }
 
@@ -123,85 +119,16 @@ final class RichTextRenderer
     }
 
     /**
-     * @param  list<Node>  $inline
-     */
-    private function paragraph(array $inline, string $format): string
-    {
-        $text = $this->inline($inline, $format);
-
-        if ($format === self::MARKDOWN) {
-            // Text that looks like block syntax at the start of a line.
-            $text = (string) preg_replace('/^(\h*)(#{1,6})(?=\h|$)/m', '$1\\\\$2', $text);
-            $text = (string) preg_replace('/^(\h*)([-+])(?=[\h-]|$)/m', '$1\\\\$2', $text);
-            $text = (string) preg_replace('/^(\h*\d+)([.)])(?=\h|$)/m', '$1\\\\$2', $text);
-        }
-
-        return $text;
-    }
-
-    /**
      * @param  list<Node>  $nodes
      */
-    private function inline(array $nodes, string $format): string
+    private function inline(array $nodes, RichTextWriter $writer): string
     {
         $out = '';
 
         foreach ($nodes as $node) {
-            if ($node['type'] === 'hardBreak') {
-                $out .= $format === self::MARKDOWN ? "\\\n" : "\n";
-            } else {
-                $out .= $this->text($node, $format);
-            }
+            $out .= $node['type'] === 'hardBreak' ? $writer->hardBreak() : $writer->text($node);
         }
 
         return $out;
-    }
-
-    /**
-     * @param  Node  $node
-     */
-    private function text(array $node, string $format): string
-    {
-        $text = (string) $node['text'];
-        $marks = array_column($node['marks'] ?? [], null, 'type');
-
-        if ($format === self::TEXT) {
-            $href = $marks['link']['attrs']['href'] ?? null;
-
-            // The address would be lost otherwise.
-            return $href !== null && trim($text) !== '' && $text !== $href && 'mailto:'.$text !== $href
-                ? $text.' ('.$href.')'
-                : $text;
-        }
-
-        $text = (string) preg_replace('/([\\\\`*_\[\]<>])/', '\\\\$1', $text);
-        $text = (string) preg_replace('/&(?=#?\w+;)/', '\\\\&', $text);
-
-        if ($marks === []) {
-            return $text;
-        }
-
-        // Emphasis cannot start or end on whitespace.
-        preg_match('/^(\s*)(.*?)(\s*)$/su', $text, $parts);
-
-        if (($parts[2] ?? '') === '') {
-            return $text;
-        }
-
-        $core = $parts[2];
-
-        if (isset($marks['bold'], $marks['italic'])) {
-            $core = '***'.$core.'***';
-        } elseif (isset($marks['bold'])) {
-            $core = '**'.$core.'**';
-        } elseif (isset($marks['italic'])) {
-            $core = '*'.$core.'*';
-        }
-
-        if (isset($marks['link'])) {
-            $core = '['.$core.']('.strtr((string) $marks['link']['attrs']['href'], ['(' => '%28', ')' => '%29']).')';
-        }
-
-        return $parts[1].$core.$parts[3];
     }
 }
