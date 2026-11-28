@@ -24,6 +24,7 @@ import {
   toApiValue,
   type CaseFileValues,
 } from '@/admin/module/case-file/case-file.utils'
+import { caseFileResolver } from '@/admin/module/case-file/case-file.schema'
 import type { AdoptionStep } from '@/api/types/case-file'
 import type { ApplicantField, ApplicantGroup } from '../api/types'
 import { applicantRequirement } from '../applicant.utils'
@@ -61,6 +62,12 @@ export function ApplicantCaseFileForm({
   const fieldsByKey = new Map(allFields.map((field) => [field.key, field]))
 
   const form = useForm<FormData>({
+    // Format checks only; the server decides what is still missing.
+    resolver: caseFileResolver(
+      allFields.filter(isWritable),
+      fieldsByKey,
+      Object.fromEntries(allFields.map((f) => [f.key, f.value]))
+    ),
     defaultValues: {
       values: Object.fromEntries(
         allFields

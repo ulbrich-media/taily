@@ -2,11 +2,9 @@ import type { AdoptionStep, CaseFileFieldType } from '@/api/types/case-file'
 import { ADOPTION_STEP_LABELS, stepReached } from '@/api/types/case-file'
 import {
   fieldApplies,
-  isFileField,
-  isPresent,
-  toApiValue,
   type CaseFileValues,
 } from '@/admin/module/case-file/case-file.utils'
+import { validateCaseFile } from '@/admin/module/case-file/case-file.schema'
 import type {
   CatalogueField,
   CatalogueGroup,
@@ -258,18 +256,11 @@ export function requiredAt(
   return stepReached(step, field.required_for) ? field.required_for : null
 }
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-
-function isValidDate(value: string): boolean {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
-  const date = new Date(`${value}T00:00:00Z`)
-  return !Number.isNaN(date.getTime()) && date.toISOString().startsWith(value)
-}
-
 /**
  * Checks the entered values against the catalogue configuration and returns
- * one German message per field key. Fields that do not apply are skipped, as
- * are info and file fields. The server stays authoritative.
+ * one German message per field key. The rules come from the shared case-file
+ * schema, so the preview validates like the real forms. The server stays
+ * authoritative.
  */
 export function validatePreview(
   fields: CatalogueField[],
@@ -277,52 +268,10 @@ export function validatePreview(
   fieldsByKey: Map<string, CatalogueField>,
   step: AdoptionStep
 ): Record<string, string> {
-  const errors: Record<string, string> = {}
-
-  for (const field of fields) {
-    if (field.type === 'info' || isFileField(field)) continue
-    if (!fieldApplies(field, values, fieldsByKey)) continue
-
-    const value = toApiValue(field, values[field.key])
-
-    if (!isPresent(field, value)) {
-      if (requiredAt(field, step)) errors[field.key] = 'Pflichtfeld fehlt.'
-      continue
-    }
-
-    switch (field.type) {
-      case 'number':
-      case 'integer': {
-        const { min, max } = field.options ?? {}
-        if (typeof value !== 'number') {
-          errors[field.key] = 'Bitte eine Zahl eingeben.'
-        } else if (field.type === 'integer' && !Number.isInteger(value)) {
-          errors[field.key] = 'Bitte eine ganze Zahl eingeben.'
-        } else if (min !== undefined && value < min) {
-          errors[field.key] = `Der Wert muss mindestens ${min} sein.`
-        } else if (max !== undefined && value > max) {
-          errors[field.key] = `Der Wert darf höchstens ${max} sein.`
-        }
-        break
-      }
-      case 'select':
-      case 'radio':
-        if (!field.options?.choices?.some((c) => c.value === value)) {
-          errors[field.key] = 'Bitte eine der Optionen wählen.'
-        }
-        break
-      case 'email':
-        if (!EMAIL_PATTERN.test(String(value))) {
-          errors[field.key] = 'Bitte eine gültige E-Mail-Adresse eingeben.'
-        }
-        break
-      case 'date':
-        if (!isValidDate(String(value))) {
-          errors[field.key] = 'Bitte ein gültiges Datum eingeben.'
-        }
-        break
-    }
-  }
-
-  return errors
+  return validateCaseFile(
+    fields,
+    values,
+    fieldsByKey,
+    (field) => requiredAt(field, step) !== null
+  )
 }
