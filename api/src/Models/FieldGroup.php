@@ -31,7 +31,7 @@ class FieldGroup extends Model
     protected function casts(): array
     {
         return [
-            'intro' => RichTextCast::for(RichTextField::GroupIntro),
+            'intro' => RichTextCast::for(RichTextField::AdoptionFieldGroupIntro),
         ];
     }
 

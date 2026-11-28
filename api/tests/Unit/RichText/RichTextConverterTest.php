@@ -103,7 +103,7 @@ class RichTextConverterTest extends TestCase
 
     public function test_plain_text_becomes_paragraphs_with_hard_breaks(): void
     {
-        $doc = $this->converter->fromPlainText("Erste Zeile\nzweite Zeile\n\nNeuer Absatz\n\n\n\nNoch einer <b>roh</b>", RichTextField::GroupIntro);
+        $doc = $this->converter->fromPlainText("Erste Zeile\nzweite Zeile\n\nNeuer Absatz\n\n\n\nNoch einer <b>roh</b>", RichTextField::AdoptionFieldGroupIntro);
 
         $this->assertSame(RichText::doc(
             RichText::paragraph([RichText::text('Erste Zeile'), ['type' => 'hardBreak'], RichText::text('zweite Zeile')]),
@@ -114,7 +114,7 @@ class RichTextConverterTest extends TestCase
 
     public function test_empty_plain_text_stays_empty(): void
     {
-        $this->assertNull($this->converter->fromPlainText('', RichTextField::GroupIntro));
-        $this->assertNull($this->converter->fromPlainText(" \n\n ", RichTextField::GroupIntro));
+        $this->assertNull($this->converter->fromPlainText('', RichTextField::AdoptionFieldGroupIntro));
+        $this->assertNull($this->converter->fromPlainText(" \n\n ", RichTextField::AdoptionFieldGroupIntro));
     }
 }

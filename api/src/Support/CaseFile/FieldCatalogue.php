@@ -242,7 +242,7 @@ class FieldCatalogue
     {
         $data = Validator::make($input, [
             'title' => ['required', 'string', 'max:255'],
-            'intro' => ['nullable', new RichTextRule(RichTextField::GroupIntro, 2000)],
+            'intro' => ['nullable', new RichTextRule(RichTextField::AdoptionFieldGroupIntro, 2000)],
         ], [], ['title' => 'Titel', 'intro' => 'Einleitung'])->validate();
 
         return ['title' => $data['title'], 'intro' => $data['intro'] ?? ''];

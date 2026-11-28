@@ -3,17 +3,6 @@
 namespace Taily\Support\RichText;
 
 use Tiptap\Editor;
-use Tiptap\Marks\Bold;
-use Tiptap\Marks\Italic;
-use Tiptap\Marks\Link;
-use Tiptap\Nodes\BulletList;
-use Tiptap\Nodes\Document;
-use Tiptap\Nodes\HardBreak;
-use Tiptap\Nodes\Heading;
-use Tiptap\Nodes\ListItem;
-use Tiptap\Nodes\OrderedList;
-use Tiptap\Nodes\Paragraph;
-use Tiptap\Nodes\Text;
 
 /**
  * Renders a stored rich text document for a consumer: HTML for the contract
@@ -37,29 +26,7 @@ final class RichTextRenderer
             return '';
         }
 
-        $extensions = [new Document, new Paragraph, new Text, new HardBreak];
-
-        if ($field->allows(RichTextField::BOLD)) {
-            $extensions[] = new Bold;
-        }
-
-        if ($field->allows(RichTextField::ITALIC)) {
-            $extensions[] = new Italic;
-        }
-
-        if ($field->allows(RichTextField::HEADING)) {
-            $extensions[] = new Heading(['levels' => RichTextField::HEADING_LEVELS]);
-        }
-
-        if ($field->allows(RichTextField::LIST)) {
-            array_push($extensions, new BulletList, new OrderedList, new ListItem);
-        }
-
-        if ($field->allows(RichTextField::LINK)) {
-            $extensions[] = new Link(['allowedProtocols' => ['http', 'https', 'mailto']]);
-        }
-
-        return (new Editor(['extensions' => $extensions, 'content' => $doc]))->getHTML();
+        return (new Editor(['extensions' => $field->extensions(), 'content' => $doc]))->getHTML();
     }
 
     public function toText(mixed $value, RichTextField $field): string

@@ -25,7 +25,7 @@ return new class extends Migration
     private const FIELDS = [
         ['contract_templates', 'body', RichTextField::ContractBody, true],
         ['animals', 'publish_description', RichTextField::AnimalDescription, true],
-        ['field_groups', 'intro', RichTextField::GroupIntro, false],
+        ['field_groups', 'intro', RichTextField::AdoptionFieldGroupIntro, false],
     ];
 
     public function up(): void

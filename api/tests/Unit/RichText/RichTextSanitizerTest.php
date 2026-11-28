@@ -41,7 +41,7 @@ class RichTextSanitizerTest extends TestCase
     {
         $doc = RichText::doc(RichText::paragraph('Hallo'));
 
-        $this->assertSame($doc, $this->sanitizer->sanitize(RichText::encode($doc), RichTextField::GroupIntro));
+        $this->assertSame($doc, $this->sanitizer->sanitize(RichText::encode($doc), RichTextField::AdoptionFieldGroupIntro));
     }
 
     public function test_empty_or_invalid_values_give_null(): void
@@ -58,7 +58,7 @@ class RichTextSanitizerTest extends TestCase
         ]));
 
         $body = $this->sanitizer->sanitize($doc, RichTextField::ContractBody);
-        $intro = $this->sanitizer->sanitize($doc, RichTextField::GroupIntro);
+        $intro = $this->sanitizer->sanitize($doc, RichTextField::AdoptionFieldGroupIntro);
 
         $this->assertSame([['type' => 'bold']], $body['content'][0]['content'][0]['marks']);
         $this->assertSame([['type' => 'bold'], ['type' => 'link', 'attrs' => ['href' => 'https://example.org']]], $intro['content'][0]['content'][0]['marks']);
@@ -104,7 +104,7 @@ class RichTextSanitizerTest extends TestCase
     {
         $doc = RichText::doc(RichText::heading('Titel'), RichText::bulletList(['eins']));
 
-        $clean = $this->sanitizer->sanitize($doc, RichTextField::GroupIntro);
+        $clean = $this->sanitizer->sanitize($doc, RichTextField::AdoptionFieldGroupIntro);
 
         $this->assertSame([RichText::paragraph('Titel')], [$clean['content'][0]]);
         $this->assertSame('bulletList', $clean['content'][1]['type']);
@@ -144,6 +144,6 @@ class RichTextSanitizerTest extends TestCase
     {
         $doc = RichText::doc(RichText::paragraph([RichText::text('a'), RichText::text('b'), ['type' => 'hardBreak'], ['type' => 'hardBreak']]));
 
-        $this->assertSame(RichText::doc(RichText::paragraph('ab')), $this->sanitizer->sanitize($doc, RichTextField::GroupIntro));
+        $this->assertSame(RichText::doc(RichText::paragraph('ab')), $this->sanitizer->sanitize($doc, RichTextField::AdoptionFieldGroupIntro));
     }
 }

@@ -4,17 +4,6 @@ namespace Taily\Support\RichText;
 
 use Illuminate\Support\Str;
 use Tiptap\Editor;
-use Tiptap\Marks\Bold;
-use Tiptap\Marks\Italic;
-use Tiptap\Marks\Link;
-use Tiptap\Nodes\BulletList;
-use Tiptap\Nodes\Document;
-use Tiptap\Nodes\HardBreak;
-use Tiptap\Nodes\Heading;
-use Tiptap\Nodes\ListItem;
-use Tiptap\Nodes\OrderedList;
-use Tiptap\Nodes\Paragraph;
-use Tiptap\Nodes\Text;
 
 /**
  * Turns the legacy formats (Markdown, plain text) into a document for a
@@ -49,10 +38,7 @@ final class RichTextConverter
         }
 
         $editor = new Editor([
-            'extensions' => [
-                new Document, new Paragraph, new Text, new HardBreak, new Bold, new Italic,
-                new Heading, new BulletList, new OrderedList, new ListItem, new Link,
-            ],
+            'extensions' => RichTextField::allExtensions(),
             'content' => $html,
         ]);
 

@@ -55,7 +55,7 @@ class RichTextRendererTest extends TestCase
             ['type' => 'text', 'text' => 'Böse', 'marks' => [['type' => 'link', 'attrs' => ['href' => 'javascript:alert(1)']]]],
         ]));
 
-        $html = $this->renderer->toHtml($doc, RichTextField::GroupIntro);
+        $html = $this->renderer->toHtml($doc, RichTextField::AdoptionFieldGroupIntro);
 
         $this->assertStringNotContainsString('<script>', $html);
         $this->assertStringContainsString('&lt;script&gt;', $html);
@@ -73,7 +73,7 @@ class RichTextRendererTest extends TestCase
         // The contract body has no links.
         $this->assertSame('<p>Link</p><h2>Titel</h2>', $this->renderer->toHtml($doc, RichTextField::ContractBody));
 
-        $intro = $this->renderer->toHtml($doc, RichTextField::GroupIntro);
+        $intro = $this->renderer->toHtml($doc, RichTextField::AdoptionFieldGroupIntro);
         $this->assertStringContainsString('<a ', $intro);
         $this->assertStringEndsWith('<p>Titel</p>', $intro);
     }
@@ -147,9 +147,9 @@ class RichTextRendererTest extends TestCase
     public function test_empty_values_render_as_empty_strings(): void
     {
         foreach ([null, '', RichText::doc()] as $value) {
-            $this->assertSame('', $this->renderer->toHtml($value, RichTextField::GroupIntro));
-            $this->assertSame('', $this->renderer->toText($value, RichTextField::GroupIntro));
-            $this->assertSame('', $this->renderer->toMarkdown($value, RichTextField::GroupIntro));
+            $this->assertSame('', $this->renderer->toHtml($value, RichTextField::AdoptionFieldGroupIntro));
+            $this->assertSame('', $this->renderer->toText($value, RichTextField::AdoptionFieldGroupIntro));
+            $this->assertSame('', $this->renderer->toMarkdown($value, RichTextField::AdoptionFieldGroupIntro));
         }
     }
 }

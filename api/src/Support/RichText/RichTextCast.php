@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
  * sanitized for the field; empty stays `''`. A plain string that is not a
  * document becomes paragraphs, so callers can still assign text.
  *
- * Use as `RichTextCast::for(RichTextField::GroupIntro)`.
+ * Use as `RichTextCast::for(RichTextField::AdoptionFieldGroupIntro)`.
  *
  * @implements CastsAttributes<array<string, mixed>|null, mixed>
  */
