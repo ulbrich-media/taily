@@ -6,7 +6,6 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Taily\Enums\FieldType;
 use Taily\Models\Adoption;
@@ -16,6 +15,9 @@ use Taily\Models\FieldDefinition;
 use Taily\Support\CaseFile\CaseFileService;
 use Taily\Support\CaseFile\ContractFieldRegistry;
 use Taily\Support\CaseFile\FieldCatalogue;
+use Taily\Support\RichText\RichTextField;
+use Taily\Support\RichText\RichTextRenderer;
+use Taily\Support\RichText\RichTextRule;
 
 /**
  * Configures contract templates and turns one into what the contract prints
@@ -95,7 +97,7 @@ class ContractTemplateService
         $validated = Validator::make($data, [
             'name' => ['required', 'string', 'max:255'],
             'title' => ['required', 'string', 'max:255'],
-            'body' => ['present', 'nullable', 'string', 'max:50000'],
+            'body' => ['present', 'nullable', new RichTextRule(RichTextField::ContractBody, 50000)],
             'animal_type_id' => ['required', 'uuid', 'exists:animal_types,id'],
             ...collect(ContractTemplate::SECTIONS)->flatMap(fn (string $section) => [
                 "{$section}_fields" => ['present', 'array'],
@@ -172,12 +174,13 @@ class ContractTemplateService
     }
 
     /**
-     * The wording as HTML. Markdown only — HTML in the wording is dropped,
-     * and so are images: dompdf would embed any local file they point to.
+     * The wording as HTML, rendered from the rich text document. The document
+     * has no images or links; the `<img>` strip stays as a safeguard because
+     * dompdf would embed any local file one points to.
      */
     public function bodyHtml(ContractTemplate $template): string
     {
-        $html = Str::markdown($template->body, ['html_input' => 'strip', 'allow_unsafe_links' => false]);
+        $html = (new RichTextRenderer)->toHtml($template->body, RichTextField::ContractBody);
 
         return (string) preg_replace('/<img\b[^>]*>/i', '', $html);
     }

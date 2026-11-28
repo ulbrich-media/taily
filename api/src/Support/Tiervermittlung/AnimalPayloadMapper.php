@@ -7,6 +7,8 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Taily\Enums\TiervermittlungSpecies;
 use Taily\Models\Animal;
 use Taily\Support\AnimalNumberGenerator;
+use Taily\Support\RichText\RichTextField;
+use Taily\Support\RichText\RichTextRenderer;
 
 /**
  * Decides whether an animal goes to Tiervermittlung.de and builds the
@@ -75,7 +77,7 @@ class AnimalPayloadMapper
             $reasons[] = 'Die Tierart ist keiner Tierart auf Tiervermittlung.de zugeordnet.';
         }
 
-        if (trim($animal->publish_description ?? '') === '') {
+        if ($this->descriptionText($animal) === '') {
             $reasons[] = 'Es gibt keinen Beschreibungstext.';
         }
 
@@ -217,13 +219,21 @@ class AnimalPayloadMapper
     }
 
     /**
+     * The rich text description as plain text; the platform takes no markup.
+     */
+    private function descriptionText(Animal $animal): string
+    {
+        return trim((new RichTextRenderer)->toText($animal->publish_description, RichTextField::AnimalDescription));
+    }
+
+    /**
      * The description with the animal's compatibilities and personality
      * traits appended as plain text. The description is shortened first, so
      * the trait block is never cut off and the total stays within the limit.
      */
     private function description(Animal $animal): string
     {
-        $base = trim($animal->publish_description ?? '');
+        $base = $this->descriptionText($animal);
 
         $lines = [];
         foreach (['Verträglichkeiten' => $animal->compatibilities, 'Persönlichkeit' => $animal->personalityTraits] as $label => $traits) {

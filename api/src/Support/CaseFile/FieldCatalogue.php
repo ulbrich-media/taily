@@ -14,6 +14,8 @@ use Taily\Models\AnimalType;
 use Taily\Models\ContractTemplate;
 use Taily\Models\FieldDefinition;
 use Taily\Models\FieldGroup;
+use Taily\Support\RichText\RichTextField;
+use Taily\Support\RichText\RichTextRule;
 
 /**
  * Configures an animal type's Case File catalogue: its groups and fields
@@ -232,13 +234,15 @@ class FieldCatalogue
     }
 
     /**
-     * @return array{title: string, intro: string}
+     * The intro is a rich text document; the group's cast sanitizes it when stored.
+     *
+     * @return array{title: string, intro: mixed}
      */
     private function validateGroup(array $input): array
     {
         $data = Validator::make($input, [
             'title' => ['required', 'string', 'max:255'],
-            'intro' => ['nullable', 'string', 'max:2000'],
+            'intro' => ['nullable', new RichTextRule(RichTextField::AdoptionFieldGroupIntro, 2000)],
         ], [], ['title' => 'Titel', 'intro' => 'Einleitung'])->validate();
 
         return ['title' => $data['title'], 'intro' => $data['intro'] ?? ''];

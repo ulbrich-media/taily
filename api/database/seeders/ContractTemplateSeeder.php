@@ -16,17 +16,27 @@ class ContractTemplateSeeder extends Seeder
     public const DEFAULT = [
         'name' => 'Schutzvertrag (Beispielvorlage)',
         'title' => 'Schutzvertrag',
-        'body' => <<<'MD'
-            *Hinweis: Dies ist eine Beispielvorlage zu Demonstrationszwecken und kein rechtssicherer, produktionsreifer Vertrag. Vor dem Einsatz muss sie durch eine eigene, rechtlich geprüfte Fassung ersetzt werden.*
-
-            ## Bedingungen
-
-            Der/die Adoptant:in verpflichtet sich, das oben genannte Tier artgerecht zu halten, zu pflegen und tierärztlich zu versorgen.
-
-            Eine Weitergabe an Dritte sowie eine gewerbliche Nutzung des Tieres sind ohne vorherige schriftliche Zustimmung der vermittelnden Organisation untersagt.
-
-            Bei Zuwiderhandlung gegen diesen Vertrag behält sich die vermittelnde Organisation das Recht vor, das Tier zurückzufordern.
-            MD,
+        // A rich text document (the contract body's features: bold, italic, headings, lists).
+        'body' => [
+            'type' => 'doc',
+            'content' => [
+                ['type' => 'paragraph', 'content' => [
+                    ['type' => 'text', 'text' => 'Hinweis: Dies ist eine Beispielvorlage zu Demonstrationszwecken und kein rechtssicherer, produktionsreifer Vertrag. Vor dem Einsatz muss sie durch eine eigene, rechtlich geprüfte Fassung ersetzt werden.', 'marks' => [['type' => 'italic']]],
+                ]],
+                ['type' => 'heading', 'attrs' => ['level' => 2], 'content' => [
+                    ['type' => 'text', 'text' => 'Bedingungen'],
+                ]],
+                ['type' => 'paragraph', 'content' => [
+                    ['type' => 'text', 'text' => 'Der/die Adoptant:in verpflichtet sich, das oben genannte Tier artgerecht zu halten, zu pflegen und tierärztlich zu versorgen.'],
+                ]],
+                ['type' => 'paragraph', 'content' => [
+                    ['type' => 'text', 'text' => 'Eine Weitergabe an Dritte sowie eine gewerbliche Nutzung des Tieres sind ohne vorherige schriftliche Zustimmung der vermittelnden Organisation untersagt.'],
+                ]],
+                ['type' => 'paragraph', 'content' => [
+                    ['type' => 'text', 'text' => 'Bei Zuwiderhandlung gegen diesen Vertrag behält sich die vermittelnde Organisation das Recht vor, das Tier zurückzufordern.'],
+                ]],
+            ],
+        ],
         // The parties' names, the adopter's email and address and the
         // animal's photo are fixed fields every contract prints.
         'animal_fields' => [

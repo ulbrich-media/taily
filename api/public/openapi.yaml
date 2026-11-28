@@ -332,8 +332,28 @@ components:
           description: Short public title shown above the description.
         publish_description:
           type: string
-          nullable: true
-          description: Public-facing description shown on the adoption listing.
+          deprecated: true
+          description: >-
+            Deprecated, use `publish_description_markdown` (same value) or
+            one of the other `publish_description_*` variants. Still returns
+            the description as Markdown for now. An animal without a
+            description returns an empty string.
+        publish_description_markdown:
+          type: string
+          description: >-
+            Public-facing description shown on the adoption listing, as
+            Markdown (bold, italic, `##`/`###` headings, lists and links). An
+            animal without a description returns an empty string.
+        publish_description_html:
+          type: string
+          description: >-
+            The same description as HTML. An animal without a description
+            returns an empty string.
+        publish_description_text:
+          type: string
+          description: >-
+            The same description as plain text without formatting. An animal
+            without a description returns an empty string.
         application_url:
           type: string
           format: uri

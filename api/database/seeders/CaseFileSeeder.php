@@ -11,6 +11,7 @@ use Taily\Models\AnimalType;
 use Taily\Models\FieldDefinition;
 use Taily\Models\FieldGroup;
 use Taily\Support\CaseFile\FieldCatalogue;
+use Taily\Support\RichText\RichText;
 
 /**
  * The example dog catalogue from docs/features/case-file.md, and values for
@@ -118,7 +119,7 @@ class CaseFileSeeder extends Seeder
                 $fieldGroup = FieldGroup::create([
                     'animal_type_id' => $animalType->id,
                     'title' => $group['title'],
-                    'intro' => $group['intro'],
+                    'intro' => RichText::fromPlainText($group['intro']),
                     'position' => $groupPosition,
                 ]);
 

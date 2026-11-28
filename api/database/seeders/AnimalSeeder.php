@@ -18,6 +18,7 @@ use Taily\Models\Person;
 use Taily\Models\Vaccination;
 use Taily\Services\AnimalTraitService;
 use Taily\Support\AnimalNumberGenerator;
+use Taily\Support\RichText\RichText;
 
 /**
  * The animals, generated per species from SpeciesCatalog.
@@ -125,7 +126,7 @@ class AnimalSeeder extends Seeder
             'alternate_arrival_location' => $faker->boolean(10) ? $faker->randomElement(SpeciesCatalog::locations()) : '',
             'do_publish' => $faker->boolean(85),
             'publish_title' => $faker->boolean(60) ? Str::limit($faker->sentence(4), 60, '') : '',
-            'publish_description' => $faker->boolean(60) ? $faker->realText(300) : '',
+            'publish_description' => $faker->boolean(60) ? $this->description($faker) : '',
             'application_url' => $faker->boolean(50) ? $faker->url() : '',
             'is_deceased' => $isDeceased,
             'date_of_death' => $isDeceased ? $faker->dateTimeBetween($intakeDate, 'now') : null,
@@ -136,6 +137,28 @@ class AnimalSeeder extends Seeder
      * @param  Collection<int, Vaccination>  $vaccinations
      * @param  Collection<int, MedicalTest>  $medicalTests
      */
+    /**
+     * A description within the animal description's features: a bold
+     * lead-in, a paragraph and sometimes a short list.
+     *
+     * @return array<string, mixed>
+     */
+    private function description(Generator $faker): array
+    {
+        $blocks = [
+            RichText::paragraph([
+                RichText::text(Str::limit($faker->sentence(4), 60, ''), ['bold']),
+                RichText::text(' '.$faker->realText(200)),
+            ]),
+        ];
+
+        if ($faker->boolean(40)) {
+            $blocks[] = RichText::bulletList([$faker->sentence(3), $faker->sentence(3)]);
+        }
+
+        return RichText::doc(...$blocks);
+    }
+
     private function attachHealthRecords(Generator $faker, Animal $animal, $vaccinations, $medicalTests): void
     {
         foreach (SeedRandom::pickMany($vaccinations, $faker->numberBetween(0, $vaccinations->count())) as $vaccination) {
