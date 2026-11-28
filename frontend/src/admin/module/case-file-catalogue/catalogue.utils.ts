@@ -1,5 +1,10 @@
 import type { AdoptionStep, CaseFileFieldType } from '@/api/types/case-file'
-import { ADOPTION_STEP_LABELS } from '@/api/types/case-file'
+import { ADOPTION_STEP_LABELS, stepReached } from '@/api/types/case-file'
+import {
+  fieldApplies,
+  type CaseFileValues,
+} from '@/admin/module/case-file/case-file.utils'
+import { validateCaseFile } from '@/admin/module/case-file/case-file.schema'
 import type {
   CatalogueField,
   CatalogueGroup,
@@ -199,4 +204,74 @@ export function toRequest(
         : { field: data.condition_field, in: data.condition_in }
 
   return request
+}
+
+export type PreviewRole = 'applicant' | 'inspector' | 'mediator'
+
+export const PREVIEW_ROLE_LABELS: Record<PreviewRole, string> = {
+  applicant: 'Bewerber:in',
+  inspector: 'Kontrolleur:in',
+  mediator: 'Vermittler:in',
+}
+
+/**
+ * The catalogue as a person in the given role sees it at the given step:
+ * no archived fields, nothing collected later, nothing hidden for the role.
+ * When `conditions` is given, fields whose condition is not met are dropped
+ * too.
+ */
+export function previewFields(
+  groups: CatalogueGroup[],
+  step: AdoptionStep,
+  role: PreviewRole,
+  conditions?: {
+    values: CaseFileValues
+    fieldsByKey: Map<string, CatalogueField>
+  }
+): CatalogueGroup[] {
+  return groups
+    .map((group) => ({
+      ...group,
+      fields: group.fields.filter(
+        (field) =>
+          !field.archived_at &&
+          stepReached(step, field.collect_at) &&
+          (role === 'mediator' ||
+            (role === 'applicant'
+              ? field.visible_to_applicant
+              : field.visible_to_inspector)) &&
+          (!conditions ||
+            fieldApplies(field, conditions.values, conditions.fieldsByKey))
+      ),
+    }))
+    .filter((group) => group.fields.length > 0)
+}
+
+/** The step a field is required from, if that step is reached. */
+export function requiredAt(
+  field: CatalogueField,
+  step: AdoptionStep
+): AdoptionStep | null {
+  if (field.type === 'info' || !field.required_for) return null
+  return stepReached(step, field.required_for) ? field.required_for : null
+}
+
+/**
+ * Checks the entered values against the catalogue configuration and returns
+ * one German message per field key. The rules come from the shared case-file
+ * schema, so the preview validates like the real forms. The server stays
+ * authoritative.
+ */
+export function validatePreview(
+  fields: CatalogueField[],
+  values: CaseFileValues,
+  fieldsByKey: Map<string, CatalogueField>,
+  step: AdoptionStep
+): Record<string, string> {
+  return validateCaseFile(
+    fields,
+    values,
+    fieldsByKey,
+    (field) => requiredAt(field, step) !== null
+  )
 }

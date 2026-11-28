@@ -1,6 +1,6 @@
 import {
   ADOPTION_STEP_LABELS,
-  ADOPTION_STEPS,
+  stepReached,
   type AdoptionStep,
 } from '@/api/types/case-file'
 import type { ApplicantField } from './api/types'
@@ -15,7 +15,7 @@ export function applicantRequirement(
 ): string {
   const step = field.effective_required_for
   if (!step) return ''
-  return ADOPTION_STEPS.indexOf(step) <= ADOPTION_STEPS.indexOf(currentStep)
+  return stepReached(currentStep, step)
     ? 'Pflicht'
     : `Nötig für: ${ADOPTION_STEP_LABELS[step]}`
 }
