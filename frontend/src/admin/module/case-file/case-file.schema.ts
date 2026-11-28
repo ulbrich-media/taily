@@ -97,7 +97,16 @@ export function caseFileSchema<F extends SchemaField>(
     if (!fieldApplies(field, values, fieldsByKey)) continue
     shape[field.key] = fieldSchema(field, isRequired(field))
   }
-  return z.object({ values: z.object(shape) })
+  // zod treats a missing key as invalid even for z.unknown(); an unanswered
+  // field must reach its own check, so fill absent keys with null.
+  const withAllKeys = (input: unknown) => {
+    const answers = { ...((input ?? {}) as Record<string, unknown>) }
+    for (const key of Object.keys(shape)) answers[key] ??= null
+    return answers
+  }
+  return z.object({
+    values: z.preprocess(withAllKeys, z.object(shape)),
+  })
 }
 
 /** One message per field key; empty when everything is valid. */
