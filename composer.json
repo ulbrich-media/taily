@@ -23,7 +23,8 @@
         "sentry/sentry-laravel": "^4.31",
         "setasign/fpdf": "^1.9",
         "setasign/fpdi": "^2.6",
-        "spatie/laravel-medialibrary": "^11.20"
+        "spatie/laravel-medialibrary": "^11.20",
+        "ueberdosis/tiptap-php": "^2.2"
     },
     "require-dev": {
         "barryvdh/laravel-ide-helper": "^3.6",
