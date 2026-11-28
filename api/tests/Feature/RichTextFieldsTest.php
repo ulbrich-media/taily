@@ -140,6 +140,14 @@ class RichTextFieldsTest extends TestCase
         $byName = collect($response->json())->pluck('publish_description', 'name');
         $this->assertSame("Ein **lieber** Hund.\n\n- verspielt", $byName['Bello']);
         $this->assertSame('', $byName['Ohne']);
+
+        $bello = collect($response->json())->firstWhere('name', 'Bello');
+        $this->assertSame($bello['publish_description'], $bello['publish_description_markdown']);
+        $this->assertStringContainsString('<strong>lieber</strong>', $bello['publish_description_html']);
+        $this->assertStringNotContainsString('**', $bello['publish_description_text']);
+        $this->assertStringContainsString('lieber', $bello['publish_description_text']);
+        $ohne = collect($response->json())->firstWhere('name', 'Ohne');
+        $this->assertSame(['', '', ''], [$ohne['publish_description_markdown'], $ohne['publish_description_html'], $ohne['publish_description_text']]);
     }
 
     // -- Migration -------------------------------------------------------------------------------

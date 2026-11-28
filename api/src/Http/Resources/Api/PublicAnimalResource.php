@@ -27,6 +27,9 @@ class PublicAnimalResource extends JsonResource
     {
         // All data possibly relevant during public display of an animal.
         // No personal information is returned here.
+        $renderer = new RichTextRenderer;
+        $description = $this->resource->publish_description;
+
         return [
             'id' => $this->resource->id,
             'animal_type_id' => $this->resource->animal_type_id,
@@ -53,8 +56,11 @@ class PublicAnimalResource extends JsonResource
             'do_publish' => $this->resource->do_publish,
             'is_reserved' => $this->resource->is_reserved,
             'publish_title' => $this->resource->publish_title,
-            // Still Markdown for the public API; it is rendered from the rich text document.
-            'publish_description' => (new RichTextRenderer)->toMarkdown($this->resource->publish_description, RichTextField::AnimalDescription),
+            // Deprecated alias of publish_description_markdown; kept as Markdown for existing consumers.
+            'publish_description' => $renderer->toMarkdown($description, RichTextField::AnimalDescription),
+            'publish_description_markdown' => $renderer->toMarkdown($description, RichTextField::AnimalDescription),
+            'publish_description_html' => $renderer->toHtml($description, RichTextField::AnimalDescription),
+            'publish_description_text' => $renderer->toText($description, RichTextField::AnimalDescription),
             'application_url' => $this->resource->application_url,
             'website_url' => $this->resource->website_url,
             'compatibilities' => $this->whenLoaded('compatibilities', fn () => $this->resource->compatibilities->pluck('value')->values()->all(), []
