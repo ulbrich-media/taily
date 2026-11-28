@@ -49,11 +49,11 @@ final class RichTextSanitizer
             $parsed = (new Editor(['extensions' => $extensions, 'content' => $html]))->getDocument();
 
             if (is_array($parsed)) {
-                array_push($blocks, ...$this->children($parsed));
+                array_push($blocks, ...$this->blocks($this->children($parsed), $field));
             }
         }
 
-        $clean = ['type' => 'doc', 'content' => $this->blocks($blocks, $field)];
+        $clean = ['type' => 'doc', 'content' => $blocks];
 
         return $this->hasText($clean) ? $clean : null;
     }
