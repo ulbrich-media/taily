@@ -26,6 +26,7 @@ import { adoptionQueryKeys } from '@/admin/module/adoptions/api/queries'
 import { caseFileQueryKeys } from '../api/queries'
 import { updateCaseFile } from '../api/requests'
 import { CaseFileFieldInput } from '../components/CaseFileFieldInput'
+import { caseFileResolver } from '../case-file.schema'
 import {
   fieldApplies,
   isEditable,
@@ -63,6 +64,12 @@ export function CaseFileGroupEditDialog({
   const allValues = Object.fromEntries(allFields.map((f) => [f.key, f.value]))
 
   const form = useForm<FormData>({
+    // Format checks only; the server decides what is still missing.
+    resolver: caseFileResolver(
+      group.fields.filter(isEditable),
+      fieldsByKey,
+      allValues
+    ),
     defaultValues: {
       values: Object.fromEntries(
         group.fields

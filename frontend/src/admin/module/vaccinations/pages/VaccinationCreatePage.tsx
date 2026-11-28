@@ -5,7 +5,6 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { vaccinationQueryKeys } from '@/admin/module/vaccinations/api/queries'
 import { createVaccination } from '@/admin/module/vaccinations/api/requests'
-import type { AnimalTypeResource } from '@/api/types/animal-types'
 import {
   Dialog,
   DialogContent,
@@ -20,25 +19,24 @@ import { FieldGroup } from '@/shadcn/components/ui/field.tsx'
 import { toast } from 'sonner'
 import { FormBlocker } from '@/components/form/FormBlocker'
 import { TextInput } from '@/components/field/TextInput'
-import { SelectInput } from '@/components/field/SelectInput'
 import { zFieldString } from '@/components/field/TextInput.utils.ts'
 
 const createVaccinationSchema = z.object({
   title: zFieldString({ required: true }),
   description: zFieldString(),
-  animal_type_id: z.string().min(1, 'Bitte wähle eine Tierart aus'),
 })
 
 type CreateVaccinationFormData = z.infer<typeof createVaccinationSchema>
 
 interface VaccinationCreatePageProps {
-  animalTypes: AnimalTypeResource[]
+  /** The vaccination always belongs to this animal type. */
+  animalTypeId: string
   onClose: () => void
   breadcrumb?: ReactNode
 }
 
 export function VaccinationCreatePage({
-  animalTypes,
+  animalTypeId,
   onClose,
   breadcrumb,
 }: VaccinationCreatePageProps) {
@@ -50,7 +48,6 @@ export function VaccinationCreatePage({
     defaultValues: {
       title: '',
       description: '',
-      animal_type_id: animalTypes.length === 1 ? animalTypes[0].id : '',
     },
   })
 
@@ -61,11 +58,7 @@ export function VaccinationCreatePage({
       toast.success(data.message)
 
       if (keepOpen) {
-        form.reset({
-          title: '',
-          description: '',
-          animal_type_id: form.getValues('animal_type_id'),
-        })
+        form.reset({ title: '', description: '' })
         setKeepOpen(false)
       } else {
         onClose()
@@ -78,7 +71,7 @@ export function VaccinationCreatePage({
   })
 
   const onSubmit = async (data: CreateVaccinationFormData) => {
-    await createMutation.mutateAsync(data)
+    await createMutation.mutateAsync({ ...data, animal_type_id: animalTypeId })
   }
 
   const handleSaveAndNew = () => {
@@ -94,7 +87,7 @@ export function VaccinationCreatePage({
         <DialogHeader>
           <DialogTitle>Neue Impfung erstellen</DialogTitle>
           <DialogDescription>
-            Erstelle eine neue Impfung für eine Tierart.
+            Erstelle eine neue Impfung für diese Tierart.
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -102,18 +95,6 @@ export function VaccinationCreatePage({
             <FormBlocker />
 
             <FieldGroup>
-              <SelectInput
-                name="animal_type_id"
-                control={form.control}
-                label="Tierart"
-                required
-                options={animalTypes.map((animalType) => ({
-                  value: animalType.id,
-                  label: animalType.title,
-                }))}
-                placeholder="Tierart auswählen"
-              />
-
               <TextInput
                 name="title"
                 control={form.control}

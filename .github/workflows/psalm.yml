@@ -9,8 +9,6 @@ on:
       - 'psalm.xml'
       - 'psalm-baseline.xml'
   pull_request:
-    branches:
-      - development
     paths:
       - 'api/**/*.php'
       - 'psalm.xml'

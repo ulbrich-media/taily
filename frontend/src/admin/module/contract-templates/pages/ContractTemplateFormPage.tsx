@@ -1,5 +1,4 @@
-import type { ReactNode } from 'react'
-import { FormProvider, useForm, useWatch, type Path } from 'react-hook-form'
+import { FormProvider, useForm, type Path } from 'react-hook-form'
 import {
   CONTRACT_SECTIONS,
   type ContractFieldOptions,
@@ -18,7 +17,6 @@ import { FieldGroup } from '@/shadcn/components/ui/field'
 import { FormBlocker } from '@/components/form/FormBlocker'
 import { TextInput } from '@/components/field/TextInput'
 import { Textarea } from '@/components/field/Textarea'
-import { SelectInput } from '@/components/field/SelectInput'
 import { ApiValidationError } from '@/lib/api'
 import { createContractTemplate, updateContractTemplate } from '../api/requests'
 import {
@@ -34,10 +32,10 @@ import { useContractTemplateMutation } from '../useContractTemplateMutation'
 interface ContractTemplateFormPageProps {
   // Absent when creating a new template.
   template?: ContractTemplateResource
-  animalTypes: { id: string; title: string }[]
+  // The animal type the template belongs to; it comes from the URL.
+  animalTypeId: string
   options: ContractFieldOptions
   onDone: () => void
-  breadcrumb?: ReactNode
   // Users who aren't admins see the template, but can't change it.
   readOnly?: boolean
 }
@@ -49,18 +47,13 @@ interface ContractTemplateFormPageProps {
  */
 export function ContractTemplateFormPage({
   template,
-  animalTypes,
+  animalTypeId,
   options,
   onDone,
-  breadcrumb,
   readOnly = false,
 }: ContractTemplateFormPageProps) {
   const form = useForm<ContractTemplateFormData>({
-    defaultValues: toFormData(template),
-  })
-  const animalTypeId = useWatch({
-    control: form.control,
-    name: 'animal_type_id',
+    defaultValues: toFormData(animalTypeId, template),
   })
 
   const mutation = useContractTemplateMutation(
@@ -89,7 +82,7 @@ export function ContractTemplateFormPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        breadcrumb={breadcrumb}
+        variant="section"
         title={
           !template
             ? 'Neue Vertragsvorlage'
@@ -116,7 +109,7 @@ export function ContractTemplateFormPage({
         >
           <FormBlocker />
 
-          <fieldset disabled={readOnly} className="contents">
+          <fieldset disabled={readOnly} className="contents space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle>Vorlage</CardTitle>
@@ -137,17 +130,6 @@ export function ContractTemplateFormPage({
                     description="Steht oben auf dem Vertrag."
                     required
                   />
-                  <SelectInput
-                    name="animal_type_id"
-                    control={form.control}
-                    label="Tierart"
-                    description="Die Vorlage steht nur für Vermittlungen dieser Tierart zur Auswahl."
-                    options={animalTypes.map((type) => ({
-                      value: type.id,
-                      label: type.title,
-                    }))}
-                    required
-                  />
                 </FieldGroup>
               </CardContent>
             </Card>
@@ -161,17 +143,11 @@ export function ContractTemplateFormPage({
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {section === 'adopter' && animalTypeId === '' ? (
-                    <p className="text-sm text-muted-foreground">
-                      Wähle zuerst die Tierart, für die die Vorlage gilt.
-                    </p>
-                  ) : (
-                    <SectionFieldsEditor
-                      section={section}
-                      available={available[section]}
-                      options={options}
-                    />
-                  )}
+                  <SectionFieldsEditor
+                    section={section}
+                    available={available[section]}
+                    options={options}
+                  />
                 </CardContent>
               </Card>
             ))}

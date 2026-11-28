@@ -7,7 +7,6 @@ import type {
   CatalogueGroup,
   CatalogueResource,
 } from '@/api/types/case-file-catalogue'
-import { PageHeader } from '@/components/layout/PageHeader'
 import {
   Card,
   CardAction,
@@ -18,6 +17,9 @@ import {
 } from '@/shadcn/components/ui/card'
 import { Badge } from '@/shadcn/components/ui/badge'
 import { Button } from '@/shadcn/components/ui/button'
+import { Switch } from '@/shadcn/components/ui/switch'
+import { Field, FieldLabel } from '@/shadcn/components/ui/field'
+import { CataloguePreview } from './CataloguePreview'
 import { catalogueQueryKeys } from '../api/queries'
 import {
   reorderFieldDefinitions,
@@ -33,9 +35,6 @@ import {
 
 interface CatalogueEditorPageProps {
   catalogue: CatalogueResource
-  breadcrumb?: ReactNode
-  // Links to the same editor for the other animal types.
-  animalTypeLinks: ReactNode
   addGroupAction: ReactNode
   copyAction: ReactNode
   renderGroupActions: (group: CatalogueGroup) => ReactNode
@@ -49,14 +48,13 @@ interface CatalogueEditorPageProps {
  */
 export function CatalogueEditorPage({
   catalogue,
-  breadcrumb,
-  animalTypeLinks,
   addGroupAction,
   copyAction,
   renderGroupActions,
   renderAddFieldAction,
   renderFieldActions,
 }: CatalogueEditorPageProps) {
+  const [previewMode, setPreviewMode] = useState(false)
   const queryClient = useQueryClient()
   const animalTypeId = catalogue.animal_type.id
 
@@ -84,59 +82,72 @@ export function CatalogueEditorPage({
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        breadcrumb={breadcrumb}
-        title={`Angaben für ${catalogue.animal_type.title}`}
-        description="Was eine Vermittlung dieser Tierart erfragt, in welcher Reihenfolge und ab welchem Schritt es gebraucht wird."
-        links={animalTypeLinks}
-      />
+      <p className="text-sm text-muted-foreground">
+        Was eine Vermittlung dieser Tierart erfragt, in welcher Reihenfolge und
+        ab welchem Schritt es gebraucht wird.
+      </p>
 
-      <div className="flex flex-wrap justify-end gap-2">
-        {copyAction}
-        {addGroupAction}
+      <div className="flex flex-wrap items-center justify-end gap-4">
+        <Field orientation="horizontal" className="w-auto">
+          <Switch
+            id="catalogue-preview-mode"
+            checked={previewMode}
+            onCheckedChange={setPreviewMode}
+          />
+          <FieldLabel htmlFor="catalogue-preview-mode">Vorschau</FieldLabel>
+        </Field>
+        {!previewMode && (
+          <>
+            {copyAction}
+            {addGroupAction}
+          </>
+        )}
       </div>
 
-      {catalogue.groups.map((group, index) => (
-        <Card key={group.id}>
-          <CardHeader>
-            <CardTitle>{group.title}</CardTitle>
-            {group.intro && <CardDescription>{group.intro}</CardDescription>}
-            <CardAction className="flex flex-wrap justify-end gap-1">
-              <OrderButtons
-                label={`Abschnitt ${group.title}`}
-                isFirst={index === 0}
-                isLast={index === catalogue.groups.length - 1}
+      {previewMode && <CataloguePreview groups={catalogue.groups} />}
+
+      {!previewMode &&
+        catalogue.groups.map((group, index) => (
+          <Card key={group.id}>
+            <CardHeader>
+              <CardTitle>{group.title}</CardTitle>
+              {group.intro && <CardDescription>{group.intro}</CardDescription>}
+              <CardAction className="flex flex-wrap justify-end gap-1">
+                <OrderButtons
+                  label={`Abschnitt ${group.title}`}
+                  isFirst={index === 0}
+                  isLast={index === catalogue.groups.length - 1}
+                  disabled={busy}
+                  onMove={(offset) =>
+                    reorderGroups.mutate(moved(groupIds, group.id, offset))
+                  }
+                />
+                {renderGroupActions(group)}
+              </CardAction>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <FieldList
+                group={group}
+                groups={catalogue.groups}
                 disabled={busy}
-                onMove={(offset) =>
-                  reorderGroups.mutate(moved(groupIds, group.id, offset))
+                renderFieldActions={renderFieldActions}
+                onMove={(field, offset) =>
+                  reorderFields.mutate({
+                    groupId: group.id,
+                    ids: moved(
+                      group.fields.map((f) => f.id),
+                      field.id,
+                      offset
+                    ),
+                  })
                 }
               />
-              {renderGroupActions(group)}
-            </CardAction>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <FieldList
-              group={group}
-              groups={catalogue.groups}
-              disabled={busy}
-              renderFieldActions={renderFieldActions}
-              onMove={(field, offset) =>
-                reorderFields.mutate({
-                  groupId: group.id,
-                  ids: moved(
-                    group.fields.map((f) => f.id),
-                    field.id,
-                    offset
-                  ),
-                })
-              }
-            />
-            <div className="flex justify-end">
-              {renderAddFieldAction(group)}
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+              <div className="flex justify-end">
+                {renderAddFieldAction(group)}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
     </div>
   )
 }

@@ -56,6 +56,57 @@ paths:
         '403':
           $ref: '#/components/responses/Forbidden'
 
+  /animals/{animal}/website-url:
+    put:
+      summary: Report the website URL of an animal
+      operationId: updateAnimalWebsiteUrl
+      description: |
+        Callback for websites: after publishing an animal, report the public
+        URL under which it can be found. Taily stores and shows it so staff can
+        copy it (e.g. for social media). Send `null` to clear the URL.
+
+        Only published animals (`do_publish` is `true`) can be updated; others
+        return `404`. The stored URL is kept when an animal is unpublished.
+
+        Required token ability: `animals:write:website-url`
+      parameters:
+        - name: animal
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID of the animal (the `id` field from `/animals`).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [website_url]
+              properties:
+                website_url:
+                  type: string
+                  format: uri
+                  nullable: true
+                  maxLength: 2048
+                  description: Absolute `http` or `https` URL, or `null` to clear.
+      responses:
+        '200':
+          description: The updated animal.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Animal'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: Animal not found or not published.
+        '422':
+          description: Invalid URL.
+
   /animal-types:
     get:
       summary: List animal types
@@ -178,7 +229,8 @@ components:
                  created_at, updated_at, vaccinations, medical_tests, media]
       properties:
         id:
-          type: integer
+          type: string
+          format: uuid
         animal_type_id:
           type: integer
           nullable: true
@@ -287,6 +339,13 @@ components:
           format: uri
           nullable: true
           description: URL to an external adoption application form.
+        website_url:
+          type: string
+          format: uri
+          nullable: true
+          description: |
+            URL under which the website shows this animal. Reported back by the
+            website via `PUT /animals/{animal}/website-url`.
         compatibilities:
           type: array
           items:

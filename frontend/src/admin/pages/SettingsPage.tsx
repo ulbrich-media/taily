@@ -1,14 +1,10 @@
 import type { ReactNode } from 'react'
 import {
-  Syringe,
-  FlaskConical,
   Users,
   TriangleAlert,
   Building2,
   ClipboardList,
   PawPrint,
-  ListChecks,
-  FileSignature,
   Upload,
 } from 'lucide-react'
 import {
@@ -23,10 +19,6 @@ import { NavigationCards } from '@/components/navigation/NavigationCards'
 interface SettingsPageProps {
   usersAction: ReactNode
   animalTypesAction: ReactNode
-  caseFileAction: ReactNode
-  contractsAction: ReactNode
-  vaccinationsAction: ReactNode
-  medicalTestsAction: ReactNode
   organizationsAction: ReactNode
   formTemplatesAction: ReactNode
   exportAction: ReactNode
@@ -36,10 +28,6 @@ interface SettingsPageProps {
 export function SettingsPage({
   usersAction,
   animalTypesAction,
-  caseFileAction,
-  contractsAction,
-  vaccinationsAction,
-  medicalTestsAction,
   organizationsAction,
   formTemplatesAction,
   exportAction,
@@ -78,41 +66,11 @@ export function SettingsPage({
           },
           {
             icon: PawPrint,
-            title: 'Tierarten',
-            subtitle: 'Verfügbare Tierarten',
-            description: 'Verwalte die Tierarten, die vermittelt werden.',
+            title: 'Tierarten & ihre Konfiguration',
+            subtitle: 'Alles, was zu einer Tierart gehört',
+            description:
+              'Verwalte die Tierarten, die vermittelt werden, und ihre Einstellungen.',
             actions: animalTypesAction,
-          },
-          {
-            icon: ListChecks,
-            title: 'Angaben',
-            subtitle: 'Was eine Vermittlung je Tierart erfragt',
-            description:
-              'Lege fest, welche Angaben Bewerber:innen machen, wann sie gebraucht werden und wer sie sieht.',
-            actions: caseFileAction,
-          },
-          {
-            icon: FileSignature,
-            title: 'Verträge',
-            subtitle: 'Vorlagen für den Schutzvertrag',
-            description:
-              'Lege Titel, Vertragstext und die gedruckten Angaben fest – Pflichtfelder erscheinen auf der Checkliste jeder Vermittlung.',
-            actions: contractsAction,
-          },
-          {
-            icon: Syringe,
-            title: 'Impfungen',
-            subtitle: 'Verfügbare Impfungen',
-            description: 'Verwalte die verfügbaren Impfungen der Tiere.',
-            actions: vaccinationsAction,
-          },
-          {
-            icon: FlaskConical,
-            title: 'Tests',
-            subtitle: 'Medizinische Tests',
-            description:
-              'Verwalte die verfügbaren medizinischen Tests der Tiere.',
-            actions: medicalTestsAction,
           },
           {
             icon: Building2,

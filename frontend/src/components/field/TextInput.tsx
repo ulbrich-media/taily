@@ -5,6 +5,12 @@ import {
 import type { ComponentProps } from 'react'
 import type { FieldPath, FieldValues } from 'react-hook-form'
 import { Input } from '@/shadcn/components/ui/input.tsx'
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from '@/shadcn/components/ui/input-group.tsx'
+import { CopyButton } from '@/components/field/CopyButton.tsx'
 
 export type TextInputProps<
   TFieldValues extends FieldValues = FieldValues,
@@ -19,6 +25,8 @@ export type TextInputProps<
   inputMode?: ComponentProps<'input'>['inputMode']
   autoFocus?: boolean
   disabled?: boolean
+  /** Shows a copy button that copies the current field value. */
+  copyable?: { label: string; successMessage: string }
 }
 
 export function TextInput<
@@ -31,23 +39,39 @@ export function TextInput<
   inputMode,
   autoFocus = false,
   disabled = false,
+  copyable,
   ...props
 }: TextInputProps<TFieldValues, TName, TTransformedValues>) {
   return (
     <FormFieldWrapper
       {...props}
-      render={({ field, fieldState }) => (
-        <Input
-          {...field}
-          id={field.name}
-          aria-invalid={fieldState.invalid}
-          type={type}
-          autoComplete={autoComplete}
-          inputMode={inputMode}
-          autoFocus={autoFocus}
-          disabled={disabled}
-        />
-      )}
+      render={({ field, fieldState }) => {
+        const inputProps = {
+          ...field,
+          id: field.name,
+          'aria-invalid': fieldState.invalid,
+          type,
+          autoComplete,
+          inputMode,
+          autoFocus,
+          disabled,
+        }
+
+        if (!copyable) return <Input {...inputProps} />
+
+        return (
+          <InputGroup>
+            <InputGroupInput {...inputProps} />
+            <InputGroupAddon align="inline-end">
+              <CopyButton
+                value={field.value}
+                label={copyable.label}
+                successMessage={copyable.successMessage}
+              />
+            </InputGroupAddon>
+          </InputGroup>
+        )
+      }}
     />
   )
 }

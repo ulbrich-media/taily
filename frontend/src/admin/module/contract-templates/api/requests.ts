@@ -25,8 +25,12 @@ const json = (method: string, body?: unknown): RequestInit => ({
   body: body === undefined ? undefined : JSON.stringify(body),
 })
 
-export const getContractTemplates = () =>
-  apiRequest<ContractTemplateResource[]>('contract-templates')
+export const getContractTemplates = (animalTypeId?: string) =>
+  apiRequest<ContractTemplateResource[]>(
+    animalTypeId
+      ? `contract-templates?animal_type_id=${encodeURIComponent(animalTypeId)}`
+      : 'contract-templates'
+  )
 
 export const getContractTemplate = (id: string) =>
   apiRequest<ContractTemplateResource>(`contract-templates/${id}`)

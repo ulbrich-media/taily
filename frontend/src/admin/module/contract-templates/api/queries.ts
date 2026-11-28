@@ -7,15 +7,16 @@ import {
 
 export const contractTemplateQueryKeys = {
   all: ['contract-templates'] as const,
-  list: () => ['contract-templates', 'list'] as const,
+  list: (animalTypeId?: string) =>
+    ['contract-templates', 'list', animalTypeId ?? null] as const,
   detail: (id: string) => ['contract-templates', 'detail', id] as const,
   fieldOptions: () => ['contract-templates', 'field-options'] as const,
 }
 
-export const listContractTemplatesQuery = () =>
+export const listContractTemplatesQuery = (animalTypeId?: string) =>
   queryOptions({
-    queryKey: contractTemplateQueryKeys.list(),
-    queryFn: getContractTemplates,
+    queryKey: contractTemplateQueryKeys.list(animalTypeId),
+    queryFn: () => getContractTemplates(animalTypeId),
   })
 
 export const getContractTemplateQuery = (id: string) =>

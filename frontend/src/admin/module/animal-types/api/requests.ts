@@ -28,7 +28,9 @@ export async function getAnimalTypesPage(
 }
 
 export async function getAnimalType(id: string): Promise<AnimalType> {
-  return apiRequest<AnimalType>(`animal-types/${id}`)
+  // The show endpoint wraps the resource in { message, data }.
+  const response = await apiRequest<AnimalTypeResponse>(`animal-types/${id}`)
+  return response.data
 }
 
 export async function createAnimalType(

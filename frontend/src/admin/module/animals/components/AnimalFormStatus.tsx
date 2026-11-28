@@ -10,6 +10,12 @@ import {
   FieldLabel,
   FieldSeparator,
 } from '@/shadcn/components/ui/field.tsx'
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from '@/shadcn/components/ui/input-group.tsx'
+import { CopyButton } from '@/components/field/CopyButton.tsx'
 import { Switch as SwitchComponent } from '@/shadcn/components/ui/switch.tsx'
 import type { AnimalDetailResource } from '@/api/types/animals'
 import { FormSection } from '@/components/form/FormSection'
@@ -199,7 +205,34 @@ export function AnimalFormStatus({
                 control={form.control}
                 label="Bewerbungs-URL"
                 info="Link zum Bewerbungsformular zur Adoption dieses Tieres. Muss eine vollständige URL sein (z.B. https://...)."
+                copyable={{
+                  label: 'Bewerbungs-URL kopieren',
+                  successMessage: 'Bewerbungs-URL kopiert',
+                }}
               />
+
+              <Field>
+                <FieldLabel htmlFor="website_url">Website-URL</FieldLabel>
+                <InputGroup>
+                  <InputGroupInput
+                    id="website_url"
+                    readOnly
+                    value={defaultValues?.website_url ?? ''}
+                    placeholder="Noch nicht von der Website gemeldet"
+                  />
+                  <InputGroupAddon align="inline-end">
+                    <CopyButton
+                      value={defaultValues?.website_url}
+                      label="Website-URL kopieren"
+                      successMessage="Website-URL kopiert"
+                    />
+                  </InputGroupAddon>
+                </InputGroup>
+                <FieldDescription>
+                  Link zu diesem Tier auf der Website. Wird von der Website
+                  automatisch gemeldet.
+                </FieldDescription>
+              </Field>
             </FormGrid>
           </FormSection>
 

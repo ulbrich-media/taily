@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react'
 import { FlaskConical } from 'lucide-react'
-import type { AnimalTypeResource } from '@/api/types/animal-types'
 import type { MedicalTestResource } from '@/api/types/medical-tests'
 import type { PaginatedResponse } from '@/api/types/pagination'
 import { AnimalTypeItemListPage } from '@/admin/module/animal-types/pages/AnimalTypeItemListPage'
@@ -9,7 +8,6 @@ import type { AnimalTypeItemListSearch } from '@/admin/module/animal-types/anima
 interface MedicalTestListPageProps {
   medicalTests: PaginatedResponse<MedicalTestResource>
   search: AnimalTypeItemListSearch
-  animalTypes: AnimalTypeResource[]
   /** True while the previous result is shown and the next one is loading. */
   isUpdating?: boolean
   onSearchChange: (patch: Partial<AnimalTypeItemListSearch>) => void

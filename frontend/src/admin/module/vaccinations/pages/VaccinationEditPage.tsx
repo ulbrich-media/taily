@@ -6,7 +6,6 @@ import { z } from 'zod'
 import { vaccinationQueryKeys } from '@/admin/module/vaccinations/api/queries'
 import { updateVaccination } from '@/admin/module/vaccinations/api/requests'
 import type { VaccinationResource } from '@/api/types/vaccinations'
-import type { AnimalTypeResource } from '@/api/types/animal-types'
 import {
   Dialog,
   DialogContent,
@@ -21,28 +20,24 @@ import { FieldGroup } from '@/shadcn/components/ui/field.tsx'
 import { toast } from 'sonner'
 import { FormBlocker } from '@/components/form/FormBlocker'
 import { TextInput } from '@/components/field/TextInput'
-import { SelectInput } from '@/components/field/SelectInput'
 import { zFieldString } from '@/components/field/TextInput.utils.ts'
 import { Mark } from '@/components/typo/mark.tsx'
 
 const updateVaccinationSchema = z.object({
   title: zFieldString({ required: true }),
   description: zFieldString(),
-  animal_type_id: z.string().min(1, 'Bitte wähle eine Tierart aus'),
 })
 
 type UpdateVaccinationFormData = z.infer<typeof updateVaccinationSchema>
 
 interface VaccinationEditPageProps {
   vaccination: VaccinationResource
-  animalTypes: AnimalTypeResource[]
   onClose: () => void
   breadcrumb?: ReactNode
 }
 
 export function VaccinationEditPage({
   vaccination,
-  animalTypes,
   onClose,
   breadcrumb,
 }: VaccinationEditPageProps) {
@@ -53,7 +48,6 @@ export function VaccinationEditPage({
     defaultValues: {
       title: vaccination.title,
       description: vaccination.description,
-      animal_type_id: vaccination.animal_type_id,
     },
   })
 
@@ -85,19 +79,6 @@ export function VaccinationEditPage({
             <FormBlocker />
 
             <FieldGroup>
-              <SelectInput
-                name="animal_type_id"
-                control={form.control}
-                label="Tierart"
-                required
-                disabled
-                options={animalTypes.map((animalType) => ({
-                  value: animalType.id,
-                  label: animalType.title,
-                }))}
-                info="Die Tierart kann nicht nachträglich geändert werden"
-              />
-
               <TextInput
                 name="title"
                 control={form.control}

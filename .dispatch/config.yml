@@ -23,13 +23,16 @@ workspace:
   # Idle task: stop the DDEV project (stop only, nothing is deleted); `dev.start` brings it back before the next job.
   stop: ["ddev stop"]
   # Dev environment (task page "Start dev environment", `dispatch task dev <task> start`). Host and port of the frontend and the
-  # API's CORS/cookie setup come from worktree-init.sh (frontend/.env.local: <slug>.ddev.site:<port>), so no portEnv here and no
-  # url template: open https://<slug>.ddev.site:<port> from the workspace's frontend/.env.local.
+  # API's CORS/cookie setup come from worktree-init.sh (frontend/.env.local: <slug>.ddev.site:<port>), so no portEnv here: the
+  # "Open application" link reads host and port from that file (workspace.dev.urlEnvFile, Dispatch #496). https needs mkcert
+  # on the machine (worktree-init.sh falls back to plain http without it).
   dev:
     # Also runs before a job after an idle stop. The migrate step applies migrations the branch added after
     # workspace setup (setup migrates only once, and the tests use in-memory SQLite, so they never notice).
     start: ["ddev start", "ddev artisan migrate --force"]
     run: "npm run dev --prefix frontend"
+    urlEnvFile: frontend/.env.local
+    url: "https://${VITE_DEV_HOST}:${VITE_DEV_PORT}"
     timeoutMinutes: 60
   copy: []
   env: {}

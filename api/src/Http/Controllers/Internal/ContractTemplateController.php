@@ -22,9 +22,13 @@ class ContractTemplateController extends Controller
         $this->middleware('admin')->except(['index', 'show', 'fieldOptions']);
     }
 
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $templates = ContractTemplate::with('animalType')->orderBy('name')->get()->sortBy(fn (ContractTemplate $template) => $template->animalType->title)->values();
+        $animalTypeId = $request->query('animal_type_id');
+
+        $templates = ContractTemplate::with('animalType')
+            ->when(is_string($animalTypeId) && $animalTypeId !== '', fn ($query) => $query->where('animal_type_id', $animalTypeId))
+            ->orderBy('name')->get()->sortBy(fn (ContractTemplate $template) => $template->animalType->title)->values();
 
         return response()->json($templates->map(fn (ContractTemplate $template) => $this->present($template)));
     }

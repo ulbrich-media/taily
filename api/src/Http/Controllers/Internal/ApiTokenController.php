@@ -15,6 +15,7 @@ class ApiTokenController extends Controller
     private const AVAILABLE_ABILITIES = [
         'animals:read:adoptable' => 'Lese verfügbare Tiere zum Adoptieren',
         'animals:read:types' => 'Lese verfügbare Tierarten',
+        'animals:write:website-url' => 'Schreibe Website-Link zu Tieren',
     ];
 
     /**
