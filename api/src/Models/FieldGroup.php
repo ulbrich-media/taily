@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Taily\Support\RichText\RichTextCast;
+use Taily\Support\RichText\RichTextField;
 
 /**
  * A titled section of an animal type's Case File catalogue. Groups decide *where* a field
@@ -25,6 +27,13 @@ class FieldGroup extends Model
         'intro',
         'position',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'intro' => RichTextCast::for(RichTextField::GroupIntro),
+        ];
+    }
 
     public function animalType(): BelongsTo
     {

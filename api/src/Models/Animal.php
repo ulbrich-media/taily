@@ -16,6 +16,8 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Taily\Models\Concerns\SearchesWithLike;
 use Taily\Support\AnimalNumberGenerator;
+use Taily\Support\RichText\RichTextCast;
+use Taily\Support\RichText\RichTextField;
 
 class Animal extends Model implements HasMedia
 {
@@ -125,6 +127,7 @@ class Animal extends Model implements HasMedia
     protected function casts(): array
     {
         return [
+            'publish_description' => RichTextCast::for(RichTextField::AnimalDescription),
             'date_of_birth' => 'date:Y-m-d',
             'intake_date' => 'date:Y-m-d',
             'date_of_death' => 'date:Y-m-d',

@@ -5,6 +5,8 @@ namespace Taily\Http\Resources\Api;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Taily\Support\RichText\RichTextField;
+use Taily\Support\RichText\RichTextRenderer;
 
 class PublicAnimalResource extends JsonResource
 {
@@ -51,7 +53,8 @@ class PublicAnimalResource extends JsonResource
             'do_publish' => $this->resource->do_publish,
             'is_reserved' => $this->resource->is_reserved,
             'publish_title' => $this->resource->publish_title,
-            'publish_description' => $this->resource->publish_description,
+            // Still Markdown for the public API; it is rendered from the rich text document.
+            'publish_description' => (new RichTextRenderer)->toMarkdown($this->resource->publish_description, RichTextField::AnimalDescription),
             'application_url' => $this->resource->application_url,
             'website_url' => $this->resource->website_url,
             'compatibilities' => $this->whenLoaded('compatibilities', fn () => $this->resource->compatibilities->pluck('value')->values()->all(), []

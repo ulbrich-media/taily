@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Taily\Support\RichText\RichTextCast;
+use Taily\Support\RichText\RichTextField;
 
 /**
  * A contract template (ADR-017): the printed title, the wording and three
@@ -63,6 +65,7 @@ class ContractTemplate extends Model
     protected function casts(): array
     {
         return [
+            'body' => RichTextCast::for(RichTextField::ContractBody),
             'animal_fields' => 'array',
             'mediator_fields' => 'array',
             'adopter_fields' => 'array',

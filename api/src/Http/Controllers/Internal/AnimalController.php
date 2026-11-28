@@ -13,6 +13,8 @@ use Taily\Http\Resources\AnimalListResource;
 use Taily\Models\Animal;
 use Taily\Services\AnimalTraitService;
 use Taily\Support\AnimalNumberGenerator;
+use Taily\Support\RichText\RichTextField;
+use Taily\Support\RichText\RichTextRule;
 
 class AnimalController extends Controller
 {
@@ -168,7 +170,7 @@ class AnimalController extends Controller
             'do_publish' => 'sometimes|boolean',
             'is_reserved' => 'sometimes|boolean',
             'publish_title' => 'sometimes|nullable|string|max:60',
-            'publish_description' => 'sometimes|nullable|string',
+            'publish_description' => ['sometimes', 'nullable', new RichTextRule(RichTextField::AnimalDescription)],
             'application_url' => 'sometimes|nullable|url|max:2048',
             'is_deceased' => 'sometimes|boolean',
             'date_of_death' => 'sometimes|nullable|date_format:Y-m-d',

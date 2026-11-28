@@ -14,6 +14,7 @@ use Taily\Models\FieldGroup;
 use Taily\Models\Person;
 use Taily\Models\User;
 use Taily\Support\CaseFile\CaseFileService;
+use Taily\Support\RichText\RichText;
 use Taily\Tests\TestCase;
 
 class ContractTemplateTest extends TestCase
@@ -232,7 +233,7 @@ class ContractTemplateTest extends TestCase
         return $overrides + [
             'name' => 'Schutzvertrag Hund',
             'title' => 'Schutzvertrag',
-            'body' => "## Bedingungen\n\nDas Tier wird artgerecht gehalten.",
+            'body' => RichText::doc(RichText::heading('Bedingungen'), RichText::paragraph('Das Tier wird artgerecht gehalten.')),
             'animal_type_id' => $this->dogs->id,
             'animal_fields' => [['key' => 'animal.breed', 'required' => true]],
             'mediator_fields' => [['key' => 'mediator.email', 'required' => false]],

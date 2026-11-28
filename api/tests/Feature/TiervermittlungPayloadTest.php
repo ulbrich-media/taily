@@ -10,6 +10,7 @@ use Taily\Models\Animal;
 use Taily\Models\AnimalTrait;
 use Taily\Models\AnimalType;
 use Taily\Models\Person;
+use Taily\Support\RichText\RichText;
 use Taily\Support\Tiervermittlung\AnimalPayloadMapper;
 use Taily\Support\Tiervermittlung\CompatibilityMapping;
 use Taily\Tests\TestCase;
@@ -105,6 +106,32 @@ class TiervermittlungPayloadTest extends TestCase
 
         $this->assertSame(AnimalPayloadMapper::MAX_DESCRIPTION_LENGTH, mb_strlen($description));
         $this->assertStringEndsWith($block, $description);
+    }
+
+    public function test_the_description_is_sent_as_plain_text_and_the_limit_counts_the_text_not_the_json(): void
+    {
+        $doc = RichText::doc(
+            RichText::paragraph([RichText::text('Bello ist '), RichText::text('lieb', ['bold']), RichText::text('.')]),
+            RichText::bulletList(['verspielt', 'verschmust']),
+        );
+        $animal = $this->animal(['publish_description' => $doc]);
+
+        $this->assertSame("Bello ist lieb.\n\n- verspielt\n- verschmust", $this->mapper->payload($animal)['description']);
+
+        // 15000 characters of alternating bold and italic text: the JSON is longer than the limit, the text is not.
+        $long = RichText::doc(RichText::paragraph(array_map(fn (int $i) => RichText::text(str_repeat('a', 10), [$i % 2 === 0 ? 'bold' : 'italic']), range(1, 1500))));
+        $animal = $this->animal(['publish_description' => $long]);
+
+        $this->assertSame(15000, mb_strlen($this->mapper->payload($animal)['description']));
+        $this->assertGreaterThan(AnimalPayloadMapper::MAX_DESCRIPTION_LENGTH, strlen((string) $animal->getRawOriginal('publish_description')));
+    }
+
+    public function test_an_empty_rich_text_document_is_no_description(): void
+    {
+        $animal = $this->animal(['publish_description' => RichText::doc(RichText::paragraph('  '))]);
+
+        $this->assertSame('', $animal->getRawOriginal('publish_description'));
+        $this->assertContains('Es gibt keinen Beschreibungstext.', $this->mapper->exclusionReasons($animal));
     }
 
     private function addVideo(Animal $animal, string $name = 'clip.mp4', int $kilobytes = 1000, string $mime = 'video/mp4'): Animal

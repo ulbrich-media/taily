@@ -16,6 +16,7 @@ use Taily\Models\Person;
 use Taily\Support\CaseFile\FieldCatalogue;
 use Taily\Support\ContractPdfService;
 use Taily\Support\ContractSigningService;
+use Taily\Support\RichText\RichText;
 use Taily\Tests\Concerns\CreatesContractTemplates;
 use Taily\Tests\TestCase;
 
@@ -95,7 +96,12 @@ class ContractPdfServiceTest extends TestCase
         $template = $this->contractTemplate($adoption);
         $template->update([
             'title' => 'Übernahmevertrag',
-            'body' => "## Pflichten\n\nDas Tier wird **artgerecht** gehalten.\n\n<script>alert(1)</script>\n\n![x](/etc/hosts)",
+            'body' => RichText::doc(
+                RichText::heading('Pflichten'),
+                RichText::paragraph([RichText::text('Das Tier wird '), RichText::text('artgerecht', ['bold']), RichText::text(' gehalten.')]),
+                RichText::paragraph('<script>alert(1)</script>'),
+                ['type' => 'image', 'attrs' => ['src' => '/etc/hosts']],
+            ),
             'animal_fields' => [['key' => 'animal.color', 'required' => true], ['key' => 'animal.breed', 'required' => false]],
             'mediator_fields' => [],
             'adopter_fields' => [['key' => 'date_of_birth', 'required' => true]],
@@ -108,8 +114,9 @@ class ContractPdfServiceTest extends TestCase
         $this->assertStringContainsString('15.03.1990', $html);
         $this->assertStringContainsString('<h2>Pflichten</h2>', $html);
         $this->assertStringContainsString('<strong>artgerecht</strong>', $html);
-        // HTML in the wording is dropped, not rendered.
+        // HTML in the wording is escaped, not rendered.
         $this->assertStringNotContainsString('<script>', $html);
+        $this->assertStringContainsString('&lt;script&gt;', $html);
         // Images too: dompdf would embed any local file they point to.
         $this->assertStringNotContainsString('/etc/hosts', $html);
         // An optional field without a value is left out.

@@ -332,8 +332,12 @@ components:
           description: Short public title shown above the description.
         publish_description:
           type: string
-          nullable: true
-          description: Public-facing description shown on the adoption listing.
+          description: >-
+            Public-facing description shown on the adoption listing, as
+            Markdown (bold, italic, `##`/`###` headings, lists and links). It
+            is rendered from the rich text the team edits, so the field and
+            its type stay the same. An animal without a description returns
+            an empty string.
         application_url:
           type: string
           format: uri
