@@ -1,7 +1,9 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Taily\Support\RichText\RichText;
 use Taily\Support\RichText\RichTextConverter;
 use Taily\Support\RichText\RichTextField;
@@ -14,7 +16,8 @@ use Taily\Support\RichText\RichTextRenderer;
  * is sanitized for the field, so whatever it does not allow (links in a
  * contract body, for example) is flattened to text. Empty stays `''`.
  * Values that already are a document are skipped, so a rerun is harmless.
- * The columns are text columns and hold the JSON as is.
+ * The JSON is several times longer than the text it holds, so the two `text`
+ * columns grow to `mediumText` (the contract body already is `longText`).
  */
 return new class extends Migration
 {
@@ -27,6 +30,13 @@ return new class extends Migration
 
     public function up(): void
     {
+        Schema::table('animals', function (Blueprint $table) {
+            $table->mediumText('publish_description')->nullable()->change();
+        });
+        Schema::table('field_groups', function (Blueprint $table) {
+            $table->mediumText('intro')->change();
+        });
+
         $converter = new RichTextConverter;
 
         foreach (self::FIELDS as [$table, $column, $field, $markdown]) {
